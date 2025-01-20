@@ -6,7 +6,6 @@ const ApprovedUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
 
-  // Mock fetching user data dynamically
   useEffect(() => {
     const fetchUsers = async () => {
       const response = [
@@ -102,7 +101,7 @@ const ApprovedUsers = () => {
     <div className="p-6 bg-white rounded-md shadow-md">
       <h2 className="text-xl font-bold mb-4">User List</h2>
 
-      {/* Top Actions */}
+
       <div className="flex flex-col items-end gap-2 mb-4">
         <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
           Un-approved Users List
@@ -117,7 +116,7 @@ const ApprovedUsers = () => {
       </div>
 
 
-      {/* Table */}
+
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
@@ -172,12 +171,12 @@ const ApprovedUsers = () => {
                     onChange={() => toggleSwitch(user.id, "transfer")}
                     className="sr-only"
                   />
-                  {/* Toggle Track */}
+
                   <div
                     className={`w-10 h-5 rounded-full transition-colors duration-300 ${user.transfer ? "bg-green-400" : "bg-yellow-500"
                       }`}
                   ></div>
-                  {/* Toggle Knob */}
+
                   <div
                     className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${user.transfer ? "translate-x-5" : "translate-x-0"
                       }`}
@@ -193,12 +192,11 @@ const ApprovedUsers = () => {
                     onChange={() => toggleSwitch(user.id, "active")}
                     className="sr-only"
                   />
-                  {/* Toggle Track */}
                   <div
                     className={`w-10 h-5 rounded-full transition-colors duration-300 ${user.active ? "bg-green-400" : "bg-yellow-500"
                       }`}
                   ></div>
-                  {/* Toggle Knob */}
+
                   <div
                     className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${user.active ? "translate-x-5" : "translate-x-0"
                       }`}
@@ -214,7 +212,7 @@ const ApprovedUsers = () => {
         </tbody>
       </table>
 
-      {/* Pagination */}
+
       <div className="flex justify-between items-center mt-4">
         <span>
           Showing {indexOfFirstItem + 1} to{" "}

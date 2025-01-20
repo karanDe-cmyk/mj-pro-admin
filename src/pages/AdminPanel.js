@@ -1,15 +1,59 @@
 import React, { useState } from 'react';
+import { AiFillHome } from 'react-icons/ai';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 const AdminPanel = () => {
-    const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
+    const [openMenus, setOpenMenus] = useState({});
     const navigate = useNavigate();
-
 
     const username = localStorage.getItem('username') || 'Admin';
 
-    const toggleUserManagement = () => {
-        setIsUserManagementOpen(!isUserManagementOpen);
+    const menuItems = [
+        {
+            label: 'Dashboard',
+            path: '/admin/dashboard',
+            icon: <i class="fa fa-home" aria-hidden="true"></i>,
+        },
+        {
+            label: 'User Management',
+            children: [
+                {
+                    label: 'Approved Users',
+                    path: '/admin/user-management/approved',
+                },
+                {
+                    label: 'Unapproved Users',
+                    path: '/admin/user-management/unapproved',
+                },
+            ],
+        },
+        {
+            label: 'Game Management',
+            children: [
+                {
+                    label: 'Game Name',
+                    path: '/admin/game-management/game-name',
+                },
+                
+            ],
+        },
+        // {
+        //     label: 'Game Management',
+        //     path: '/admin/game-management',
+        // },
+        {
+            label: 'Starline Management',
+            path: '/admin/starline-management',
+        },
+    ];
+
+    const toggleMenu = (label) => {
+        setOpenMenus((prevOpenMenus) => ({
+            ...prevOpenMenus,
+            [label]: !prevOpenMenus[label],
+        }));
     };
 
     const handleLogout = () => {
@@ -18,78 +62,52 @@ const AdminPanel = () => {
         navigate('/login');
     };
 
-    return (
-        <div className="flex min-h-screen">
-
-            <div className="w-1/4 bg-gray-800 text-white p-6">
-                <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
-                <ul>
-                    <li className="mb-2">
-                        <NavLink
-                            to="/admin/dashboard"
-                            className={({ isActive }) =>
-                                isActive ? 'text-blue-400' : 'text-white'
-                            }
-                        >
-                            Dashboard
-                        </NavLink>
-                    </li>
-
-                    <li className="mb-2">
+    const renderMenuItems = (items) => {
+        return items.map((item) => (
+            <li key={item.label} className="mb-2">
+                {item.children ? (
+                    <>
                         <div
-                            onClick={toggleUserManagement}
+                            onClick={() => toggleMenu(item.label)}
                             className="cursor-pointer flex justify-between items-center px-4 py-2 bg-gray-800 rounded-md hover:bg-gray-700"
                         >
-                            <span className="font-medium text-white">User Management</span>
+                            <div className="flex items-center">
+                                {item.icon && <span className="mr-2">{item.icon}</span>}
+                                <span className="font-medium text-white">{item.label}</span>
+                            </div>
                             <span className="text-gray-400">
-                                {isUserManagementOpen ? '▲' : '▼'}
+                                {openMenus[item.label] ? '▲' : '▼'}
                             </span>
                         </div>
-                        {isUserManagementOpen && (
+                        {openMenus[item.label] && (
                             <ul className="ml-4 mt-2 border-l-4 border-blue-500 pl-4">
-                                <li className="mb-1">
-                                    <NavLink
-                                        to="/admin/user-management/approved"
-                                        className={({ isActive }) =>
-                                            isActive
-                                                ? 'block px-3 py-2 bg-blue-500 text-white rounded-md'
-                                                : 'block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md'
-                                        }
-                                    >
-                                        Approved Users
-                                    </NavLink>
-                                </li>
-                                <li className="mb-1">
-                                    <NavLink
-                                        to="/admin/user-management/unapproved"
-                                        className={({ isActive }) =>
-                                            isActive
-                                                ? 'block px-3 py-2 bg-blue-500 text-white rounded-md'
-                                                : 'block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md'
-                                        }
-                                    >
-                                        Unapproved Users
-                                    </NavLink>
-                                </li>
+                                {renderMenuItems(item.children)}
                             </ul>
                         )}
-                    </li>
+                    </>
+                ) : (
+                    <NavLink
+                        to={item.path}
+                        className={({ isActive }) =>
+                            isActive
+                                ? 'block px-3 py-2 bg-blue-500 text-white rounded-md'
+                                : 'block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md'
+                        }
+                    >
+                        {item.label}
+                    </NavLink>
+                )}
+            </li>
+        ));
+    };
 
-                    <li className="mb-2">
-                        <NavLink
-                            to="/admin/starline-management"
-                            className={({ isActive }) =>
-                                isActive ? 'text-blue-400' : 'text-white'
-                            }
-                        >
-                            Starline Management
-                        </NavLink>
-                    </li>
-                </ul>
+    return (
+        <div className="flex min-h-screen">
+            <div className="w-1/4 bg-gray-800 text-white p-6">
+                <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
+                <ul>{renderMenuItems(menuItems)}</ul>
             </div>
-
             <div className="w-3/4 bg-gray-100">
-
                 <header className="flex justify-between items-center bg-white shadow-md p-4">
                     <div className="font-medium text-gray-700">
                         Welcome, <strong>{username}</strong>
@@ -101,7 +119,6 @@ const AdminPanel = () => {
                         Logout
                     </button>
                 </header>
-
                 <main className="p-6">
                     <Outlet />
                 </main>
