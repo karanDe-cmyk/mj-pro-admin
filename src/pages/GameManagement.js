@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import EditModal from "./EditModal"; 
+import EditModal from "./EditModal";
 
 const GameManagement = () => {
   const [games, setGames] = useState(() => {
@@ -31,7 +31,6 @@ const GameManagement = () => {
   };
 
   const handleAddMarket = () => {
-  
     if (
       !formData.marketName ||
       !formData.marketType ||
@@ -40,6 +39,12 @@ const GameManagement = () => {
       !formData.selectedGame
     ) {
       alert("Please fill in all fields before adding a market.");
+      return;
+    }
+
+    // Check for duplicate market names
+    if (games.some((game) => game.name.toLowerCase() === formData.marketName.toLowerCase())) {
+      alert("A market with this name already exists. Please use a unique name.");
       return;
     }
 
@@ -61,6 +66,7 @@ const GameManagement = () => {
     });
   };
 
+
   const handleDeleteGame = (game) => {
     setGameToDelete(game);
     setIsConfirmDelete(true);
@@ -71,6 +77,8 @@ const GameManagement = () => {
     setIsConfirmDelete(false);
     setGameToDelete(null);
   };
+
+
 
   const cancelDelete = () => {
     setIsConfirmDelete(false);
@@ -85,6 +93,8 @@ const GameManagement = () => {
     const { name, value } = e.target;
     setEditModalData({ ...editModalData, [name]: value });
   };
+
+
 
   const handleSaveEdit = () => {
     setGames(
@@ -196,6 +206,7 @@ const GameManagement = () => {
                   >
                     Edit
                   </button>
+                 
                   <button
                     onClick={() => handleDeleteGame(game)}
                     className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
@@ -203,6 +214,7 @@ const GameManagement = () => {
                     Remove
                   </button>
                 </td>
+
               </tr>
             ))}
           </tbody>

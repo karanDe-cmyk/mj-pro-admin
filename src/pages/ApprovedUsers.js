@@ -75,7 +75,6 @@ const ApprovedUsers = () => {
     fetchUsers();
   }, []);
 
-  // Toggle the switch for a specific field
   const toggleSwitch = (id, field) => {
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
@@ -84,7 +83,6 @@ const ApprovedUsers = () => {
     );
   };
 
-  // Filter and Paginate users
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

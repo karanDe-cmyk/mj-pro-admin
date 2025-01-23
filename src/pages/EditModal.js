@@ -1,80 +1,66 @@
-// EditModal.js
-
 import React from "react";
 
 const EditModal = ({ gameData, onChange, onSave, onClose }) => {
+  const days = ["Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]; // Add other days as needed
+
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-md w-96">
-        <h3 className="text-lg font-bold mb-4">Edit Game</h3>
-        <div className="mb-4">
-          <label className="block font-medium">Market Name</label>
-          <input
-            type="text"
-            name="name"
-            value={gameData.name}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-md w-full max-w-4xl overflow-hidden relative">
+        <h3 className="text-lg font-bold mb-4 text-center">Edit Market Schedule</h3>
+        <div
+          className="grid grid-cols-2 gap-4 overflow-y-auto max-h-[70vh] px-2"
+          style={{ scrollbarWidth: "thin" }}
+        >
+          {days.map((day, index) => (
+            <div key={index} className="bg-gray-50 p-4 rounded-md">
+              <h4 className="text-md font-bold mb-2">{day}</h4>
+              <div className="mb-2">
+                <label className="block font-medium">Market Open Time</label>
+                <input
+                  type="time"
+                  name={`${day.toLowerCase()}Open`}
+                  value={gameData[`${day.toLowerCase()}Open`] || ""}
+                  onChange={onChange}
+                  className="w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+              <div className="mb-2">
+                <label className="block font-medium">Market Close Time</label>
+                <input
+                  type="time"
+                  name={`${day.toLowerCase()}Close`}
+                  value={gameData[`${day.toLowerCase()}Close`] || ""}
+                  onChange={onChange}
+                  className="w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+              <div>
+                <label className="block font-medium">Select Status</label>
+                <select
+                  name={`${day.toLowerCase()}Status`}
+                  value={gameData[`${day.toLowerCase()}Status`] || "Active"}
+                  onChange={onChange}
+                  className="w-full border border-gray-300 rounded-md p-2"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="mb-4">
-          <label className="block font-medium">Market Type</label>
-          <select
-            name="type"
-            value={gameData.type || ""}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          >
-            <option value="">Select</option>
-            <option value="Type 1">Mumbai</option>
-            <option value="Type 2">Pune</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block font-medium">Market Open Time</label>
-          <input
-            type="time"
-            name="open"
-            value={gameData.open}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block font-medium">Market Close Time</label>
-          <input
-            type="time"
-            name="close"
-            value={gameData.close}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block font-medium">Selected Game</label>
-          <select
-            name="selectedGame"
-            value={gameData.selectedGame || ""}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-md p-2"
-          >
-            <option value="">Select</option>
-            <option value="Game 1">Game 1</option>
-            <option value="Game 2">Game 2</option>
-          </select>
-        </div>
-        <div className="flex justify-end">
-          <button
-            onClick={onSave}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md mr-4"
-          >
-            Save
-          </button>
+        <div className="flex justify-end mt-4 sticky bottom-0 bg-white pt-4">
           <button
             onClick={onClose}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md"
+            className="bg-red-500 text-white px-4 py-2 rounded-md mr-2"
           >
             Close
+          </button>
+          <button
+            onClick={onSave}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          >
+            Update Market
           </button>
         </div>
       </div>
