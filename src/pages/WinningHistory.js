@@ -6,14 +6,12 @@ const WinningHistory = () => {
   const [page, setPage] = useState(1);
   const entriesPerPage = 10;
 
-  // Dummy data for the winning history table
   const data = [
     { id: 1, txId: 'TX123', memberName: 'John Doe', memberNumber: '12345', gameName: 'Game 1', betNumber: '5', gameType: 'Type A', amount: '500' },
     { id: 2, txId: 'TX124', memberName: 'Jane Smith', memberNumber: '67890', gameName: 'Game 2', betNumber: '10', gameType: 'Type B', amount: '1000' },
-    // Add more rows as needed...
+   
   ];
 
-  // Filtered and paginated data
   const filteredData = data.filter((item) =>
     item.memberName.toLowerCase().includes(search.toLowerCase())
   );
@@ -31,7 +29,6 @@ const WinningHistory = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       <h2 className="text-2xl font-bold mb-4">Winning History Report</h2>
 
-      {/* Date Selection Form */}
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-md p-4 mb-6">
         <div className="flex items-center gap-4">
           <div>

@@ -1,63 +1,113 @@
-import React, { useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import React, { useState, useEffect } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const AdminPanel = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [openMenus, setOpenMenus] = useState({});
+    const [isMobile, setIsMobile] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
-    const username = localStorage.getItem('username') || 'Admin';
+    const username = localStorage.getItem("username") || "Admin";
 
     const menuItems = [
         {
-            label: 'Dashboard',
-            path: '/admin/dashboard',
+            label: "Dashboard",
+            path: "/admin/dashboard",
             icon: <i className="fa fa-home" aria-hidden="true"></i>,
         },
         {
-            label: 'User Management',
+            label: "User Management",
+            icon: <i className="fa fa-users" aria-hidden="true"></i>,
             children: [
-                {
-                    label: 'Approved Users',
-                    path: '/admin/user-management/approved',
-                },
-                {
-                    label: 'Unapproved Users',
-                    path: '/admin/user-management/unapproved',
-                },
+                { label: "Approved Users", path: "/admin/user-management/approved" },
+                { label: "Unapproved Users", path: "/admin/user-management/unapproved" },
             ],
         },
         {
-            label: 'Game Management',
+            label: "Game Management",
+            icon: <i className="fa fa-gamepad" aria-hidden="true"></i>,
             children: [
-                { label: 'Game Name', path: '/admin/game-management/game-name' },
-                { label: 'Game Rates', path: '/admin/game-management/game-rates' },
-                { label: 'On/Off Market', path: '/admin/game-management/on-off-market' },
-                { label: 'Users Bid History', path: '/admin/game-management/bit-history' },
-                { label: 'Bid Date Wise', path: '/admin/game-management/bid-date' },
-                { label: 'Bet List', path: '/admin/game-management/bet-list' },
-                { label: 'Winning History', path: '/admin/game-management/winning-history' },
+                { label: "Game Name", path: "/admin/game-management/game-name" },
+                { label: "Game Rates", path: "/admin/game-management/game-rates" },
+                { label: "On/Off Market", path: "/admin/game-management/on-off-market" },
+                { label: "Users Bid History", path: "/admin/game-management/bit-history" },
+                { label: "Bid Date Wise", path: "/admin/game-management/bid-date" },
+                { label: "Bet List", path: "/admin/game-management/bet-list" },
+                { label: "Winning History", path: "/admin/game-management/winning-history" },
             ],
         },
         {
-            label: 'Game & Number',
+            label: "Game & Number",
+            icon: <i className="fa fa-dice" aria-hidden="true"></i>,
             children: [
-                { label: 'Single Digit', path: '/admin/game-number/single-digit' },
-                { label: 'Jodi Digit', path: '/admin/game-number/jodi-digit' },
-                { label: 'Single Pana', path: '/admin/game-number/single-pana' },
-                { label: 'Double Pana', path: '/admin/game-number/double-pana' },
-                { label: 'Triple Pana', path: '/admin/game-number/triple-pana' },
-                { label: 'Half Sangam', path: '/admin/game-number/half-sangam' },
-                { label: 'Full Sangam', path: '/admin/game-number/full-sangam' },
+                { label: "Single Digit", path: "/admin/game-number/single-digit" },
+                { label: "Jodi Digit", path: "/admin/game-number/jodi-digit" },
+                { label: "Single Pana", path: "/admin/game-number/single-pana" },
+                { label: "Double Pana", path: "/admin/game-number/double-pana" },
+                { label: "Triple Pana", path: "/admin/game-number/triple-pana" },
+                { label: "Half Sangam", path: "/admin/game-number/half-sangam" },
+                { label: "Full Sangam", path: "/admin/game-number/full-sangam" },
             ],
         },
         {
-            label: 'Starline Management',
-            path: '/admin/starline-management',
+            label: "Wallet Management",
+            icon: <i className="fa fa-wallet" aria-hidden="true"></i>,
+            children: [
+                { label: "All Fund Requests", path: "/admin/wallet-management/all-fund-request" },
+                { label: "Fund Request", path: "/admin/wallet-management/fund-request" },
+                { label: "Offline Payment Records", path: "/admin/wallet-management/offline-payment-records" },
+                { label: "Withdraw Request", path: "/admin/wallet-management/withdraw-request" },
+                { label: "Add Fund (User Wallet)", path: "/admin/wallet-management/add-fund" },
+                { label: "Remove Money", path: "/admin/wallet-management/remove-money" },
+            ],
+        },
+        {
+            label: "Starline Management",
+            icon: <i className="fa fa-star" aria-hidden="true"></i>,
+            children: [
+                { label: "Game Name", path: "/admin/starline-management/game-name" },
+                { label: "All Bid History", path: "/admin/starline-management/all-bid-history" },
+                { label: "Bid History", path: "/admin/starline-management/bid-history" },
+                { label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
+                { label: "Game Rates", path: "/admin/starline-management/game-rates" },
+            ],
+        },
+        {
+            label: "Declare Result",
+            path: "/admin/declare-result",
+            icon: <i className="fa fa-trophy" aria-hidden="true"></i>,
+        },
+        {
+            label: "Auto Deposit History",
+            path: "/admin/auto-deposit-history",
+            icon: <i className="fa fa-history" aria-hidden="true"></i>,
+        },
+        {
+            label: "Winning Prediction",
+            path: "/admin/winning-prediction",
+            icon: <i className="fa fa-chart-line" aria-hidden="true"></i>,
+        },
+        {
+            label: "Notice Management",
+            path: "/admin/notice-management",
+            icon: <i className="fa fa-cog" aria-hidden="true"></i>,
         },
     ];
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        handleResize();
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
 
     const toggleMenu = (label) => {
         setOpenMenus((prevOpenMenus) => ({
@@ -67,9 +117,9 @@ const AdminPanel = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('username');
-        navigate('/');
+        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("username");
+        navigate("/");
     };
 
     const toggleSidebar = () => {
@@ -78,7 +128,7 @@ const AdminPanel = () => {
 
     const renderMenuItems = (items) => {
         return items.map((item) => (
-            <li key={item.label} className="mb-2">
+            <li key={item.label} className="mb-2 overflow-y-auto">
                 {item.children ? (
                     <>
                         <div
@@ -89,9 +139,7 @@ const AdminPanel = () => {
                                 {item.icon && <span className="mr-2">{item.icon}</span>}
                                 <span className="font-medium text-white">{item.label}</span>
                             </div>
-                            <span className="text-gray-400">
-                                {openMenus[item.label] ? '▲' : '▼'}
-                            </span>
+                            <span className="text-gray-400">{openMenus[item.label] ? "▲" : "▼"}</span>
                         </div>
                         {openMenus[item.label] && (
                             <ul className="ml-4 mt-2 border-l-4 border-blue-500 pl-4">
@@ -104,50 +152,36 @@ const AdminPanel = () => {
                         to={item.path}
                         className={({ isActive }) =>
                             isActive
-                                ? 'block px-3 py-2 bg-blue-500 text-white rounded-md'
-                                : 'block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md'
+                                ? "block px-3 py-2 bg-blue-500 text-white rounded-md"
+                                : "block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md"
                         }
                     >
-                        {item.label}
+                        <div className="flex items-center">
+                            {item.icon && <span className="mr-2">{item.icon}</span>}
+                            {item.label}
+                        </div>
                     </NavLink>
                 )}
             </li>
         ));
     };
 
-    const getBreadcrumbs = () => {
-        const paths = location.pathname.split('/').filter((path) => path);
-        return paths.map((path, index) => {
-            const to = `/${paths.slice(0, index + 1).join('/')}`;
-            return (
-                <span key={to} className="text-gray-600">
-                    {index > 0 && <span className="mx-2">/</span>}
-                    <NavLink to={to} className="hover:underline">
-                        {path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')}
-                    </NavLink>
-                </span>
-            );
-        });
-    };
-
     return (
         <div className="flex min-h-screen">
             {/* Sidebar */}
-            <div
-                className={`${
-                    isSidebarOpen ? 'w-1/4' : 'w-0'
-                } bg-gray-800 text-white overflow-hidden transition-all duration-300`}
-            >
-                <div className={`${isSidebarOpen ? 'p-6' : 'p-2'}`}>
+            <div className="w-1/4
+            
+             bg-gray-800 text-white fixed h-screen overflow-y-auto">
+                <div className="p-6">
                     <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
-                    {isSidebarOpen && <ul>{renderMenuItems(menuItems)}</ul>}
+                    <ul>{renderMenuItems(menuItems)}</ul>
                 </div>
             </div>
 
             {/* Main Content */}
-            <div className={`${isSidebarOpen ? 'w-3/4' : 'w-full'} bg-gray-100 transition-all duration-300`}>
+            <div className="flex-1 ml-[25%] h-screen overflow-y-auto">
                 {/* Header */}
-                <header className="flex justify-between items-center bg-white shadow-md p-4">
+                <header className="flex justify-between items-center bg-white shadow-md p-4 sticky top-0 z-10">
                     <button onClick={toggleSidebar} className="text-gray-500 text-xl">
                         <i className="fas fa-bars"></i>
                     </button>
@@ -162,14 +196,8 @@ const AdminPanel = () => {
                     </button>
                 </header>
 
-                {/* Breadcrumbs */}
-                <div className="p-4 bg-gray-200 text-sm">
-                    {/* <span className="text-gray-600">Home</span> */}
-                    {getBreadcrumbs()}
-                </div>
-
-                {/* Outlet */}
-                <main className="p-6">
+                {/* Scrollable Main Content */}
+                <main className="p-6 overflow-y-auto h-[calc(100vh-64px)]">
                     <Outlet />
                 </main>
             </div>

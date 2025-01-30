@@ -15,6 +15,28 @@ import BetList from './pages/BetList';
 import Singledigit from './pages/game_and_number/Singledigit';
 import JodiDigit from './pages/game_and_number/JodiDigit';
 import SinglePana from './pages/game_and_number/SinglePana';
+import DoublePana from './pages/game_and_number/DoublePana';
+import TriplePana from './pages/game_and_number/TriplePana';
+import HalfSangam from './pages/game_and_number/HalfSangam';
+import FullSangam from './pages/game_and_number/FullSangam';
+import AllFundRequest from './pages/wallet_management/AllFundRequest';
+import FundRequest from './pages/wallet_management/FundRequest';
+import OfflinePaymentRecords from './pages/wallet_management/OfflinePaymentRecords';
+import WithDrawRequest from './pages/wallet_management/WithDrawRequest';
+import AddFund from './pages/wallet_management/AddFund';
+import RemoveMoney from './pages/wallet_management/RemoveMoney';
+import DeclareResult from './pages/DeclareResult';
+import GameName from './pages/starline management/GameName';
+import AllBidHistory from './pages/starline management/AllBidHistory';
+import BidHistory from './pages/starline management/BidHistory';
+
+import GameRates from './pages/starline management/GameRates';
+import WinningPrediction from './pages/WinningPrediction';
+import DeclareResultStarline from './pages/starline management/DeclareResultStarline';
+import AutoDepositHistory from './pages/AutoDepositHistory';
+import NoticeManagement from './pages/NoticeManagement';
+
+
 
 const App = () => {
   const isAuthenticated = localStorage.getItem('isAuthenticated');
@@ -40,18 +62,44 @@ const App = () => {
             <Route path="bet-list" element={<BetList />} />
             <Route path="winning-history" element={<WinningHistory />} />
             {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
-          </Route>s
+          </Route>
           <Route path="game-number">
             <Route path="single-digit" element={<Singledigit />} />
             <Route path="jodi-digit" element={<JodiDigit />} />
             <Route path="single-pana" element={<SinglePana />} />
-            <Route path="double-pana" element={<UsersBidHistory />} />
-            <Route path="triple-pana" element={<BidDateWise />} />
-            <Route path="half-sangam" element={<BetList />} />
-            <Route path="full-sangam" element={<WinningHistory />} />
+            <Route path="double-pana" element={<DoublePana />} />
+            <Route path="triple-pana" element={<TriplePana />} />
+            <Route path="half-sangam" element={<HalfSangam />} />
+            <Route path="full-sangam" element={<FullSangam />} />
             {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
           </Route>
+          <Route path="wallet-management">
+            <Route path="all-fund-request" element={<AllFundRequest />} />
+            <Route path="fund-request" element={<FundRequest />} />
+            <Route path="offline-payment-records" element={<OfflinePaymentRecords />} />
+            <Route path="withdraw-request" element={<WithDrawRequest />} />
+            <Route path="add-fund" element={<AddFund />} />
+            <Route path="remove-money" element={<RemoveMoney />} />
+            {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
+          </Route>
+          <Route path="starline-management">
+            <Route path="game-name" element={<GameName />} />
+            <Route path="all-bid-history" element={<AllBidHistory />} />
+            <Route path="bid-history" element={<BidHistory />} />
+            <Route path="declare-result-starline" element={<DeclareResultStarline />} />
+            <Route path="game-rates" element={<GameRates />} />
+
+            {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
+          </Route>
+
           {/* <Route path="game-management" element={<GameManagement />} /> */}
+          <Route path="declare-result" element={<DeclareResult/>} />
+          <Route path="winning-prediction" element={<WinningPrediction/>} />
+          <Route path="auto-deposit-history" element={<AutoDepositHistory/>} />
+          <Route path="notice-management" element={<NoticeManagement/>} />
+
+
+
         </Route>
       </Routes>
     </Router>

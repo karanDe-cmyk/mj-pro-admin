@@ -7,11 +7,10 @@ const SinglePana = () => {
     1: ["128", "137", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579"],
     2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "679", "589"],
     3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689"],
-    
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-10 px-4">
       <div className="w-full max-w-6xl bg-white p-6 rounded-md shadow-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Single Pana Numbers</h2>
         {Object.entries(singleAnkData).map(([ank, numbers]) => (
@@ -27,7 +26,7 @@ const SinglePana = () => {
               </div>
             </div>
  
-            <div className="grid grid-cols-12 gap-3">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-3">
               {numbers.map((number) => (
                 <button
                   key={number}
