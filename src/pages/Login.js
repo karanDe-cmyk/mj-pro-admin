@@ -11,14 +11,17 @@ const Login = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (username === 'admin' && password === 'password') { 
-            dispatch(login({ username }));
-            localStorage.setItem('isAuthenticated', 'true'); 
-            navigate('/admin'); 
+      
+        // Static authentication for now
+        if (username === "admin" && password === "password") {
+          dispatch(login({ username })); 
+          localStorage.setItem("isAuthenticated", "true"); 
+          navigate("/admin/dashboard"); 
         } else {
-            alert('Invalid credentials. Please try again.');
+          alert("Invalid credentials. Please try again.");
         }
-    };
+      };
+      
 
 
     return (

@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { useDispatch } from "react-redux";
+
+import { logout } from "../features/auth/authSlice";
+import Header from "../components/Header";
+
+
+
 
 const AdminPanel = () => {
+    const dispatch = useDispatch();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [openMenus, setOpenMenus] = useState({});
     const [isMobile, setIsMobile] = useState(false);
@@ -124,11 +132,11 @@ const AdminPanel = () => {
         }));
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("isAuthenticated");
-        localStorage.removeItem("username");
-        navigate("/");
-    };
+  const handleLogout = () => {
+    dispatch(logout()); // Reset Redux state
+    localStorage.removeItem("isAuthenticated"); // Clear authentication from localStorage
+    navigate("/"); // Redirect to login
+  };
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -189,48 +197,7 @@ const AdminPanel = () => {
             {/* Main Content */}
             <div className="flex-1 ml-[20%] h-fit overflow-y-auto">
                 {/* Header */}
-                <header className="flex justify-between items-center bg-white shadow-md p-4 sticky top-0 z-10">
-                    <button onClick={toggleSidebar} className="text-gray-500 text-xl">
-                        <i className="fas fa-bars"></i>
-                    </button>
-
-                    {/* Username with User Icon and Dropdown */}
-                    <div className="relative ml-auto flex items-center">
-                        {/* User Icon */}
-                        <i className="fas fa-user-circle text-2xl text-gray-700 mr-2"></i>
-                        <span className="font-medium text-gray-700 mr-2">  <strong>{username}</strong></span>
-                        <button onClick={toggleDropdown} className="text-gray-500 text-xl">
-                            <i className="fas fa-chevron-down"></i> {/* Dropdown arrow icon */}
-                        </button>
-
-                        {/* Dropdown Menu */}
-                        {dropdownOpen && (
-                            <div className="absolute right-0 mt-32 w-40 bg-white shadow-lg rounded-md border border-gray-200">
-                                <ul>
-                                    <li>
-                                        <button
-                                            onClick={() => alert('Settings')}
-                                            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left flex items-center"
-                                        >
-                                            <i className="fas fa-cogs mr-2 text-gray-500"></i> {/* Settings Icon */}
-                                            Settings
-                                        </button>
-                                    </li>
-
-                                    <li>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left flex items-center"
-                                    >
-                                        <i className="fas fa-sign-out-alt mr-2 text-gray-500"></i> {/* Logout Icon */}
-                                        Logout
-                                    </button>
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                </header>
+                <Header username={username} handleLogout={handleLogout} />
 
                 {/* Scrollable Main Content */}
                 <main className="p-1 overflow-y-auto h-fit">

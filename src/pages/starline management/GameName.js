@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import EditGameModal from "../EditGameModal"; // Import the modal component
+import instance from "../../utils/axiosInstance";
+import { apiUrl, dummyUrl } from "../../utils/config";
+
 
 const gameData = [
   { id: 1, gameTime: "12:00 am", gameName: "10:00 AM", isActive: false },
@@ -12,6 +15,10 @@ const gameData = [
 
 
 const GameSchedule = () => {
+  const [posts, setPosts] = useState([]);
+
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState(null)
   const [games, setGames] = useState(gameData);
   const [selectedGame, setSelectedGame] = useState(null); // To store selected game for editing
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility
@@ -69,7 +76,25 @@ const GameSchedule = () => {
       isMarketActive: false,
     });
   };
+  useEffect(() => {
+    const getCategory = async () => {
+      try {
+       
+        const response = await instance.get(apiUrl);
+         if (response && response.data) {
+          console.log("Response data:", response.data); 
+          setCategories(response.data);  }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setError("Failed to fetch categories"); 
+      }
+    };
 
+    getCategory();
+  }, []); 
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
   return (
     <div className="p-4 max-w-screen mx-auto">
       {/* Add Market Section */}
@@ -87,6 +112,7 @@ const GameSchedule = () => {
               placeholder="Market Name"
             />
           </div>
+         
           <div className="flex-1">
             <label className="block mb-1 font-medium">Market Open Time</label>
             <input
@@ -126,6 +152,7 @@ const GameSchedule = () => {
 
 
         </div>
+        
         <div className="mt-6">
           <button
             onClick={handleAddMarket}
@@ -137,6 +164,7 @@ const GameSchedule = () => {
       </div>
 
       {/* Game Schedule Table */}
+  
       <h2 className="text-2xl font-bold mb-4 text-center">Game Schedule</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
