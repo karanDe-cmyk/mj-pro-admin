@@ -10,7 +10,10 @@ const AdminPanel = () => {
     const location = useLocation();
 
     const username = localStorage.getItem("username") || "Admin";
-
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const toggleDropdown = () => {
+        setDropdownOpen(!dropdownOpen);
+    };
     const menuItems = [
         {
             label: "Dashboard",
@@ -94,6 +97,11 @@ const AdminPanel = () => {
             path: "/admin/notice-management",
             icon: <i className="fa fa-cog" aria-hidden="true"></i>,
         },
+        {
+            label: "Notice Management",
+            path: "/admin/notice-management",
+            icon: <i className="fa fa-cog" aria-hidden="true"></i>,
+        },
     ];
 
     useEffect(() => {
@@ -169,7 +177,7 @@ const AdminPanel = () => {
     return (
         <div className="flex min-h-screen">
             {/* Sidebar */}
-            <div className="w-1/4
+            <div className="w-1/5
             
              bg-gray-800 text-white fixed h-screen overflow-y-auto">
                 <div className="p-6">
@@ -179,25 +187,53 @@ const AdminPanel = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 ml-[25%] h-screen overflow-y-auto">
+            <div className="flex-1 ml-[20%] h-fit overflow-y-auto">
                 {/* Header */}
                 <header className="flex justify-between items-center bg-white shadow-md p-4 sticky top-0 z-10">
                     <button onClick={toggleSidebar} className="text-gray-500 text-xl">
                         <i className="fas fa-bars"></i>
                     </button>
-                    <div className="font-medium text-gray-700">
-                        Welcome, <strong>{username}</strong>
+
+                    {/* Username with User Icon and Dropdown */}
+                    <div className="relative ml-auto flex items-center">
+                        {/* User Icon */}
+                        <i className="fas fa-user-circle text-2xl text-gray-700 mr-2"></i>
+                        <span className="font-medium text-gray-700 mr-2">  <strong>{username}</strong></span>
+                        <button onClick={toggleDropdown} className="text-gray-500 text-xl">
+                            <i className="fas fa-chevron-down"></i> {/* Dropdown arrow icon */}
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {dropdownOpen && (
+                            <div className="absolute right-0 mt-32 w-40 bg-white shadow-lg rounded-md border border-gray-200">
+                                <ul>
+                                    <li>
+                                        <button
+                                            onClick={() => alert('Settings')}
+                                            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left flex items-center"
+                                        >
+                                            <i className="fas fa-cogs mr-2 text-gray-500"></i> {/* Settings Icon */}
+                                            Settings
+                                        </button>
+                                    </li>
+
+                                    <li>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left flex items-center"
+                                    >
+                                        <i className="fas fa-sign-out-alt mr-2 text-gray-500"></i> {/* Logout Icon */}
+                                        Logout
+                                    </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        )}
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                    >
-                        Logout
-                    </button>
                 </header>
 
                 {/* Scrollable Main Content */}
-                <main className="p-6 overflow-y-auto h-[calc(100vh-64px)]">
+                <main className="p-1 overflow-y-auto h-fit">
                     <Outlet />
                 </main>
             </div>
