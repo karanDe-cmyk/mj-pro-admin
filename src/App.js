@@ -1,10 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ApprovedUsers from './pages/ApprovedUsers';
-import UnapprovedUsers from './pages/UnapprovedUsers';
+import UnapprovedUsers from './pages/UnapprovedUsers'; 
 import GameManagement from './pages/GameManagement';
 import GameRate from './pages/GameRate';
 import OnOffMarket from './pages/OnOffMarket';
@@ -35,72 +36,71 @@ import WinningPrediction from './pages/WinningPrediction';
 import DeclareResultStarline from './pages/starline management/DeclareResultStarline';
 import AutoDepositHistory from './pages/AutoDepositHistory';
 import NoticeManagement from './pages/NoticeManagement';
+import ProtectedRoute from './utils/ProtectedRoute';
 
 
 
 const App = () => {
   const isAuthenticated = localStorage.getItem('isAuthenticated');
+  console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
+  console.log("accessToken:", localStorage.getItem('accessToken'));
 
   return (
     <Router>
       <Routes>
+        {/* Public Route - Login */}
         <Route path="/" element={<Login />} />
-        <Route
-          path="/admin"
-          element={isAuthenticated ? <AdminPanel /> : <Navigate to="/" />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="user-management">
-            <Route path="approved" element={<ApprovedUsers />} />
-            <Route path="unapproved" element={<UnapprovedUsers />} />
-          </Route>
-          <Route path="game-management">
-            <Route path="game-name" element={<GameManagement />} />
-            <Route path="game-rates" element={<GameRate />} />
-            <Route path="on-off-market" element={<OnOffMarket />} />
-            <Route path="bit-history" element={<UsersBidHistory />} />
-            <Route path="bid-date" element={<BidDateWise />} />
-            <Route path="bet-list" element={<BetList />} />
-            <Route path="winning-history" element={<WinningHistory />} />
-            {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
-          </Route>
-          <Route path="game-number">
-            <Route path="single-digit" element={<Singledigit />} />
-            <Route path="jodi-digit" element={<JodiDigit />} />
-            <Route path="single-pana" element={<SinglePana />} />
-            <Route path="double-pana" element={<DoublePana />} />
-            <Route path="triple-pana" element={<TriplePana />} />
-            <Route path="half-sangam" element={<HalfSangam />} />
-            <Route path="full-sangam" element={<FullSangam />} />
-            {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
-          </Route>
-          <Route path="wallet-management">
-            <Route path="all-fund-request" element={<AllFundRequest />} />
-            <Route path="fund-request" element={<FundRequest />} />
-            <Route path="offline-payment-records" element={<OfflinePaymentRecords />} />
-            <Route path="withdraw-request" element={<WithDrawRequest />} />
-            <Route path="add-fund" element={<AddFund />} />
-            <Route path="remove-money" element={<RemoveMoney />} />
-            {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
-          </Route>
-          <Route path="starline-management">
-            <Route path="game-name" element={<GameName />} />
-            <Route path="all-bid-history" element={<AllBidHistory />} />
-            <Route path="bid-history" element={<BidHistory />} />
-            <Route path="declare-result-starline" element={<DeclareResultStarline />} />
-            <Route path="game-rates" element={<GameRates />} />
 
-            {/* <Route path="unapproved" element={<UnapprovedUsers />} /> */}
+        {/* Protected Routes - Only accessible if logged in */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin" element={<AdminPanel />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="user-management">
+              <Route path="approved" element={<ApprovedUsers />} />
+              <Route path="unapproved" element={<UnapprovedUsers />} />
+            </Route>
+            <Route path="game-management">
+              <Route path="game-name" element={<GameManagement />} />
+              <Route path="game-rates" element={<GameRate />} />
+              <Route path="on-off-market" element={<OnOffMarket />} />
+              <Route path="bit-history" element={<UsersBidHistory />} />
+              <Route path="bid-date" element={<BidDateWise />} />
+              <Route path="bet-list" element={<BetList />} />
+              <Route path="winning-history" element={<WinningHistory />} />
+            </Route>
+            <Route path="game-number">
+              <Route path="single-digit" element={<Singledigit />} />
+              <Route path="jodi-digit" element={<JodiDigit />} />
+              <Route path="single-pana" element={<SinglePana />} />
+              <Route path="double-pana" element={<DoublePana />} />
+              <Route path="triple-pana" element={<TriplePana />} />
+              <Route path="half-sangam" element={<HalfSangam />} />
+              <Route path="full-sangam" element={<FullSangam />} />
+            </Route>
+            <Route path="wallet-management">
+              <Route path="all-fund-request" element={<AllFundRequest />} />
+              <Route path="fund-request" element={<FundRequest />} />
+              <Route path="offline-payment-records" element={<OfflinePaymentRecords />} />
+              <Route path="withdraw-request" element={<WithDrawRequest />} />
+              <Route path="add-fund" element={<AddFund />} />
+              <Route path="remove-money" element={<RemoveMoney />} />
+            </Route>
+            <Route path="starline-management">
+              <Route path="game-name" element={<GameName />} />
+              <Route path="all-bid-history" element={<AllBidHistory />} />
+              <Route path="bid-history" element={<BidHistory />} />
+              <Route path="declare-result-starline" element={<DeclareResultStarline />} />
+              <Route path="game-rates" element={<GameRates />} />
+            </Route>
+            <Route path="declare-result" element={<DeclareResult />} />
+            <Route path="winning-prediction" element={<WinningPrediction />} />
+            <Route path="auto-deposit-history" element={<AutoDepositHistory />} />
+            <Route path="notice-management" element={<NoticeManagement />} />
           </Route>
-
-          {/* <Route path="game-management" element={<GameManagement />} /> */}
-          <Route path="declare-result" element={<DeclareResult/>} />
-          <Route path="winning-prediction" element={<WinningPrediction/>} />
-          <Route path="auto-deposit-history" element={<AutoDepositHistory/>} />
-          <Route path="notice-management" element={<NoticeManagement/>} />
-
-
-
         </Route>
+
+        {/* Catch-All Redirect */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );

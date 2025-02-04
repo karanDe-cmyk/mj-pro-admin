@@ -2,26 +2,47 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '../features/auth/authSlice';
-
+import instance from '../utils/axiosInstance';
+import { apiUrl } from '../utils/config';
 const Login = () => {
-    const [username, setUsername] = useState('admin');
-    const [password, setPassword] = useState('password');
+    const [username, setUsername] = useState('matka');
+    const [password, setPassword] = useState('1234');
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-      
-        // Static authentication for now
-        if (username === "admin" && password === "password") {
-          dispatch(login({ username })); 
-          localStorage.setItem("isAuthenticated", "true"); 
-          navigate("/admin/dashboard"); 
-        } else {
-          alert("Invalid credentials. Please try again.");
+
+        try {
+            console.log("API URL:", `${apiUrl}/api/auth/adminLogin`);
+            console.log("Sending:", { username, password });
+
+            const response = await instance.post(`${apiUrl}/api/auth/adminLogin`, { username, password });
+
+            if (response && response.data) {
+                console.log("API Response after login:", response.data);
+
+                const token = response.data.token;
+                if (token) {
+                    localStorage.setItem("accessToken", token);
+                    localStorage.setItem("isAuthenticated", "true");
+                    console.log("Token stored in localStorage:", token);
+                    navigate("/admin/dashboard");
+                } else {
+                    console.error("No token received in API response.");
+                }
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+
+            if (error.response) {
+                console.error("Error Status:", error.response.status);
+                console.error("Error Data:", error.response.data);
+            }
+
+            alert("Invalid credentials. Please try again.");
         }
-      };
-      
+    };
 
 
     return (
