@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import EditGameModal from "../EditGameModal";
+
 import AddGame from "../../components/AddGame"; // Import the AddGame component
 import instance from "../../utils/axiosInstance";
 import { apiUrl } from "../../utils/config";
+import EditGameModal from "./EditGameModal";
 
 const GameSchedule = () => {
   const [games, setGames] = useState([]);
@@ -59,7 +60,7 @@ const GameSchedule = () => {
       {error && <p className="text-center text-red-500">{error}</p>}
 
       {!loading && !error && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto p-2">
           <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
             <thead>
               <tr className="bg-gray-200">
@@ -84,8 +85,8 @@ const GameSchedule = () => {
                       {game.is_active ? "ON" : "OFF"}
                     </span>
                   </td>
-                  <td className="py-2 px-4 text-center bg-blue-500 w-3">
-                    <button onClick={() => openEditModal(game)}>Edit</button>
+                  <td className="  px-3 py-1 rounded-md text-center bg-blue-500 w-1">
+                    <button     onClick={() => openEditModal(game)}>Edit</button>
                   </td>
                 </tr>
               ))}
@@ -94,7 +95,7 @@ const GameSchedule = () => {
         </div>
       )}
 
-      <EditGameModal isOpen={isModalOpen} gameData={selectedGame} onSave={handleSaveGame} onCancel={handleCancelEdit} />
+      <EditGameModal  isOpen={isModalOpen} gameData={selectedGame} onSave={handleSaveGame} onCancel={handleCancelEdit} />
     </div>
   );
 };

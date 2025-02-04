@@ -5,8 +5,8 @@ import { login } from '../features/auth/authSlice';
 import instance from '../utils/axiosInstance';
 import { apiUrl } from '../utils/config';
 const Login = () => {
-    const [username, setUsername] = useState('matka');
-    const [password, setPassword] = useState('1234');
+    const [username, setUsername] = useState('check');
+    const [password, setPassword] = useState('check');
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
