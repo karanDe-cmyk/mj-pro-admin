@@ -12,10 +12,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - kalyandpboss.shop
+    - kalyandpboss.com
     secretName: matka-tls-secret
   rules:
-  - host: kalyandpboss.shop
+  - host: kalyandpboss.com
     http:
       paths:
       - path: /
