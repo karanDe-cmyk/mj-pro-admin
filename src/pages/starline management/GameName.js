@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import AddGame from "../../components/AddGame"; // Import the AddGame component
 import instance from "../../utils/axiosInstance";
-import { apiUrl } from "../../utils/config";
+import { apiUrl, appiD } from "../../utils/config";
 import EditGameModal from "./EditGameModal";
 
 const GameSchedule = () => {
@@ -30,7 +30,7 @@ const GameSchedule = () => {
 
   const fetchGameList = async () => {
     try {
-      const response = await instance.get(`${apiUrl}/api/starline/getGameList`);
+      const response = await instance.get(`/api/starline/getGameList/${appiD}`);
       if (response.data.success) {
         setGames(response.data.data);
       } else {

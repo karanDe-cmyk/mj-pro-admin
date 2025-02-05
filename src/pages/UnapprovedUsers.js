@@ -6,109 +6,36 @@ import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
 const UnapprovedUsers = () => {
-  const [user, setUser] = useState(null);
-  console.log("user", user);
-  const fetchUser  = async () => {
-    try {
-      const response = await instance.get(
-        `http://localhost:5001/api/auth/userStatus/3d88dae8-5904-40e9-b314-4906bc064bed?status=false`
-      );
-      if (response) {
-        console.log("goodVibees", response.data);
-        setUser(response.data);
-      } else {
-        throw new Error("Failed to fetch user data");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-  useEffect(() => {
-    fetchUser ();
-  }, []);
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      name: "9785575373 (King)",
+      mobile: "9785575373",
+      walletBalance: 91,
+      betting: false,
+      transfer: false,
+      active: false,
+    },
+    {
+      id: 2,
+      name: "9878789878 (Demo)",
+      mobile: "9878789878",
+      walletBalance: 1,
+      betting: false,
+      transfer: false,
+      active: false,
+    },
+  ]);
+
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [selectedId, setSelectedId] = useState({});
-  console.log("setSelectedId", selectedId);
-
-  const [loading, setLoading] = useState(false);
-
-  const toggleSwitch =  (record) => {
-    setLoading(true);
-    setSelectedId(record._id);
-    try {
-      const response =  instance.post(
-        `http://localhost:5001/api/auth/userStatusUpdate/${appiD}/${record._id}`,
-        {
-          type: "status",
-          value: !record.status, // toggle the status
-        }
-      );
-      if (response) {
-        console.log("User   status updated successfully", response);
-        // Refresh the table
-        fetchUser ();
-      } else {
-        throw new Error("Failed to update user status");
-      }
-    } catch (error) {
-      console.error("Error updating user status:", error);
-    } finally {
-      setLoading(false);
-    }
+  const toggleSwitch = (id, field) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === id ? { ...user, [field]: !user[field] } : user
+      )
+    );
   };
-  
-  const columns = [
-    {
-      title: "#",
-      dataIndex: "id",
-      key: "id",
-      render: (text, record, index) => index + 1,
-    },
-    {
-      title: "Member Name",
-      dataIndex: "userName",
-      key: "userName",
-    },
-    {
-      title: "Member Mobile No",
-      dataIndex: "userNumber",
-      key: "userNumber",
-    },
-    {
-      title: "Member Whatsapp No",
-      dataIndex: "userWhatsappNumber",
-      key: "userWhatsappNumber",
-    },
-    {
-      title: "Wallet Balance",
-      dataIndex: "walletBalance",
-      key: "walletBalance",
-    },
-    {
-      title: "Active",
-      dataIndex: "status",
-      key: "status",
-      render: (text, record) => (
-        <Spin spinning={loading && selectedId === record._id}>
-          <Switch
-            checked={text}
-            onChange={() => toggleSwitch(record)}
-          />
-        </Spin>
-      ),
-    },
-    {
-      title: "Option",
-      dataIndex: "option",
-      key: "option",
-      render: () => (
-        <Button type="link" onClick={() => console.log("View button clicked")}>
-          View
-        </Button>
-      ),
-    },
-  ];
 
   return (
     <div className="p-6 bg-white rounded-md shadow-md">
@@ -131,7 +58,99 @@ const UnapprovedUsers = () => {
       </div>
 
       {/* Table */}
-      <Table columns={columns} dataSource={user} pagination={false} />
+      <table className="w-full border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border border-gray-300 px-4 py-2">#</th>
+            <th className="border border-gray-300 px-4 py-2">Member Name</th>
+            <th className="border border-gray-300 px-4 py-2">Member Mobile No</th>
+            <th className="border border-gray-300 px-4 py-2">Wallet Balance</th>
+            <th className="border border-gray-300 px-4 py-2">Betting</th>
+            <th className="border border-gray-300 px-4 py-2">Transfer</th>
+            <th className="border border-gray-300 px-4 py-2">Active</th>
+            <th className="border border-gray-300 px-4 py-2">Option</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users
+            .filter((user) =>
+              user.name.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .map((user, index) => (
+              <tr key={user.id} className="text-center">
+                <td className="border border-gray-300 px-4 py-2">{index + 1}</td>
+                <td className="border border-gray-300 px-4 py-2">{user.name}</td>
+                <td className="border border-gray-300 px-4 py-2">{user.mobile}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {user.walletBalance}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <label className="relative flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={user.betting}
+                      onChange={() => toggleSwitch(user.id, "betting")}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-10 h-5 rounded-full ${
+                        user.betting ? "bg-green-400" : "bg-yellow-500"
+                      }`}
+                    ></div>
+                    <div
+                      className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                        user.betting ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    ></div>
+                  </label>
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <label className="relative flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={user.transfer}
+                      onChange={() => toggleSwitch(user.id, "transfer")}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-10 h-5 rounded-full ${
+                        user.transfer ? "bg-green-400" : "bg-yellow-500"
+                      }`}
+                    ></div>
+                    <div
+                      className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                        user.transfer ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    ></div>
+                  </label>
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <label className="relative flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={user.active}
+                      onChange={() => toggleSwitch(user.id, "active")}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-10 h-5 rounded-full ${
+                        user.active ? "bg-green-400" : "bg-yellow-500"
+                      }`}
+                    ></div>
+                    <div
+                      className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                        user.active ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    ></div>
+                  </label>
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <button className="text-blue-500 hover:underline">View</button>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
 
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
