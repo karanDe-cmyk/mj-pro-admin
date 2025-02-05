@@ -301,11 +301,15 @@ const GameManagement = () => {
             placeholder="Select Games"
           >
             <Select.Option value="">Select Game</Select.Option>
-            {gameList?.data?.map((game, index) => (
-              <Select.Option key={index} value={game?.gameName}>
-                {game?.gameName}
-              </Select.Option>
-            ))}
+            <Select.Option value="">Single Digit</Select.Option>
+            <Select.Option value="">Single Paana</Select.Option>
+            <Select.Option value="">Double Digit</Select.Option>
+            <Select.Option value="">Double Paana</Select.Option>
+
+
+
+
+
           </Select>
         </Form.Item>
         <Form.Item
