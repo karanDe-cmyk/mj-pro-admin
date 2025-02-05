@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
 import { apiUrl } from "../utils/config";
 import { appiD } from "../utils/config";
-import { Table, Input, Button, Switch, Pagination, Space } from "antd";
+import { Table, Input, Button, Switch, Pagination, Space, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
 const UnapprovedUsers = () => {
@@ -28,7 +28,7 @@ const UnapprovedUsers = () => {
   ]);
   const [user, setUser] = useState(null);
   console.log("user", user);
-  const fetchUser = async () => {
+  const fetchUser   = async () => {
     try {
       const response = await instance.get(
         `https://matka-admin-backend.onrender.com/api/auth/userStatus/${appiD}?status=true`
@@ -44,34 +44,36 @@ const UnapprovedUsers = () => {
     }
   };
   useEffect(() => {
-    fetchUser();
+    fetchUser  ();
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
 
-
-  const toggleSwitch = async (record) => {
+  const toggleSwitch = async (record, type) => {
+    setLoading((prevLoading) => ({ ...prevLoading, [type]: true }));
     try {
       const response = await instance.post(
         `https://matka-admin-backend.onrender.com/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
         {
           type: "status",
-          value: false,
+          value:false,
           // status: !user.find((item) => item.id === record?._id).betting,
         }
       );
       if (response) {
         console.log("User   status updated successfully");
         // Update the local state
-        // setUser((prevUsers) =>
-        //   prevUsers.map((user) =>
-        //     user.id === record?._id ? { ...user, betting: !user.betting } : user
-        //   )
-        // );
+        setUser((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === record?._id ? { ...user, [type]: !user[type] } : user
+          )
+        );
       } else {
         throw new Error("Failed to update user status");
       }
     } catch (error) {
       console.error("Error updating user status:", error);
+    } finally {
+      setLoading((prevLoading) => ({ ...prevLoading, [type]: false }));
     }
   };
 
@@ -128,7 +130,7 @@ const UnapprovedUsers = () => {
       key: "betting",
       render: (text, record) => (
         <Switch
-          checked={record?.betting ? true : false}
+          checked={record?.betting ? true : false} 
           onChange={() => {
             toggleSwitch(record);
           }}
@@ -141,7 +143,7 @@ const UnapprovedUsers = () => {
       key: "transfer",
       render: (text, record) => (
         <Switch
-          checked={record?.transfer ? true : false}
+          checked={record?.transfer ? true : false} 
           onChange={() => {
             toggleSwitch(record);
           }}
@@ -153,12 +155,15 @@ const UnapprovedUsers = () => {
       dataIndex: "status",
       key: "status",
       render: (text, record) => (
-        <Switch
-          checked={record?.status ? true : false}
-          onChange={() => {
-            toggleSwitch(record);
-          }}
-        />
+        <Spin spinning={loading.status}>
+          <Switch
+            checked={record?.status ? true : false}
+            onChange={() => {
+              toggleSwitch(record, "status");
+            }}
+            disabled={loading.status}
+          />
+        </Spin>
       ),
     },
     {
@@ -175,7 +180,7 @@ const UnapprovedUsers = () => {
 
   return (
     <div className="p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-xl font-bold mb-4">User   List</h2>
+      <h2 className="text-xl font-bold mb-4">User    List</h2>
 
       {/* Top Actions */}
       <div className="flex justify-end mb-4">

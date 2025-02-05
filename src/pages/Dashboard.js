@@ -54,7 +54,8 @@ const Dashboard = () => {
   console.log("data list", gameList?.data);
 
   const [date, setDate] = useState("");
-  const [gameName, setGameName] = useState("");
+  const [gameName, setGameName] = useState();
+  console.log(gameName, "gameName");
   const [marketTime, setMarketTime] = useState("");
   const [fundRequests, setFundRequests] = useState([
     {
@@ -107,7 +108,7 @@ const Dashboard = () => {
     fetchData();
   }, []);
   const [count, setCount] = useState(null);
-  console.log("count", count?.data);
+  //   console.log("count", count?.data);
   const fetchCount = async () => {
     try {
       const response = await instance.get(
@@ -127,7 +128,7 @@ const Dashboard = () => {
     fetchCount();
   }, []);
   const [countDash, setCountDash] = useState(null);
-  console.log("countDash ....", countDash?.data?.totalBidRevenue);
+  console.log("countDash", countDash?.data?.totalBidRevenue);
   const fetchCountDash = async () => {
     try {
       const response = await instance.get(
@@ -146,28 +147,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchCountDash();
   }, []);
-
-  const fetchGameList = async () => {
-    try {
-      // You should replace `appId` with the actual appId variable from your context or state
-      const appId = "your-app-id";
-      const response = await instance.get(
-        `https://matka-admin-backend.onrender.com/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
-      );
-      if (response) {
-        console.log("Fetched Game List:", response.data);
-        setGameList(response.data); // Update state with the fetched game list
-      } else {
-        throw new Error("Failed to fetch game list");
-      }
-    } catch (error) {
-      console.error("Error fetching game list:", error);
-    }
-  };
-  useEffect(() => {
-    fetchGameList();
-  }, []);
-
   return (
     <>
       <div className="flex min-h-screen bg-gray-100">
@@ -220,7 +199,8 @@ const Dashboard = () => {
               >
 
                 <option value="">Select Games</option>
-
+                <option value="Game 1">Game 1</option>
+                <option value="Game 2">Game 2</option>
               </select>
               <button
                 type="submit"
@@ -273,21 +253,21 @@ const Dashboard = () => {
               <FaUser className="text-blue-500 text-2xl mr-4" />
               <div>
                 <h4 className="font-bold text-sm">Users</h4>
-                <p>{count?.data?.approvedUserCount}</p>
+                <p>{countDash?.data?.totalUserCount}</p>
               </div>
             </div>
             <div className="p-4 bg-white shadow rounded flex items-center">
               <FaGamepad className="text-green-500 text-2xl mr-4" />
               <div>
                 <h4 className="font-bold text-sm">Games</h4>
-                <p>{count?.data?.gameCount}</p>
+                <p>{countDash?.data?.gameCount}</p>
               </div>
             </div>
             <div className="p-4 bg-white shadow rounded flex items-center">
               <FaCoins className="text-yellow-500 text-2xl mr-4" />
               <div>
                 <h4 className="font-bold text-sm">Main Market Bid Amount</h4>
-                <p>{count?.data?.totalBidRevenue}</p>
+                <p>{countDash?.data?.totalBidRevenue}</p>
               </div>
             </div>
             <div className="p-4 bg-white shadow rounded flex items-center">
@@ -310,16 +290,10 @@ const Dashboard = () => {
                 <select
                   value={gameName}
                   onChange={(e) => setGameName(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
                 >
-                  {/* <option value="">Select Game Name</option> */}
-                  {
-                    gameList?.data.map((data) => {
-                      <option value="">{data.gameName}</option>
-
-                    })
-                  }
-
+                  <option value="">Select Game Name</option>
+                  <option value="Game 1">Game 1</option>
+                  <option value="Game 2">Game 2</option>
                 </select>
               </div>
 
@@ -333,8 +307,8 @@ const Dashboard = () => {
                   className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
                 >
                   <option value="">Select Market Time</option>
-                  <option value="Morning">Morning</option>
-                  <option value="Evening">Evening</option>
+                  <option value="open">Open</option>
+                  <option value="close">Close</option>
                 </select>
               </div>
 
@@ -370,8 +344,8 @@ const Dashboard = () => {
                   <div
                     className={`text-white  mt-4 w-full ${generateRandomColor()}`}
                   >
-                    Ank {bid.digit}
-
+                       Ank {bid.digit}
+                
                   </div>
                 </div>
               ))}
