@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-    baseURL: "https://matka-admin-backend.onrender.com",
-    timeout: 5000,
+    baseURL: "http://localhost:5001",
 });
 
 // Request interceptor
