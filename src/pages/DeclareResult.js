@@ -1,152 +1,89 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Table, Button, Form, Select, DatePicker, Input } from "antd";
+import { Modal, Table, Button, Form, Select, DatePicker, Input, Spin, message } from "antd";
 import instance from "../utils/axiosInstance";
+import { apiUrl } from "../utils/config";
 
 const DeclareResult = () => {
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const winnerListColumns = [
-    {
-      title: "Bid ID",
-      dataIndex: "bidId",
-      key: "bidId",
-    },
-    {
-      title: "Digit",
-      dataIndex: "digit",
-      key: "digit",
-    },
-    {
-      title: "Panna",
-      dataIndex: "panna",
-      key: "panna",
-    },
-    {
-      title: "Points",
-      dataIndex: "points",
-      key: "points",
-    },
-    {
-      title: "Market",
-      dataIndex: "market",
-      key: "market",
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Game Name",
-      dataIndex: "gameName",
-      key: "gameName",
-    },
-    {
-      title: "Win Status",
-      dataIndex: "win",
-      key: "win",
-    },
-  ];
   const [gameList, setGameList] = useState(null);
-  console.log("gooVibesaaaaaaa", gameList?.data);
-  const fetchGameList = async () => {
-    try {
-      const response = await instance.get(
-        `http://localhost:5001/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
-      );
-      if (response) {
-        console.log("goodVibeedsdsdds", response);
-        setGameList(response?.data);
-      } else {
-        throw new Error("Failed to fetch user data");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-  useEffect(() => {
-    fetchGameList();
-  }, []);
   const [selectedGame, setSelectedGame] = useState(null);
   const [digitValue, setDigitValue] = useState("");
   const [winnerList, setWinnerList] = useState(null);
-  console.log(winnerList, "winnerList");
-  const showWinnerList = async () => {
-    setIsModalVisible(true);
+  const [loadingWinnerList, setLoadingWinnerList] = useState(false); // Spinner state for Winner List
+  const [declear, setDeclear] = useState({});
+  
+  // Add loading state for Declare Result form submission
+  const [loadingDeclareResult, setLoadingDeclareResult] = useState(false);
+
+  // Add loading state for Declared Results Table
+  const [loadingDeclaredResults, setLoadingDeclaredResults] = useState(false);
+
+  // Winner List Columns
+  const winnerListColumns = [
+    { title: "Bid ID", dataIndex: "bidId", key: "bidId" },
+    { title: "Digit", dataIndex: "digit", key: "digit" },
+    { title: "Panna", dataIndex: "panna", key: "panna" },
+    { title: "Points", dataIndex: "points", key: "points" },
+    { title: "Market", dataIndex: "market", key: "market" },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
+    { title: "Win Status", dataIndex: "win", key: "win" },
+  ];
+
+  // Fetch Game List
+  const fetchGameList = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/declareResults/showWinnerList/3d88dae8-5904-40e9-b314-4906bc064bed/${selectedGame}/${digitValue}`
+        `${apiUrl}/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
       );
-      console.log(response, "success");
-      setWinnerList(response.data);
+      if (response?.data) {
+        setGameList(response?.data);
+      } else {
+        throw new Error("Failed to fetch game data");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching game list:", error);
     }
   };
 
-  const handleOk = () => {
-    setIsModalVisible(false);
+  useEffect(() => {
+    fetchGameList();
+  }, []);
+
+  // Show Winner List in Modal
+  const showWinnerList = async () => {
+    if (!selectedGame || !digitValue) {
+      message.error("Please select a game and digit to fetch winner list.");
+      return;
+    }
+    
+    setIsModalVisible(true);
+    setLoadingWinnerList(true); // Show the loading spinner
+
+    try {
+      const response = await instance.get(
+        `https://matka-admin-backend.onrender.com/api/declareResults/showWinnerList/3d88dae8-5904-40e9-b314-4906bc064bed/${selectedGame}/${digitValue}`
+      );
+      if (response?.data) {
+        setWinnerList(response.data);
+      } else {
+        message.error("No winner data found.");
+        setWinnerList(null);
+      }
+    } catch (error) {
+      console.error("Error fetching winner list:", error);
+      message.error("Failed to fetch winner list.");
+      setWinnerList(null);
+    } finally {
+      setLoadingWinnerList(false); // Hide the loading spinner
+    }
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const [declear, setDeclear] = useState({});
-  const DeclearListColumns = [
-    {
-      title: "Bid ID",
-      dataIndex: "bidId",
-      key: "bidId",
-    },
-    {
-      title: "Digit",
-      dataIndex: "digit",
-      key: "digit",
-    },
-    {
-      title: "Panna",
-      dataIndex: "panna",
-      key: "panna",
-    },
-    {
-      title: "Points",
-      dataIndex: "points",
-      key: "points",
-    },
-    {
-      title: "Market",
-      dataIndex: "market",
-      key: "market",
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Game Name",
-      dataIndex: "gameName",
-      key: "gameName",
-    },
-    {
-      title: "Win",
-      dataIndex: "win",
-      key: "win",
-    },
-    {
-      title: "Created At",
-      dataIndex: "createdAt",
-      key: "createdAt",
-    },
-    {
-      title: "Updated At",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-    },
-  ];
+  // Declare Result Form Submission
   const onFinish = (values) => {
+    setLoadingDeclareResult(true); // Show spinner on form submission
+
     const declareResultBody = {
       market: values.market,
       panna: parseInt(values.panna),
@@ -157,34 +94,61 @@ const DeclareResult = () => {
 
     instance
       .post(
-        `http://localhost:5001/api/declareResults/addDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed`,
+        `${apiUrl}/api/declareResults/addDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed`,
         declareResultBody
       )
       .then((response) => {
         console.log("Result declared successfully:", response);
 
         // Fetch declared result
+        setLoadingDeclaredResults(true); // Show spinner when fetching declared results
         instance
           .get(
-            `http://localhost:5001/api/declareResults/getDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed/PUBG/1/100/open`,
+            `${apiUrl}/api/declareResults/getDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed/PUBG/1/100/open`,
             {
               params: declareResultBody,
             }
           )
           .then((response) => {
             console.log("Declared result:", response?.data);
-
-            // Update table data
             setDeclear(response?.data);
           })
           .catch((error) => {
             console.error("Error fetching declared result:", error);
+          })
+          .finally(() => {
+            setLoadingDeclaredResults(false); // Hide the spinner when data is loaded
           });
       })
       .catch((error) => {
         console.error("Error declaring result:", error);
+      })
+      .finally(() => {
+        setLoadingDeclareResult(false); // Hide the spinner when done
       });
   };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const DeclearListColumns = [
+    { title: "Bid ID", dataIndex: "bidId", key: "bidId" },
+    { title: "Digit", dataIndex: "digit", key: "digit" },
+    { title: "Panna", dataIndex: "panna", key: "panna" },
+    { title: "Points", dataIndex: "points", key: "points" },
+    { title: "Market", dataIndex: "market", key: "market" },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
+    { title: "Win", dataIndex: "win", key: "win" },
+    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Updated At", dataIndex: "updatedAt", key: "updatedAt" },
+  ];
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md">
@@ -220,8 +184,8 @@ const DeclareResult = () => {
               <Input />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Declare Result
+              <Button type="primary" htmlType="submit" loading={loadingDeclareResult}>
+                {loadingDeclareResult ? "Declaring..." : "Declare Result"}
               </Button>
               <Button
                 type="primary"
@@ -233,21 +197,35 @@ const DeclareResult = () => {
             </Form.Item>
           </Form>
         </div>
+
+        {/* Winner List Modal */}
         <Modal
           title="Winner List"
           visible={isModalVisible}
           onOk={handleOk}
           onCancel={handleCancel}
-          width={900} 
-          style={{ top: 20, overflow: "auto" }} 
+          width={900}
+          style={{ top: 20, overflow: "auto" }}
         >
-          <Table columns={winnerListColumns} dataSource={winnerList?.bids} />
+          <Spin spinning={loadingWinnerList}>
+            <Table
+              columns={winnerListColumns}
+              dataSource={winnerList?.bids}
+              loading={loadingWinnerList} // Optional: Display loading on Table itself
+              rowKey="bidId"
+            />
+          </Spin>
         </Modal>
-        <Table
-          columns={DeclearListColumns}
-          dataSource={declear?.data}
-          scroll={{ x: 1000 }} 
-        />
+
+        {/* Declared Results Table with Spinner */}
+        <Spin spinning={loadingDeclaredResults}> {/* Wrap table with Spin */}
+          <Table
+            columns={DeclearListColumns}
+            dataSource={declear?.data}
+            scroll={{ x: 1000 }}
+            rowKey="bidId"
+          />
+        </Spin>
       </div>
     </div>
   );
