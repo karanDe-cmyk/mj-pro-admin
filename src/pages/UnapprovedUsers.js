@@ -1,99 +1,88 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl } from "../utils/config";
-import { appiD } from "../utils/config";
+import { apiUrl, appiD } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
 const UnapprovedUsers = () => {
-  const [user, setUser] = useState(null);
-  console.log("user", user);
-  const fetchUser  = async () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true); // Spinner for initial data loading
+  const [selectedId, setSelectedId] = useState(null); // Store selected user ID for switch spinner
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // ✅ Fetch Users with Spinner
+  const fetchUsers = async () => {
     try {
+      setLoading(true);
       const response = await instance.get(
-        `http://localhost:5001/api/auth/userStatus/3d88dae8-5904-40e9-b314-4906bc064bed?status=false`
+        `${apiUrl}/api/auth/userStatus/${appiD}?status=false`
       );
-      if (response) {
-        console.log("goodVibees", response.data);
-        setUser(response.data);
+      if (response?.data) {
+        console.log("Fetched Users:", response.data);
+        setUsers(response.data);
       } else {
         throw new Error("Failed to fetch user data");
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
-    fetchUser ();
+    fetchUsers();
   }, []);
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const [selectedId, setSelectedId] = useState({});
-  console.log("setSelectedId", selectedId);
+  // ✅ Toggle Switch Function for Active Status
+  const toggleSwitch = async (record) => {
+    // Optimistic UI Update: Immediately toggle the status
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user._id === record._id ? { ...user, status: !record.status } : user
+      )
+    );
 
-  const [loading, setLoading] = useState(false);
+    setSelectedId(record._id); // Show spinner on switch
 
-  const toggleSwitch =  (record) => {
-    setLoading(true);
-    setSelectedId(record._id);
     try {
-      const response =  instance.post(
-        `http://localhost:5001/api/auth/userStatusUpdate/${appiD}/${record._id}`,
+      const response = await instance.post(
+        `${apiUrl}/api/auth/userStatusUpdate/${appiD}/${record._id}`,
         {
           type: "status",
-          value: !record.status, // toggle the status
+          value: !record.status, // Toggle the status
         }
       );
+
       if (response) {
-        console.log("User   status updated successfully", response);
-        // Refresh the table
-        fetchUser ();
+        console.log("User status updated successfully", response);
+        fetchUsers(); // ✅ Refresh table after toggle
       } else {
         throw new Error("Failed to update user status");
       }
     } catch (error) {
       console.error("Error updating user status:", error);
     } finally {
-      setLoading(false);
+      setSelectedId(null); // Hide spinner on switch after completion
     }
   };
-  
+
+  // Table Columns
   const columns = [
-    {
-      title: "#",
-      dataIndex: "id",
-      key: "id",
-      render: (text, record, index) => index + 1,
-    },
-    {
-      title: "Member Name",
-      dataIndex: "userName",
-      key: "userName",
-    },
-    {
-      title: "Member Mobile No",
-      dataIndex: "userNumber",
-      key: "userNumber",
-    },
-    {
-      title: "Member Whatsapp No",
-      dataIndex: "userWhatsappNumber",
-      key: "userWhatsappNumber",
-    },
-    {
-      title: "Wallet Balance",
-      dataIndex: "walletBalance",
-      key: "walletBalance",
-    },
+    { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
+    { title: "Member Name", dataIndex: "userName", key: "userName" },
+    { title: "Member Mobile No", dataIndex: "userNumber", key: "userNumber" },
+    { title: "Member Whatsapp No", dataIndex: "userWhatsappNumber", key: "userWhatsappNumber" },
+    { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
     {
       title: "Active",
       dataIndex: "status",
       key: "status",
       render: (text, record) => (
-        <Spin spinning={loading && selectedId === record._id}>
+        <Spin spinning={selectedId === record._id}>
           <Switch
-            checked={text}
-            onChange={() => toggleSwitch(record)}
+            checked={record.status}
+            onChange={() => toggleSwitch(record)} // Call toggle on switch change
           />
         </Spin>
       ),
@@ -102,43 +91,39 @@ const UnapprovedUsers = () => {
       title: "Option",
       dataIndex: "option",
       key: "option",
-      render: () => (
-        <Button type="link" onClick={() => console.log("View button clicked")}>
-          View
-        </Button>
-      ),
+      render: () => <Button type="link">View</Button>,
     },
   ];
 
   return (
     <div className="p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-xl font-bold mb-4">User  List</h2>
+      <h2 className="text-xl font-bold mb-4">Unapproved Users</h2>
 
       {/* Top Actions */}
       <div className="flex justify-end mb-4">
-        <div className="text-right">
-          <Button type="primary" onClick={() => console.log("Approved Users List button clicked")}>
-            Approved Users List
-          </Button>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 200 }}
-          />
-        </div>
+        <Button type="primary">Approved Users List</Button>
+        <Input
+          prefix={<SearchOutlined />}
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: 200, marginLeft: 10 }}
+        />
       </div>
 
-      {/* Table */}
-      <Table columns={columns} dataSource={user} pagination={false} />
+      {/* Table with Spinner */}
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id" />
+      )}
 
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
-        <span>
-          Showing 1 to 10 of 50 entries
-        </span>
-        <Pagination defaultCurrent={1} total={50} />
+        <span>Showing {users.length} entries</span>
+        <Pagination defaultCurrent={1} total={users.length} />
       </div>
     </div>
   );

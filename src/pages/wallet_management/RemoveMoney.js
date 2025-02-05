@@ -1,53 +1,136 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import axios from "../../utils/axiosInstance"; // Import your Axios instance
+import { appiD } from "../../utils/config";
 
 const RemoveMoney = () => {
-  const [user, setUser] = useState("9878789878-demo");
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [walletBalance, setWalletBalance] = useState(0);
   const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    // Fetch users from API using Axios
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(`/api/app/users/${appiD}`);
+        const data = response.data;
+
+        if (Array.isArray(data) && data.length > 0) {
+          setUsers(data);
+          setSelectedUser(data[0].email);
+          setWalletBalance(data[0].walletBalance || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Handle user selection change
+  const handleUserChange = (e) => {
+    const selectedEmail = e.target.value;
+    setSelectedUser(selectedEmail);
+
+    // Find the selected user and update wallet balance
+    const user = users.find((u) => u.email === selectedEmail);
+    if (user) {
+      setWalletBalance(user.walletBalance || 0);
+    }
+  };
+
+  // Handle money deduction
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Deducted Amount: ${amount} from User: ${user}`);
+
+    if (!amount || amount <= 0) {
+      alert("Please enter a valid amount!");
+      return;
+    }
+
+    if (amount > walletBalance) {
+      alert("Insufficient balance!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`/api/wallet/deduct-balance/${appiD}`, {
+        email: selectedUser,
+        amount: parseFloat(amount),
+      });
+
+      setLoading(false);
+      alert(`Balance deducted successfully! New Balance: ₹${response.data.walletBalance}`);
+      setWalletBalance(response.data.walletBalance);
+      setAmount(""); // Reset input field
+    } catch (error) {
+      setLoading(false);
+      console.error("Error deducting balance:", error);
+      alert(error.response?.data?.message || "Failed to deduct balance. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
-      {/* Main Content */}
-      <main className="flex-1 p-6">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-md mx-auto">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Deduct Balance In User Wallet</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">User List</label>
-                <select
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                >
-                  <option value="9878789878-demo">9878789878-demo</option>
-                  <option value="1234567890-demo">1234567890-demo</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">Amount</label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-                  placeholder="Enter Amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Deduct Balance In User Wallet</h2>
+          <form onSubmit={handleSubmit}>
+            {/* User List Dropdown */}
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">User List</label>
+              <select
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                value={selectedUser}
+                onChange={handleUserChange}
               >
-                Submit
-              </button>
-            </form>
-          </div>
+                {users.map((user) => (
+                  <option key={user.userId} value={user.email}>
+                    {user.userName} - {user.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Wallet Balance Display */}
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">Current Wallet Balance</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border rounded-md bg-gray-200"
+                value={`₹ ${walletBalance}`}
+                readOnly
+              />
+            </div>
+
+            {/* Amount Input */}
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">Amount</label>
+              <input
+                type="number"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                placeholder="Enter Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600"
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Submit"}
+            </button>
+          </form>
         </div>
-      </main>
+      </div>
+      <footer className="absolute bottom-2 text-gray-500 text-sm">2025 ©Matka.</footer>
     </div>
   );
 };
