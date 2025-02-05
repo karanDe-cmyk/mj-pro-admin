@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
+import instance from "../utils/axiosInstance";
+import { apiUrl } from "../utils/config";
+import { appiD } from "../utils/config";
 
 const UnapprovedUsers = () => {
   const [users, setUsers] = useState([
@@ -21,15 +24,33 @@ const UnapprovedUsers = () => {
       active: false,
     },
   ]);
-
+  const [user, setUser] = useState(null);
+  console.log("user",user);
+  const fetchUser  = async () => {
+    try {
+      const response = await instance.get('/api/auth/userStatus/3d88dae8-5904-40e9-b314-4906bc064bed');
+      if (response.data.success) {
+        console.log("goodVibees",response.data)
+        setUser(response.data.data);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+   
+    }
+  };
+  useEffect(() => {
+    fetchUser ();
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
 
   const toggleSwitch = (id, field) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === id ? { ...user, [field]: !user[field] } : user
-      )
-    );
+    // setUsers((prevUsers) =>
+    //   prevUsers.map((user) =>
+    //     user.id === id ? { ...user, [field]: !user[field] } : user
+    //   )
+    // );
   };
 
   return (
@@ -60,8 +81,6 @@ const UnapprovedUsers = () => {
             <th className="border border-gray-300 px-4 py-2">Member Name</th>
             <th className="border border-gray-300 px-4 py-2">Member Mobile No</th>
             <th className="border border-gray-300 px-4 py-2">Wallet Balance</th>
-            <th className="border border-gray-300 px-4 py-2">Betting</th>
-            <th className="border border-gray-300 px-4 py-2">Transfer</th>
             <th className="border border-gray-300 px-4 py-2">Active</th>
             <th className="border border-gray-300 px-4 py-2">Option</th>
           </tr>
