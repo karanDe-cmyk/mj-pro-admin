@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: matka-frontend
-  labels:
-    name: matka-frontend
