@@ -1,40 +1,80 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
+import { Modal, Table, Button,Form,Select,DatePicker } from 'antd';
+import instance from "../utils/axiosInstance";
 
 const DeclareResult = () => {
-  // Example dynamic data for tables
-  const winMembers = [
+  const [form] = Form.useForm();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [winnerList, setWinnerList] = useState();
+  console.log(winnerList, "winnerList");
+
+  const winnerListColumns = [
     {
-      id: 1,
-      member: "John Doe",
-      gameName: "Game A",
-      betDigit: "123",
-      betAmount: 500,
-      winningAmount: 1000,
+      title: 'Bid ID',
+      dataIndex: 'bidId',
+      key: 'bidId',
     },
     {
-      id: 2,
-      member: "Jane Smith",
-      gameName: "Game B",
-      betDigit: "456",
-      betAmount: 300,
-      winningAmount: 800,
+      title: 'Digit',
+      dataIndex: 'digit',
+      key: 'digit',
+    },
+    {
+      title: 'Panna',
+      dataIndex: 'panna',
+      key: 'panna',
+    },
+    {
+      title: 'Points',
+      dataIndex: 'points',
+      key: 'points',
+    },
+    {
+      title: 'Market',
+      dataIndex: 'market',
+      key: 'market',
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+    },
+    {
+      title: 'Game Name',
+      dataIndex: 'gameName',
+      key: 'gameName',
+    },
+    {
+      title: 'Win Status',
+      dataIndex: 'win',
+      key: 'win',
     },
   ];
 
-  const gameResults = [
-    {
-      id: 1,
-      gameName: "Kalyan Morning",
-      openPana: "-",
-      closePana: "-",
-    },
-    {
-      id: 2,
-      gameName: "Sridevi",
-      openPana: "-",
-      closePana: "-",
-    },
-  ];
+  const showWinnerList = async () => {
+    setIsModalVisible(true);
+    try {
+      const response = await instance.get('http://localhost:5001/api/declareResults/showWinnerList/3d88dae8-5904-40e9-b314-4906bc064bed', {
+      });
+      console.log(response, "success");
+      setWinnerList(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const onFinish = async (values) => {
+    console.log('Form values:', values);
+    // Add your logic here to handle the form submission
+  };   
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -42,105 +82,38 @@ const DeclareResult = () => {
         {/* Select Game Section */}
         <div className="mb-8">
           <h1 className="text-lg font-bold mb-4">Select Game</h1>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Result Date</label>
-              <input
-                type="date"
-                className="block w-full border border-gray-300 rounded-md p-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Game Name</label>
-              <select className="block w-full border border-gray-300 rounded-md p-2">
-                <option>Select Game</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Session</label>
-              <select className="block w-full border border-gray-300 rounded-md p-2">
-                <option>Select Session</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Number</label>
-              <select className="block w-full border border-gray-300 rounded-md p-2">
-                <option>Select Number</option>
-              </select>
-            </div>
-          </div>
-          {/* Buttons in a Separate Row */}
-          <div className="flex gap-4 mt-4">
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 w-full">
-              Declare Result
-            </button>
-            <button className="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600 w-full">
-              Show Winner List
-            </button>
-          </div>
+          <Form form={form} onFinish={onFinish}>
+            <Form.Item name="resultDate" label="Result Date">
+              <DatePicker />
+            </Form.Item>
+            <Form.Item name="gameName" label="Game Name">
+              <Select>
+                <Select.Option value="Game A">Game A</Select.Option>
+                <Select.Option value="Game B">Game B</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="session" label="Session">
+              <Select>
+                <Select.Option value="Session 1">Session 1</Select.Option>
+                <Select.Option value="Session 2">Session 2</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="number" label="Number">
+              <Select>
+                <Select.Option value="Number 1">Number 1</Select.Option>
+                <Select.Option value="Number 2">Number 2</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit">Declare Result</Button>
+              <Button type="primary" style={{ marginLeft: 8 }} onClick={showWinnerList}>Show Winner List</Button>
+            </Form.Item>
+          </Form>
         </div>
 
-        {/* Win Member Section */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold mb-4">Win Member</h2>
-          <table className="min-w-full border border-gray-200">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 p-2">#</th>
-                <th className="border border-gray-300 p-2">Member</th>
-                <th className="border border-gray-300 p-2">Game Name</th>
-                <th className="border border-gray-300 p-2">Bet Digit</th>
-                <th className="border border-gray-300 p-2">Bet Amount</th>
-                <th className="border border-gray-300 p-2">Winning Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {winMembers.map((member) => (
-                <tr key={member.id}>
-                  <td className="border border-gray-300 p-2 text-center">{member.id}</td>
-                  <td className="border border-gray-300 p-2 text-center">{member.member}</td>
-                  <td className="border border-gray-300 p-2 text-center">{member.gameName}</td>
-                  <td className="border border-gray-300 p-2 text-center">{member.betDigit}</td>
-                  <td className="border border-gray-300 p-2 text-center">{member.betAmount}</td>
-                  <td className="border border-gray-300 p-2 text-center">{member.winningAmount}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Game Result History Section */}
-        <div>
-          <h2 className="text-lg font-bold mb-4">Game Result History - 27-01-2025</h2>
-          <table className="min-w-full border border-gray-200">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 p-2">#</th>
-                <th className="border border-gray-300 p-2">Game Name</th>
-                <th className="border border-gray-300 p-2">Open Pana</th>
-                <th className="border border-gray-300 p-2">Open Action</th>
-                <th className="border border-gray-300 p-2">Close Pana</th>
-                <th className="border border-gray-300 p-2">Close Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gameResults.map((result) => (
-                <tr key={result.id}>
-                  <td className="border border-gray-300 p-2 text-center">{result.id}</td>
-                  <td className="border border-gray-300 p-2 text-center">{result.gameName}</td>
-                  <td className="border border-gray-300 p-2 text-center">{result.openPana}</td>
-                  <td className="border border-gray-300 p-2 text-center text-blue-500 cursor-pointer">
-                    Delete Result
-                  </td>
-                  <td className="border border-gray-300 p-2 text-center">{result.closePana}</td>
-                  <td className="border border-gray-300 p-2 text-center text-blue-500 cursor-pointer">
-                    Delete Result
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Modal title="Winner List" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+          <Table columns={winnerListColumns} dataSource={winnerList} />
+        </Modal>
       </div>
     </div>
   );

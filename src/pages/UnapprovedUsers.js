@@ -11,7 +11,7 @@ const UnapprovedUsers = () => {
   const fetchUser  = async () => {
     try {
       const response = await instance.get(
-        `https://matka-admin-backend.onrender.com/api/auth/userStatus/3d88dae8-5904-40e9-b314-4906bc064bed?status=false`
+        `http://localhost:5001/api/auth/userStatus/3d88dae8-5904-40e9-b314-4906bc064bed?status=false`
       );
       if (response) {
         console.log("goodVibees", response.data);
@@ -38,7 +38,7 @@ const UnapprovedUsers = () => {
     setSelectedId(record._id);
     try {
       const response =  instance.post(
-        `https://matka-admin-backend.onrender.com/api/auth/userStatusUpdate/${appiD}/${record._id}`,
+        `http://localhost:5001/api/auth/userStatusUpdate/${appiD}/${record._id}`,
         {
           type: "status",
           value: !record.status, // toggle the status
