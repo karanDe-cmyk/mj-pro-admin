@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { FaUser, FaGamepad, FaCoins } from "react-icons/fa";
 import instance from "../utils/axiosInstance";
 import { apiUrl } from "../utils/config";
+import { Spin } from "antd";
 const Dashboard = () => {
   const [totalBidAmount, setTotalBidAmount] = useState(0);
   const [totalWinAmount, setTotalWinAmount] = useState(0);
   const [totalProfitAmount, setTotalProfitAmount] = useState(0);
-
+  // const [countDash, setCountDash] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState(
     Array(10).fill({ totalBids: 0, bidAmount: 0 })
   );
@@ -50,9 +52,6 @@ const Dashboard = () => {
     mainMarketBidAmount: 0,
     starlineBidAmount: 0,
   });
-  const [gameList, setGameList] = useState(null);
-  console.log("data list", gameList?.data);
-
   const [date, setDate] = useState("");
   const [gameName, setGameName] = useState();
   console.log(gameName, "gameName");
@@ -128,15 +127,38 @@ const Dashboard = () => {
     fetchCount();
   }, []);
   const [countDash, setCountDash] = useState(null);
-  console.log("countDash", countDash?.data?.totalBidRevenue);
+  console.log("countDash.......", countDash?.data);
   const fetchCountDash = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/count/dashboardCounts/3d88dae8-5904-40e9-b314-4906bc064bed`
+        `${apiUrl}/api/count/dashboardCounts/3d88dae8-5904-40e9-b314-4906bc064bed`
       );
       if (response) {
-        console.log("goodVibeedsdsdds......", response);
+        console.log("goodVibes", response);
         setCountDash(response?.data);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false); // Stop loading once data is fetched
+    }
+  };
+
+  useEffect(() => {
+    fetchCountDash();
+  }, []);
+  const [gameList, setGameList] = useState(null);
+  console.log("gooVibesaaaaaaa", gameList?.data);
+  const fetchGameList = async () => {
+    try {
+      const response = await instance.get(
+        `${apiUrl}/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
+      );
+      if (response) {
+        console.log("goodVibeedsdsdds", response);
+        setGameList(response?.data);
       } else {
         throw new Error("Failed to fetch user data");
       }
@@ -145,7 +167,7 @@ const Dashboard = () => {
     }
   };
   useEffect(() => {
-    fetchCountDash();
+    fetchGameList();
   }, []);
   return (
     <>
@@ -197,10 +219,12 @@ const Dashboard = () => {
                 onChange={(e) => setGameName(e.target.value)}
                 className="w-full p-2 border rounded mb-4"
               >
-
                 <option value="">Select Games</option>
-                <option value="Game 1">Game 1</option>
-                <option value="Game 2">Game 2</option>
+                {gameList?.data?.map((game, index) => (
+                  <option key={index} value={game.name}>
+                    {game.name}
+                  </option>
+                ))}
               </select>
               <button
                 type="submit"
@@ -251,31 +275,49 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-3">
             <div className="p-6 bg-white shadow rounded flex items-center">
               <FaUser className="text-blue-500 text-2xl mr-4" />
-              <div>
-                <h4 className="font-bold text-sm">Users</h4>
-                <p>{countDash?.data?.totalUserCount}</p>
-              </div>
+              {loading ? (
+                <Spin size="large" />
+              ) : (
+                <div>
+                  <h4 className="font-bold text-sm">Users</h4>
+                  <p>{countDash?.data?.totalUserCount}</p>
+                </div>
+              )}
             </div>
             <div className="p-4 bg-white shadow rounded flex items-center">
               <FaGamepad className="text-green-500 text-2xl mr-4" />
-              <div>
-                <h4 className="font-bold text-sm">Games</h4>
-                <p>{countDash?.data?.gameCount}</p>
-              </div>
+              {loading ? (
+                <Spin size="large" />
+              ) : (
+                <div>
+                  <h4 className="font-bold text-sm">Games</h4>
+                  <p>{countDash?.data?.gameCount}</p>
+                </div>
+              )}
             </div>
+
             <div className="p-4 bg-white shadow rounded flex items-center">
               <FaCoins className="text-yellow-500 text-2xl mr-4" />
-              <div>
-                <h4 className="font-bold text-sm">Main Market Bid Amount</h4>
-                <p>{countDash?.data?.totalBidRevenue}</p>
-              </div>
+              {loading ? (
+                <Spin size="large" />
+              ) : (
+                <div>
+                  <h4 className="font-bold text-sm">Main Market Bid Amount</h4>
+                  <p>{countDash?.data?.totalBidRevenue}</p>
+                </div>
+              )}
             </div>
+
             <div className="p-4 bg-white shadow rounded flex items-center">
               <FaCoins className="text-purple-500 text-2xl mr-4" />
-              <div>
-                <h4 className="font-bold text-sm">Starline Bid Amount</h4>
-                <p>{dashboardData.starlineBidAmount}</p>
-              </div>
+              {loading ? (
+                <Spin size="large" />
+              ) : (
+                <div>
+                  <h4 className="font-bold text-sm">Starline Bid Amount</h4>
+                  <p>{dashboardData.starlineBidAmount}</p>
+                </div>
+              )}
             </div>
           </div>
           <div className="grid  grid-cols-1 sm:grid-cols-1 gap-4 bg-white p-6 rounded shadow">
@@ -291,9 +333,12 @@ const Dashboard = () => {
                   value={gameName}
                   onChange={(e) => setGameName(e.target.value)}
                 >
-                  <option value="">Select Game Name</option>
-                  <option value="Game 1">Game 1</option>
-                  <option value="Game 2">Game 2</option>
+                  <option value="">Select Games</option>
+                  {gameList?.data?.map((game, index) => (
+                    <option key={index} value={game?.gameName}>
+                      {game?.gameName}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -344,8 +389,7 @@ const Dashboard = () => {
                   <div
                     className={`text-white  mt-4 w-full ${generateRandomColor()}`}
                   >
-                       Ank {bid.digit}
-                
+                    Ank {bid.digit}
                   </div>
                 </div>
               ))}

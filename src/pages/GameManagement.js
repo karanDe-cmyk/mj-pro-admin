@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { Form, Table, Button, Modal, Input, Select, Switch } from "antd";
 import EditModal from "./EditModal";
+import instance from "../utils/axiosInstance";
 
 const GameManagement = () => {
   const [games, setGames] = useState(() => {
-
     const savedGames = localStorage.getItem("games");
     return savedGames ? JSON.parse(savedGames) : [];
   });
@@ -13,57 +14,94 @@ const GameManagement = () => {
     marketType: "",
     marketOpenTime: "",
     marketCloseTime: "",
-    selectedGame: "",
+    games: "",
   });
 
   const [isConfirmDelete, setIsConfirmDelete] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [editModalData, setEditModalData] = useState(null);
 
-
   useEffect(() => {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
+  const handleAddMarket = async (values) => {
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleAddMarket = () => {
+    console.log(values);
     if (
-      !formData.marketName ||
-      !formData.marketType ||
-      !formData.marketOpenTime ||
-      !formData.marketCloseTime ||
-      !formData.selectedGame
+      !values.market_name ||
+      !values.market_type ||
+      !values.open_time ||
+      !values.close_time ||
+      !values.games
     ) {
-      alert("Please fill in all fields before adding a market.");
+      Modal.error({
+        title: "Error",
+        content: "Please fill in all fields before adding a market.",
+      });
       return;
     }
 
     // Check for duplicate market names
-    if (games.some((game) => game.name.toLowerCase() === formData.marketName.toLowerCase())) {
-      alert("A market with this name already exists. Please use a unique name.");
+    if (
+      games.some(
+        (game) => game.name.toLowerCase() === values.market_name.toLowerCase()
+      )
+    ) {
+      Modal.error({
+        title: "Error",
+        content:
+          "A market with this name already exists. Please use a unique name.",
+      });
       return;
     }
 
-    const newGame = {
-      id: games.length + 1,
-      name: formData.marketName,
-      open: formData.marketOpenTime,
-      close: formData.marketCloseTime,
-      status: "Active",
-    };
+    try {
+      const response = await instance.post(
+        "http://localhost:5001/api/marketManagement/addMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed",
+        {
+          market_name: values.market_name,
+          market_type: values.market_type,
+          open_time: values.open_time,
+          close_time: values.close_time,
+          games: values.games,
+          openActivity: values.open_activity,
+          closeActivity: false,
+          actions: {
+            edit_market: true,
+            edit_timings: false,
+            edit_games: true,
+          },
+        }
+      );
 
-    setGames([...games, newGame]);
-    setFormData({
-      marketName: "",
-      marketType: "",
-      marketOpenTime: "",
-      marketCloseTime: "",
-      selectedGame: "",
-    });
+      if (response.status === 200) {
+        console.log("Market added successfully");
+        // Add the new market to the local state
+        const newGame = {
+          id: games.length + 1,
+          name: values.market_name,
+          open: values.open_time,
+          close: values.close_time,
+          status: "Active",
+        };
+        setGames([...games, newGame]);
+        setFormData({
+          marketName: "",
+          marketType: "",
+          marketOpenTime: "",
+          marketCloseTime: "",
+          games: "",
+        });
+      } else {
+        throw new Error("Failed to add market");
+      }
+    } catch (error) {
+      console.error("Error adding market:", error);
+      Modal.error({
+        title: "Error",
+        content: "Failed to add market. Please try again.",
+      });
+    }
   };
   const handleDeleteGame = (record) => {
     instance.delete(`http://localhost:5001/api/marketManagement/deleteMarketGameById/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`)
@@ -82,32 +120,19 @@ const GameManagement = () => {
     setGameToDelete(null);
   };
 
-
-
   const cancelDelete = () => {
     setIsConfirmDelete(false);
     setGameToDelete(null);
   };
 
-  // ✅ Edit game market
-  // ✅ Open Edit Modal with selected game data
-  // ✅ Import moment
-
   const handleEditGame = (game) => {
-    setEditData({
-      ...game,
-      open_time: game.open_time ? moment(game.open_time, "HH:mm") : null,  // ✅ Convert string to Moment.js object
-      close_time: game.close_time ? moment(game.close_time, "HH:mm") : null,
-    });
-    setIsEditModalVisible(true);
+    setEditModalData(game);
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditModalData({ ...editModalData, [name]: value });
   };
-
-
 
   const handleSaveEdit = () => {
     setGames(
@@ -117,141 +142,198 @@ const GameManagement = () => {
     );
     setEditModalData(null);
   };
+  const [gameMarketList, setGameMarketList] = useState(null);
+  console.log("gooVibesaaaaaaa", gameMarketList?.data);
+  const fetchMarketGameList = async () => {
+    try {
+      const response = await instance.get(
+        `http://localhost:5001/api/marketManagement/getMarketGames/3d88dae8-5904-40e9-b314-4906bc064bed`
+      );
+      if (response) {
+        console.log("goodVibeedsdsdds", response);
+        setGameMarketList(response?.data);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+  useEffect(() => {
+    fetchMarketGameList();
+  }, []);
+  const columns = [
+    {
+      title: "#",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Market Name",
+      dataIndex: "MarketName",
+      key: "MarketName",
+      render: (text, record) => record?.market_name,
+  
+    },
+    {
+      title: "Today Open",
+      dataIndex: "todayOpen",
+      key: "todayOpen",
+      render: (text, record) => record?.open_time,
+    },
+    {
+      title: "Today Close",
+      dataIndex: "todayClose",
+      key: "todayClose",
+      render: (text, record) => record?.close_time,
 
+    },
+    {
+      title: "Market Status",
+      dataIndex: "openActivity",
+      key: "openActivity",
+      render: (text, record) => record?.openActivity === true,
+
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (text, record) => (
+        <span>
+          <Button
+            type="primary"
+            onClick={() => handleEditGame(record)}
+            style={{ marginRight: 16 }}
+          >
+            Edit
+          </Button>
+          <Button type="danger" onClick={() => handleDeleteGame(record)}>
+            Remove
+          </Button>
+        </span>
+      ),
+    },
+  ];
+  const [gameList, setGameList] = useState(null);
+  console.log("gooVibesaaaaaaa", gameList?.data);
+  const fetchGameList = async () => {
+    try {
+      const response = await instance.get(
+        `http://localhost:5001/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
+      );
+      if (response) {
+        console.log("goodVibeedsdsdds", response);
+        setGameList(response?.data);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+  useEffect(() => {
+    fetchGameList();
+  }, []);
   return (
     <div className="p-6">
+      <Form
+        name="basic"
+        labelCol={{ span: 8 }}
+        wrapperCol={{ span: 16 }}
+        initialValues={{ remember: true }}
+        onFinish={handleAddMarket}
+        autoComplete="off"
+      >
+        <Form.Item
+          label="Market Name"
+          name="market_name"
+          rules={[
+            { required: true, message: "Please input your market name!" },
+          ]}
+        >
+          <Input />
+        </Form.Item>
 
-      <div className="mb-6 p-4 bg-white rounded-md shadow-md">
-        <h2 className="text-lg font-bold mb-4">Select Game</h2>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">Market Name</label>
-            <input
-              type="text"
-              name="marketName"
-              value={formData.marketName}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-2"
-              placeholder="Market Name"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">Market Type</label>
-            <select
-              name="marketType"
-              value={formData.marketType}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-2"
-            >
-              <option value="">Select</option>
-              <option value="Type 1">Type 1</option>
-              <option value="Type 2">Type 2</option>
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">Market Open Time</label>
-            <input
-              type="time"
-              name="marketOpenTime"
-              value={formData.marketOpenTime}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">Market Close Time</label>
-            <input
-              type="time"
-              name="marketCloseTime"
-              value={formData.marketCloseTime}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">Select Game</label>
-            <select
-              name="selectedGame"
-              value={formData.selectedGame}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-2"
-            >
-              <option value="">Game</option>
-              <option value="Game 1">Game 1</option>
-              <option value="Game 2">Game 2</option>
-            </select>
-          </div>
-        </div>
-        <div className="mt-6">
-          <button
-            onClick={handleAddMarket}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        <Form.Item
+          label="Market Type"
+          name="market_type"
+          rules={[
+            { required: true, message: "Please select your market type!" },
+          ]}
+        >
+          <Select>
+            <Select.Option value="">Select</Select.Option>
+            <Select.Option value="Main">Main</Select.Option>
+            <Select.Option value="Starline">Starline</Select.Option>
+            <Select.Option value="King Jackpot">King Jackpot</Select.Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          label="Market Open Time"
+          name="open_time"
+          rules={[
+            { required: true, message: "Please input your market open time!" },
+          ]}
+        >
+          <Input type="time" />
+        </Form.Item>
+
+        <Form.Item
+          label="Market Close Time"
+          name="close_time"
+          rules={[
+            { required: true, message: "Please input your market close time!" },
+          ]}
+        >
+          <Input type="time" />
+        </Form.Item>
+
+        <Form.Item
+          label="Select Game"
+          name="games"
+          rules={[{ required: true, message: "Please select your game!" }]}
+        >
+          <Select
+            mode="multiple"
+            allowClear
+            style={{ width: "100%" }}
+            placeholder="Select Games"
           >
-            Add Market
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-md shadow-md">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border p-2">#</th>
-              <th className="border p-2">Game Name</th>
-              <th className="border p-2">Today Open</th>
-              <th className="border p-2">Today Close</th>
-              <th className="border p-2">Market Status</th>
-              <th className="border p-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {games.map((game, index) => (
-              <tr key={game.id} className={`text-center ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
-                <td className="border p-2">{index + 1}</td>
-                <td className="border p-2">{game.name}</td>
-                <td className="border p-2">{game.open}</td>
-                <td className="border p-2">{game.close}</td>
-                <td className="border p-2">{game.status}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => handleEditGame(game)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 mr-2"
-                  >
-                    Edit
-                  </button>
-                 
-                  <button
-                    onClick={() => handleDeleteGame(game)}
-                    className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
-                  >
-                    Remove
-                  </button>
-                </td>
-
-              </tr>
+            <Select.Option value="">Select Game</Select.Option>
+            {gameList?.data?.map((game, index) => (
+              <Select.Option key={index} value={game?.gameName}>
+                {game?.gameName}
+              </Select.Option>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </Select>
+        </Form.Item>
+        <Form.Item
+  label="Open Activity"
+  name="open_activity"
+  valuePropName="checked"
+  initialValue={true}
+>
+  <Switch />
+</Form.Item>
+        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+          <Button type="primary" htmlType="submit">
+            Add Market
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <Table columns={columns} dataSource={gameMarketList?.data} />
 
       {isConfirmDelete && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-md">
-            <h3 className="text-lg font-bold mb-4">Are you sure you want to delete?</h3>
-            <button
-              onClick={confirmDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded-md mr-4"
-            >
-              Yes
-            </button>
-            <button
-              onClick={cancelDelete}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md"
-            >
-              No
-            </button>
-          </div>
-        </div>
+        <Modal
+          title="Are you sure you want to delete?"
+          visible={true}
+          onOk={confirmDelete}
+          onCancel={cancelDelete}
+        >
+          <p>Are you sure you want to delete this game?</p>
+        </Modal>
       )}
 
       {editModalData && (

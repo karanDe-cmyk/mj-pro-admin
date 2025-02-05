@@ -1,167 +1,118 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl } from "../utils/config";
-import { appiD } from "../utils/config";
-import { Table, Input, Button, Switch, Pagination, Space, Spin } from "antd";
+import { apiUrl, appiD } from "../utils/config";
+import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
 const UnapprovedUsers = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "9785575373 (King)",
-      mobile: "9785575373",
-      walletBalance: 91,
-      betting: false,
-      transfer: false,
-      active: false,
-    },
-    {
-      id: 2,
-      name: "9878789878 (Demo)",
-      mobile: "9878789878",
-      walletBalance: 1,
-      betting: false,
-      transfer: false,
-      active: false,
-    },
-  ]);
-  const [user, setUser] = useState(null);
-  console.log("user", user);
-  const fetchUser   = async () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false); // For global loading
+  const [loadingSwitch, setLoadingSwitch] = useState(null); // For loading spinner on individual switch
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // ✅ Fetch Users with Spinner
+  const fetchUsers = async () => {
+    setLoading(true); // Show global loading spinner while fetching users
     try {
       const response = await instance.get(
-        `https://matka-admin-backend.onrender.com/api/auth/userStatus/${appiD}?status=true`
+        `${apiUrl}/api/auth/userStatus/${appiD}?status=true`
       );
-      if (response) {
-        console.log("goodVibees", response.data);
-        setUser(response.data);
+      if (response?.data) {
+        setUsers(response.data);
       } else {
         throw new Error("Failed to fetch user data");
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false); // Hide global loading spinner after fetching data
     }
   };
-  useEffect(() => {
-    fetchUser  ();
-  }, []);
-  const [searchTerm, setSearchTerm] = useState("");
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // ✅ Toggle Switch Function
   const toggleSwitch = async (record, type) => {
-    setLoading((prevLoading) => ({ ...prevLoading, [type]: true }));
+    setLoadingSwitch(record._id); // Show loading spinner for the switch being toggled
+
     try {
       const response = await instance.post(
-        `https://matka-admin-backend.onrender.com/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
+        `${apiUrl}/api/auth/userStatusUpdate/${appiD}/${record._id}`,
         {
-          type: "status",
-          value:false,
-          // status: !user.find((item) => item.id === record?._id).betting,
+          type,
+          value: !record[type], // Toggle the value of the status
         }
       );
+
       if (response) {
-        console.log("User   status updated successfully");
-        // Update the local state
-        setUser((prevUsers) =>
-          prevUsers.map((user) =>
-            user.id === record?._id ? { ...user, [type]: !user[type] } : user
-          )
-        );
+        console.log(`User ${type} updated successfully`);
+
+        // ✅ Refresh table when "Active" (status) is toggled OFF
+        if (type === "status" && !record.status) {
+          console.log("Status OFF - Refreshing table");
+          await fetchUsers(); // Re-fetch users when status is toggled off
+        } else {
+          // ✅ Update the local users state correctly for other switches (Betting, Transfer)
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user._id === record._id ? { ...user, [type]: !user[type] } : user
+            )
+          );
+        }
       } else {
         throw new Error("Failed to update user status");
       }
     } catch (error) {
       console.error("Error updating user status:", error);
     } finally {
-      setLoading((prevLoading) => ({ ...prevLoading, [type]: false }));
+      setLoadingSwitch(null); // Hide loading spinner for the individual switch after the operation
     }
   };
 
+  // Table Columns
   const columns = [
-    {
-      title: "#",
-      dataIndex: "id",
-      key: "id",
-      render: (text, record, index) => index + 1,
-    },
-    {
-      title: "Member Name",
-      dataIndex: "userName",
-      key: "userName",
-      render: (text, record) => (
-        <div>
-          <p>{record?.userName}</p>
-        </div>
-      ),
-    },
-    {
-      title: "Member Mobile No",
-      dataIndex: "userNumber",
-      key: "userNumber",
-      render: (text, record) => (
-        <div>
-          <p>{record?.userNumber}</p>
-        </div>
-      ),
-    },
-    {
-      title: "Member Whatsapp No",
-      dataIndex: "userWhatsappNumber",
-      key: "userWhatsappNumber",
-      render: (text, record) => (
-        <div>
-          <p>{record?.userWhatsappNumber}</p>
-        </div>
-      ),
-    },
-    {
-      title: "Wallet Balance",
-      dataIndex: "walletBalance",
-      key: "walletBalance",
-      render: (text, record) => (
-        <div>
-          <p>{record?.walletBalance}</p>
-        </div>
-      ),
-    },
+    { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
+    { title: "Member Name", dataIndex: "userName", key: "userName" },
+    { title: "Member Mobile No", dataIndex: "userNumber", key: "userNumber" },
+    { title: "Member Whatsapp No", dataIndex: "userWhatsappNumber", key: "userWhatsappNumber" },
+    { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
     {
       title: "Betting",
       dataIndex: "betting",
       key: "betting",
-      render: (text, record) => (
-        <Switch
-          checked={record?.betting ? true : false} 
-          onChange={() => {
-            toggleSwitch(record);
-          }}
-        />
+      render: (_, record) => (
+        <Spin spinning={loadingSwitch === record._id}>
+          <Switch
+            checked={record.betting}
+            onChange={() => toggleSwitch(record, "betting")}
+          />
+        </Spin>
       ),
     },
     {
       title: "Transfer",
       dataIndex: "transfer",
       key: "transfer",
-      render: (text, record) => (
-        <Switch
-          checked={record?.transfer ? true : false} 
-          onChange={() => {
-            toggleSwitch(record);
-          }}
-        />
+      render: (_, record) => (
+        <Spin spinning={loadingSwitch === record._id}>
+          <Switch
+            checked={record.transfer}
+            onChange={() => toggleSwitch(record, "transfer")}
+          />
+        </Spin>
       ),
     },
     {
       title: "Active",
       dataIndex: "status",
       key: "status",
-      render: (text, record) => (
-        <Spin spinning={loading.status}>
+      render: (_, record) => (
+        <Spin spinning={loadingSwitch === record._id}>
           <Switch
-            checked={record?.status ? true : false}
-            onChange={() => {
-              toggleSwitch(record, "status");
-            }}
-            disabled={loading.status}
+            checked={record.status}
+            onChange={() => toggleSwitch(record, "status")}
           />
         </Spin>
       ),
@@ -170,43 +121,39 @@ const UnapprovedUsers = () => {
       title: "Option",
       dataIndex: "option",
       key: "option",
-      render: () => (
-        <Button type="link" onClick={() => console.log("View button clicked")}>
-          View
-        </Button>
-      ),
+      render: () => <Button type="link">View</Button>,
     },
   ];
 
   return (
     <div className="p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-xl font-bold mb-4">User    List</h2>
+      <h2 className="text-xl font-bold mb-4">User List</h2>
 
       {/* Top Actions */}
       <div className="flex justify-end mb-4">
-        <div className="text-right">
-          <Button type="primary" onClick={() => console.log("Approved Users List button clicked")}>
-            Approved Users List
-          </Button>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 200 }}
-          />
-        </div>
+        <Button type="primary">Approved Users List</Button>
+        <Input
+          prefix={<SearchOutlined />}
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: 200, marginLeft: 10 }}
+        />
       </div>
 
-      {/* Table */}
-      <Table columns={columns} dataSource={user} pagination={false} />
+      {/* Global Loading Spinner */}
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id" />
+      )}
 
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
-        <span>
-          Showing 1 to {users.length} of {users.length} entries
-        </span>
-        <Pagination defaultCurrent={1} total={50} />
+        <span>Showing {users.length} entries</span>
+        <Pagination defaultCurrent={1} total={users.length} />
       </div>
     </div>
   );
