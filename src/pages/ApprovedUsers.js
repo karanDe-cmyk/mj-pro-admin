@@ -1,241 +1,210 @@
 import React, { useState, useEffect } from "react";
+import instance from "../utils/axiosInstance";
+import { apiUrl } from "../utils/config";
+import { appiD } from "../utils/config";
+import { Table, Input, Button, Switch, Pagination, Space } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 
-const ApprovedUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5);
-
+const UnapprovedUsers = () => {
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      name: "9785575373 (King)",
+      mobile: "9785575373",
+      walletBalance: 91,
+      betting: false,
+      transfer: false,
+      active: false,
+    },
+    {
+      id: 2,
+      name: "9878789878 (Demo)",
+      mobile: "9878789878",
+      walletBalance: 1,
+      betting: false,
+      transfer: false,
+      active: false,
+    },
+  ]);
+  const [user, setUser] = useState(null);
+  console.log("user", user);
+  const fetchUser   = async () => {
+    try {
+      const response = await instance.get(
+        `http://localhost:5001/api/auth/userStatus/${appiD}?status=true`
+      );
+      if (response) {
+        console.log("goodVibees", response.data);
+        setUser(response.data);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
   useEffect(() => {
-    const fetchUsers = async () => {
-      const response = [
-        {
-          id: 1,
-          name: "9785575353 (King)",
-          whatsapp: true,
-          mobile: "9785575353",
-          walletBalance: 1,
-          betting: true,
-          transfer: true,
-          active: true,
-        },
-        {
-          id: 2,
-          name: "9951489926 (Test)",
-          whatsapp: true,
-          mobile: "9951489926",
-          walletBalance: 1,
-          betting: true,
-          transfer: true,
-          active: true,
-        },
-        {
-          id: 3,
-          name: "7023600277 (Ram)",
-          whatsapp: true,
-          mobile: "7023600277",
-          walletBalance: 1,
-          betting: true,
-          transfer: true,
-          active: true,
-        },
-        {
-          id: 4,
-          name: "9785575373 (King)",
-          whatsapp: false,
-          mobile: "9785575373",
-          walletBalance: 91,
-          betting: false,
-          transfer: false,
-          active: false,
-        },
-        {
-          id: 5,
-          name: "9878789878 (Demo)",
-          whatsapp: false,
-          mobile: "9878789878",
-          walletBalance: 1,
-          betting: false,
-          transfer: false,
-          active: false,
-        },
-        {
-          id: 6,
-          name: "1234567890 (User)",
-          whatsapp: true,
-          mobile: "1234567890",
-          walletBalance: 50,
-          betting: false,
-          transfer: true,
-          active: false,
-        },
-      ];
-      setUsers(response);
-    };
-    fetchUsers();
+    fetchUser  ();
   }, []);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const toggleSwitch = (id, field) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === id ? { ...user, [field]: !user[field] } : user
-      )
-    );
+
+  const toggleSwitch = async (record) => {
+    try {
+      const response = await instance.post(
+        `http://localhost:5001/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
+        {
+          type: "status",
+          value:false,
+          // status: !user.find((item) => item.id === record?._id).betting,
+        }
+      );
+      if (response) {
+        console.log("User   status updated successfully");
+        // Update the local state
+        // setUser((prevUsers) =>
+        //   prevUsers.map((user) =>
+        //     user.id === record?._id ? { ...user, betting: !user.betting } : user
+        //   )
+        // );
+      } else {
+        throw new Error("Failed to update user status");
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.mobile.includes(searchTerm)
-  );
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const columns = [
+    {
+      title: "#",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "Member Name",
+      dataIndex: "userName",
+      key: "userName",
+      render: (text, record) => (
+        <div>
+          <p>{record?.userName}</p>
+        </div>
+      ),
+    },
+    {
+      title: "Member Mobile No",
+      dataIndex: "userNumber",
+      key: "userNumber",
+      render: (text, record) => (
+        <div>
+          <p>{record?.userNumber}</p>
+        </div>
+      ),
+    },
+    {
+      title: "Member Whatsapp No",
+      dataIndex: "userWhatsappNumber",
+      key: "userWhatsappNumber",
+      render: (text, record) => (
+        <div>
+          <p>{record?.userWhatsappNumber}</p>
+        </div>
+      ),
+    },
+    {
+      title: "Wallet Balance",
+      dataIndex: "walletBalance",
+      key: "walletBalance",
+      render: (text, record) => (
+        <div>
+          <p>{record?.walletBalance}</p>
+        </div>
+      ),
+    },
+    {
+      title: "Betting",
+      dataIndex: "betting",
+      key: "betting",
+      render: (text, record) => (
+        <Switch
+          checked={record?.betting ? true : false} 
+          onChange={() => {
+            toggleSwitch(record);
+          }}
+        />
+      ),
+    },
+    {
+      title: "Transfer",
+      dataIndex: "transfer",
+      key: "transfer",
+      render: (text, record) => (
+        <Switch
+          checked={record?.transfer ? true : false} 
+          onChange={() => {
+            toggleSwitch(record);
+          }}
+        />
+      ),
+    },
+    {
+      title: "Active",
+      dataIndex: "status",
+      key: "status",
+      render: (text, record) => (
+        <Switch
+          checked={record?.status ? true : false}
+          onChange={() => {
+            toggleSwitch(record);
+          }}
+        />
+      ),
+    },
+    {
+      title: "Option",
+      dataIndex: "option",
+      key: "option",
+      render: () => (
+        <Button type="link" onClick={() => console.log("View button clicked")}>
+          View
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-xl font-bold mb-4">User List</h2>
+      <h2 className="text-xl font-bold mb-4">User   List</h2>
 
-
-      <div className="flex flex-col items-end gap-2 mb-4">
-        <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-          Un-approved Users List
-        </button>
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border px-4 py-2 rounded focus:outline-blue-400"
-        />
+      {/* Top Actions */}
+      <div className="flex justify-end mb-4">
+        <div className="text-right">
+          <Button type="primary" onClick={() => console.log("Approved Users List button clicked")}>
+            Approved Users List
+          </Button>
+          <Input
+            prefix={<SearchOutlined />}
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: 200 }}
+          />
+        </div>
       </div>
 
+      {/* Table */}
+      <Table columns={columns} dataSource={user} pagination={false} />
 
-
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border border-gray-300 px-4 py-2">#</th>
-            <th className="border border-gray-300 px-4 py-2">Member Name</th>
-            <th className="border border-gray-300 px-4 py-2">WhatsApp</th>
-            <th className="border border-gray-300 px-4 py-2">Member Mobile No</th>
-            <th className="border border-gray-300 px-4 py-2">Wallet Balance</th>
-            <th className="border border-gray-300 px-4 py-2">Betting</th>
-            <th className="border border-gray-300 px-4 py-2">Transfer</th>
-            <th className="border border-gray-300 px-4 py-2">Active</th>
-            <th className="border border-gray-300 px-4 py-2">Option</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentUsers.map((user, index) => (
-            <tr key={user.id} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">
-                {indexOfFirstItem + index + 1}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">{user.name}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                {user.whatsapp ? "Yes" : "No"}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">{user.mobile}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                {user.walletBalance}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                <label className="relative flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={user.betting}
-                    onChange={() => toggleSwitch(user.id, "betting")}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-10 h-5 rounded-full transition-colors duration-300 ${user.betting ? "bg-green-400" : "bg-yellow-500"
-                      }`}
-                  ></div>
-                  <div
-                    className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${user.betting ? "translate-x-5" : "translate-x-0"
-                      }`}
-                  ></div>
-                </label>
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                <label className="relative flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={user.transfer}
-                    onChange={() => toggleSwitch(user.id, "transfer")}
-                    className="sr-only"
-                  />
-
-                  <div
-                    className={`w-10 h-5 rounded-full transition-colors duration-300 ${user.transfer ? "bg-green-400" : "bg-yellow-500"
-                      }`}
-                  ></div>
-
-                  <div
-                    className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${user.transfer ? "translate-x-5" : "translate-x-0"
-                      }`}
-                  ></div>
-                </label>
-              </td>
-
-              <td className="border border-gray-300 px-4 py-2">
-                <label className="relative flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={user.active}
-                    onChange={() => toggleSwitch(user.id, "active")}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-10 h-5 rounded-full transition-colors duration-300 ${user.active ? "bg-green-400" : "bg-yellow-500"
-                      }`}
-                  ></div>
-
-                  <div
-                    className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${user.active ? "translate-x-5" : "translate-x-0"
-                      }`}
-                  ></div>
-                </label>
-              </td>
-
-              <td className="border border-gray-300 px-4 py-2">
-                <button className="text-blue-500 hover:underline">View</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-
+      {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <span>
-          Showing {indexOfFirstItem + 1} to{" "}
-          {Math.min(indexOfLastItem, filteredUsers.length)} of{" "}
-          {filteredUsers.length} entries
+          Showing 1 to {users.length} of {users.length} entries
         </span>
-        <div className="flex space-x-2">
-          <button
-            className="px-3 py-1 border rounded"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Previous
-          </button>
-          <button
-            className="px-3 py-1 border rounded"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Next
-          </button>
-        </div>
+        <Pagination defaultCurrent={1} total={50} />
       </div>
     </div>
   );
 };
 
-export default ApprovedUsers;
+export default UnapprovedUsers;
