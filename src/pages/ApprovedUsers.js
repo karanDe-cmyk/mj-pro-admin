@@ -28,10 +28,10 @@ const UnapprovedUsers = () => {
   ]);
   const [user, setUser] = useState(null);
   console.log("user", user);
-  const fetchUser   = async () => {
+  const fetchUser = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/auth/userStatus/${appiD}?status=true`
+        `https://matka-admin-backend.onrender.com/api/auth/userStatus/${appiD}?status=true`
       );
       if (response) {
         console.log("goodVibees", response.data);
@@ -44,7 +44,7 @@ const UnapprovedUsers = () => {
     }
   };
   useEffect(() => {
-    fetchUser  ();
+    fetchUser();
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -52,10 +52,10 @@ const UnapprovedUsers = () => {
   const toggleSwitch = async (record) => {
     try {
       const response = await instance.post(
-        `http://localhost:5001/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
+        `https://matka-admin-backend.onrender.com/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
         {
           type: "status",
-          value:false,
+          value: false,
           // status: !user.find((item) => item.id === record?._id).betting,
         }
       );
@@ -128,7 +128,7 @@ const UnapprovedUsers = () => {
       key: "betting",
       render: (text, record) => (
         <Switch
-          checked={record?.betting ? true : false} 
+          checked={record?.betting ? true : false}
           onChange={() => {
             toggleSwitch(record);
           }}
@@ -141,7 +141,7 @@ const UnapprovedUsers = () => {
       key: "transfer",
       render: (text, record) => (
         <Switch
-          checked={record?.transfer ? true : false} 
+          checked={record?.transfer ? true : false}
           onChange={() => {
             toggleSwitch(record);
           }}

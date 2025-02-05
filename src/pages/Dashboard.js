@@ -50,6 +50,9 @@ const Dashboard = () => {
     mainMarketBidAmount: 0,
     starlineBidAmount: 0,
   });
+  const [gameList, setGameList] = useState(null);
+  console.log("data list", gameList?.data);
+
   const [date, setDate] = useState("");
   const [gameName, setGameName] = useState("");
   const [marketTime, setMarketTime] = useState("");
@@ -143,6 +146,28 @@ const Dashboard = () => {
   useEffect(() => {
     fetchCountDash();
   }, []);
+
+  const fetchGameList = async () => {
+    try {
+      // You should replace `appId` with the actual appId variable from your context or state
+      const appId = "your-app-id";
+      const response = await instance.get(
+        `https://matka-admin-backend.onrender.com/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
+      );
+      if (response) {
+        console.log("Fetched Game List:", response.data);
+        setGameList(response.data); // Update state with the fetched game list
+      } else {
+        throw new Error("Failed to fetch game list");
+      }
+    } catch (error) {
+      console.error("Error fetching game list:", error);
+    }
+  };
+  useEffect(() => {
+    fetchGameList();
+  }, []);
+
   return (
     <>
       <div className="flex min-h-screen bg-gray-100">
@@ -193,9 +218,9 @@ const Dashboard = () => {
                 onChange={(e) => setGameName(e.target.value)}
                 className="w-full p-2 border rounded mb-4"
               >
+
                 <option value="">Select Games</option>
-                <option value="Game 1">Game 1</option>
-                <option value="Game 2">Game 2</option>
+
               </select>
               <button
                 type="submit"
@@ -287,9 +312,14 @@ const Dashboard = () => {
                   onChange={(e) => setGameName(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
                 >
-                  <option value="">Select Game Name</option>
-                  <option value="Game 1">Game 1</option>
-                  <option value="Game 2">Game 2</option>
+                  {/* <option value="">Select Game Name</option> */}
+                  {
+                    gameList?.data.map((data) => {
+                      <option value="">{data.gameName}</option>
+
+                    })
+                  }
+
                 </select>
               </div>
 
@@ -340,8 +370,8 @@ const Dashboard = () => {
                   <div
                     className={`text-white  mt-4 w-full ${generateRandomColor()}`}
                   >
-                       Ank {bid.digit}
-                
+                    Ank {bid.digit}
+
                   </div>
                 </div>
               ))}
