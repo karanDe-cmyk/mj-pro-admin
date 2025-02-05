@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-    baseURL: "https://matka-admin-backend.onrender.com",
+    baseURL: "https://api.kalyandpboss.com",
 });
 
 // Request interceptor
