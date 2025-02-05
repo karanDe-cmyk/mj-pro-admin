@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: matka
+  namespace: matka-frontend
 spec:
   replicas: 5
   strategy:
