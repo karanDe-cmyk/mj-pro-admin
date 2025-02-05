@@ -31,7 +31,8 @@ pipeline {
         stage('Git: Code Checkout') {
             steps {
                 script{
-                    code_checkout("https://github.com/MaccoTechgit/Matka-Fronted.git","himanshu")
+                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'main'
+
                 }
             }
         }
