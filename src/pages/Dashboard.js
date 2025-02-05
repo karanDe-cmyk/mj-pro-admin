@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaUser, FaGamepad, FaCoins } from "react-icons/fa";
 import instance from "../utils/axiosInstance";
+import { apiUrl } from "../utils/config";
 const Dashboard = () => {
   const [totalBidAmount, setTotalBidAmount] = useState(0);
   const [totalWinAmount, setTotalWinAmount] = useState(0);
@@ -107,7 +108,7 @@ const Dashboard = () => {
   const fetchCount = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/count/ankCount/3d88dae8-5904-40e9-b314-4906bc064bed?gameName=${gameName}&market=${marketTime}`
+        `${apiUrl}/api/count/ankCount/3d88dae8-5904-40e9-b314-4906bc064bed?gameName=${gameName}&market=${marketTime}`
       );
       if (response) {
         console.log("goodVibees", response?.data);
@@ -123,14 +124,14 @@ const Dashboard = () => {
     fetchCount();
   }, []);
   const [countDash, setCountDash] = useState(null);
-  console.log("countDash", countDash?.data?.totalBidRevenue);
+  console.log("countDash ....", countDash?.data?.totalBidRevenue);
   const fetchCountDash = async () => {
     try {
       const response = await instance.get(
         `http://localhost:5001/api/count/dashboardCounts/3d88dae8-5904-40e9-b314-4906bc064bed`
       );
       if (response) {
-        console.log("goodVibeedsdsdds", response);
+        console.log("goodVibeedsdsdds......", response);
         setCountDash(response?.data);
       } else {
         throw new Error("Failed to fetch user data");
