@@ -31,7 +31,7 @@ const UnapprovedUsers = () => {
   const fetchUser   = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/auth/userStatus/${appiD}?status=true`
+        `https://matka-admin-backend.onrender.com/api/auth/userStatus/${appiD}?status=true`
       );
       if (response) {
         console.log("goodVibees", response.data);
@@ -52,7 +52,7 @@ const UnapprovedUsers = () => {
   const toggleSwitch = async (record) => {
     try {
       const response = await instance.post(
-        `http://localhost:5001/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
+        `https://matka-admin-backend.onrender.com/api/auth/userStatusUpdate/${appiD}/${record?._id}`,
         {
           type: "status",
           value:false,

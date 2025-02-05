@@ -127,7 +127,7 @@ const Dashboard = () => {
   const fetchCountDash = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/count/dashboardCounts/3d88dae8-5904-40e9-b314-4906bc064bed`
+        `https://matka-admin-backend.onrender.com/api/count/dashboardCounts/3d88dae8-5904-40e9-b314-4906bc064bed`
       );
       if (response) {
         console.log("goodVibeedsdsdds", response);
