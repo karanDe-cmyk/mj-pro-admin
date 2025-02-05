@@ -116,7 +116,7 @@ const GameManagement = () => {
         close_time: editData.close_time ? editData.close_time.format("HH:mm") : null,
       };
 
-      await instance.put(`${apiUrl}/api/marketManagement/updateMarketGame/${appiD}/${editData._id}`, updatedGame);
+      await instance.put(`${apiUrl}api/marketManagement/updateMarketGame/${appiD}/${editData._id}`, updatedGame);
       fetchGames();  // Refresh table
       setIsEditModalVisible(false);
       setEditData(null);
