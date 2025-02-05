@@ -73,12 +73,10 @@ pipeline {
         stage("Docker: Build Image"){
             steps{
                 script{
-                    dir('Matka-Fronted'){
                         docker_build("matka-frontend","${params.FRONTEND_DOCKER_TAG}","saurav547")
                     }
                 }
             }
-        }
         
         stage("Docker: Push to DockerHub"){
             steps{
