@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Table, Button, Modal, Input, Select, Switch } from "antd";
 import EditModal from "./EditModal";
 import instance from "../utils/axiosInstance";
+import { apiUrl } from "../utils/config";
 
 const GameManagement = () => {
   const [games, setGames] = useState(() => {
@@ -20,7 +21,7 @@ const GameManagement = () => {
   const [isConfirmDelete, setIsConfirmDelete] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [editModalData, setEditModalData] = useState(null);
-console.log("editModalData",editModalData)
+  console.log("editModalData", editModalData)
   useEffect(() => {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
@@ -56,7 +57,7 @@ console.log("editModalData",editModalData)
 
     try {
       const response = await instance.post(
-        "http://localhost:5001/api/marketManagement/addMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed",
+        `${apiUrl}/api/marketManagement/addMarketGame/3d88dae8-5904-40e9-b314-4906bc064be0d`,
         {
           market_name: values.market_name,
           market_type: values.market_type,
@@ -105,7 +106,7 @@ console.log("editModalData",editModalData)
   const handleDeleteGame = (record) => {
     instance
       .delete(
-        `http://localhost:5001/api/marketManagement/deleteMarketGameById/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
+        `${apiUrl}/api/marketManagement/deleteMarketGameById/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
       )
       .then((response) => {
         console.log(response.data);
@@ -127,27 +128,57 @@ console.log("editModalData",editModalData)
     setGameToDelete(null);
   };
 
-  const handleEditGame = (game) => {
-    setEditModalData(game);
+  const handleEditGame = async (record) => {
+    try {
+      // Fetch single market details using API
+      const response = await instance.get(
+        `${apiUrl}/api/marketManagement/getSingleMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
+      );
+
+      if (response?.data) {
+        console.log("Fetched Market Data:", response.data);
+
+        // Populate modal with fetched data
+        setEditModalData({
+          id: record._id,
+          market_name: response.data.market_name,
+          open_time: response.data.open_time,
+          close_time: response.data.close_time,
+          openActivity: response.data.openActivity,
+          market_type: response.data.market_type,
+        });
+      } else {
+        throw new Error("Failed to fetch market data");
+      }
+    } catch (error) {
+      console.error("Error fetching market data:", error);
+    }
   };
+
   const [gameSingleMarketList, setGameSingleMarketList] = useState(null);
   console.log("gameSingleMarketList", gameSingleMarketList?.data);
   const handleEditChange = async (record, e = {}) => {
-    const { name, value } = e.target || {};
-    setEditModalData({ ...editModalData, [name]: value });   try {
+    if (!record?._id) {
+      console.error("Error: Missing market ID!");
+      return;
+    }
+  
+    try {
       const response = await instance.get(
-        `http://localhost:5001/api/marketManagement/getSingleMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed/${record?._id}`
+        `${apiUrl}/api/marketManagement/getSingleMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
       );
-      if (response) {
-        console.log("gameSingleMarketList", response);
+  
+      if (response?.data) {
+        console.log("Market Data Received:", response.data);
         setGameSingleMarketList(response?.data);
       } else {
-        throw new Error("Failed to fetch user data");
+        throw new Error("Failed to fetch market data");
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error fetching market data:", error);
     }
   };
+  
 
   const handleSaveEdit = () => {
     setGames(
@@ -162,7 +193,7 @@ console.log("editModalData",editModalData)
   const fetchMarketGameList = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/marketManagement/getMarketGames/3d88dae8-5904-40e9-b314-4906bc064bed`
+        `${apiUrl}/api/marketManagement/getMarketGames/3d88dae8-5904-40e9-b314-4906bc064bed`
       );
       if (response) {
         console.log("goodVibeedsdsdds", response);
@@ -177,7 +208,7 @@ console.log("editModalData",editModalData)
   useEffect(() => {
     fetchMarketGameList();
   }, []);
-  
+
 
 
 
@@ -220,7 +251,7 @@ console.log("editModalData",editModalData)
         <span>
           <Button
             type="primary"
-            onClick={() => handleEditChange(record)}
+            onClick={() => handleEditGame(record)} // Fetch data and open modal
             style={{ marginRight: 16 }}
           >
             Edit
@@ -230,14 +261,15 @@ console.log("editModalData",editModalData)
           </Button>
         </span>
       ),
-    },
+    }
+
   ];
   const [gameList, setGameList] = useState(null);
   console.log("gooVibesaaaaaaa", gameList?.data);
   const fetchGameList = async () => {
     try {
       const response = await instance.get(
-        `http://localhost:5001/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
+        `${apiUrl}/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
       );
       if (response) {
         console.log("goodVibeedsdsdds", response);
@@ -355,7 +387,7 @@ console.log("editModalData",editModalData)
 
       {editModalData && (
         <EditModal
-        gameSingleMarketList={gameSingleMarketList}
+          gameSingleMarketList={gameSingleMarketList}
           gameData={editModalData}
           onChange={handleEditChange}
           onSave={handleSaveEdit}
