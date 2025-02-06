@@ -45,7 +45,7 @@ pipeline {
                         sh "git config --global user.email 'sauravgarg5922@gmail.com'"
                         sh "git config --global user.name "sauravgarg547"
                         sh "git add ."
-                        sh "git commit -m "Updated backend image tag to ${params.BACKEND_DOCKER_TAG}"
+                        sh "git commit -m 'Updated backend image tag to ${params.BACKEND_DOCKER_TAG}' || echo 'No changes to commit'"
                         sh "git push origin himanshu"
                         '''
                     }
