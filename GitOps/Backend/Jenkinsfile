@@ -8,8 +8,8 @@ pipeline {
 
     stages {
         stage("Workspace cleanup"){
-            steps{
-                script{
+            steps {
+                script {
                     cleanWs()
                 }
             }
@@ -17,37 +17,35 @@ pipeline {
         
         stage('Git: Code Checkout') {
             steps {
-                script{
-                   git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
+                script {
+                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
                 }
             }
         }
         
         stage('Verify: Docker Image Tags') {
             steps {
-                script{
+                script {
                     echo "BACKEND_DOCKER_TAG: ${params.BACKEND_DOCKER_TAG}"
                 }
             }
         }
         
-        
         stage("Update: Kubernetes manifests"){
-            steps{
-                script{
-                    dir('kubernetes'){
+            steps {
+                script {
+                    dir('kubernetes') {
                         sh """
                             sed -i -e s/matka-backend*/matka-backend:${params.BACKEND_DOCKER_TAG}/g backend.yaml
                         """
                     }
-                    
                 }
             }
         }
         
-        stage("Git: Code update and push to GitHub"){
-            steps{
-                script{
+        stage("Git: Code update and push to GitHub") {
+            steps {
+                script {
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-Cred', gitToolName: 'Default')]) {
                         sh '''
                         echo "Checking repository status: "
@@ -56,23 +54,24 @@ pipeline {
                         echo "Adding changes to git: "
                         git add .
                         
-                        echo "Commiting changes: "
+                        echo "Committing changes: "
                         git commit -m "Updated environment variables"
                         
-                        echo "Pushing changes to github: "
+                        echo "Pushing changes to GitHub: "
                         git push https://github.com/MaccoTechgit/Matka-Fronted.git himanshu
-                    '''
+                        '''
                     }
                 }
             }
         }
     }
-  post {
+    
+    post {
         success {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "Matka Backend Application has been updated and deployed - '${currentBuild.result}'",
+                subject: "Matka backend Application has been updated and deployed - '${currentBuild.result}'",
                 body: """
                     <html>
                     <body>
@@ -87,12 +86,13 @@ pipeline {
                         </div>
                     </body>
                     </html>
-            """,
-            to: 'sauravgarg5922@gmail.com',
-            mimeType: 'text/html'
+                """,
+                to: 'sauravgarg5922@gmail.com',
+                mimeType: 'text/html'
             }
         }
-      failure {
+        
+        failure {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
@@ -108,9 +108,9 @@ pipeline {
                         </div>
                     </body>
                     </html>
-            """,
-            to: 'sauravgarg5922@gmail.com',
-            mimeType: 'text/html'
+                """,
+                to: 'sauravgarg5922@gmail.com',
+                mimeType: 'text/html'
             }
         }
     }
