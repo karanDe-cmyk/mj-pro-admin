@@ -20,12 +20,11 @@ const GameManagement = () => {
   const [isConfirmDelete, setIsConfirmDelete] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [editModalData, setEditModalData] = useState(null);
-
+console.log("editModalData",editModalData)
   useEffect(() => {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
   const handleAddMarket = async (values) => {
-
     console.log(values);
     if (
       !values.market_name ||
@@ -104,7 +103,10 @@ const GameManagement = () => {
     }
   };
   const handleDeleteGame = (record) => {
-    instance.delete(`http://localhost:5001/api/marketManagement/deleteMarketGameById/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`)
+    instance
+      .delete(
+        `http://localhost:5001/api/marketManagement/deleteMarketGameById/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
+      )
       .then((response) => {
         console.log(response.data);
         setGames(games.filter((game) => game.id !== record.id));
@@ -128,10 +130,23 @@ const GameManagement = () => {
   const handleEditGame = (game) => {
     setEditModalData(game);
   };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditModalData({ ...editModalData, [name]: value });
+  const [gameSingleMarketList, setGameSingleMarketList] = useState(null);
+  console.log("gameSingleMarketList", gameSingleMarketList?.data);
+  const handleEditChange = async (record, e = {}) => {
+    const { name, value } = e.target || {};
+    setEditModalData({ ...editModalData, [name]: value });   try {
+      const response = await instance.get(
+        `http://localhost:5001/api/marketManagement/getSingleMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed/${record?._id}`
+      );
+      if (response) {
+        console.log("gameSingleMarketList", response);
+        setGameSingleMarketList(response?.data);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
   };
 
   const handleSaveEdit = () => {
@@ -162,6 +177,12 @@ const GameManagement = () => {
   useEffect(() => {
     fetchMarketGameList();
   }, []);
+  
+
+
+
+
+
   const columns = [
     {
       title: "#",
@@ -173,7 +194,6 @@ const GameManagement = () => {
       dataIndex: "MarketName",
       key: "MarketName",
       render: (text, record) => record?.market_name,
-  
     },
     {
       title: "Today Open",
@@ -186,14 +206,12 @@ const GameManagement = () => {
       dataIndex: "todayClose",
       key: "todayClose",
       render: (text, record) => record?.close_time,
-
     },
     {
       title: "Market Status",
       dataIndex: "openActivity",
       key: "openActivity",
-      render: (text, record) => record?.openActivity === true,
-
+      render: (text, record) => record?.openActivity ? "Open" : "Close",
     },
     {
       title: "Action",
@@ -202,7 +220,7 @@ const GameManagement = () => {
         <span>
           <Button
             type="primary"
-            onClick={() => handleEditGame(record)}
+            onClick={() => handleEditChange(record)}
             style={{ marginRight: 16 }}
           >
             Edit
@@ -301,25 +319,20 @@ const GameManagement = () => {
             placeholder="Select Games"
           >
             <Select.Option value="">Select Game</Select.Option>
-            <Select.Option value="">Single Digit</Select.Option>
-            <Select.Option value="">Single Paana</Select.Option>
-            <Select.Option value="">Double Digit</Select.Option>
-            <Select.Option value="">Double Paana</Select.Option>
-
-
-
-
-
+            <Select.Option value="singleDigit">Single Digit</Select.Option>
+            <Select.Option value="singlePanna">Single Paana</Select.Option>
+            <Select.Option value="doubleDigit">Double Digit</Select.Option>
+            <Select.Option value="doublePanna">Double Paana</Select.Option>
           </Select>
         </Form.Item>
         <Form.Item
-  label="Open Activity"
-  name="open_activity"
-  valuePropName="checked"
-  initialValue={true}
->
-  <Switch />
-</Form.Item>
+          label="Open Activity"
+          name="open_activity"
+          valuePropName="checked"
+          initialValue={true}
+        >
+          <Switch />
+        </Form.Item>
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
           <Button type="primary" htmlType="submit">
             Add Market
@@ -342,6 +355,7 @@ const GameManagement = () => {
 
       {editModalData && (
         <EditModal
+        gameSingleMarketList={gameSingleMarketList}
           gameData={editModalData}
           onChange={handleEditChange}
           onSave={handleSaveEdit}

@@ -37,6 +37,7 @@ import DeclareResultStarline from './pages/starline management/DeclareResultStar
 import AutoDepositHistory from './pages/AutoDepositHistory';
 import NoticeManagement from './pages/NoticeManagement';
 import ProtectedRoute from './utils/ProtectedRoute';
+import MarketDeclareResult from './pages/MarketDeclareResult';
 
 
 
@@ -62,6 +63,7 @@ const App = () => {
             <Route path="game-management">
               <Route path="game-name" element={<GameManagement />} />
               <Route path="game-rates" element={<GameRate />} />
+              <Route path="declare-market-result" element={<MarketDeclareResult />} />
               <Route path="on-off-market" element={<OnOffMarket />} />
               <Route path="bit-history" element={<UsersBidHistory />} />
               <Route path="bid-date" element={<BidDateWise />} />

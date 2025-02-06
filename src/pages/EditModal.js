@@ -1,7 +1,18 @@
 import React from "react";
 
-const EditModal = ({ gameData, onChange, onSave, onClose }) => {
-  const days = ["Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]; // Add other days as needed
+const EditModal = ({ gameData, onChange, onSave, onClose, gameSingleMarketList }) => {
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]; // Add other days as needed
+
+  // Check if gameSingleMarketList is not null or undefined
+  if (!gameSingleMarketList) {
+    return <div>Loading...</div>;
+  }
+
+  // Map week_selection to days
+  const weekSelection = gameSingleMarketList.data.games.reduce((acc, game, index) => {
+    acc[days[index]] = game;
+    return acc;
+  }, {});
 
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
@@ -19,7 +30,7 @@ const EditModal = ({ gameData, onChange, onSave, onClose }) => {
                 <input
                   type="time"
                   name={`${day.toLowerCase()}Open`}
-                  value={gameData[`${day.toLowerCase()}Open`] || ""}
+                  value={weekSelection[day] ? weekSelection[day].openTime || "" : ""}
                   onChange={onChange}
                   className="w-full border border-gray-300 rounded-md p-2"
                 />
@@ -29,7 +40,7 @@ const EditModal = ({ gameData, onChange, onSave, onClose }) => {
                 <input
                   type="time"
                   name={`${day.toLowerCase()}Close`}
-                  value={gameData[`${day.toLowerCase()}Close`] || ""}
+                  value={weekSelection[day] ? weekSelection[day].closeTime || "" : ""}
                   onChange={onChange}
                   className="w-full border border-gray-300 rounded-md p-2"
                 />
@@ -38,7 +49,7 @@ const EditModal = ({ gameData, onChange, onSave, onClose }) => {
                 <label className="block font-medium">Select Status</label>
                 <select
                   name={`${day.toLowerCase()}Status`}
-                  value={gameData[`${day.toLowerCase()}Status`] || "Active"}
+                  value={weekSelection[day] ? (weekSelection[day].open ? "Active" : "Inactive") : ""}
                   onChange={onChange}
                   className="w-full border border-gray-300 rounded-md p-2"
                 >

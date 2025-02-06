@@ -41,6 +41,7 @@ const AdminPanel = () => {
             icon: <i className="fa fa-gamepad" aria-hidden="true"></i>,
             children: [
                 { label: "Game Name", path: "/admin/game-management/game-name" },
+                { label: "Market Declare Result", path: "/admin/game-management/declare-market-result" },
                 { label: "Game Rates", path: "/admin/game-management/game-rates" },
                 { label: "On/Off Market", path: "/admin/game-management/on-off-market" },
                 { label: "Users Bid History", path: "/admin/game-management/bit-history" },
