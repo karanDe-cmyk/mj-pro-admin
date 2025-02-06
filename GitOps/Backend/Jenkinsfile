@@ -60,7 +60,7 @@ pipeline {
                         git commit -m "Updated environment variables"
                         
                         echo "Pushing changes to github: "
-                        git push https://github.com/MaccoTechgit/Matka-Admin-Backend.git main
+                        git push https://github.com/MaccoTechgit/Matka-Fronted.git himanshu
                     '''
                     }
                 }
