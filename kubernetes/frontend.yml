@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: saurav547/matka-frontend:v1.5:latest
+          image: saurav547/matka-frontend:v1.5
           ports:
             - containerPort: 3000
 ---
