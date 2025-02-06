@@ -7,82 +7,70 @@ pipeline {
     }
 
     stages {
-        stage("Workspace cleanup"){
+        stage("Workspace Cleanup") {
             steps {
-                script {
-                    cleanWs()
-                }
+                cleanWs()
             }
         }
-        
+
         stage('Git: Code Checkout') {
             steps {
-                script {
-                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
-                }
+                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
             }
         }
-        
+
         stage('Verify: Docker Image Tags') {
             steps {
-                script {
-                    echo "BACKEND_DOCKER_TAG: ${params.BACKEND_DOCKER_TAG}"
-                }
+                echo "BACKEND_DOCKER_TAG: ${params.BACKEND_DOCKER_TAG}"
             }
         }
-        
-        stage("Update: Kubernetes manifests"){
+
+        stage("Update: Kubernetes Manifests") {
             steps {
                 script {
                     dir('kubernetes') {
                         sh """
-                            sed -i -e s/matka-backend*/matka-backend:${params.BACKEND_DOCKER_TAG}/g backend.yaml
+                        sed -i -E 's|(image: saurav547/matka-backend:)[^ ]+|\\1${params.BACKEND_DOCKER_TAG}|' backend.yaml
                         """
                     }
                 }
             }
         }
-        
-        stage("Git: Code update and push to GitHub") {
+
+        stage("Git: Code Update and Push") {
             steps {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-Cred', gitToolName: 'Default')]) {
                         sh '''
-                        echo "Checking repository status: "
-                        git status
-                    
-                        echo "Adding changes to git: "
+                        git config --global user.email "sauravgarg5922.com"
+                        git config --global user.name "sauravgarg547"
                         git add .
-                        
-                        echo "Committing changes: "
-                        git commit -m "Updated environment variables"
-                        
-                        echo "Pushing changes to GitHub: "
-                        git push https://github.com/MaccoTechgit/Matka-Fronted.git himanshu
+                        git commit -m "Updated backend image tag to ${params.BACKEND_DOCKER_TAG}"
+                        git push origin himanshu
                         '''
                     }
                 }
             }
         }
     }
-    
+
     post {
         success {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "Matka backend Application has been updated and deployed - '${currentBuild.result}'",
+                subject: "Matka Backend Updated & Deployed - ${currentBuild.result}",
                 body: """
                     <html>
                     <body>
-                        <div style="background-color: #FFA07A; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Project: ${env.JOB_NAME}</p>
+                        <div style="background-color: #FFA07A; padding: 10px;">
+                            <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         </div>
-                        <div style="background-color: #90EE90; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Build Number: ${env.BUILD_NUMBER}</p>
+                        <div style="background-color: #90EE90; padding: 10px;">
+                            <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                         </div>
-                        <div style="background-color: #87CEEB; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">URL: ${env.BUILD_URL}</p>
+                        <div style="background-color: #87CEEB; padding: 10px;">
+                            <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
                         </div>
                     </body>
                     </html>
@@ -91,20 +79,23 @@ pipeline {
                 mimeType: 'text/html'
             }
         }
-        
+
         failure {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "Matka Backend Application build failed - '${currentBuild.result}'",
+                subject: "Matka Backend Deployment Failed - ${currentBuild.result}",
                 body: """
                     <html>
                     <body>
-                        <div style="background-color: #FFA07A; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Project: ${env.JOB_NAME}</p>
+                        <div style="background-color: #FFA07A; padding: 10px;">
+                            <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         </div>
-                        <div style="background-color: #90EE90; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Build Number: ${env.BUILD_NUMBER}</p>
+                        <div style="background-color: #90EE90; padding: 10px;">
+                            <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                        </div>
+                        <div style="background-color: #FF6347; padding: 10px;">
+                            <p><strong>Error:</strong> Check logs in Jenkins</p>
                         </div>
                     </body>
                     </html>
