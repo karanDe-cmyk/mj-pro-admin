@@ -42,11 +42,11 @@ pipeline {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-Cred', gitToolName: 'Default')]) {
                         sh '''
-                        git config --global user.email "sauravgarg5922@gmail.com"
-                        git config --global user.name "sauravgarg547"
-                        git add .
-                        git commit -m "Updated backend image tag to ${params.BACKEND_DOCKER_TAG}"
-                        git push origin himanshu
+                        sh "git config --global user.email 'sauravgarg5922@gmail.com'"
+                        sh "git config --global user.name "sauravgarg547"
+                        sh "git add ."
+                        sh "git commit -m "Updated backend image tag to ${params.BACKEND_DOCKER_TAG}"
+                        sh "git push origin himanshu"
                         '''
                     }
                 }
