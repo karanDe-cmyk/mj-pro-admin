@@ -1,15 +1,15 @@
 @Library('Shared') _
 pipeline {
     agent any
-    
+
     environment {
         SONAR_HOME = tool "Sonar"
     }
-    
+
     parameters {
         string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
     }
-    
+
     stages {
         stage("Validate Parameters") {
             steps {
@@ -20,24 +20,20 @@ pipeline {
                 }
             }
         }
-        
-        stage("Workspace cleanup") {
+
+        stage("Workspace Cleanup") {
             steps {
-                script {
-                    cleanWs()
-                }
+                cleanWs()
             }
         }
-        
+
         stage('Git: Code Checkout') {
             steps {
-                script {
-                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
-                }
+                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
             }
         }
-        
-        stage("Trivy: Filesystem scan") {
+
+        stage("Trivy: Security Scan") {
             steps {
                 script {
                     trivy_scan()
@@ -52,7 +48,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage("Docker: Push to DockerHub") {
             steps {
                 script {
@@ -61,7 +57,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         success {
             build job: "Matka-Fronted-CD", parameters: [
