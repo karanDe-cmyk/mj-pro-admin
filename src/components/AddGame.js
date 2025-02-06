@@ -1,34 +1,39 @@
 import React, { useState } from "react";
-
+import { TimePicker, Switch, Button, message } from "antd";
+import moment from "moment";
 import { apiUrl, appiD } from "../utils/config";
 import instance from "../utils/axiosInstance";
 
-
 const AddGame = ({ onGameAdded }) => {
   const [formData, setFormData] = useState({
-    marketOpenTime: "",
-    marketCloseTime: "",
+    marketOpenTime: null,
+    marketCloseTime: null,
     isMarketActive: false,
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  // Handle Time Change
+  const handleTimeChange = (time, timeString, field) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: time,
+    }));
   };
 
-  const handleToggleChange = () => {
-    setFormData((prev) => ({ ...prev, isMarketActive: !prev.isMarketActive }));
+  // Toggle Market On/Off
+  const handleToggleChange = (checked) => {
+    setFormData((prev) => ({ ...prev, isMarketActive: checked }));
   };
 
-  const formatTime = (time) => {
-    const date = new Date(`1970-01-01T${time}:00`);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
-  };
-
+  // Handle Add Game
   const handleAddMarket = async () => {
     try {
-      const formattedCloseTime = formatTime(formData.marketCloseTime);
-      const formattedOpenTime = formatTime(formData.marketOpenTime);
+      if (!formData.marketOpenTime || !formData.marketCloseTime) {
+        message.error("Please select both open and close times.");
+        return;
+      }
+
+      const formattedOpenTime = formData.marketOpenTime.format("hh:mm A");
+      const formattedCloseTime = formData.marketCloseTime.format("hh:mm A");
 
       const url = `${apiUrl}/api/starline/addGameList/${appiD}`;
       console.log("Sending POST request to:", url);
@@ -40,7 +45,7 @@ const AddGame = ({ onGameAdded }) => {
       });
 
       if (response.data.success) {
-        alert("Game added successfully!");
+        message.success("Game added successfully!");
 
         // Send the new game data to parent component (GameSchedule)
         onGameAdded({
@@ -50,17 +55,18 @@ const AddGame = ({ onGameAdded }) => {
           is_active: formData.isMarketActive,
         });
 
+        // Reset form fields
         setFormData({
-          marketOpenTime: "",
-          marketCloseTime: "",
+          marketOpenTime: null,
+          marketCloseTime: null,
           isMarketActive: false,
         });
       } else {
-        alert("Failed to add game");
+        message.error("Failed to add game.");
       }
     } catch (error) {
       console.error("Error adding game:", error);
-      alert("Error adding game. Please try again.");
+      message.error("Error adding game. Please try again.");
     }
   };
 
@@ -68,51 +74,44 @@ const AddGame = ({ onGameAdded }) => {
     <div className="mb-6 p-4 bg-white rounded-md shadow-md">
       <h2 className="text-lg font-bold mb-4">Add Game</h2>
       <div className="flex flex-wrap items-center gap-4">
+        {/* Game Name (Open Time) */}
         <div className="flex-1">
-          <label className="block mb-1 font-medium">Game Name</label>
-          <input
-            type="time"
-            name="marketOpenTime"
+          <label className="block mb-1 font-medium">Game Name (Open Time)</label>
+          <TimePicker
+            use12Hours
+            format="hh:mm A"
             value={formData.marketOpenTime}
-            onChange={handleInputChange}
-            className="w-full border border-gray-300 rounded-md p-2"
+            onChange={(time, timeString) => handleTimeChange(time, timeString, "marketOpenTime")}
+            className="w-full"
           />
         </div>
+
+        {/* Market Close Time */}
         <div className="flex-1">
           <label className="block mb-1 font-medium">Market Close Time</label>
-          <input
-            type="time"
-            name="marketCloseTime"
+          <TimePicker
+            use12Hours
+            format="hh:mm A"
             value={formData.marketCloseTime}
-            onChange={handleInputChange}
-            className="w-full border border-gray-300 rounded-md p-2"
+            onChange={(time, timeString) => handleTimeChange(time, timeString, "marketCloseTime")}
+            className="w-full"
           />
         </div>
+
+        {/* Market On/Off Toggle */}
         <div className="flex-1">
           <label className="block mb-1 font-medium">Market On/Off</label>
-          <div className="flex items-center justify-center">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isMarketActive}
-                onChange={handleToggleChange}
-                className="sr-only peer"
-              />
-              <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-all duration-300 ease-in-out">
-                <div className="w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out peer-checked:transform peer-checked:translate-x-6"></div>
-              </div>
-            </label>
+          <div className="flex items-center">
+            <Switch checked={formData.isMarketActive} onChange={handleToggleChange} />
           </div>
         </div>
       </div>
 
+      {/* Submit Button */}
       <div className="mt-6">
-        <button
-          onClick={handleAddMarket}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-        >
+        <Button type="primary" onClick={handleAddMarket}>
           Add Game
-        </button>
+        </Button>
       </div>
     </div>
   );
