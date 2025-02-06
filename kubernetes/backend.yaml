@@ -21,14 +21,6 @@ spec:
           image: saurav547/matka-backend:latest
           ports:
             - containerPort: 5001
-          resources:
-            requests:
-              memory: "256Mi" # Minimum memory the pod will request
-              cpu: "200m"
-            limits:
-              memory: "512Mi" # Maximum memory the pod can use
-              cpu: "500m"
-        
 ---
 apiVersion: v1
 kind: Service
