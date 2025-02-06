@@ -7,7 +7,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: backend  
+    name: backend-deployment  
   minReplicas: 3
   maxReplicas: 10
   metrics:
@@ -16,4 +16,4 @@ spec:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 80  # 80% CPU usage par scale karega
+        averageUtilization: 80  # 80% CPU usage then start scale
