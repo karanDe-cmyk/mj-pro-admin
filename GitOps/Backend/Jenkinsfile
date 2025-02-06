@@ -46,6 +46,7 @@ pipeline {
                 script {
                     dir('kubernetes') {
                         sh """
+                            #!/bin/bash
                             sed -i 's|image: saurav547/matka-backend:.*|image: saurav547/matka-backend:${params.BACKEND_DOCKER_TAG}|' backend.yaml
                         """
                     }
@@ -58,20 +59,21 @@ pipeline {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-Cred', gitToolName: 'Default')]) {
                         sh '''
-                        git config --global user.email "sauravgarg5922@gmail.com"
-                        git config --global user.name "sauravgarg547"
+                            #!/bin/bash
+                            git config --global user.email "sauravgarg5922@gmail.com"
+                            git config --global user.name "sauravgarg547"
 
-                        echo "Checking repository status..."
-                        git status
-                        
-                        echo "Adding changes..."
-                        git add kubernetes/backend.yaml
-                        
-                        echo "Committing changes..."
-                        git commit -m "Updated backend image tag to ${params.BACKEND_DOCKER_TAG}" || echo "No changes to commit"
-                        
-                        echo "Pushing changes..."
-                        git push origin himanshu
+                            echo "Checking repository status..."
+                            git status
+                            
+                            echo "Adding changes..."
+                            git add kubernetes/backend.yaml
+                            
+                            echo "Committing changes..."
+                            git commit -m "Updated backend image tag to ${BACKEND_DOCKER_TAG}" || echo "No changes to commit"
+                            
+                            echo "Pushing changes..."
+                            git push origin himanshu
                         '''
                     }
                 }
