@@ -2,7 +2,7 @@
 pipeline {
     agent any
     
-    environment{
+    environment {
         SONAR_HOME = tool "Sonar"
     }
     
@@ -20,9 +20,10 @@ pipeline {
                 }
             }
         }
-        stage("Workspace cleanup"){
-            steps{
-                script{
+        
+        stage("Workspace cleanup") {
+            steps {
+                script {
                     cleanWs()
                 }
             }
@@ -30,65 +31,39 @@ pipeline {
         
         stage('Git: Code Checkout') {
             steps {
-                script{
-                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
-
+                script {
+                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
                 }
             }
         }
         
-        stage("Trivy: Filesystem scan"){
-            steps{
-                script{
+        stage("Trivy: Filesystem scan") {
+            steps {
+                script {
                     trivy_scan()
                 }
             }
         }
 
-        // stage("OWASP: Dependency check"){
-        //     steps{
-        //         script{
-        //             owasp_dependency()
-        //         }
-        //     }
-        // }
-        
-        // stage("SonarQube: Code Analysis"){
-        //     steps{
-        //         script{
-        //             sonarqube_analysis("Sonar","matka-frontend","matka-fronted")
-        //         }
-        //     }
-        // }
-        
-        // stage("SonarQube: Code Quality Gates"){
-        //     steps{
-        //         script{
-        //             sonarqube_code_quality()
-        //         }
-        //     }
-        // }
-        
-        
-        stage("Docker: Build Image"){
-            steps{
-                script{
-                        docker_build("matka-frontend","${params.FRONTEND_DOCKER_TAG}","saurav547")
-                    }
+        stage("Docker: Build Image") {
+            steps {
+                script {
+                    docker_build("matka-frontend", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
+        }
         
-        stage("Docker: Push to DockerHub"){
-            steps{
-                script{
-                    docker_push("matka-frontend","${params.FRONTEND_DOCKER_TAG}","saurav547")
+        stage("Docker: Push to DockerHub") {
+            steps {
+                script {
+                    docker_push("matka-frontend", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
         }
     }
-    post{
-        success{
-            archiveArtifacts artifacts: '*.xml', followSymlinks: false
+    
+    post {
+        success {
             build job: "Matka-Fronted-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}")
             ]
