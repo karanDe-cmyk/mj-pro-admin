@@ -1,18 +1,59 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: backend-deployment
+#   namespace: matka
+#   labels:
+#     app: backend
+# spec:
+#   replicas: 4
+#   selector:
+#     matchLabels:
+#       app: backend
+#   template:
+#     metadata:
+#       name: backend
+#       labels:
+#         app: backend
+#     spec:
+#       containers:
+#         - name: backend
+#           image: saurav547/matka-backend:latest
+#           ports:
+#             - containerPort: 5001
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: backend-service
+#   namespace: matka
+# spec:
+#   type: NodePort
+#   selector:
+#     app: backend
+#   ports:
+#     - port: 5001
+#       targetPort: 5001
+#       protocol: TCP
+#       nodePort: 31100
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-deployment
+  name: backend
   namespace: matka
-  labels:
-    app: backend
 spec:
   replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1   # Ek extra pod create hoga update ke time
+      maxUnavailable: 1 # Ek pod tak unavailable ho sakta hai update ke time
   selector:
     matchLabels:
       app: backend
   template:
     metadata:
-      name: backend
       labels:
         app: backend
     spec:
@@ -21,6 +62,26 @@ spec:
           image: saurav547/matka-backend:latest
           ports:
             - containerPort: 5001
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:  # Ensure service is ready before sending traffic
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:   # Restart pod if it becomes unresponsive
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 10
+          periodSeconds: 20
+
 ---
 apiVersion: v1
 kind: Service
@@ -28,11 +89,28 @@ metadata:
   name: backend-service
   namespace: matka
 spec:
-  type: NodePort
   selector:
     app: backend
   ports:
-    - port: 5001
+    - protocol: TCP
+      port: 5001
       targetPort: 5001
-      protocol: TCP
-      nodePort: 31100
+  type: LoadBalancer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
