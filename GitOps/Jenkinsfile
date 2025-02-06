@@ -37,7 +37,7 @@ pipeline {
                 script{
                     dir('kubernetes'){
                         sh """
-                            sed -i -e s/matka-frontend*/matka-frontend:${params.FRONTEND_DOCKER_TAG}/g frontend.yaml
+                            sed -i -e s/matka-frontend*/matka-frontend:${params.FRONTEND_DOCKER_TAG}/g frontend.yml
                         """
                     }
                     
