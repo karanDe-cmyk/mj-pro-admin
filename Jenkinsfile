@@ -4,32 +4,33 @@ pipeline {
 
     environment {
         SONAR_HOME = tool "Sonar"
-    }
-
-    parameters {
-        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
+        DOCKER_IMAGE = "saurav547/matka-frontend"
     }
 
     stages {
-        stage("Validate Parameters") {
-            steps {
-                script {
-                    if (params.FRONTEND_DOCKER_TAG == '') {
-                        error("FRONTEND_DOCKER_TAG must be provided.")
-                    }
-                }
-            }
-        }
-
         stage("Workspace Cleanup") {
             steps {
                 cleanWs()
             }
         }
 
-        stage('Git: Code Checkout') {
+        stage("Git: Code Checkout") {
             steps {
-                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
+                script {
+                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
+                }
+            }
+        }
+
+        stage("Generate Version Tag") {
+            steps {
+                script {
+                    def lastTag = sh(script: "git describe --tags --abbrev=0 || echo v1.0", returnStdout: true).trim()
+                    def versionParts = lastTag.replace("v", "").tokenize('.')
+                    def newTag = "v${versionParts[0]}.${versionParts[1].toInteger() + 1}"
+                    env.NEW_FRONTEND_DOCKER_TAG = newTag
+                    echo "Generated new tag: ${env.NEW_FRONTEND_DOCKER_TAG}"
+                }
             }
         }
 
@@ -44,7 +45,7 @@ pipeline {
         stage("Docker: Build Image") {
             steps {
                 script {
-                    docker_build("matka-frontend", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
+                    docker_build("matka-frontend", "${env.NEW_FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
         }
@@ -52,7 +53,19 @@ pipeline {
         stage("Docker: Push to DockerHub") {
             steps {
                 script {
-                    docker_push("matka-frontend", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
+                    docker_push("matka-frontend", "${env.NEW_FRONTEND_DOCKER_TAG}", "saurav547")
+                }
+            }
+        }
+
+        stage("Docker: Cleanup Local Images") {
+            steps {
+                script {
+                    echo "Cleaning up local Docker images..."
+                    sh """
+                        docker rmi saurav547/matka-frontend:${env.NEW_FRONTEND_DOCKER_TAG} || true
+                        docker image prune -af || true
+                    """
                 }
             }
         }
@@ -60,9 +73,12 @@ pipeline {
 
     post {
         success {
-            build job: "Matka-Fronted-CD", parameters: [
-                string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}")
-            ]
+            script {
+                echo "Triggering Deployment Pipeline with TAG: ${env.NEW_FRONTEND_DOCKER_TAG}"
+                build job: "Matka-Fronted-CD", parameters: [
+                    string(name: 'FRONTEND_DOCKER_TAG', value: "${env.NEW_FRONTEND_DOCKER_TAG}")
+                ]
+            }
         }
     }
 }
