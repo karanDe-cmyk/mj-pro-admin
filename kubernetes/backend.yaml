@@ -5,6 +5,7 @@ metadata:
   namespace: matka
   labels:
     app: backend
+    version: v1.1 
 spec:
   replicas: 4
   selector:
