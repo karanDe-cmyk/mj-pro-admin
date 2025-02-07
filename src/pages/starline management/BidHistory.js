@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Input, Select, DatePicker, Modal, Form, Spin, message, Alert } from "antd";
-import axiosInstance from "../../utils/axiosInstance"; // Import axios instance
+import { Table, Button, Input, Select, DatePicker, Modal, Form, Spin, message } from "antd";
+import axiosInstance from "../../utils/axiosInstance";
 import { appiD } from "../../utils/config";
 import moment from "moment";
 
 const { Option } = Select;
 
 const BidHistory = () => {
-  const [date, setDate] = useState(null);
+  // Store both the raw moment object and the formatted date string
+  const [date, setDate] = useState(null); // moment object from DatePicker
+  const [formattedDate, setFormattedDate] = useState(""); // formatted date string
   const [selectedGame, setSelectedGame] = useState("");
   const [gameOptions, setGameOptions] = useState([]);
   const [bidHistoryData, setBidHistoryData] = useState([]);
@@ -15,9 +17,10 @@ const BidHistory = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editBid, setEditBid] = useState(null);
   const [updating, setUpdating] = useState(false);
-  const [deleting, setDeleting] = useState(null); // ✅ Track which bid is being deleted
+  const [deleting, setDeleting] = useState(null);
   const [form] = Form.useForm();
 
+  // Fetch game list on component mount
   useEffect(() => {
     const fetchGameList = async () => {
       try {
@@ -37,12 +40,18 @@ const BidHistory = () => {
     fetchGameList();
   }, []);
 
+  // When the user clicks Submit, use the stored formattedDate
   const handleFilterSubmit = async () => {
     setLoading(true);
     try {
-      const formattedDate = date ? moment(date).format("DD-MM-YYYY") : "";
+      // Use the formatted date string directly
       const payload = { date: formattedDate, gamename: selectedGame };
-      const response = await axiosInstance.post(`api/starlinebid/showBidlistOfSingleMarket/${appiD}`, payload);
+
+      const response = await axiosInstance.post(
+        `api/starlinebid/showBidlistOfSingleMarket/${appiD}`,
+        payload
+      );
+
       setBidHistoryData(response.data.results || []);
     } catch (error) {
       console.error("Error fetching bid history:", error);
@@ -52,24 +61,23 @@ const BidHistory = () => {
   };
 
   const handleDeleteBid = async (bidId) => {
-    setDeleting(bidId); // ✅ Show "Deleting..." on this specific button
-
+    setDeleting(bidId);
     try {
-      const response = await axiosInstance.delete(`/api/starlinebid/deletebid/${appiD}/${bidId}`);
+      const response = await axiosInstance.delete(
+        `/api/starlinebid/deletebid/${appiD}/${bidId}`
+      );
 
       if (response.status === 200) {
         setBidHistoryData((prevBids) => prevBids.filter((bid) => bid.bidId !== bidId));
         message.success("Bid deleted successfully and amount refunded.");
-        alert("User bid deleted successfully and amount refunded to user wallet"); // ✅ Alert for success
+        alert("User bid deleted successfully and amount refunded to user wallet");
       } else {
-        console.error("Delete failed:", response);
         message.error("Failed to delete bid. Please try again.");
       }
     } catch (error) {
-      console.error("Error deleting bid:", error);
       message.error("Error deleting bid. Please check your network and try again.");
     } finally {
-      setDeleting(null); // ✅ Reset delete state
+      setDeleting(null);
     }
   };
 
@@ -87,16 +95,16 @@ const BidHistory = () => {
       const values = await form.validateFields();
       setUpdating(true);
 
-      // API Call to Update Bid
       await axiosInstance.patch(`/api/starlinebid/updatebid/${appiD}/${editBid.bidId}`, {
         points: values.points,
         digit: values.digit,
       });
 
-      // Update the state locally
       setBidHistoryData((prevBids) =>
         prevBids.map((bid) =>
-          bid.bidId === editBid.bidId ? { ...bid, points: values.points, digit: values.digit } : bid
+          bid.bidId === editBid.bidId
+            ? { ...bid, points: values.points, digit: values.digit }
+            : bid
         )
       );
 
@@ -147,7 +155,7 @@ const BidHistory = () => {
             Edit
           </Button>
           <Button type="danger" onClick={() => handleDeleteBid(record.bidId)}>
-            {deleting === record.bidId ? "Deleting..." : "Delete"} {/* ✅ Show "Deleting..." */}
+            {deleting === record.bidId ? "Deleting..." : "Delete"}
           </Button>
         </>
       ),
@@ -159,36 +167,39 @@ const BidHistory = () => {
       <h2 className="text-2xl font-bold mb-4 text-center">Bid History Report</h2>
 
       <div className="bg-white p-4 shadow-md rounded-lg flex flex-wrap gap-4 items-center justify-between">
-  {/* Date Picker */}
-  <DatePicker
-    className="w-52"
-    format="DD-MM-YYYY"
-    value={date}
-    onChange={(value) => setDate(value)}
-    placeholder="Select Date"
-  />
+        {/* Date Picker */}
+        <DatePicker
+          className="w-52"
+          format="DD-MM-YYYY"
+          value={date}
+          onChange={(value) => {
+            setDate(value);
+            // Store the formatted date string immediately when a date is selected.
+            setFormattedDate(value ? value.format("DD-MM-YYYY") : "");
+          }}
+          placeholder="Select Date"
+        />
 
-  {/* Fixed Select Dropdown */}
-  <Select
-    className="w-52"
-    value={selectedGame || undefined} // ✅ Ensure placeholder is shown when no value is selected
-    onChange={(value) => setSelectedGame(value)}
-    placeholder="Select Game"
-    allowClear // ✅ Adds a clear option
-  >
-    {gameOptions.map((game, index) => (
-      <Select.Option key={index} value={game}>
-        {game}
-      </Select.Option>
-    ))}
-  </Select>
+        {/* Game Dropdown */}
+        <Select
+          className="w-52"
+          value={selectedGame || undefined}
+          onChange={(value) => setSelectedGame(value)}
+          placeholder="Select Game"
+          allowClear
+        >
+          {gameOptions.map((game, index) => (
+            <Option key={index} value={game}>
+              {game}
+            </Option>
+          ))}
+        </Select>
 
-  {/* Submit Button */}
-  <Button type="primary" onClick={handleFilterSubmit}>
-    Submit
-  </Button>
-</div>
-
+        {/* Submit Button */}
+        <Button type="primary" onClick={handleFilterSubmit}>
+          Submit
+        </Button>
+      </div>
 
       <div className="mt-6 bg-white p-4 shadow-md rounded-lg">
         <h3 className="text-lg font-semibold mb-3">Bid History List</h3>

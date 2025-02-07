@@ -5,37 +5,89 @@ import { appiD } from "../../utils/config";
 const AllBidHistory = () => {
   const [search, setSearch] = useState("");
   const [bidHistoryData, setBidHistoryData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedMarket, setSelectedMarket] = useState("");
+  const [gameNameList, setGameNameList] = useState([]);
+  const [selectedGameName, setSelectedGameName] = useState("");
 
   useEffect(() => {
-    fetchBidHistory(); // Fetch data on component mount
-  }, []);
+    if (selectedMarket) {
+      fetchGameNames();
+    }
+  }, [selectedMarket]); // Fetch game names when market changes
 
-  // ✅ Fetch All Bid History
-  const fetchBidHistory = async () => {
+  // ✅ Fetch Game Names Based on Market Selection
+  const fetchGameNames = async () => {
+    setGameNameList([]); // Clear previous game list
+    setSelectedGameName(""); // Reset selected game
+  
+    if (!selectedMarket) return; // If no market is selected, do nothing
+  
     try {
-      setLoading(true);
-      setError("");
-      const response = await axiosInstance.get(
-        `/api/starlinebid/getallbid/${appiD}`
-      );
-      setBidHistoryData(response.data);
+      let response;
+      if (selectedMarket === "Starline") {
+        response = await axiosInstance.get(`/api/starline/getGameList/${appiD}`);
+        if (response.data && Array.isArray(response.data.data)) {
+          setGameNameList(response.data.data.map((game) => game.game_name)); // Extract game names
+        }
+      } 
+      else if (selectedMarket === "Main Market") {
+        response = await axiosInstance.get(`/api/marketManagement/getMarketGames/${appiD}`);
+        if (response.data && Array.isArray(response.data.data)) {
+          setGameNameList(response.data.data.map((market) => market.market_name)); // Extract market names
+        }
+      } 
+      else {
+        setGameNameList([]); // If no valid data, set empty array
+      }
+    } catch (error) {
+      console.error("Failed to fetch game names:", error);
+      setError("Failed to load game names.");
+    }
+  };
+  
+
+  // ✅ Fetch All Bid History (With Filters)
+  const fetchBidHistory = async () => {
+    setLoading(true);
+    setError("");
+  
+    try {
+      let queryParams = `/api/starlinebid/getallbid/${appiD}?`;
+      if (selectedDate) queryParams += `date=${selectedDate}&`;
+      if (selectedMarket) queryParams += `market=${selectedMarket}&`;
+      if (selectedGameName) queryParams += `gamename=${selectedGameName}`;
+  
+      queryParams = queryParams.replace(/[?&]$/, ""); // Remove trailing "&" or "?"
+  
+      const response = await axiosInstance.get(queryParams);
+  
+      // ✅ Filter only the relevant data based on the selected filters
+      const filteredData = response.data.filter((bid) => {
+        const bidDate = bid.time.split(" ")[0]; // Extract YYYY-MM-DD
+        return (
+          (!selectedDate || bidDate === selectedDate) &&
+          (!selectedMarket || bid.market === selectedMarket) &&
+          (!selectedGameName || bid.gamename === selectedGameName)
+        );
+      });
+  
+      setBidHistoryData(filteredData);
     } catch (err) {
       setError("Failed to load bid history. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
+  
   // ✅ Handle Delete Bid
   const handleDeleteBid = async (bidId) => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
 
     try {
-      await axiosInstance.delete(
-        `/api/starlinebid/deletbid/${appiD}/${bidId}`
-      );
+      await axiosInstance.delete(`/api/starlinebid/deletebid/${appiD}/${bidId}`);
 
       // ✅ Update state to remove the deleted bid
       setBidHistoryData((prevBids) =>
@@ -48,27 +100,72 @@ const AllBidHistory = () => {
   };
 
   return (
-    <div className="mt-6 bg-white p-4 shadow-md rounded-lg">
-      <h3 className="text-lg font-semibold mb-3">Bid History List</h3>
+    <div className="mt-6 bg-white p-6 shadow-md rounded-lg mx-auto max-w-6xl">
+      {/* Title Centered & Bigger */}
+      <h3 className="text-2xl font-bold text-center mb-5">Bid History List</h3>
 
-      {/* Search & Entries */}
-      <div className="flex justify-between mb-2">
+      {/* Filters Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Select Date */}
         <div>
-          Show
-          <select className="border px-2 py-1 mx-2 rounded">
-            <option>10</option>
-            <option>25</option>
-            <option>50</option>
-          </select>
-          entries
+          <label className="block text-gray-700 font-medium mb-1">
+            Select Date
+          </label>
+          <input
+            type="date"
+            className="border px-3 py-2 rounded w-full"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
         </div>
-        <input
-          type="text"
-          className="border px-3 py-2 rounded"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+
+        {/* Select Market */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-1">
+            Select Market
+          </label>
+          <select
+            className="border px-3 py-2 rounded w-full"
+            value={selectedMarket}
+            onChange={(e) => setSelectedMarket(e.target.value)}
+          >
+            <option value="">Select Market</option>
+            <option value="Main Market">Main Market</option>
+            <option value="Starline">Starline</option>
+            <option value="Jackpot">Jackpot</option>
+          </select>
+        </div>
+
+        {/* Game Name (Dropdown) */}
+        <div>
+  <label className="block text-gray-700 font-medium mb-1">
+    {selectedMarket === "Main Market" ? "Market Name" : "Game Name"}
+  </label>
+  <select
+    className="border px-3 py-2 rounded w-full"
+    value={selectedGameName}
+    onChange={(e) => setSelectedGameName(e.target.value)}
+    disabled={!selectedMarket} // Disable if no market selected
+  >
+    <option value="">Select {selectedMarket === "Main Market" ? "Market" : "Game Name"}</option>
+    {gameNameList.length > 0 &&
+      gameNameList.map((game, index) => (
+        <option key={index} value={game}>
+          {game}
+        </option>
+      ))}
+  </select>
+</div>
+      </div>
+
+      {/* Submit Button */}
+      <div className="text-center mb-6">
+        <button
+          className="bg-blue-600 text-white px-5 py-2 rounded"
+          onClick={fetchBidHistory} // ✅ Calls the updated function
+        >
+          Submit
+        </button>
       </div>
 
       {/* Loading State */}
@@ -82,59 +179,56 @@ const AllBidHistory = () => {
       ) : error ? (
         <p className="text-center text-red-500">{error}</p>
       ) : (
-        <table className="min-w-full bg-white border">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="py-2 px-4 border">Sr No</th>
-              <th className="py-2 px-4 border">Member Name</th>
-              <th className="py-2 px-4 border">Betting Amount</th>
-              <th className="py-2 px-4 border">Betting Number</th>
-              <th className="py-2 px-4 border">Betting Time</th>
-              <th className="py-2 px-4 border">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bidHistoryData.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center py-4">
-                  No data available in table
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border text-center">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="py-3 px-4 border">Sr No</th>
+                <th className="py-3 px-4 border">Member Name</th>
+                <th className="py-3 px-4 border">Market</th>{" "}
+                {/* Added Market */}
+                <th className="py-3 px-4 border">Game Name</th>{" "}
+                {/* Added Game Name */}
+                <th className="py-3 px-4 border">Betting Amount</th>
+                <th className="py-3 px-4 border">Betting Number</th>
+                <th className="py-3 px-4 border">Betting Time</th>
+                <th className="py-3 px-4 border">Action</th>
               </tr>
-            ) : (
-              bidHistoryData.map((bid, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-2 px-4 border">{index + 1}</td>
-                  <td className="py-2 px-4 border">{bid.userName}</td>
-                  <td className="py-2 px-4 border">{bid.points}</td>
-                  <td className="py-2 px-4 border">{bid.digit || bid.panna}</td>
-                  <td className="py-2 px-4 border">{bid.time}</td>
-                  <td className="py-2 px-4 border">
-                    <button
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                      onClick={() => handleDeleteBid(bid.bidId)} // Pass bidId dynamically
-                    >
-                      Delete
-                    </button>
+            </thead>
+            <tbody>
+              {bidHistoryData.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-6 text-gray-600">
+                    No data available in table
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      )}
-
-      {/* Pagination Placeholder */}
-      <div className="flex justify-between mt-4">
-        <span>Showing {bidHistoryData.length} entries</span>
-        <div>
-          <button className="px-3 py-1 border rounded-l bg-gray-300">
-            Previous
-          </button>
-          <button className="px-3 py-1 border rounded-r bg-gray-300">
-            Next
-          </button>
+              ) : (
+                bidHistoryData.map((bid, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="py-3 px-4 border">{index + 1}</td>
+                    <td className="py-3 px-4 border">{bid.userName}</td>
+                    <td className="py-3 px-4 border">{bid.market}</td>{" "}
+                    {/* Display Market */}
+                    <td className="py-3 px-4 border">{bid.gamename}</td>{" "}
+                    {/* Display Game Name */}
+                    <td className="py-3 px-4 border">{bid.points}</td>
+                    <td className="py-3 px-4 border">{bid.digit}</td>
+                    <td className="py-3 px-4 border">{bid.time}</td>
+                    <td className="py-3 px-4 border">
+                      <button
+                        className="bg-red-500 text-white px-4 py-1 rounded"
+                        onClick={() => handleDeleteBid(bid.bidId)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -43,11 +43,8 @@ const AdminPanel = () => {
                 { label: "Game Name", path: "/admin/game-management/game-name" },
                 { label: "Market Declare Result", path: "/admin/game-management/declare-market-result" },
                 { label: "Game Rates", path: "/admin/game-management/game-rates" },
-                { label: "On/Off Market", path: "/admin/game-management/on-off-market" },
                 { label: "Users Bid History", path: "/admin/game-management/bit-history" },
-                { label: "Bid Date Wise", path: "/admin/game-management/bid-date" },
-                { label: "Bet List", path: "/admin/game-management/bet-list" },
-                { label: "Winning History", path: "/admin/game-management/winning-history" },
+              
             ],
         },
         {
@@ -67,9 +64,9 @@ const AdminPanel = () => {
             label: "Wallet Management",
             icon: <i className="fa fa-wallet" aria-hidden="true"></i>,
             children: [
-                { label: "All Fund Requests", path: "/admin/wallet-management/all-fund-request" },
-                { label: "Fund Request", path: "/admin/wallet-management/fund-request" },
-                { label: "Offline Payment Records", path: "/admin/wallet-management/offline-payment-records" },
+                // { label: "All Fund Requests", path: "/admin/wallet-management/all-fund-request" },
+                // { label: "Fund Request", path: "/admin/wallet-management/fund-request" },
+                // { label: "Offline Payment Records", path: "/admin/wallet-management/offline-payment-records" },
                 { label: "Withdraw Request", path: "/admin/wallet-management/withdraw-request" },
                 { label: "Add Fund (User Wallet)", path: "/admin/wallet-management/add-fund" },
                 { label: "Remove Money", path: "/admin/wallet-management/remove-money" },
@@ -80,36 +77,43 @@ const AdminPanel = () => {
             icon: <i className="fa fa-star" aria-hidden="true"></i>,
             children: [
                 { label: "Game Name", path: "/admin/starline-management/game-name" },
-                { label: "All Bid History", path: "/admin/starline-management/all-bid-history" },
                 { label: "Bid History", path: "/admin/starline-management/bid-history" },
                 { label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
                 { label: "Game Rates", path: "/admin/starline-management/game-rates" },
             ],
         },
         {
-            label: "Declare Result",
-            path: "/admin/declare-result",
-            icon: <i className="fa fa-trophy" aria-hidden="true"></i>,
+            label: "All Bid History",
+            path: "/admin/starline-management/all-bid-history",
+            icon: <i class="fa fa-history" aria-hidden="true"></i>,
         },
         {
             label: "Auto Deposit History",
             path: "/admin/auto-deposit-history",
             icon: <i className="fa fa-history" aria-hidden="true"></i>,
         },
-        {
-            label: "Winning Prediction",
-            path: "/admin/winning-prediction",
-            icon: <i className="fa fa-chart-line" aria-hidden="true"></i>,
-        },
+       
         {
             label: "Notice Management",
             path: "/admin/notice-management",
             icon: <i className="fa fa-cog" aria-hidden="true"></i>,
         },
+
         {
-            label: "Notice Management",
-            path: "/admin/notice-management",
-            icon: <i className="fa fa-cog" aria-hidden="true"></i>,
+            label: "Settings",
+            icon: <i className="fa fa-cog"></i>,
+            children: [
+                { label: "General Setting", path: "/admin/settings/main" },
+                { label: "Bank Details", path: "/admin/settings/bank-details" },
+                { label: "App Links", path: "/admin/settings/app-links" },
+                { label: "Home Title", path: "/admin/settings/home-title" },
+                { label: "UPI Payment ID", path: "/admin/settings/upi-payment" }, // Added UPI Payment ID
+                { label: "Other Settings", path: "/admin/settings/other-settings" }, // Added Other Settings
+                { label: "How To Play", path: "/admin/settings/how-to-play" }, // Added How To Play
+                { label: "Refer & Earn", path: "/admin/settings/refer-earn" }, // Added Refer & Earn
+                { label: "Welcome Settings", path: "/admin/settings/welcome-settings" }, // Added Welcome Settings
+
+            ],
         },
     ];
 

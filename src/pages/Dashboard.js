@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaUser, FaGamepad, FaCoins } from "react-icons/fa";
 import instance from "../utils/axiosInstance";
-import { apiUrl } from "../utils/config";
+import { apiUrl, appiD } from "../utils/config";
 import { Spin } from "antd";
 const Dashboard = () => {
   const [totalBidAmount, setTotalBidAmount] = useState(0);
@@ -123,8 +123,28 @@ const Dashboard = () => {
       console.error("Error fetching user data:", error);
     }
   };
+
+  const [starlinecount, setStarlineCount] = useState(null);
+  const fetchStarlineCount = async () => {
+    try {
+      const response = await instance.get(
+        `/api/starlinebid/starline-total-bid-amount/${appiD}`
+      );
+      if (response) {
+        // console.log("goodVibees", response?.data);
+        setStarlineCount(response.data.totalAmount);
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+
   useEffect(() => {
     fetchCount();
+    fetchStarlineCount();
   }, []);
   const [countDash, setCountDash] = useState(null);
   console.log("countDash.......", countDash?.data);
@@ -315,7 +335,7 @@ const Dashboard = () => {
               ) : (
                 <div>
                   <h4 className="font-bold text-sm">Starline Bid Amount</h4>
-                  <p>{dashboardData.starlineBidAmount}</p>
+                  <p>{starlinecount}</p>
                 </div>
               )}
             </div>

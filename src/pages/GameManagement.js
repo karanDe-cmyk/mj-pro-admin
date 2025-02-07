@@ -1,399 +1,262 @@
 import React, { useState, useEffect } from "react";
-import { Form, Table, Button, Modal, Input, Select, Switch } from "antd";
-import EditModal from "./EditModal";
-import instance from "../utils/axiosInstance";
-import { apiUrl } from "../utils/config";
+import { Table, Button, Switch, TimePicker, Input, Form, Card, Row, Col, message,Modal, Empty, Spin } from "antd";
+import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import moment from "moment";
+import axios from "../utils/axiosInstance"; 
+import { appiD } from "../utils/config"; 
 
 const GameManagement = () => {
-  const [games, setGames] = useState(() => {
-    const savedGames = localStorage.getItem("games");
-    return savedGames ? JSON.parse(savedGames) : [];
-  });
+  const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
+  const [games, setGames] = useState([]); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGame, setEditingGame] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true); // New state to track initial loading
 
-  const [formData, setFormData] = useState({
-    marketName: "",
-    marketType: "",
-    marketOpenTime: "",
-    marketCloseTime: "",
-    games: "",
-  });
-
-  const [isConfirmDelete, setIsConfirmDelete] = useState(false);
-  const [gameToDelete, setGameToDelete] = useState(null);
-  const [editModalData, setEditModalData] = useState(null);
-  console.log("editModalData", editModalData)
   useEffect(() => {
-    localStorage.setItem("games", JSON.stringify(games));
-  }, [games]);
-  const handleAddMarket = async (values) => {
-    console.log(values);
-    if (
-      !values.market_name ||
-      !values.market_type ||
-      !values.open_time ||
-      !values.close_time ||
-      !values.games
-    ) {
-      Modal.error({
-        title: "Error",
-        content: "Please fill in all fields before adding a market.",
-      });
-      return;
-    }
-
-    // Check for duplicate market names
-    if (
-      games.some(
-        (game) => game.name.toLowerCase() === values.market_name.toLowerCase()
-      )
-    ) {
-      Modal.error({
-        title: "Error",
-        content:
-          "A market with this name already exists. Please use a unique name.",
-      });
-      return;
-    }
-
-    try {
-      const response = await instance.post(
-        `${apiUrl}/api/marketManagement/addMarketGame/3d88dae8-5904-40e9-b314-4906bc064be0d`,
-        {
-          market_name: values.market_name,
-          market_type: values.market_type,
-          open_time: values.open_time,
-          close_time: values.close_time,
-          games: values.games,
-          openActivity: values.open_activity,
-          closeActivity: false,
-          actions: {
-            edit_market: true,
-            edit_timings: false,
-            edit_games: true,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        console.log("Market added successfully");
-        // Add the new market to the local state
-        const newGame = {
-          id: games.length + 1,
-          name: values.market_name,
-          open: values.open_time,
-          close: values.close_time,
-          status: "Active",
-        };
-        setGames([...games, newGame]);
-        setFormData({
-          marketName: "",
-          marketType: "",
-          marketOpenTime: "",
-          marketCloseTime: "",
-          games: "",
-        });
-      } else {
-        throw new Error("Failed to add market");
-      }
-    } catch (error) {
-      console.error("Error adding market:", error);
-      Modal.error({
-        title: "Error",
-        content: "Failed to add market. Please try again.",
-      });
-    }
-  };
-  const handleDeleteGame = (record) => {
-    instance
-      .delete(
-        `${apiUrl}/api/marketManagement/deleteMarketGameById/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
-      )
-      .then((response) => {
-        console.log(response.data);
-        setGames(games.filter((game) => game.id !== record.id));
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-
-  const confirmDelete = () => {
-    setGames(games.filter((game) => game.id !== gameToDelete.id));
-    setIsConfirmDelete(false);
-    setGameToDelete(null);
-  };
-
-  const cancelDelete = () => {
-    setIsConfirmDelete(false);
-    setGameToDelete(null);
-  };
-
-  const handleEditGame = async (record) => {
-    try {
-      // Fetch single market details using API
-      const response = await instance.get(
-        `${apiUrl}/api/marketManagement/getSingleMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
-      );
-
-      if (response?.data) {
-        console.log("Fetched Market Data:", response.data);
-
-        // Populate modal with fetched data
-        setEditModalData({
-          id: record._id,
-          market_name: response.data.market_name,
-          open_time: response.data.open_time,
-          close_time: response.data.close_time,
-          openActivity: response.data.openActivity,
-          market_type: response.data.market_type,
-        });
-      } else {
-        throw new Error("Failed to fetch market data");
-      }
-    } catch (error) {
-      console.error("Error fetching market data:", error);
-    }
-  };
-
-  const [gameSingleMarketList, setGameSingleMarketList] = useState(null);
-  console.log("gameSingleMarketList", gameSingleMarketList?.data);
-  const handleEditChange = async (record, e = {}) => {
-    if (!record?._id) {
-      console.error("Error: Missing market ID!");
-      return;
-    }
-  
-    try {
-      const response = await instance.get(
-        `${apiUrl}/api/marketManagement/getSingleMarketGame/3d88dae8-5904-40e9-b314-4906bc064bed/${record._id}`
-      );
-  
-      if (response?.data) {
-        console.log("Market Data Received:", response.data);
-        setGameSingleMarketList(response?.data);
-      } else {
-        throw new Error("Failed to fetch market data");
-      }
-    } catch (error) {
-      console.error("Error fetching market data:", error);
-    }
-  };
-  
-
-  const handleSaveEdit = () => {
-    setGames(
-      games.map((game) =>
-        game.id === editModalData.id ? { ...editModalData } : game
-      )
-    );
-    setEditModalData(null);
-  };
-  const [gameMarketList, setGameMarketList] = useState(null);
-  console.log("gooVibesaaaaaaa", gameMarketList?.data);
-  const fetchMarketGameList = async () => {
-    try {
-      const response = await instance.get(
-        `${apiUrl}/api/marketManagement/getMarketGames/3d88dae8-5904-40e9-b314-4906bc064bed`
-      );
-      if (response) {
-        console.log("goodVibeedsdsdds", response);
-        setGameMarketList(response?.data);
-      } else {
-        throw new Error("Failed to fetch user data");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-  useEffect(() => {
-    fetchMarketGameList();
+    fetchGames();
   }, []);
 
+  const fetchGames = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/marketManagement/getMarketGames/${appiD}`);
+      if (response.data) {
+        setGames(response.data || []);
+      } else {
+        message.error("Failed to fetch market games.");
+      }
+    } catch (error) {
+      console.error("Error fetching games:", error);
+      message.error("Failed to fetch games.");
+    } finally {
+      setLoading(false);
+      setFirstLoad(false); // Stops showing the loader after the first request
+    }
+  };
 
+  const handleAddGame = async (values) => {
+    try {
+      const newGame = {
+        marketName: values.marketName,
+        gameName: values.gameName,
+        openTime: values.openTime.format("hh:mm A"),
+        closeTime: values.closeTime.format("hh:mm A"),
+        isActive: values.marketOnOff || false,
+      };
 
+      await axios.post(`/api/marketManagement/addMarketGame/${appiD}`, newGame);
+      message.success("Game added successfully!");
+      fetchGames();
+      form.resetFields();
+    } catch (error) {
+      console.error("Error adding game:", error);
+      message.error("Failed to add game.");
+    }
+  };
 
+  const handleToggle = async (id, isActive) => {
+    try {
+      await axios.put(`/api/marketManagement/updateMarketGame/${appiD}/${id}`, { isActive: !isActive });
+      message.success("Market status updated!");
+      fetchGames();
+    } catch (error) {
+      console.error("Error updating market status:", error);
+      message.error("Failed to update market status.");
+    }
+  };
 
+  const handleUpdate = async () => {
+    try {
+      const values = await editForm.validateFields();
+      const updatedGame = {
+        gameName: values.gameName,
+        weekends: values.weekends.map((day) => ({
+          ...day,
+          openTime: day.openTime.format("hh:mm A"),
+          closeTime: day.closeTime.format("hh:mm A"),
+        })),
+      };
+
+      await axios.put(`/api/marketManagement/updateMarketGame/${appiD}/${editingGame._id}`, updatedGame);
+      message.success("Game updated successfully!");
+      setIsModalOpen(false);
+      fetchGames();
+    } catch (error) {
+      console.error("Error updating game:", error);
+      message.error("Failed to update game.");
+    }
+  };
 
   const columns = [
-    {
-      title: "#",
-      dataIndex: "id",
-      key: "id",
+    { title: "#", dataIndex: "sNo", key: "sNo", render: (_, __, index) => index + 1, width: 50 },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName", width: 250 },
+    { title: "Open Time", dataIndex: "openTime", key: "openTime", width: 180 },
+    { title: "Close Time", dataIndex: "closeTime", key: "closeTime", width: 180 },
+    { 
+      title: "Active", 
+      dataIndex: "isActive", 
+      key: "isActive", 
+      render: (isActive, record) => (
+        <Switch checked={isActive} onChange={() => handleToggle(record._id, isActive)} />
+      ), 
+      width: 120 
     },
-    {
-      title: "Market Name",
-      dataIndex: "MarketName",
-      key: "MarketName",
-      render: (text, record) => record?.market_name,
-    },
-    {
-      title: "Today Open",
-      dataIndex: "todayOpen",
-      key: "todayOpen",
-      render: (text, record) => record?.open_time,
-    },
-    {
-      title: "Today Close",
-      dataIndex: "todayClose",
-      key: "todayClose",
-      render: (text, record) => record?.close_time,
-    },
-    {
-      title: "Market Status",
-      dataIndex: "openActivity",
-      key: "openActivity",
-      render: (text, record) => record?.openActivity ? "Open" : "Close",
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (text, record) => (
-        <span>
-          <Button
-            type="primary"
-            onClick={() => handleEditGame(record)} // Fetch data and open modal
-            style={{ marginRight: 16 }}
+    { 
+      title: "Actions", 
+      key: "actions", 
+      render: (_, record) => (
+        <>
+          <Button 
+            icon={<EditOutlined />} 
+            onClick={() => handleEdit(record)} 
+            style={{ 
+              marginRight: 10, 
+              backgroundColor: "#1890ff", 
+              color: "#fff", 
+              borderRadius: "5px", 
+              border: "none", 
+              padding: "4px 12px",
+              fontWeight: "500"
+            }}
           >
             Edit
           </Button>
-          <Button type="danger" onClick={() => handleDeleteGame(record)}>
-            Remove
+          <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record._id)} danger>
+            Delete
           </Button>
-        </span>
-      ),
-    }
-
+        </>
+      ), 
+      width: 180 
+    },
   ];
-  const [gameList, setGameList] = useState(null);
-  console.log("gooVibesaaaaaaa", gameList?.data);
-  const fetchGameList = async () => {
+
+  const handleEdit = (record) => {
+    setEditingGame(record);
+    setIsModalOpen(true);
+
+    editForm.setFieldsValue({
+      gameName: record.gameName,
+      weekends: record.weekends.map((day) => ({
+        ...day,
+        openTime: moment(day.openTime, "hh:mm A"),
+        closeTime: moment(day.closeTime, "hh:mm A"),
+        is_open: day.is_open,
+      })),
+    });
+  };
+
+  const handleDelete = async (id) => {
     try {
-      const response = await instance.get(
-        `${apiUrl}/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
-      );
-      if (response) {
-        console.log("goodVibeedsdsdds", response);
-        setGameList(response?.data);
-      } else {
-        throw new Error("Failed to fetch user data");
-      }
+      await axios.delete(`/api/marketManagement/deleteMarketGameById/${appiD}/${id}`);
+      message.success("Game deleted successfully!");
+      fetchGames();
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error deleting game:", error);
+      message.error("Failed to delete game.");
     }
   };
-  useEffect(() => {
-    fetchGameList();
-  }, []);
+
   return (
-    <div className="p-6">
-      <Form
-        name="basic"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
-        initialValues={{ remember: true }}
-        onFinish={handleAddMarket}
-        autoComplete="off"
-      >
-        <Form.Item
-          label="Market Name"
-          name="market_name"
-          rules={[
-            { required: true, message: "Please input your market name!" },
-          ]}
-        >
-          <Input />
-        </Form.Item>
+    <div style={{ padding: "40px", maxWidth: "1400px", margin: "auto" }}>
+      <Card style={{ padding: "30px", borderRadius: "10px", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)" }}>
+        <h2 style={{ textAlign: "center", fontSize: "28px", fontWeight: "600", marginBottom: "25px" }}>
+          Game Market
+        </h2>
 
-        <Form.Item
-          label="Market Type"
-          name="market_type"
-          rules={[
-            { required: true, message: "Please select your market type!" },
-          ]}
-        >
-          <Select>
-            <Select.Option value="">Select</Select.Option>
-            <Select.Option value="Main">Main</Select.Option>
-            <Select.Option value="Starline">Starline</Select.Option>
-            <Select.Option value="King Jackpot">King Jackpot</Select.Option>
-          </Select>
-        </Form.Item>
+        {/* ADD GAME SECTION */}
+        <Card style={{ padding: "25px", borderRadius: "8px", marginBottom: "25px", backgroundColor: "#f8f8f8" }}>
+          <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "15px" }}>Add Game</h3>
+          <Form form={form} layout="inline" onFinish={handleAddGame} style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap" }}>
 
-        <Form.Item
-          label="Market Open Time"
-          name="open_time"
-          rules={[
-            { required: true, message: "Please input your market open time!" },
-          ]}
-        >
-          <Input type="time" />
-        </Form.Item>
+          <div>
+              <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Market Name</label>
+              <Form.Item name="marketName" rules={[{ required: true, message: "Enter Market name" }]}>
+                <Input placeholder="Enter Market Name" style={{ width: "250px" }} />
+              </Form.Item>
+            </div>
 
-        <Form.Item
-          label="Market Close Time"
-          name="close_time"
-          rules={[
-            { required: true, message: "Please input your market close time!" },
-          ]}
-        >
-          <Input type="time" />
-        </Form.Item>
+            <div>
+              <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Game Name</label>
+              <Form.Item name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
+                <Input placeholder="Enter Game Name" style={{ width: "250px" }} />
+              </Form.Item>
+            </div>
 
-        <Form.Item
-          label="Select Game"
-          name="games"
-          rules={[{ required: true, message: "Please select your game!" }]}
-        >
-          <Select
-            mode="multiple"
-            allowClear
-            style={{ width: "100%" }}
-            placeholder="Select Games"
-          >
-            <Select.Option value="">Select Game</Select.Option>
-            <Select.Option value="singleDigit">Single Digit</Select.Option>
-            <Select.Option value="singlePanna">Single Paana</Select.Option>
-            <Select.Option value="doubleDigit">Double Digit</Select.Option>
-            <Select.Option value="doublePanna">Double Paana</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item
-          label="Open Activity"
-          name="open_activity"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
-        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button type="primary" htmlType="submit">
-            Add Market
-          </Button>
-        </Form.Item>
-      </Form>
+            <div>
+              <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Market Open Time</label>
+              <Form.Item name="openTime" rules={[{ required: true, message: "Select open time" }]}>
+                <TimePicker format="hh:mm A" use12Hours style={{ width: "170px" }} />
+              </Form.Item>
+            </div>
 
-      <Table columns={columns} dataSource={gameMarketList?.data} />
+            <div>
+              <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Market Close Time</label>
+              <Form.Item name="closeTime" rules={[{ required: true, message: "Select close time" }]}>
+                <TimePicker format="hh:mm A" use12Hours style={{ width: "170px" }} />
+              </Form.Item>
+            </div>
 
-      {isConfirmDelete && (
-        <Modal
-          title="Are you sure you want to delete?"
-          visible={true}
-          onOk={confirmDelete}
-          onCancel={cancelDelete}
-        >
-          <p>Are you sure you want to delete this game?</p>
-        </Modal>
-      )}
+            <div>
+              <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Market On/Off</label>
+              <Form.Item name="marketOnOff" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </div>
 
-      {editModalData && (
-        <EditModal
-          gameSingleMarketList={gameSingleMarketList}
-          gameData={editModalData}
-          onChange={handleEditChange}
-          onSave={handleSaveEdit}
-          onClose={() => setEditModalData(null)}
-        />
-      )}
+            <Form.Item>
+              <Button type="primary" htmlType="submit" icon={<PlusOutlined />} style={{ fontWeight: "600" }}>
+                Add Game
+              </Button>
+            </Form.Item>
+
+          </Form>
+        </Card>
+
+        {/* TABLE SECTION */}
+        <Card style={{ padding: "20px", borderRadius: "8px" }}>
+          <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "15px" }}>Game List</h3>
+
+          {firstLoad ? (
+            <div style={{ textAlign: "center", padding: "50px" }}>
+              <Spin size="large" />
+            </div>
+          ) : games.length === 0 ? (
+            <Empty description="No Games Available" />
+          ) : (
+            <Table columns={columns} dataSource={games} loading={loading} pagination={{ pageSize: 5 }} bordered />
+          )}
+        </Card>
+      </Card>
+
+       {/* Edit Modal */}
+       <Modal title="Edit Game" open={isModalOpen} onCancel={() => setIsModalOpen(false)} onOk={handleUpdate} width={700}>
+        <Form form={editForm} layout="vertical">
+          <Form.Item label="Game Name" name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
+            <Input />
+          </Form.Item>
+          <Row gutter={[16, 16]}>
+            {editingGame &&
+              editingGame.weekends.map((day, index) => (
+                <Col span={12} key={day.day}>
+                  <Card size="small" title={day.day} style={{ textAlign: "center" }}>
+                    <Form.Item name={["weekends", index, "openTime"]} label="Open Time" rules={[{ required: true }]}>
+                      <TimePicker format="hh:mm A" use12Hours />
+                    </Form.Item>
+                    <Form.Item name={["weekends", index, "closeTime"]} label="Close Time" rules={[{ required: true }]}>
+                      <TimePicker format="hh:mm A" use12Hours />
+                    </Form.Item>
+                    <Form.Item name={["weekends", index, "is_open"]} label="Is Active" valuePropName="checked">
+                      <Switch />
+                    </Form.Item>
+                  </Card>
+                </Col>
+              ))}
+          </Row>
+        </Form>
+      </Modal>
+
     </div>
   );
 };

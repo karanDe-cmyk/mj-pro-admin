@@ -1,0 +1,134 @@
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance"; // Assuming axiosInstance is set up
+import { appiD } from "../../utils/config"; // Ensure appiD is correctly imported
+
+const HowToPlay = () => {
+  const [description, setDescription] = useState("Enter a short description...");
+  const [howToPlayContent, setHowToPlayContent] = useState(
+    "Download our application from Google Play Store or from our official website. Register with your mobile number, email, and start using our platform."
+  );
+  const [videoLink, setVideoLink] = useState("");
+  const [id, setId] = useState(""); // To store the ID of the existing content
+  const [loading, setLoading] = useState(false); // Loading state
+
+  // Fetch the existing content using GET API
+  useEffect(() => {
+    const fetchHowToPlayContent = async () => {
+      try {
+        setLoading(true); // Set loading to true while data is being fetched
+        const response = await axiosInstance.get(`/api/settings/howtoplay/${appiD}`);
+        const data = response.data[0]; // Assuming data is an array with one object
+        
+        if (data) {
+          setDescription(data.howtoplay_content || "Enter a short description...");
+          setHowToPlayContent(data.howtoplay_content || ""); 
+          setVideoLink(data.video_link || "");
+          setId(data._id); // Save the ID for updating
+        }
+      } catch (error) {
+        console.error("Error fetching How to Play data:", error);
+        alert("Failed to fetch How to Play content.");
+      } finally {
+        setLoading(false); // Set loading to false after the data fetch is complete
+      }
+    };
+
+    fetchHowToPlayContent();
+  }, []); // Empty dependency array to run only once when component mounts
+
+  // Handle input changes
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
+  };
+
+  const handleContentChange = (e) => {
+    setHowToPlayContent(e.target.value);
+  };
+
+  const handleVideoLinkChange = (e) => {
+    setVideoLink(e.target.value);
+  };
+
+  // Handle the update request using PUT API
+  const handleUpdate = async () => {
+    if (!description.trim() || !howToPlayContent.trim() || !videoLink.trim()) {
+      alert("All fields must be filled out.");
+      return;
+    }
+
+    try {
+      await axiosInstance.put(`/api/settings/howtoplay/${appiD}/${id}`, {
+        howtoplay_content: howToPlayContent,
+        video_link: videoLink,
+      });
+
+      alert("How to Play Content Updated Successfully!");
+      console.log("Updated Description:", description);
+      console.log("Updated Content:", howToPlayContent);
+      console.log("Updated Video Link:", videoLink);
+    } catch (error) {
+      console.error("Error updating How to Play content:", error);
+      alert("Failed to update How to Play content.");
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+      <h2 className="text-xl font-bold text-blue-600 mb-4">How To Play</h2>
+
+      {/* Show loading indicator while fetching */}
+      {loading ? (
+        <div className="text-center">Loading...</div>
+      ) : (
+        <>
+          {/* Description Input */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold">Short Description</label>
+            <textarea
+              name="description"
+              value={description}
+              onChange={handleDescriptionChange}
+              placeholder="Enter a short description..."
+              className="w-full border border-gray-300 p-2 rounded-md h-20"
+            ></textarea>
+          </div>
+
+          {/* Video Link Input */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold">Video Link</label>
+            <input
+              type="text"
+              name="videoLink"
+              value={videoLink}
+              onChange={handleVideoLinkChange}
+              placeholder="Enter YouTube or Video Link"
+              className="w-full border border-gray-300 p-2 rounded-md"
+            />
+          </div>
+
+          {/* How To Play Content Input Field */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold">How To Play Content</label>
+            <textarea
+              name="howToPlayContent"
+              value={howToPlayContent}
+              onChange={handleContentChange}
+              placeholder="Enter detailed How To Play instructions..."
+              className="w-full border border-gray-300 p-2 rounded-md h-32"
+            ></textarea>
+          </div>
+
+          {/* Update Button */}
+          <button
+            onClick={handleUpdate}
+            className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+          >
+            Update
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default HowToPlay;

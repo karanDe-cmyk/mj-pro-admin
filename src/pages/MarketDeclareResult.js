@@ -1,243 +1,400 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Table, Button, Form, Select, DatePicker, Input, Spin, message } from "antd";
+import { Modal, Table, Button, Form, Select, DatePicker, Input, message } from "antd";
 import instance from "../utils/axiosInstance";
-import { apiUrl } from "../utils/config";
+import { appiD } from "../utils/config";
+import moment from "moment";
 
 const MarketDeclareResult = () => {
   const [form] = Form.useForm();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [gameMarketList, setMarketGameList] = useState(null);
-  console.log("gameMarketList",gameMarketList?.data);
-  const [selectedGame, setSelectedGame] = useState(null);
+  const [editForm] = Form.useForm();
+  const [marketGameList, setMarketGameList] = useState([]);
+  const [gameOptions, setGameOptions] = useState([]);
+  const [allGames, setAllGames] = useState([]);
   const [selectedMarketGame, setSelectedMarketGame] = useState(null);
-console.log("selectedMarketGame",selectedMarketGame);
+  const [selectedGameName, setSelectedGameName] = useState(null);
   const [digitValue, setDigitValue] = useState("");
-  const [winnerList, setWinnerList] = useState(null);
-  console.log("winnerList",winnerList?.data);
-  const [loadingWinnerList, setLoadingWinnerList] = useState(false); // Spinner state for Winner List
-  const [declear, setDeclear] = useState({});
-  
-  // Add loading state for Declare Result form submission
+  const [loading, setLoading] = useState(false);
   const [loadingDeclareResult, setLoadingDeclareResult] = useState(false);
+  const [isWinnerModalVisible, setIsWinnerModalVisible] = useState(false);
+  const [winners, setWinners] = useState([]);
+  const [gameResults, setGameResults] = useState([]); // ✅ Stores game result history
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editingWinner, setEditingWinner] = useState(null);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-  // Add loading state for Declared Results Table
-  const [loadingDeclaredResults, setLoadingDeclaredResults] = useState(false);
 
-  // Winner List Columns
-  const winnerListColumns = [
-    { title: "Bid ID", dataIndex: "bidId", key: "bidId" },
-    { title: "Digit", dataIndex: "digit", key: "digit" },
-    { title: "Panna", dataIndex: "panna", key: "panna" },
-    { title: "Points", dataIndex: "points", key: "points" },
-    { title: "Market", dataIndex: "market", key: "market" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
-    { title: "Win Status", dataIndex: "win", key: "win" },
-  ];
+  const pannaOptions = ["000", ...Array.from({ length: 900 }, (_, i) => (100 + i).toString())];
 
-  // Fetch Game List
+ 
+
   const fetchMarketGameList = async () => {
     try {
-      const response = await instance.get(
-        `http://localhost:5001/api/marketManagement/getMarketGames/3d88dae8-5904-40e9-b314-4906bc064bed`
-      );
+      setLoading(true);
+      const response = await instance.get(`/api/marketManagement/getMarketGames/${appiD}`);
       if (response?.data) {
-        setMarketGameList(response?.data);
-      } else {
-        throw new Error("Failed to fetch game data");
+        const uniqueMarkets = [
+          ...new Set(response.data.map((item) => item.marketName).filter((name) => name && name.trim() !== "")),
+        ];
+        setMarketGameList(uniqueMarkets);
+        setAllGames(response.data);
       }
     } catch (error) {
-      console.error("Error fetching game list:", error);
+      console.error("Error fetching market and game list:", error);
+      message.error("Failed to fetch market & game names.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    // Function to open the edit modal with selected bid data
+    const handleEdit = (record) => {
+      setEditingWinner(record);
+      editForm.setFieldsValue({
+        bidId: record.bidId,
+        newPoints: record.points,
+        newbidvalue: record.digit,
+      });
+      setIsEditModalVisible(true);
+    };
+
+    
+   // ✅ Fetch Declared Results (Game Result History)
+   const fetchDeclaredResults = async () => {
+    if (!appiD) {
+      console.warn("appiD is undefined, skipping API call.");
+      return;
+    }
+  
+    try {
+      setLoading(true);
+      const response = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult/${appiD}`);
+      
+      if (response?.data?.results) {
+        setGameResults(response.data.results);
+      } else {
+        setGameResults([]); // Ensure empty array if no results
+      }
+    } catch (error) {
+      console.error("Error fetching declared results:", error);
+      message.error("Failed to fetch declared results. Please try again.");
+    }finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchMarketGameList();
-  }, []);
-
-  // Show Winner List in Modal
-  const showWinnerList = async () => {
-    if (!selectedGame || !digitValue) {
-      message.error("Please select a game and digit to fetch winner list.");
+    fetchDeclaredResults();
+  }, [appiD]);
+  
+  const fetchWinners = async () => {
+    const values = form.getFieldsValue();
+    if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
+      message.error("Please select all required fields to show winners.");
       return;
     }
-    
-    setIsModalVisible(true);
-    setLoadingWinnerList(true); // Show the loading spinner
+  
+    try {
+      setLoading(true);
+      const response = await instance.post(`/api/showwinners/getWinningBids/${appiD}`, {
+        marketName: values.marketGame,
+        gameName: values.gameName,
+        date: values.resultDate ? values.resultDate.format("DD-MM-YYYY") : moment().format("DD-MM-YYYY"),
+        gameType: values.gameType,
+        digit: values.digit,
+        panna: values.panna,
+      });
+  
+      // console.log("API Response:", response.data); // ✅ Debug API response
+  
+      if (response?.data?.winners && Array.isArray(response.data.winners)) {
+        setWinners(response.data.winners);
+      } else {
+        setWinners([]); // ✅ Ensure winners is always an array
+      }
+  
+      setIsWinnerModalVisible(true);
+    } catch (error) {
+      console.error("Error fetching winners:", error);
+      message.error("Failed to fetch winner data.");
+      setWinners([]); // ✅ Handle API errors gracefully
+      setIsWinnerModalVisible(true); // ✅ Ensure modal opens even if error
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // ✅ Declare Winner & Update Wallet
+  const declareWinner = async () => {
+    const values = form.getFieldsValue();
+    if (!winners.length) {
+      message.warning("No winners to declare.");
+      return;
+    }
 
     try {
-      const response = await instance.get(
-        `http://localhost:5001/api/marketManagement/showMarketWinners/3d88dae8-5904-40e9-b314-4906bc064bed/123`
-      );
-      if (response?.data) {
-        setWinnerList(response.data);
-      } else {
-        message.error("No winner data found.");
-        setWinnerList(null);
-      }
+      setLoadingDeclareResult(true);
+      await instance.post(`/api/mainmarketdeclareResult/declareResult/${appiD}`, {
+        marketName: values.marketGame,
+        gameName: values.gameName,
+        date: values.resultDate ? values.resultDate.format("DD-MM-YYYY") : moment().format("DD-MM-YYYY"),
+        gameType: values.gameType,
+        digit: values.digit,
+        panna: values.panna,
+      });
+
+      message.success("Winner declared successfully!");
+      setIsWinnerModalVisible(false);
+      fetchDeclaredResults();
     } catch (error) {
-      console.error("Error fetching winner list:", error);
-      message.error("Failed to fetch winner list.");
-      setWinnerList(null);
+      message.error("Failed to declare winner.");
     } finally {
-      setLoadingWinnerList(false); // Hide the loading spinner
+      setLoadingDeclareResult(false);
     }
   };
 
-  // Declare Result Form Submission
-  const onFinish = (values) => {
-    setLoadingDeclareResult(true); // Show spinner on form submission
+  const handleMarketChange = (selectedMarket) => {
+    const filteredGames = allGames
+      .filter((game) => game.marketName === selectedMarket)
+      .map((game) => game.gameName);
 
-    const declareResultBody = {
-      market: values.market,
-      marketName:selectedMarketGame,
-      panna: parseInt(values.panna),
-      points: parseInt(values.points),
-      gameType: values.gameType,
-      digit: parseInt(values.digit),
+    setGameOptions([...new Set(filteredGames)]);
+    setSelectedMarketGame(selectedMarket);
+    form.setFieldsValue({ gameName: undefined });
+  };
+
+  const handlePannaChange = (value) => {
+    const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+    setDigitValue(sum % 10);
+    form.setFieldsValue({ digit: sum % 10 });
+  };
+
+  const deleteGameResult = async (id) => {
+    try {
+      await instance.delete(`/api/marketManagement/deleteGameResult/${appiD}/${id}`);
+      message.success("Game result deleted successfully!");
+      setGameResults((prevResults) => prevResults.filter((result) => result._id !== id));
+    } catch (error) {
+      message.error("Failed to delete game result.");
+    }
+  };
+
+  const handleDelete = async (record) => {
+    try {
+      setIsDeleting(true);
+      await instance.delete(`/api/bid/deleteBid/${appiD}/${record._id}`,{
+        bidId: record.bidId,
+      });
+      
+      message.success("Bid deleted successfully!");
+      
+      // Remove the deleted winner from the state
+      setWinners((prev) => prev.filter((winner) => winner._id !== record._id));
+    } catch (error) {
+      console.error("Error deleting bid:", error);
+      message.error("Failed to delete bid.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+    // Function to update the bid
+    const handleSaveEdit = async () => {
+      try {
+        setIsSavingEdit(true);
+        const values = editForm.getFieldsValue();
+          console.log(values)
+        await instance.put(`/api/bid/updateBid/${appiD}/${editingWinner._id}`, {
+          bidId: editingWinner.bidId,
+          newPoints: editingWinner.points,
+          newbidvalue: editingWinner.digit,
+        });
+  
+        message.success("Bid updated successfully!");
+        
+        // Update the local winners list dynamically
+        setWinners((prev) =>
+          prev.map((winner) =>
+            winner._id === editingWinner._id ? { ...winner, ...values } : winner
+          )
+        );
+  
+        setIsEditModalVisible(false);
+      } catch (error) {
+        console.error("Error updating bid:", error);
+        message.error("Failed to update bid.");
+      } finally {
+        setIsSavingEdit(false);
+      }
     };
 
-    instance
-      .post(
-        `${apiUrl}/api/marketManagement/addMarketDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed`,
-        declareResultBody
-      )
-      .then((response) => {
-        console.log("Result declared successfully:", response);
 
-        // Fetch declared result
-        setLoadingDeclaredResults(true); // Show spinner when fetching declared results
-        instance
-          .get(
-            `${apiUrl}/api/marketManagement/getMarketDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed/${selectedMarketGame}/${selectedGame}/1/123/open`,
-          
-          )
-          .then((response) => {
-            console.log("Declared result:", response?.data);
-            setDeclear(response?.data);
-          })
-          .catch((error) => {
-            console.error("Error fetching declared result:", error);
-          })
-          .finally(() => {
-            setLoadingDeclaredResults(false); // Hide the spinner when data is loaded
-          });
-      })
-      .catch((error) => {
-        console.error("Error declaring result:", error);
-      })
-      .finally(() => {
-        setLoadingDeclareResult(false); // Hide the spinner when done
-      });
-  };
-
-  const handleOk = () => {
-    setIsModalVisible(false);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const DeclearListColumns = [
-    { title: "Digit", dataIndex: "digit", key: "digit" },
-    { title: "Panna", dataIndex: "panna", key: "panna" },
-    { title: "Points", dataIndex: "points", key: "points" },
-    { title: "Market", dataIndex: "market", key: "market" },
-    { title: "Email", dataIndex: "email", key: "email" },
+  const winnerColumns = [
+    { title: "Member Name", dataIndex: "userName", key: "userName" },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
     { title: "Game Type", dataIndex: "gameType", key: "gameType" },
-    { title: "Win", dataIndex: "win", key: "win" },
-    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
-    { title: "Updated At", dataIndex: "updatedAt", key: "updatedAt" },
+    { title: "Digit/Pana", dataIndex: "digit", key: "digit" },
+    { title: "Bid Amount", dataIndex: "points", key: "points" },
+    { title: "Winning Amount", dataIndex: "winningPoints", key: "winningPoints" },
+  ];
+
+  const gameResultColumns = [
+    { title: "S. No", dataIndex: "sNo", key: "sNo", render: (_, __, index) => index + 1 },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
+    { title: "Panna", dataIndex: "panna", key: "panna" },
+    { title: "Digit", dataIndex: "digit", key: "digit" },
+    { title: "Total Winners", dataIndex: "totalWinners", key: "totalWinners" },
+    { title: "Date", dataIndex: "date", key: "date", render: (date) => moment(date).format("DD-MM-YYYY") },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Button type="danger" onClick={() => deleteGameResult(record._id)}>
+          Delete
+        </Button>
+      ),
+    },
   ];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md">
-        {/* Select Game Section */}
-        <div className="mb-8">
-          <h1 className="text-lg font-bold mb-4">Select Market Game</h1>
-          <Form form={form} onFinish={onFinish}>
-            <Form.Item name="resultDate" label="Result Date">
-              <DatePicker />
-            </Form.Item>
-            <Form.Item name="marketGame" label="Market Game">
-              <Select onChange={(value) => setSelectedMarketGame(value)}>
-                {gameMarketList?.data?.map((game) => (
-                    <Select.Option key={game.id} value={game?.market_name}>
-                        {game?.market_name}
-                    </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name="gameType" label="Game Type">
-              <Select onChange={(value) => setSelectedGame(value)}>
-              <Select.Option value="singlePanna">Single Panna</Select.Option>
-              <Select.Option value="singleDigit">Single Digit</Select.Option>
-              <Select.Option value="doublePanna">Double Panna</Select.Option>
-              <Select.Option value="doubleDigit">Double Digit</Select.Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name="market" label="Market">
-              <Select>
-                <Select.Option value="open">Open</Select.Option>
-                <Select.Option value="close">Close</Select.Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name="digit" label="Digit">
-              <Input onChange={(e) => setDigitValue(e.target.value)} />
-            </Form.Item>
-            <Form.Item name="panna" label="Panna">
-              <Input />
-            </Form.Item>
-            <Form.Item name="points" label="Points">
-              <Input />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loadingDeclareResult}>
-                {loadingDeclareResult ? "Declaring..." : "Declare Market Result"}
-              </Button>
-              <Button
-                type="primary"
-                style={{ marginLeft: 8 }}
-                onClick={showWinnerList}
-              >
-                Show Winner List
-              </Button>
-            </Form.Item>
-          </Form>
-        </div>
+        <h1 className="text-lg font-bold mb-4">Select Market Game</h1>
+        <Form form={form}>
+          <Form.Item name="resultDate" label="Date" rules={[{ required: true }]}>
+            <DatePicker format="DD-MM-YYYY" />
+          </Form.Item>
 
-        {/* Winner List Modal */}
-        <Modal
-          title="Winner List"
-          visible={isModalVisible}
-          onOk={handleOk}
-          onCancel={handleCancel}
-          width={900}
-          style={{ top: 20, overflow: "auto" }}
-        >
-          <Spin spinning={loadingWinnerList}>
-            <Table
-              columns={winnerListColumns}
-              dataSource={winnerList?.data}
-              loading={loadingWinnerList} // Optional: Display loading on Table itself
-              rowKey="bidId"
-            />
-          </Spin>
-        </Modal>
+          <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]}>
+            <Select onChange={handleMarketChange} placeholder="Select Market" loading={loading}>
+              {marketGameList.map((market, index) => (
+                <Select.Option key={index} value={market}>
+                  {market}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-        {/* Declared Results Table with Spinner */}
-        <Spin spinning={loadingDeclaredResults}> {/* Wrap table with Spin */}
-          <Table
-            columns={DeclearListColumns}
-            dataSource={declear?.data}
-            scroll={{ x: 1000 }}
-            rowKey="bidId"
-          />
-        </Spin>
+          <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]}>
+            <Select
+              onChange={(value) => setSelectedGameName(value)}
+              placeholder="Select Game"
+              disabled={!gameOptions.length}
+            >
+              {gameOptions.map((game, index) => (
+                <Select.Option key={index} value={game}>
+                  {game}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]}>
+            <Select>
+              <Select.Option value="open">Open</Select.Option>
+              <Select.Option value="close">Close</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="panna" label="Panna" rules={[{ required: true }]}>
+            <Select onChange={handlePannaChange}>
+              {pannaOptions.map((panna) => (
+                <Select.Option key={panna} value={panna}>
+                  {panna}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="digit" label="Digit">
+            <Input value={digitValue} readOnly />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" onClick={fetchWinners}>
+              Show Winners
+            </Button>
+            <Button type="primary" loading={loadingDeclareResult} onClick={declareWinner} className="ml-2">
+              Declare Result
+            </Button>
+          </Form.Item>
+        </Form>
       </div>
+
+      <Modal
+  title="Show Winner List"
+  open={isWinnerModalVisible}
+  onCancel={() => setIsWinnerModalVisible(false)}
+  width="80%"
+  style={{ maxHeight: "80vh", overflowY: "auto" }}
+  footer={null}
+>
+{winners.length > 0 ? (
+          <Table
+            columns={[
+              { title: "Game Name", dataIndex: "gameName" },
+              { title: "Date", dataIndex: "time" },
+              { title: "Digit/Pana", dataIndex: "digit" },
+              {
+                title: "Type",
+                render: (_, record) => (record.open ? "Open" : record.close ? "Close" : "N/A"),
+              },
+              { title: "Bid Amount", dataIndex: "points" },
+              { title: "Winning Amount", dataIndex: "winningPoints" },
+              {
+                title: "Action",
+                render: (_, record) => (
+                  <div>
+                    <Button type="primary" onClick={() => handleEdit(record)}>
+                      Edit
+                    </Button>
+                    <Button
+                      type="danger"
+                      onClick={() => handleDelete(record)}
+                      loading={isDeleting}
+                      style={{ marginLeft: "10px" }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            dataSource={winners}
+            rowKey="_id"
+          />
+        ) : (
+          <p style={{ textAlign: "center", fontSize: "16px", padding: "20px", color: "#ff4d4f" }}>
+            No winners found.
+          </p>
+        )}
+</Modal>
+         {/* Edit Bid Modal */}
+      <Modal
+        title="Edit Bid"
+        open={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        onOk={handleSaveEdit}
+        confirmLoading={isSavingEdit}
+      >
+        <Form form={editForm} layout="vertical">
+          <Form.Item label="Bid Amount" name="points" rules={[{ required: true, message: "Please enter bid amount" }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item label="Bid Number" name="digit" rules={[{ required: true, message: "Please enter bid number" }]}>
+            <Input type="number" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
+        <h2 className="text-lg font-bold mb-4">Game Result History</h2>
+        <Table columns={gameResultColumns} dataSource={gameResults} pagination={false} rowKey="_id" />
+      </div>
+      
     </div>
+    
   );
 };
 
