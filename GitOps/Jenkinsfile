@@ -2,15 +2,26 @@
 pipeline {
     agent any
     
-    environment {
-        DOCKER_IMAGE = "saurav547/matka-Frontend"
-        K8S_MANIFEST_PATH = "kubernetes/Frontend.yaml"
+    parameters {
+        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'frontend Docker tag of the image built by the CI job')
     }
 
     stages {
+        stage("Validate Parameters") {
+            steps {
+                script {
+                    if (params.FRONTEND_DOCKER_TAG == '') {
+                        error("FRONTEND_DOCKER_TAG must be provided.")
+                    }
+                }
+            }
+        }
+
         stage("Workspace Cleanup") {
             steps {
-                cleanWs()
+                script {
+                    cleanWs()
+                }
             }
         }
         
@@ -21,49 +32,65 @@ pipeline {
                 }
             }
         }
-
-        stage("Update Kubernetes Manifests") {
+        
+        stage("Verify: Docker Image Tags") {
             steps {
                 script {
-                    sh """
-                        sed -i 's|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${params.Frontend_DOCKER_TAG}|' ${K8S_MANIFEST_PATH}
-                    """
+                    echo "Using FRONTEND_DOCKER_TAG: ${params.FRONTEND_DOCKER_TAG}"
+                }
+            }
+        }
+        
+        stage("Update: Kubernetes Manifests") {
+            steps {
+                script {
+                    dir('kubernetes') {
+                        sh """
+                            #!/bin/bash
+                            sed -i 's|image: saurav547/matka-frontend:.*|image: saurav547/matka-frontend:${params.FRONTEND_DOCKER_TAG}|' frontend.yaml
+                        """
+                    }
                 }
             }
         }
 
-        stage("Git: Commit & Push Changes") {
+        stage("Git: Commit & Push Updates") {
             steps {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-Cred', gitToolName: 'Default')]) {
                         sh '''
+                            #!/bin/bash
                             git config --global user.email "sauravgarg5922@gmail.com"
                             git config --global user.name "sauravgarg547"
 
-                            if git diff --exit-code ${K8S_MANIFEST_PATH}; then
-                                echo "No changes to commit."
-                            else
-                                git add ${K8S_MANIFEST_PATH}
-                                git commit -m "Updated Frontend image tag to ${params.Frontend_DOCKER_TAG}"
-                                git push origin himanshu
-                            fi
+                            echo "Checking repository status..."
+                            git status
+                            
+                            echo "Adding changes..."
+                            git add kubernetes/frontend.yaml
+                            
+                            echo "Committing changes..."
+                            git commit -m "Updated frontend image tag to ${FRONTEND_DOCKER_TAG}" || echo "No changes to commit"
+                            
+                            echo "Pushing changes..."
+                            git push origin himanshu
                         '''
                     }
                 }
             }
         }
     }
-
+    
     post {
         success {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "✅ Matka Frontend Deployment Successful!",
+                subject: "Matka Frontend Application Deployed - '${currentBuild.result}'",
                 body: """
                     <html>
                     <body>
-                        <h3 style="color: green;">Matka Frontend Deployment Success 🎉</h3>
+                        <h3 style="color: green;">Matka Backend Deployment Success</h3>
                         <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                         <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
@@ -79,11 +106,11 @@ pipeline {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "❌ Matka Frontend Deployment Failed",
+                subject: "Matka Frontend Deployment Failed - '${currentBuild.result}'",
                 body: """
                     <html>
                     <body>
-                        <h3 style="color: red;">Matka Frontend Deployment Failed 🚨</h3>
+                        <h3 style="color: red;">Matka Backend Deployment Failed</h3>
                         <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                     </body>
