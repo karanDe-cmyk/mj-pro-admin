@@ -1,30 +1,19 @@
-# Stage 1: Build Stage
-FROM node:22 AS build
+FROM node:22
+
+# Set working directory
 WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm install
 
-# Copy source files and build the application
+# Install dependencies (cache this layer)
+RUN npm install --production
+
+# Copy all other source files
 COPY . .
-RUN npm run build
 
-# Stage 2: Production Stage
-FROM nginx:alpine AS production
-WORKDIR /usr/share/nginx/html
+# Expose port
+EXPOSE 3000
 
-# Remove default nginx static assets and copy built React files
-RUN rm -rf ./*
-COPY --from=build /app/build ./
-
-# Expose the required port
-EXPOSE 80
-
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
-
-
-
-
-
+# Start the React app
+CMD ["npm", "start"]
