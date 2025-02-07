@@ -56,6 +56,15 @@ pipeline {
                 }
             }
         }
+
+        stage('Docker: Cleanup Local Images'){
+            step{
+                script{
+                    echo "Cleaning up local Docker images..."
+                    sh "docker image prune -f"
+                }
+            }
+        }
     }
 
     post {
