@@ -7,9 +7,19 @@ pipeline {
     }
 
     stages {
-        stage("Workspace cleanup"){
-            steps{
-                script{
+        stage("Validate Parameters") {
+            steps {
+                script {
+                    if (params.BACKEND_DOCKER_TAG == '') {
+                        error("BACKEND_DOCKER_TAG must be provided.")
+                    }
+                }
+            }
+        }
+
+        stage("Workspace Cleanup") {
+            steps {
+                script {
                     cleanWs()
                 }
             }
@@ -17,100 +27,97 @@ pipeline {
         
         stage('Git: Code Checkout') {
             steps {
-                script{
-                   git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
+                script {
+                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
                 }
             }
         }
         
-        stage('Verify: Docker Image Tags') {
+        stage("Verify: Docker Image Tags") {
             steps {
-                script{
-                    echo "BACKEND_DOCKER_TAG: ${params.BACKEND_DOCKER_TAG}"
+                script {
+                    echo "Using BACKEND_DOCKER_TAG: ${params.BACKEND_DOCKER_TAG}"
                 }
             }
         }
         
-        
-        stage("Update: Kubernetes manifests"){
-            steps{
-                script{
-                    dir('kubernetes'){
+        stage("Update: Kubernetes Manifests") {
+            steps {
+                script {
+                    dir('kubernetes') {
                         sh """
-                            sed -i -e s/matka-backend*/matka-backend:${params.BACKEND_DOCKER_TAG}/g backend.yaml
+                            #!/bin/bash
+                            sed -i 's|image: saurav547/matka-backend:.*|image: saurav547/matka-backend:${params.BACKEND_DOCKER_TAG}|' backend.yaml
                         """
                     }
-                    
                 }
             }
         }
-        
-        stage("Git: Code update and push to GitHub"){
-            steps{
-                script{
+
+        stage("Git: Commit & Push Updates") {
+            steps {
+                script {
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-Cred', gitToolName: 'Default')]) {
                         sh '''
-                        echo "Checking repository status: "
-                        git status
-                    
-                        echo "Adding changes to git: "
-                        git add .
-                        
-                        echo "Commiting changes: "
-                        git commit -m "Updated environment variables"
-                        
-                        echo "Pushing changes to github: "
-                        git push https://github.com/MaccoTechgit/Matka-Fronted.git himanshu
-                    '''
+                            #!/bin/bash
+                            git config --global user.email "sauravgarg5922@gmail.com"
+                            git config --global user.name "sauravgarg547"
+
+                            echo "Checking repository status..."
+                            git status
+                            
+                            echo "Adding changes..."
+                            git add kubernetes/backend.yaml
+                            
+                            echo "Committing changes..."
+                            git commit -m "Updated backend image tag to ${BACKEND_DOCKER_TAG}" || echo "No changes to commit"
+                            
+                            echo "Pushing changes..."
+                            git push origin himanshu
+                        '''
                     }
                 }
             }
         }
     }
-  post {
+    
+    post {
         success {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "Matka Backend Application has been updated and deployed - '${currentBuild.result}'",
+                subject: "Matka Backend Application Deployed - '${currentBuild.result}'",
                 body: """
                     <html>
                     <body>
-                        <div style="background-color: #FFA07A; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Project: ${env.JOB_NAME}</p>
-                        </div>
-                        <div style="background-color: #90EE90; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Build Number: ${env.BUILD_NUMBER}</p>
-                        </div>
-                        <div style="background-color: #87CEEB; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">URL: ${env.BUILD_URL}</p>
-                        </div>
+                        <h3 style="color: green;">Matka Backend Deployment Success</h3>
+                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                        <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
                     </body>
                     </html>
-            """,
-            to: 'sauravgarg5922@gmail.com',
-            mimeType: 'text/html'
+                """,
+                to: 'sauravgarg5922@gmail.com',
+                mimeType: 'text/html'
             }
         }
-      failure {
+
+        failure {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "Matka Backend Application build failed - '${currentBuild.result}'",
+                subject: "Matka Backend Deployment Failed - '${currentBuild.result}'",
                 body: """
                     <html>
                     <body>
-                        <div style="background-color: #FFA07A; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Project: ${env.JOB_NAME}</p>
-                        </div>
-                        <div style="background-color: #90EE90; padding: 10px; margin-bottom: 10px;">
-                            <p style="color: black; font-weight: bold;">Build Number: ${env.BUILD_NUMBER}</p>
-                        </div>
+                        <h3 style="color: red;">Matka Backend Deployment Failed</h3>
+                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                     </body>
                     </html>
-            """,
-            to: 'sauravgarg5922@gmail.com',
-            mimeType: 'text/html'
+                """,
+                to: 'sauravgarg5922@gmail.com',
+                mimeType: 'text/html'
             }
         }
     }

@@ -4,7 +4,7 @@ metadata:
   name: backend-deployment
   namespace: matka
   labels:
-    app: backend
+    app: backend 
 spec:
   replicas: 4
   selector:
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/matka-backend:v2
+          image: saurav547/matka-backend:v1.3
           ports:
             - containerPort: 5001
 ---
