@@ -4,7 +4,7 @@ metadata:
   name: backend-deployment
   namespace: matka
   labels:
-    app: backend 
+    app: backend
 spec:
   replicas: 4
   selector:
