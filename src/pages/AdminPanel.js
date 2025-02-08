@@ -139,7 +139,8 @@ const AdminPanel = () => {
 
   const handleLogout = () => {
     dispatch(logout()); // Reset Redux state
-    localStorage.removeItem("isAuthenticated"); // Clear authentication from localStorage
+    localStorage.removeItem("isAuthenticated"); 
+    localStorage.removeItem("accessToken"); // Clear authentication from localStorage
     navigate("/"); // Redirect to login
   };
 

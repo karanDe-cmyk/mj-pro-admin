@@ -17,24 +17,28 @@ const MarketDeclareResult = () => {
   const [loadingDeclareResult, setLoadingDeclareResult] = useState(false);
   const [isWinnerModalVisible, setIsWinnerModalVisible] = useState(false);
   const [winners, setWinners] = useState([]);
-  const [gameResults, setGameResults] = useState([]); // ✅ Stores game result history
+  const [gameResults, setGameResults] = useState([]); // Merged declared result history
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editingWinner, setEditingWinner] = useState(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-
   const pannaOptions = ["000", ...Array.from({ length: 900 }, (_, i) => (100 + i).toString())];
 
- 
-
+  // ---------------------------
+  // FETCH MARKET & GAME LIST
+  // ---------------------------
   const fetchMarketGameList = async () => {
     try {
       setLoading(true);
       const response = await instance.get(`/api/marketManagement/getMarketGames/${appiD}`);
       if (response?.data) {
         const uniqueMarkets = [
-          ...new Set(response.data.map((item) => item.marketName).filter((name) => name && name.trim() !== "")),
+          ...new Set(
+            response.data
+              .map((item) => item.marketName)
+              .filter((name) => name && name.trim() !== "")
+          ),
         ];
         setMarketGameList(uniqueMarkets);
         setAllGames(response.data);
@@ -47,38 +51,65 @@ const MarketDeclareResult = () => {
     }
   };
 
-    // Function to open the edit modal with selected bid data
-    const handleEdit = (record) => {
-      setEditingWinner(record);
-      editForm.setFieldsValue({
-        bidId: record.bidId,
-        newPoints: record.points,
-        newbidvalue: record.digit,
-      });
-      setIsEditModalVisible(true);
-    };
+  // ---------------------------
+  // EDIT MODAL FOR BIDS
+  // ---------------------------
+  const handleEdit = (record) => {
+    setEditingWinner(record);
+    // Pre-fill the edit form with current values
+    editForm.setFieldsValue({
+      points: record.points,
+      digit: record.digit,
+    });
+    setIsEditModalVisible(true);
+  };
 
-    
-   // ✅ Fetch Declared Results (Game Result History)
-   const fetchDeclaredResults = async () => {
+  // ---------------------------
+  // FETCH DECLARED RESULTS (MERGED)
+  // ---------------------------
+  const fetchDeclaredResults = async () => {
     if (!appiD) {
       console.warn("appiD is undefined, skipping API call.");
       return;
     }
-  
     try {
       setLoading(true);
       const response = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult/${appiD}`);
-      
       if (response?.data?.results) {
-        setGameResults(response.data.results);
+        const results = response.data.results;
+        // Group results by gameName and date (formatted as DD-MM-YYYY)
+        const groupedResults = {};
+        results.forEach((item) => {
+          const groupKey = `${item.gameName}_${moment(item.date).format("DD-MM-YYYY")}`;
+          if (!groupedResults[groupKey]) {
+            groupedResults[groupKey] = {
+              gameName: item.gameName,
+              date: item.date,
+              open: null,  // will hold an object: { value, id }
+              close: null, // will hold an object: { value, id }
+            };
+          }
+          if (item.gameType === "open") {
+            groupedResults[groupKey].open = {
+              value: `${item.panna}-${item.digit}`,
+              id: item._id, // Use the actual declared result id
+            };
+          }
+          if (item.gameType === "close") {
+            groupedResults[groupKey].close = {
+              value: `${item.panna}-${item.digit}`,
+              id: item._id,
+            };
+          }
+        });
+        setGameResults(Object.values(groupedResults));
       } else {
-        setGameResults([]); // Ensure empty array if no results
+        setGameResults([]);
       }
     } catch (error) {
       console.error("Error fetching declared results:", error);
       message.error("Failed to fetch declared results. Please try again.");
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -87,70 +118,93 @@ const MarketDeclareResult = () => {
     fetchMarketGameList();
     fetchDeclaredResults();
   }, [appiD]);
-  
+
+  // ---------------------------
+  // FETCH WINNERS BASED ON FORM
+  // ---------------------------
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
     if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
       message.error("Please select all required fields to show winners.");
       return;
     }
-  
     try {
       setLoading(true);
       const response = await instance.post(`/api/showwinners/getWinningBids/${appiD}`, {
         marketName: values.marketGame,
         gameName: values.gameName,
-        date: values.resultDate ? values.resultDate.format("DD-MM-YYYY") : moment().format("DD-MM-YYYY"),
+        date: values.resultDate
+          ? values.resultDate.format("DD-MM-YYYY")
+          : moment().format("DD-MM-YYYY"),
         gameType: values.gameType,
         digit: values.digit,
         panna: values.panna,
       });
-  
-      // console.log("API Response:", response.data); // ✅ Debug API response
-  
       if (response?.data?.winners && Array.isArray(response.data.winners)) {
         setWinners(response.data.winners);
       } else {
-        setWinners([]); // ✅ Ensure winners is always an array
+        setWinners([]);
       }
-  
       setIsWinnerModalVisible(true);
     } catch (error) {
       console.error("Error fetching winners:", error);
       message.error("Failed to fetch winner data.");
-      setWinners([]); // ✅ Handle API errors gracefully
-      setIsWinnerModalVisible(true); // ✅ Ensure modal opens even if error
+      setWinners([]);
+      setIsWinnerModalVisible(true);
     } finally {
       setLoading(false);
     }
   };
-  
-  // ✅ Declare Winner & Update Wallet
+
+  // ---------------------------
+  // DECLARE WINNER
+  // ---------------------------
   const declareWinner = async () => {
     const values = form.getFieldsValue();
-    if (!winners.length) {
-      message.warning("No winners to declare.");
-      return;
-    }
-
     try {
       setLoadingDeclareResult(true);
-      await instance.post(`/api/mainmarketdeclareResult/declareResult/${appiD}`, {
-        marketName: values.marketGame,
-        gameName: values.gameName,
-        date: values.resultDate ? values.resultDate.format("DD-MM-YYYY") : moment().format("DD-MM-YYYY"),
-        gameType: values.gameType,
-        digit: values.digit,
-        panna: values.panna,
-      });
-
-      message.success("Winner declared successfully!");
-      setIsWinnerModalVisible(false);
-      fetchDeclaredResults();
+      const response = await instance.post(
+        `/api/mainmarketdeclareResult/declareResult/${appiD}`,
+        {
+          marketName: values.marketGame,
+          gameName: values.gameName,
+          date: values.resultDate
+            ? values.resultDate.format("DD-MM-YYYY")
+            : moment().format("DD-MM-YYYY"),
+          gameType: values.gameType,
+          digit: values.digit,
+          panna: values.panna,
+          winners: winners.length > 0 ? winners : [],
+        }
+      );
+      console.log(response);
+      if (response.data.success === false) {
+        alert(response.data.message);
+      } else {
+        message.success("Result declared successfully!");
+        setIsWinnerModalVisible(false);
+        fetchDeclaredResults();
+      }
     } catch (error) {
-      message.error("Failed to declare winner.");
+      message.error(
+        (error.response && error.response.data && error.response.data.message) ||
+          "Failed to declare winner."
+      );
     } finally {
       setLoadingDeclareResult(false);
+    }
+  };
+
+  // ---------------------------
+  // DELETE DECLARED RESULT BY ID
+  // ---------------------------
+  const handleDeleteDeclaredResult = async (declaredId) => {
+    try {
+      await instance.delete(`/api/mainmarketdeclareResult/declareResult/${appiD}/${declaredId}`);
+      message.success("Declared result deleted successfully!");
+      fetchDeclaredResults();
+    } catch (error) {
+      message.error("Failed to delete declared result.");
     }
   };
 
@@ -158,7 +212,6 @@ const MarketDeclareResult = () => {
     const filteredGames = allGames
       .filter((game) => game.marketName === selectedMarket)
       .map((game) => game.gameName);
-
     setGameOptions([...new Set(filteredGames)]);
     setSelectedMarketGame(selectedMarket);
     form.setFieldsValue({ gameName: undefined });
@@ -170,26 +223,16 @@ const MarketDeclareResult = () => {
     form.setFieldsValue({ digit: sum % 10 });
   };
 
-  const deleteGameResult = async (id) => {
-    try {
-      await instance.delete(`/api/marketManagement/deleteGameResult/${appiD}/${id}`);
-      message.success("Game result deleted successfully!");
-      setGameResults((prevResults) => prevResults.filter((result) => result._id !== id));
-    } catch (error) {
-      message.error("Failed to delete game result.");
-    }
-  };
-
+  // ---------------------------
+  // DELETE BID (For Winner List)
+  // ---------------------------
   const handleDelete = async (record) => {
     try {
       setIsDeleting(true);
-      await instance.delete(`/api/bid/deleteBid/${appiD}/${record._id}`,{
-        bidId: record.bidId,
+      await instance.delete(`/api/bid/deleteBid/${appiD}/${record._id}`, {
+        data: { bidId: record.bidId },
       });
-      
       message.success("Bid deleted successfully!");
-      
-      // Remove the deleted winner from the state
       setWinners((prev) => prev.filter((winner) => winner._id !== record._id));
     } catch (error) {
       console.error("Error deleting bid:", error);
@@ -199,37 +242,37 @@ const MarketDeclareResult = () => {
     }
   };
 
-    // Function to update the bid
-    const handleSaveEdit = async () => {
-      try {
-        setIsSavingEdit(true);
-        const values = editForm.getFieldsValue();
-          console.log(values)
-        await instance.put(`/api/bid/updateBid/${appiD}/${editingWinner._id}`, {
-          bidId: editingWinner.bidId,
-          newPoints: editingWinner.points,
-          newbidvalue: editingWinner.digit,
-        });
-  
-        message.success("Bid updated successfully!");
-        
-        // Update the local winners list dynamically
-        setWinners((prev) =>
-          prev.map((winner) =>
-            winner._id === editingWinner._id ? { ...winner, ...values } : winner
-          )
-        );
-  
-        setIsEditModalVisible(false);
-      } catch (error) {
-        console.error("Error updating bid:", error);
-        message.error("Failed to update bid.");
-      } finally {
-        setIsSavingEdit(false);
-      }
-    };
+  // ---------------------------
+  // UPDATE BID (For Winner List)
+  // ---------------------------
+  const handleSaveEdit = async () => {
+    try {
+      setIsSavingEdit(true);
+      // Get new values from the edit form
+      const { points: newPoints, digit: newDigit } = editForm.getFieldsValue();
+      await instance.put(`/api/bid/updateBid/${appiD}/${editingWinner._id}`, {
+        bidId: editingWinner.bidId,
+        newPoints,
+        newbidvalue: newDigit,
+      });
+      message.success("Bid updated successfully!");
+      setWinners((prev) =>
+        prev.map((winner) =>
+          winner._id === editingWinner._id ? { ...winner, points: newPoints, digit: newDigit } : winner
+        )
+      );
+      setIsEditModalVisible(false);
+    } catch (error) {
+      console.error("Error updating bid:", error);
+      message.error("Failed to update bid.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
-
+  // ---------------------------
+  // WINNER TABLE COLUMNS
+  // ---------------------------
   const winnerColumns = [
     { title: "Member Name", dataIndex: "userName", key: "userName" },
     { title: "Game Name", dataIndex: "gameName", key: "gameName" },
@@ -239,21 +282,60 @@ const MarketDeclareResult = () => {
     { title: "Winning Amount", dataIndex: "winningPoints", key: "winningPoints" },
   ];
 
+  // ---------------------------
+  // DECLARED RESULTS TABLE COLUMNS (MERGED)
+  // ---------------------------
   const gameResultColumns = [
-    { title: "S. No", dataIndex: "sNo", key: "sNo", render: (_, __, index) => index + 1 },
-    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
-    { title: "Panna", dataIndex: "panna", key: "panna" },
-    { title: "Digit", dataIndex: "digit", key: "digit" },
-    { title: "Total Winners", dataIndex: "totalWinners", key: "totalWinners" },
-    { title: "Date", dataIndex: "date", key: "date", render: (date) => moment(date).format("DD-MM-YYYY") },
     {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Button type="danger" onClick={() => deleteGameResult(record._id)}>
-          Delete
-        </Button>
-      ),
+      title: "S. No",
+      dataIndex: "sNo",
+      key: "sNo",
+      render: (_, __, index) => index + 1,
+    },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
+    {
+      title: "Open",
+      key: "open",
+      render: (_, record) =>
+        record.open ? (
+          <div>
+            <span>{record.open.value}</span>{" "}
+            <Button
+              type="danger"
+              size="small"
+              onClick={() => handleDeleteDeclaredResult(record.open.id)}
+            >
+              Delete
+            </Button>
+          </div>
+        ) : (
+          ""
+        ),
+    },
+    {
+      title: "Close",
+      key: "close",
+      render: (_, record) =>
+        record.close ? (
+          <div>
+            <span>{record.close.value}</span>{" "}
+            <Button
+              type="danger"
+              size="small"
+              onClick={() => handleDeleteDeclaredResult(record.close.id)}
+            >
+              Delete
+            </Button>
+          </div>
+        ) : (
+          ""
+        ),
+    },
+    {
+      title: "Date",
+      dataIndex: "date",
+      key: "date",
+      render: (date) => moment(date).format("DD-MM-YYYY"),
     },
   ];
 
@@ -265,7 +347,6 @@ const MarketDeclareResult = () => {
           <Form.Item name="resultDate" label="Date" rules={[{ required: true }]}>
             <DatePicker format="DD-MM-YYYY" />
           </Form.Item>
-
           <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]}>
             <Select onChange={handleMarketChange} placeholder="Select Market" loading={loading}>
               {marketGameList.map((market, index) => (
@@ -275,7 +356,6 @@ const MarketDeclareResult = () => {
               ))}
             </Select>
           </Form.Item>
-
           <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]}>
             <Select
               onChange={(value) => setSelectedGameName(value)}
@@ -289,14 +369,12 @@ const MarketDeclareResult = () => {
               ))}
             </Select>
           </Form.Item>
-
           <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]}>
             <Select>
               <Select.Option value="open">Open</Select.Option>
               <Select.Option value="close">Close</Select.Option>
             </Select>
           </Form.Item>
-
           <Form.Item name="panna" label="Panna" rules={[{ required: true }]}>
             <Select onChange={handlePannaChange}>
               {pannaOptions.map((panna) => (
@@ -306,31 +384,33 @@ const MarketDeclareResult = () => {
               ))}
             </Select>
           </Form.Item>
-
           <Form.Item name="digit" label="Digit">
             <Input value={digitValue} readOnly />
           </Form.Item>
-
           <Form.Item>
             <Button type="primary" onClick={fetchWinners}>
               Show Winners
             </Button>
-            <Button type="primary" loading={loadingDeclareResult} onClick={declareWinner} className="ml-2">
+            <Button
+              type="primary"
+              loading={loadingDeclareResult}
+              onClick={declareWinner}
+              className="ml-2"
+            >
               Declare Result
             </Button>
           </Form.Item>
         </Form>
       </div>
-
       <Modal
-  title="Show Winner List"
-  open={isWinnerModalVisible}
-  onCancel={() => setIsWinnerModalVisible(false)}
-  width="80%"
-  style={{ maxHeight: "80vh", overflowY: "auto" }}
-  footer={null}
->
-{winners.length > 0 ? (
+        title="Show Winner List"
+        open={isWinnerModalVisible}
+        onCancel={() => setIsWinnerModalVisible(false)}
+        width="80%"
+        style={{ maxHeight: "80vh", overflowY: "auto" }}
+        footer={null}
+      >
+        {winners.length > 0 ? (
           <Table
             columns={[
               { title: "Game Name", dataIndex: "gameName" },
@@ -338,7 +418,8 @@ const MarketDeclareResult = () => {
               { title: "Digit/Pana", dataIndex: "digit" },
               {
                 title: "Type",
-                render: (_, record) => (record.open ? "Open" : record.close ? "Close" : "N/A"),
+                render: (_, record) =>
+                  record.open ? "Open" : record.close ? "Close" : "N/A",
               },
               { title: "Bid Amount", dataIndex: "points" },
               { title: "Winning Amount", dataIndex: "winningPoints" },
@@ -365,12 +446,18 @@ const MarketDeclareResult = () => {
             rowKey="_id"
           />
         ) : (
-          <p style={{ textAlign: "center", fontSize: "16px", padding: "20px", color: "#ff4d4f" }}>
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: "16px",
+              padding: "20px",
+              color: "#ff4d4f",
+            }}
+          >
             No winners found.
           </p>
         )}
-</Modal>
-         {/* Edit Bid Modal */}
+      </Modal>
       <Modal
         title="Edit Bid"
         open={isEditModalVisible}
@@ -379,22 +466,34 @@ const MarketDeclareResult = () => {
         confirmLoading={isSavingEdit}
       >
         <Form form={editForm} layout="vertical">
-          <Form.Item label="Bid Amount" name="points" rules={[{ required: true, message: "Please enter bid amount" }]}>
+          <Form.Item
+            label="Bid Amount"
+            name="points"
+            rules={[{ required: true, message: "Please enter bid amount" }]}
+          >
             <Input type="number" />
           </Form.Item>
-          <Form.Item label="Bid Number" name="digit" rules={[{ required: true, message: "Please enter bid number" }]}>
+          <Form.Item
+            label="Bid Number"
+            name="digit"
+            rules={[{ required: true, message: "Please enter bid number" }]}
+          >
             <Input type="number" />
           </Form.Item>
         </Form>
       </Modal>
-
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
         <h2 className="text-lg font-bold mb-4">Game Result History</h2>
-        <Table columns={gameResultColumns} dataSource={gameResults} pagination={false} rowKey="_id" />
+        <Table
+          columns={gameResultColumns}
+          dataSource={gameResults}
+          pagination={false}
+          rowKey={(record) =>
+            `${record.gameName}_${moment(record.date).format("DD-MM-YYYY")}`
+          }
+        />
       </div>
-      
     </div>
-    
   );
 };
 
