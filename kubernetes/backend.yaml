@@ -6,7 +6,7 @@ metadata:
   labels:
     app: backend
 spec:
-  replicas: 2  # Scale accordingly
+  replicas: 4
   selector:
     matchLabels:
       app: backend
@@ -18,28 +18,9 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/matka-backend:v1.4
+          image: saurav547/matka-backend:v1.1
           ports:
             - containerPort: 5001
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "250m"
-            limits:
-              memory: "256Mi"
-              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 5001
-            initialDelaySeconds: 15
-            periodSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 5001
-            initialDelaySeconds: 10
-            periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -47,10 +28,11 @@ metadata:
   name: backend-service
   namespace: matka
 spec:
-  type: LoadBalancer  # LoadBalancer for cloud-based production
+  type: NodePort
   selector:
     app: backend
   ports:
     - port: 5001
       targetPort: 5001
       protocol: TCP
+      nodePort: 31100
