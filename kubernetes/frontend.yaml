@@ -6,7 +6,7 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 2
+  replicas: 2  # Scale accordingly
   selector:
     matchLabels:
       app: frontend
@@ -21,6 +21,28 @@ spec:
           image: saurav547/matka-frontend:v1.2
           ports:
             - containerPort: 3000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          env:
+            - name: REACT_APP_API_URL
+              value: "http://api.kalyandpboss.shop"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -28,11 +50,10 @@ metadata:
   name: frontend-service
   namespace: matka
 spec:
-  type: NodePort
+  type: LoadBalancer  # LoadBalancer for cloud-based production
   selector:
     app: frontend
   ports:
-    - port: 3000
+    - port: 80   # Change port for external access (use 80 or 443 for HTTP/HTTPS)
       targetPort: 3000
       protocol: TCP
-      nodePort: 31000
