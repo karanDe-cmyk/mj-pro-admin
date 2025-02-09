@@ -19,7 +19,7 @@ spec:
   - host: www.kalyandpboss.shop
     http:
       paths:
-      - path: /
+      - path: /frontend
         pathType: Prefix
         backend:
           service:
@@ -30,7 +30,7 @@ spec:
   - host: api.kalyandpboss.shop
     http:
       paths:
-      - path: /
+      - path: /backend
         pathType: Prefix
         backend:
           service:
