@@ -9,4 +9,4 @@ spec:
     kind: Deployment
     name: frontend-deployment
   updatePolicy:
-    updateMode: "Auto"  # Auto mode for automatic updates, or "Initial" for initial values only
+    updateMode: "Auto"  # "Auto" will automatically update resource requests and limits
