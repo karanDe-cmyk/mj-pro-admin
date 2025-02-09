@@ -14,6 +14,7 @@ spec:
   - hosts:
     - www.kalyandpboss.shop
     - api.kalyandpboss.shop
+    - mongodb.kalyandpboss.shop
     secretName: matka-tls-secret
   rules:
   - host: www.kalyandpboss.shop
@@ -37,3 +38,14 @@ spec:
             name: backend-service
             port:
               number: 5001
+
+  - host: mongodb.kalyandpboss.shop
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mongodb-service
+            port:
+              number: 27017
