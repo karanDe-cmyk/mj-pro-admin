@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../utils/axiosInstance"; // Import axios instance
-import { appiD } from "../utils/config"; // Import API ID
+ // Import API ID
 
 const AutoDepositHistory = () => {
   const [data, setData] = useState([]);
@@ -11,7 +11,7 @@ const AutoDepositHistory = () => {
     const fetchDepositHistory = async () => {
       try {
         setLoading(true); // Set loading to true before API call
-        const response = await axios.get(`/api/userPayment/getpaymentResponse/${appiD}`);
+        const response = await axios.get(`/api/userPayment/getpaymentResponse`);
         setData(response.data.data || []); // Ensure data is an array
         setLoading(false); // Set loading to false after fetching
       } catch (err) {

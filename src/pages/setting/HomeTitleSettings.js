@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming axiosInstance is set up
-import { appiD } from "../../utils/config"; // Ensure appiD is correctly imported
+import {  } from "../../utils/config"; // Ensure  is correctly imported
 
 const HomeTitleSettings = () => {
   const [homeTitles, setHomeTitles] = useState({
@@ -17,7 +17,7 @@ const HomeTitleSettings = () => {
     const fetchHomeTitles = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get(`/api/settings/hometitle/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/hometitle`);
         const data = response.data[0]; // Extract first object from array response
 
         if (data) {
@@ -39,7 +39,7 @@ const HomeTitleSettings = () => {
     };
 
     fetchHomeTitles();
-  }, [appiD]);
+  }, []);
 
   // Handle input change
   const handleChange = (e) => {
@@ -59,7 +59,7 @@ const HomeTitleSettings = () => {
 
     try {
       setLoading(true);
-      await axiosInstance.put(`/api/settings/hometitle/${appiD}/${homeTitles.id}`, {
+      await axiosInstance.put(`/api/settings/hometitle/${homeTitles.id}`, {
         title_1: homeTitle1,
         title_2: homeTitle2,
       });

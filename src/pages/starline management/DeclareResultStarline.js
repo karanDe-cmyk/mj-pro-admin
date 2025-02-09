@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Import the axios instance
-import { appiD } from "../../utils/config"; // Use your API ID if needed
+import {  } from "../../utils/config"; // Use your API ID if needed
 
 const DeclareResult = () => {
   const [date, setDate] = useState("");
@@ -20,7 +20,7 @@ const DeclareResult = () => {
   useEffect(() => {
     const fetchGameList = async () => {
       try {
-        const response = await axiosInstance.get(`/api/starline/getGameList/${appiD}`);
+        const response = await axiosInstance.get(`/api/starline/getGameList`);
         const uniqueGameNames = new Set();
         if (Array.isArray(response.data.data)) {
           response.data.data.forEach((game) => {
@@ -43,7 +43,7 @@ const DeclareResult = () => {
     const fetchGameResultHistory = async () => {
       setLoadingGameResult(true);
       try {
-        const response = await axiosInstance.get(`/api/starline/game-result-history/${appiD}`);
+        const response = await axiosInstance.get(`/api/starline/game-result-history`);
         setGameResultHistory(response.data.data || []);
       } catch (error) {
         console.error("Error fetching game result history:", error);
@@ -61,7 +61,7 @@ const DeclareResult = () => {
     const fetchGameResultHistory = async () => {
       setLoadingGameResult(true);
       try {
-        const response = await axiosInstance.get(`/api/starline/game-result-history/${appiD}`);
+        const response = await axiosInstance.get(`/api/starline/game-result-history`);
         setGameResultHistory(response.data.data || []);
       } catch (error) {
         console.error("Error fetching game result history:", error);
@@ -100,7 +100,7 @@ const DeclareResult = () => {
     setLoading(true);
     try {
       const payload = { date: formatDate(date), gamename: selectedGame, panna,digit };
-      const response = await axiosInstance.post(`/api/starlinebid/showWinnerList/${appiD}`, payload);
+      const response = await axiosInstance.post(`/api/starlinebid/showWinnerList`, payload);
       setBidHistoryData(response.data.results || []);
     } catch (error) {
       console.error("Error fetching bid history:", error);
@@ -122,7 +122,7 @@ const DeclareResult = () => {
 
         // API call to declare the winner
         const response = await axiosInstance.post(
-            `/api/starlinebid/declare-winners/${appiD}`,
+            `/api/starlinebid/declare-winners`,
             { date: formattedDate, gamename: selectedGame, panna, digit }
         );
 
@@ -156,7 +156,7 @@ const DeclareResult = () => {
 
     setDeletingBid(bidId);
     try {
-      const response = await axiosInstance.delete(`/api/starlinebid/deletebid/${appiD}/${bidId}`);
+      const response = await axiosInstance.delete(`/api/starlinebid/deletebid/${bidId}`);
 
       if (response.data.status === "success") {
         setBidHistoryData((prevBids) => prevBids.filter((bid) => bid.bidId !== bidId));

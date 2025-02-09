@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import instance from '../../utils/axiosInstance'; // Import your custom axios instance
-import { appiD } from "../../utils/config"; // Use your API ID if needed
+import {  } from "../../utils/config"; // Use your API ID if needed
 
 const GameRates = () => {
   const [singleDigit, setSingleDigit] = useState('');
@@ -14,7 +14,7 @@ const GameRates = () => {
   useEffect(() => {
     const fetchGameRates = async () => {
       try {
-        const response = await instance.get(`/api/starline/rates/${appiD}`);
+        const response = await instance.get(`/api/starline/rates`);
         const { singleDigit, singlePana, doublePana, triplePana } = response.data;
         setSingleDigit(singleDigit);
         setSinglePana(singlePana);
@@ -42,7 +42,7 @@ const GameRates = () => {
     setUpdating(true); // Start updating, show loading spinner
 
     try {
-      const response = await instance.patch(`/api/starline/rates/${appiD}`, updatedRates);
+      const response = await instance.patch(`/api/starline/rates`, updatedRates);
       if (response.data) {
         alert('Game rates updated successfully!');
         // After successful update, you can re-fetch the data or update the state

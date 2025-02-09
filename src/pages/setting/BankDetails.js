@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
-import { appiD } from "../../utils/config"; // Ensure appiD is correctly imported
+import {  } from "../../utils/config"; // Ensure  is correctly imported
 
 const BankDetails = () => {
   const [bankDetails, setBankDetails] = useState({
@@ -18,7 +18,7 @@ const BankDetails = () => {
     const fetchBankDetails = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get(`/api/settings/bankdetails/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/bankdetails`);
         const data = response.data[0]; // Extract first object from array response
 
         if (data) {
@@ -41,7 +41,7 @@ const BankDetails = () => {
     };
 
     fetchBankDetails();
-  }, [appiD]);
+  }, []);
 
   // Handle input change
   const handleChange = (e) => {
@@ -60,7 +60,7 @@ const BankDetails = () => {
 
     try {
       setLoading(true);
-      await axiosInstance.put(`/api/settings/bankdetails/${appiD}/${bankDetails.id}`, bankDetails);
+      await axiosInstance.put(`/api/settings/bankdetails/${bankDetails.id}`, bankDetails);
       alert("Bank details updated successfully!");
       setLoading(false);
     } catch (error) {

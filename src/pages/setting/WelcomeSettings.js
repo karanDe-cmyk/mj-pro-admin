@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming you have an axios instance
-import { appiD } from "../../utils/config"; // Ensure you have the correct appId
+import {  } from "../../utils/config"; // Ensure you have the correct 
 
 const WelcomeSettings = () => {
   const [title, setTitle] = useState("");
@@ -13,7 +13,7 @@ const WelcomeSettings = () => {
     const fetchWelcomeData = async () => {
       setLoading(true); // Start loading
       try {
-        const response = await axiosInstance.get(`/api/settings/welcome/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/welcome`);
         const data = response.data[0]; // Assuming data returns an array with one object
         
         if (data) {
@@ -55,7 +55,7 @@ const WelcomeSettings = () => {
         discription: description,
       };
 
-      await axiosInstance.put(`/api/settings/welcome/${appiD}/${id}`, updatedData);
+      await axiosInstance.put(`/api/settings/welcome/${id}`, updatedData);
       alert("Welcome Page Updated Successfully!");
       console.log("Updated Data:", updatedData);
     } catch (error) {

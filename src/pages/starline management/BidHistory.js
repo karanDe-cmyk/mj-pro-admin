@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Input, Select, DatePicker, Modal, Form, Spin, message } from "antd";
 import axiosInstance from "../../utils/axiosInstance";
-import { appiD } from "../../utils/config";
+import {  } from "../../utils/config";
 import moment from "moment";
 
 const { Option } = Select;
@@ -24,7 +24,7 @@ const BidHistory = () => {
   useEffect(() => {
     const fetchGameList = async () => {
       try {
-        const response = await axiosInstance.get(`/api/starline/getGameList/${appiD}`);
+        const response = await axiosInstance.get(`/api/starline/getGameList`);
         const uniqueGameNames = new Set();
 
         if (Array.isArray(response.data.data)) {
@@ -48,7 +48,7 @@ const BidHistory = () => {
       const payload = { date: formattedDate, gamename: selectedGame };
 
       const response = await axiosInstance.post(
-        `api/starlinebid/showBidlistOfSingleMarket/${appiD}`,
+        `api/starlinebid/showBidlistOfSingleMarket`,
         payload
       );
 
@@ -64,7 +64,7 @@ const BidHistory = () => {
     setDeleting(bidId);
     try {
       const response = await axiosInstance.delete(
-        `/api/starlinebid/deletebid/${appiD}/${bidId}`
+        `/api/starlinebid/deletebid/${bidId}`
       );
 
       if (response.status === 200) {
@@ -95,7 +95,7 @@ const BidHistory = () => {
       const values = await form.validateFields();
       setUpdating(true);
 
-      await axiosInstance.patch(`/api/starlinebid/updatebid/${appiD}/${editBid.bidId}`, {
+      await axiosInstance.patch(`/api/starlinebid/updatebid/${editBid.bidId}`, {
         points: values.points,
         digit: values.digit,
       });

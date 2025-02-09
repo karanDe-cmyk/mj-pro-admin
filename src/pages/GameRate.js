@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../utils/axiosInstance"; // Import Axios instance
-import { appiD } from "../utils/config"; // Import API ID
+ // Import API ID
 import { Spin } from "antd"; // Import Ant Design Spinner
 
 const GameRate = () => {
@@ -16,7 +16,7 @@ const GameRate = () => {
   const fetchBetRates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/rates/getBetRates/${appiD}`);
+      const response = await axios.get(`/api/rates/getBetRates`);
 
       if (response.data) {
         // ✅ Remove unwanted fields (_id, createdAt, updatedAt, __v)
@@ -39,7 +39,7 @@ const GameRate = () => {
   const handleUpdate = async () => {
     try {
       setUpdating(true);
-      await axios.put(`/api/rates/updateBetRates/${appiD}`, rates);
+      await axios.put(`/api/rates/updateBetRates`, rates);
       fetchBetRates(); // Refresh data after update
     } catch (error) {
       console.error("Error updating bet rates:", error);

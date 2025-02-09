@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Form, Input, Select, Button, Table, message, Spin, Modal } from "antd";
 import axios from "../utils/axiosInstance";
-import { appiD } from "../utils/config";
+
 
 const UserBidHistory = () => {
   const [form] = Form.useForm();
@@ -24,7 +24,7 @@ const UserBidHistory = () => {
   const fetchMarketAndGames = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/bid/getAllBid/${appiD}`);
+      const response = await axios.get(`/api/bid/getAllBid`);
       if (response.data) {
         // ✅ Extract unique market names and game names from API response
         const uniqueMarkets = [...new Set(response.data.map((item) => item.market))];
@@ -54,7 +54,7 @@ const UserBidHistory = () => {
       };
 
       // ✅ Fetch filtered bid history
-      const response = await axios.post(`/api/bid/filterBids/${appiD}`, requestBody);
+      const response = await axios.post(`/api/bid/filterBids`, requestBody);
 
       if (response.data.success) {
         setBidHistory(response.data.bids);
@@ -94,7 +94,7 @@ const UserBidHistory = () => {
         newbidvalue: values.newbidvalue,
       };
 
-      const response = await axios.put(`/api/bid/updateBid/${appiD}/${editingBid._id}`, requestBody);
+      const response = await axios.put(`/api/bid/updateBid/${editingBid._id}`, requestBody);
 
       if (response.data.success) {
         message.success("Bid updated successfully!");
@@ -116,7 +116,7 @@ const UserBidHistory = () => {
 
       const requestBody = { bidId, id };
 
-      const response = await axios.delete(`/api/bid/deleteBid/${appiD}/${id}`, { data: requestBody });
+      const response = await axios.delete(`/api/bid/deleteBid/${id}`, { data: requestBody });
 
       if (response.data.success) {
         message.success("Bid deleted successfully!");

@@ -3,7 +3,7 @@ import { Table, Button, Switch, message, Spin } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
-import { appiD } from "../../utils/config";
+import {  } from "../../utils/config";
 import EditGameModal from "./EditGameModal";
 
 const GameName = () => {
@@ -15,7 +15,7 @@ const GameName = () => {
   // Fetch game list
   const fetchGameList = async () => {
     try {
-      const response = await instance.get(`/api/starline/getGameList/${appiD}`);
+      const response = await instance.get(`/api/starline/getGameList`);
       if (response.data.success) {
         setGames(response.data.data);
       } else {
@@ -32,7 +32,7 @@ const GameName = () => {
   const toggleGameStatus = async (gameId, currentStatus) => {
     setLoadingAction(`toggle-${gameId}`);
     try {
-      const response = await instance.patch(`/api/starline/updateGameById/${appiD}/${gameId}`, {
+      const response = await instance.patch(`/api/starline/updateGameById/${gameId}`, {
         is_active: !currentStatus,
       });
 
@@ -59,7 +59,7 @@ const GameName = () => {
       const updatedDays = [...editingGame.week_selection];
       updatedDays[dayIndex].is_open = !updatedDays[dayIndex].is_open;
 
-      await instance.patch(`/api/starline/updateGameById/${appiD}/${gameId}`, {
+      await instance.patch(`/api/starline/updateGameById/${gameId}`, {
         week_selection: updatedDays,
       });
 
@@ -82,7 +82,7 @@ const GameName = () => {
 
     try {
       const response = await instance.patch(
-        `/api/starline/updateGameById/${appiD}/${editingGame._id}`,
+        `/api/starline/updateGameById/${editingGame._id}`,
         {
           game_name: editingGame.game_name,
           close_time: editingGame.close_time,

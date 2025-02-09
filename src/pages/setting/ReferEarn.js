@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming you have an axios instance
-import { appiD } from "../../utils/config"; // Ensure you have the correct appId
+import {  } from "../../utils/config"; // Ensure you have the correct 
 
 const ReferEarn = () => {
   const [referDescription, setReferDescription] = useState("");
@@ -14,7 +14,7 @@ const ReferEarn = () => {
     const fetchReferEarnData = async () => {
       setLoading(true); // Start loading
       try {
-        const response = await axiosInstance.get(`/api/settings/referandearn/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/referandearn`);
         const data = response.data[0]; // Assuming data returns an array with one object
         
         if (data) {
@@ -62,7 +62,7 @@ const ReferEarn = () => {
         amount: referAmount,
       };
 
-      await axiosInstance.put(`/api/settings/referandearn/${appiD}/${id}`, updatedData);
+      await axiosInstance.put(`/api/settings/referandearn/${id}`, updatedData);
       alert("Refer & Earn Updated Successfully!");
       console.log("Updated Data:", updatedData);
     } catch (error) {

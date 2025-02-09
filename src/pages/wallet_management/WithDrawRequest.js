@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaEye } from "react-icons/fa";
 import axios from '../../utils/axiosInstance';
-import { appiD } from "../../utils/config";
+import {  } from "../../utils/config";
 import WithdrawalDetailsModal from './WithdrawalDetailsModal'; // Import the modal component
 
 const WithDrawRequest = () => {
@@ -13,7 +13,7 @@ const WithDrawRequest = () => {
   // Fetch withdrawal requests from the backend
   const fetchRequests = async () => {
     try {
-      const response = await axios.get(`/api/users/withdrawals/${appiD}`);
+      const response = await axios.get(`/api/users/withdrawals`);
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching withdrawal requests:', error);

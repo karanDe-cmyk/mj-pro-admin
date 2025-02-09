@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming axiosInstance is set up
-import { appiD } from "../../utils/config"; // Ensure appiD is correctly imported
+import {  } from "../../utils/config"; // Ensure  is correctly imported
 
 const UPISettings = () => {
   const [upiData, setUpiData] = useState({
@@ -20,7 +20,7 @@ const UPISettings = () => {
     const fetchUPIData = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get(`/api/settings/upipayment/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/upipayment`);
         const data = response.data[0]; // Extract the first object from the array response
 
         if (data) {
@@ -45,7 +45,7 @@ const UPISettings = () => {
     };
 
     fetchUPIData();
-  }, [appiD]);
+  }, []);
 
   // Handle input change
   const handleChange = (e) => {
@@ -65,7 +65,7 @@ const UPISettings = () => {
 
     try {
       setLoading(true);
-      await axiosInstance.put(`/api/settings/upipayment/${appiD}/${upiData.id}`, {
+      await axiosInstance.put(`/api/settings/upipayment/${upiData.id}`, {
         upi_name: upiData.upiName,
         upi_paymentid: upiData.upiPaymentId,
         upi_paytm_id: upiData.upiPaytmId,

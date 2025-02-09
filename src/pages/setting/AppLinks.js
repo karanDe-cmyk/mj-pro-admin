@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming axiosInstance is set up
-import { appiD } from "../../utils/config"; // Ensure appiD is correctly imported
+import {  } from "../../utils/config"; // Ensure  is correctly imported
 
 const AppLinks = () => {
   const [appLinks, setAppLinks] = useState({
@@ -17,7 +17,7 @@ const AppLinks = () => {
     const fetchAppLinks = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get(`/api/settings/applink/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/applink`);
         const data = response.data[0]; // Extract first object from array response
 
         if (data) {
@@ -39,7 +39,7 @@ const AppLinks = () => {
     };
 
     fetchAppLinks();
-  }, [appiD]);
+  }, []);
 
   // Handle input change
   const handleChange = (e) => {
@@ -56,7 +56,7 @@ const AppLinks = () => {
 
     try {
       setLoading(true);
-      await axiosInstance.put(`/api/settings/applink/${appiD}/${appLinks.id}`, {
+      await axiosInstance.put(`/api/settings/applink/${appLinks.id}`, {
         applink: appLinks.AppLink,
         sharemessage: appLinks.shareMessage,
       });

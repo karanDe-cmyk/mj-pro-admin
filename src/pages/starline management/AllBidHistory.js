@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Import your Axios instance
-import { appiD } from "../../utils/config";
+import {  } from "../../utils/config";
 
 const AllBidHistory = () => {
   const [search, setSearch] = useState("");
@@ -28,13 +28,13 @@ const AllBidHistory = () => {
     try {
       let response;
       if (selectedMarket === "Starline") {
-        response = await axiosInstance.get(`/api/starline/getGameList/${appiD}`);
+        response = await axiosInstance.get(`/api/starline/getGameList`);
         if (response.data && Array.isArray(response.data.data)) {
           setGameNameList(response.data.data.map((game) => game.game_name)); // Extract game names
         }
       } 
       else if (selectedMarket === "Main Market") {
-        response = await axiosInstance.get(`/api/marketManagement/getMarketGames/${appiD}`);
+        response = await axiosInstance.get(`/api/marketManagement/getMarketGames`);
         if (response.data && Array.isArray(response.data.data)) {
           setGameNameList(response.data.data.map((market) => market.market_name)); // Extract market names
         }
@@ -55,7 +55,7 @@ const AllBidHistory = () => {
     setError("");
   
     try {
-      let queryParams = `/api/starlinebid/getallbid/${appiD}?`;
+      let queryParams = `/api/starlinebid/getallbid?`;
       if (selectedDate) queryParams += `date=${selectedDate}&`;
       if (selectedMarket) queryParams += `market=${selectedMarket}&`;
       if (selectedGameName) queryParams += `gamename=${selectedGameName}`;
@@ -87,7 +87,7 @@ const AllBidHistory = () => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
 
     try {
-      await axiosInstance.delete(`/api/starlinebid/deletebid/${appiD}/${bidId}`);
+      await axiosInstance.delete(`/api/starlinebid/deletebid/${bidId}`);
 
       // ✅ Update state to remove the deleted bid
       setBidHistoryData((prevBids) =>

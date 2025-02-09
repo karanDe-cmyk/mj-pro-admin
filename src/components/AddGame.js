@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { TimePicker, Switch, Button, message } from "antd";
 import moment from "moment";
-import { apiUrl, appiD } from "../utils/config";
+import { apiUrl  } from "../utils/config";
 import instance from "../utils/axiosInstance";
 
 const AddGame = ({ onGameAdded }) => {
@@ -35,7 +35,7 @@ const AddGame = ({ onGameAdded }) => {
       const formattedOpenTime = formData.marketOpenTime.format("hh:mm A");
       const formattedCloseTime = formData.marketCloseTime.format("hh:mm A");
 
-      const url = `${apiUrl}/api/starline/addGameList/${appiD}`;
+      const url = `${apiUrl}/api/starline/addGameList`;
       console.log("Sending POST request to:", url);
 
       const response = await instance.post(url, {

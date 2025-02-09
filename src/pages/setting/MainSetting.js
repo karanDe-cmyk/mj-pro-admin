@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
-import { appiD } from "../../utils/config"; // Ensure appiD is imported properly
+import {  } from "../../utils/config"; // Ensure  is imported properly
 
 const SettingsForm = () => {
   const [formData, setFormData] = useState({
@@ -33,7 +33,7 @@ const SettingsForm = () => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get(`/api/settings/general/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/general`);
         const data = response.data[0]; // ✅ Extract the first object from array response
 
         setFormData({
@@ -69,7 +69,7 @@ const SettingsForm = () => {
     };
 
     fetchSettings();
-  }, [appiD]);
+  }, []);
 
   // Handle input change
   const handleChange = (e) => {
@@ -106,7 +106,7 @@ const SettingsForm = () => {
         withdraw_timings: `${formData.openTime} - ${formData.closeTime}`,
       };
 
-      await axiosInstance.put(`/api/settings/general/${appiD}/${formData.id}`, updatedData);
+      await axiosInstance.put(`/api/settings/general/${formData.id}`, updatedData);
       alert("Settings updated successfully!");
       setLoading(false);
     } catch (error) {

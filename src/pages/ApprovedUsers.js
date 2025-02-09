@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl, appiD } from "../utils/config";
+import { apiUrl,  } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,7 @@ const UnapprovedUsers = () => {
     setLoading(true); // Show global loading spinner while fetching users
     try {
       const response = await instance.get(
-        `${apiUrl}/api/auth/userStatus/${appiD}?status=true`
+        `${apiUrl}/api/auth/userStatus?status=true`
       );
       if (response?.data) {
         setUsers(response.data);
@@ -51,7 +51,7 @@ const UnapprovedUsers = () => {
 
     try {
       const response = await instance.post(
-        `${apiUrl}/api/auth/userStatusUpdate/${appiD}/${record._id}`,
+        `${apiUrl}/api/auth/userStatusUpdate/${record._id}`,
         {
           type,
           value: !record[type], // Toggle the value of the status

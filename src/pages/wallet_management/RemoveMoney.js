@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../utils/axiosInstance"; // Import your Axios instance
-import { appiD } from "../../utils/config";
+import {  } from "../../utils/config";
 
 const RemoveMoney = () => {
   const [users, setUsers] = useState([]);
@@ -13,7 +13,7 @@ const RemoveMoney = () => {
     // Fetch users from API using Axios
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`/api/app/users/${appiD}`);
+        const response = await axios.get(`/api/app/users`);
         const data = response.data;
 
         if (Array.isArray(data) && data.length > 0) {
@@ -58,7 +58,7 @@ const RemoveMoney = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`/api/wallet/deduct-balance/${appiD}`, {
+      const response = await axios.post(`/api/wallet/deduct-balance`, {
         email: selectedUser,
         amount: parseFloat(amount),
       });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl, appiD } from "../utils/config";
+import { apiUrl,  } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
@@ -15,7 +15,7 @@ const UnapprovedUsers = () => {
     try {
       setLoading(true);
       const response = await instance.get(
-        `${apiUrl}/api/auth/userStatus/${appiD}?status=false`
+        `${apiUrl}/api/auth/userStatus?status=false`
       );
       if (response?.data) {
         console.log("Fetched Users:", response.data);
@@ -47,7 +47,7 @@ const UnapprovedUsers = () => {
 
     try {
       const response = await instance.post(
-        `${apiUrl}/api/auth/userStatusUpdate/${appiD}/${record._id}`,
+        `${apiUrl}/api/auth/userStatusUpdate/${record._id}`,
         {
           type: "status",
           value: !record.status, // Toggle the status

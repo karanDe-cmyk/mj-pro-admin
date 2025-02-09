@@ -20,7 +20,7 @@ import {
   FundOutlined,
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
-import { appiD } from "../utils/config";
+
 import moment from "moment";
 
 const { Title, Text } = Typography;
@@ -92,7 +92,7 @@ const Dashboard = () => {
       // console.log("Posting to API with:", requestBody);
 
       const response = await instance.post(
-        `/api/mainmarketdeclareResult/get-total-winnings/${appiD}`,
+        `/api/mainmarketdeclareResult/get-total-winnings`,
         requestBody
       );
       // console.log("API response:", response.data);
@@ -120,7 +120,7 @@ const Dashboard = () => {
   // Fetch data for Total Users
   const fetchTotalUsers = async () => {
     try {
-      const response = await instance.get(`/api/app/users/${appiD}`);
+      const response = await instance.get(`/api/app/users`);
       const data = response.data;
       if (data.totalUsers !== undefined) {
         setTotalUsers({ totalUsers: data.totalUsers });
@@ -135,7 +135,7 @@ const Dashboard = () => {
   // Fetch data for ApprovedUsers
   const fetchApprovedUsers = async () => {
     try {
-      const response = await instance.get(`/api/app/users/${appiD}`);
+      const response = await instance.get(`/api/app/users`);
       const data = response.data;
       if (data.approvedUsers !== undefined) {
         setApprovedUsers({ approvedUsers: data.approvedUsers });
@@ -150,7 +150,7 @@ const Dashboard = () => {
   // Fetch data for UnApprovedUsers
   const fetchUnApprovedUsers = async () => {
     try {
-      const response = await instance.get(`/api/app/users/${appiD}`);
+      const response = await instance.get(`/api/app/users`);
       const data = response.data;
       if (data.unapprovedUsers !== undefined) {
         setUnApprovedUsers({ unapprovedUsers: data.unapprovedUsers });
@@ -173,7 +173,7 @@ const Dashboard = () => {
       try {
         setLoading(true); // Set loading to true before API call
         const response = await instance.get(
-          `/api/userPayment/getpaymentResponse/${appiD}`
+          `/api/userPayment/getpaymentResponse`
         );
         setAutoDepositHistory(response.data.data || []); // Ensure data is an array
         setLoading(false); // Set loading to false after fetching
@@ -223,10 +223,7 @@ const Dashboard = () => {
 
     try {
       setLoadingButton2(true);
-      const response = await instance.post(
-        `/api/bid/todayDigitSummary/${appiD}`,
-        body
-      );
+      const response = await instance.post(`/api/bid/todayDigitSummary`, body);
       // Assuming response.data.data contains the summary for digits 0–9
       if (response.data && response.data.data) {
         setDashboardData(response.data.data);
@@ -247,7 +244,7 @@ const Dashboard = () => {
         setLoadingButton2(true);
 
         const response = await instance.get(
-          `/api/marketManagement/getMarketGames/${appiD}`
+          `/api/marketManagement/getMarketGames`
         );
         // Ensure the response is an array
         if (Array.isArray(response.data)) {
@@ -301,9 +298,7 @@ const Dashboard = () => {
 
     const fetchGamesList = async () => {
       try {
-        const response = await instance.get(
-          `/api/gameRoutes/getGameList/${appiD}`
-        );
+        const response = await instance.get(`/api/gameRoutes/getGameList`);
 
         // console.log("API Response for Games List:", response.data);
 
@@ -332,7 +327,7 @@ const Dashboard = () => {
   const fetchStarlineData = async () => {
     try {
       const response = await instance.get(
-        `/api/starlinebid/starline-total-bid-amount/${appiD}`
+        `/api/starlinebid/starline-total-bid-amount`
       );
       const data = response.data;
       if (data.totalAmount !== undefined) {
@@ -348,7 +343,7 @@ const Dashboard = () => {
   // Fetch data for Main Market
   const fetchMainMarketData = async () => {
     try {
-      const response = await instance.get(`/api/bid/todayBids/${appiD}`);
+      const response = await instance.get(`/api/bid/todayBids`);
       const data = response.data;
       if (data.totalAmount !== undefined) {
         setMainMarketData({ totalAmount: data.totalAmount });
@@ -364,7 +359,7 @@ const Dashboard = () => {
   const fetchTotalGames = async () => {
     try {
       const response = await instance.get(
-        `/api/marketManagement/games/totalCount/${appiD}`
+        `/api/marketManagement/games/totalCount`
       );
       const data = response.data;
       if (data.totalGameCount !== undefined) {
@@ -377,13 +372,12 @@ const Dashboard = () => {
     }
   };
 
-  // Call both fetch functions when the component mounts or appiD changes
+  // Call both fetch functions when the component mounts or  changes
   useEffect(() => {
     fetchMainMarketData();
     fetchStarlineData();
     fetchTotalGames();
   }, []);
-
 
   useEffect(() => {
     const fetchProfitLossData = async () => {
@@ -391,9 +385,7 @@ const Dashboard = () => {
         setLoadingButton3(true);
         setError(null);
         // Call the API using a GET request.
-        const response = await instance.get(
-          `/api/users/total-profit-loss/${appiD}`
-        );
+        const response = await instance.get(`/api/users/total-profit-loss`);
         // console.log("Profit/Loss API response:", response.data);
 
         if (response.data && response.data.success) {
@@ -423,7 +415,6 @@ const Dashboard = () => {
 
     fetchProfitLossData();
   }, []); // Empty dependency array means this runs once on mount
-
 
   const fundRequestColumns = [
     {
@@ -544,12 +535,12 @@ const Dashboard = () => {
                 </Title>
                 <Text style={{ fontSize: 16, fontWeight: "bold" }}>
                   Unapproved Users:{" "}
-                  {unapprovedUsers.unapprovedUsers || "Failed to fetch"}
+                  {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
                 </Text>
                 <br />
                 <Text style={{ fontSize: 16, fontWeight: "bold" }}>
                   Approved Users:{" "}
-                  {approvedUsers.approvedUsers || "Failed to fetch"}
+                  {approvedUsers.approvedUsers ?? "Failed to fetch"}
                 </Text>
               </div>
             </Card>
@@ -641,7 +632,7 @@ const Dashboard = () => {
                         Users
                       </span>
                     }
-                    value={totalUsers.totalUsers || "Failed to fetch"}
+                    value={totalUsers.totalUsers ?? "Failed to fetch"} // ✅ Fix applied here
                     valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
                     prefix={
                       <UserOutlined
@@ -659,7 +650,7 @@ const Dashboard = () => {
                         Games
                       </span>
                     }
-                    value={totalGames.totalGameCount || "Failed to fetch"}
+                    value={totalGames.totalGameCount ?? "Failed to fetch"} // ✅ Fix applied here
                     valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
                     prefix={
                       <AppstoreOutlined
@@ -677,7 +668,7 @@ const Dashboard = () => {
                         Main Market Bid Amount
                       </span>
                     }
-                    value={mainMarketData.totalAmount || "Failed to fetch"}
+                    value={mainMarketData.totalAmount ?? "Failed to fetch"} // ✅ Fix here
                     valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
                     prefix={
                       <DollarOutlined
@@ -695,7 +686,7 @@ const Dashboard = () => {
                         Starline Bid Amount
                       </span>
                     }
-                    value={starlineData.totalAmount || "Failed to fetch"}
+                    value={starlineData.totalAmount ?? "Failed to fetch"} // ✅ Fix here
                     valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
                     prefix={
                       <FundOutlined

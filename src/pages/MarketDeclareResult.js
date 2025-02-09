@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Table, Button, Form, Select, DatePicker, Input, message } from "antd";
 import instance from "../utils/axiosInstance";
-import { appiD } from "../utils/config";
+
 import moment from "moment";
 
 const MarketDeclareResult = () => {
@@ -31,7 +31,7 @@ const MarketDeclareResult = () => {
   const fetchMarketGameList = async () => {
     try {
       setLoading(true);
-      const response = await instance.get(`/api/marketManagement/getMarketGames/${appiD}`);
+      const response = await instance.get(`/api/marketManagement/getMarketGames`);
       if (response?.data) {
         const uniqueMarkets = [
           ...new Set(
@@ -68,13 +68,10 @@ const MarketDeclareResult = () => {
   // FETCH DECLARED RESULTS (MERGED)
   // ---------------------------
   const fetchDeclaredResults = async () => {
-    if (!appiD) {
-      console.warn("appiD is undefined, skipping API call.");
-      return;
-    }
+  
     try {
       setLoading(true);
-      const response = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult/${appiD}`);
+      const response = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
       if (response?.data?.results) {
         const results = response.data.results;
         // Group results by gameName and date (formatted as DD-MM-YYYY)
@@ -117,7 +114,7 @@ const MarketDeclareResult = () => {
   useEffect(() => {
     fetchMarketGameList();
     fetchDeclaredResults();
-  }, [appiD]);
+  }, []);
 
   // ---------------------------
   // FETCH WINNERS BASED ON FORM
@@ -130,7 +127,7 @@ const MarketDeclareResult = () => {
     }
     try {
       setLoading(true);
-      const response = await instance.post(`/api/showwinners/getWinningBids/${appiD}`, {
+      const response = await instance.post(`/api/showwinners/getWinningBids`, {
         marketName: values.marketGame,
         gameName: values.gameName,
         date: values.resultDate
@@ -164,7 +161,7 @@ const MarketDeclareResult = () => {
     try {
       setLoadingDeclareResult(true);
       const response = await instance.post(
-        `/api/mainmarketdeclareResult/declareResult/${appiD}`,
+        `/api/mainmarketdeclareResult/declareResult`,
         {
           marketName: values.marketGame,
           gameName: values.gameName,
@@ -200,7 +197,7 @@ const MarketDeclareResult = () => {
   // ---------------------------
   const handleDeleteDeclaredResult = async (declaredId) => {
     try {
-      await instance.delete(`/api/mainmarketdeclareResult/delete/${appiD}/${declaredId}`);
+      await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
       message.success("Declared result deleted successfully!");
       fetchDeclaredResults();
     } catch (error) {
@@ -229,7 +226,7 @@ const MarketDeclareResult = () => {
   const handleDelete = async (record) => {
     try {
       setIsDeleting(true);
-      await instance.delete(`/api/bid/deleteBid/${appiD}/${record._id}`, {
+      await instance.delete(`/api/bid/deleteBid/${record._id}`, {
         data: { bidId: record.bidId },
       });
       message.success("Bid deleted successfully!");
@@ -250,7 +247,7 @@ const MarketDeclareResult = () => {
       setIsSavingEdit(true);
       // Get new values from the edit form
       const { points: newPoints, digit: newDigit } = editForm.getFieldsValue();
-      await instance.put(`/api/bid/updateBid/${appiD}/${editingWinner._id}`, {
+      await instance.put(`/api/bid/updateBid/${editingWinner._id}`, {
         bidId: editingWinner.bidId,
         newPoints,
         newbidvalue: newDigit,

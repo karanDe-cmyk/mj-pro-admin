@@ -3,7 +3,7 @@ import { Table, Button, Switch, TimePicker, Input, Form, Card, Row, Col, message
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import moment from "moment";
 import axios from "../utils/axiosInstance"; 
-import { appiD } from "../utils/config"; 
+ 
 const { Option } = Select;
 
 const GameManagement = () => {
@@ -22,7 +22,7 @@ const GameManagement = () => {
   const fetchGames = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/marketManagement/getMarketGames/${appiD}`);
+      const response = await axios.get(`/api/marketManagement/getMarketGames`);
       if (response.data) {
         setGames(response.data || []);
       } else {
@@ -47,7 +47,7 @@ const GameManagement = () => {
         isActive: values.marketOnOff || false,
       };
 
-      await axios.post(`/api/marketManagement/addMarketGame/${appiD}`, newGame);
+      await axios.post(`/api/marketManagement/addMarketGame`, newGame);
       message.success("Game added successfully!");
       fetchGames();
       form.resetFields();
@@ -59,7 +59,7 @@ const GameManagement = () => {
 
   const handleToggle = async (id, isActive) => {
     try {
-      await axios.put(`/api/marketManagement/updateMarketGame/${appiD}/${id}`, { isActive: !isActive });
+      await axios.put(`/api/marketManagement/updateMarketGame/${id}`, { isActive: !isActive });
       message.success("Market status updated!");
       fetchGames();
     } catch (error) {
@@ -80,7 +80,7 @@ const GameManagement = () => {
         })),
       };
 
-      await axios.put(`/api/marketManagement/updateMarketGame/${appiD}/${editingGame._id}`, updatedGame);
+      await axios.put(`/api/marketManagement/updateMarketGame/${editingGame._id}`, updatedGame);
       message.success("Game updated successfully!");
       setIsModalOpen(false);
       fetchGames();
@@ -150,7 +150,7 @@ const GameManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/marketManagement/deleteMarketGameById/${appiD}/${id}`);
+      await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
       message.success("Game deleted successfully!");
       fetchGames();
     } catch (error) {

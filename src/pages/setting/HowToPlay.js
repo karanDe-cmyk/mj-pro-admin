@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming axiosInstance is set up
-import { appiD } from "../../utils/config"; // Ensure appiD is correctly imported
+import {  } from "../../utils/config"; // Ensure  is correctly imported
 
 const HowToPlay = () => {
   const [description, setDescription] = useState("Enter a short description...");
@@ -16,7 +16,7 @@ const HowToPlay = () => {
     const fetchHowToPlayContent = async () => {
       try {
         setLoading(true); // Set loading to true while data is being fetched
-        const response = await axiosInstance.get(`/api/settings/howtoplay/${appiD}`);
+        const response = await axiosInstance.get(`/api/settings/howtoplay`);
         const data = response.data[0]; // Assuming data is an array with one object
         
         if (data) {
@@ -57,7 +57,7 @@ const HowToPlay = () => {
     }
 
     try {
-      await axiosInstance.put(`/api/settings/howtoplay/${appiD}/${id}`, {
+      await axiosInstance.put(`/api/settings/howtoplay/${id}`, {
         howtoplay_content: howToPlayContent,
         video_link: videoLink,
       });

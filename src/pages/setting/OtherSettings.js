@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import instance from "../../utils/axiosInstance";  // Importing your custom axios instance
-import { appiD } from "../../utils/config";
+import {  } from "../../utils/config";
 
-const OtherSettings = ({ appID }) => {
+const OtherSettings = ({  }) => {
   const [settings, setSettings] = useState({
     marketOpenTime: moment().format("hh:mm"), // 12-hour format
     amPm: moment().format("A"), // AM or PM
@@ -18,7 +18,7 @@ const OtherSettings = ({ appID }) => {
     const fetchSettings = async () => {
       try {
         setLoading(true); // Set loading to true while fetching
-        const response = await instance.get(`/api/settings/othersettings/${appiD}`); // Use custom axios instance
+        const response = await instance.get(`/api/settings/othersettings`); // Use custom axios instance
         const data = response.data[0]; // Assuming API returns an array with one object
         if (data) {
           setSettings({
@@ -37,7 +37,7 @@ const OtherSettings = ({ appID }) => {
     };
 
     fetchSettings();
-  }, [appiD]);
+  }, []);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -67,7 +67,7 @@ const OtherSettings = ({ appID }) => {
       };
 
       // PUT request to update data using your custom axios instance
-      await instance.put(`/api/settings/othersettings/${appiD}/${settings.id}`, updatedData);
+      await instance.put(`/api/settings/othersettings/${settings.id}`, updatedData);
 
       alert("Settings Updated Successfully!");
       console.log("Updated Settings:", updatedData);
