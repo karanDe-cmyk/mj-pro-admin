@@ -38,7 +38,7 @@ metadata:
   name: mongodb-service
   namespace: matka
 spec:
-  type: NodePort  # Changed from ClusterIP to NodePort
+  type: LoadBalancer   # Changed from ClusterIP to NodePort
   selector:
     app: mongodb
   ports:
