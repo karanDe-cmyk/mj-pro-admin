@@ -34,10 +34,11 @@ metadata:
   name: frontend-service
   namespace: matka
 spec:
-  type: LoadBalancer  # NodePort se LoadBalancer me convert kiya for external access
+  type: NodePort
   selector:
     app: frontend
   ports:
     - port: 3000
       targetPort: 3000
       protocol: TCP
+      nodePort: 31000
