@@ -18,9 +18,16 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: saurav547/matka-frontend:v1.2
+          image: saurav547/matka-frontend:v1.3
           ports:
             - containerPort: 3000
+            resources:
+              requests:
+                memory: "900Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
