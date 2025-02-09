@@ -38,6 +38,7 @@ metadata:
   name: mongodb-service
   namespace: matka
 spec:
+  type: NodePort
   selector:
     app: mongodb
   ports:
