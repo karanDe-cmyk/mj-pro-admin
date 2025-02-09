@@ -29,14 +29,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service
+  name: mongo-service
   namespace: matka
 spec:
   selector:
-    app: mongodb
+    app: mongo
   ports:
     - port: 27017
       targetPort: 27017
+      protocol: TCP
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
