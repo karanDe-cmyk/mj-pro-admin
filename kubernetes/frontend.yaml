@@ -21,13 +21,13 @@ spec:
           image: saurav547/matka-frontend:v1.3
           ports:
             - containerPort: 3000
-            resources:
-              requests:
-                memory: "900Mi"
-                cpu: "250m"
-              limits:
-                memory: "1Gi"
-                cpu: "500m"
+          resources:
+            requests:
+              memory: "800Mi"  # ⚡ Minimum usage ke hisaab se rakha
+              cpu: "300m"
+            limits:
+              memory: "1.2Gi"  # ⚡ Thoda buffer diya taaki crash na ho
+              cpu: "600m"
 ---
 apiVersion: v1
 kind: Service
