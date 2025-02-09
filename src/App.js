@@ -47,6 +47,7 @@ import OtherSettings from "./pages/setting/OtherSettings"; // Import the compone
 import HowToPlay from "./pages/setting/HowToPlay"; // Import the component
 import ReferEarn from "./pages/setting/ReferEarn"; // Import the component
 import WelcomeSettings from "./pages/setting/WelcomeSettings"; // Import the component
+import UserDetails from './pages/UserDetails';
 
 
 
@@ -123,6 +124,8 @@ const App = () => {
             </Route>
             
           </Route>
+
+          <Route path="/user-details/:userId" element={<UserDetails />} />
         </Route>
 
         {/* Catch-All Redirect */}

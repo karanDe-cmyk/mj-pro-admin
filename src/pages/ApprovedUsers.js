@@ -3,12 +3,15 @@ import instance from "../utils/axiosInstance";
 import { apiUrl, appiD } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+
 
 const UnapprovedUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false); // For global loading
   const [loadingSwitch, setLoadingSwitch] = useState(null); // For loading spinner on individual switch
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate(); // React Router navigation
 
   // ✅ Fetch Users with Spinner
   const fetchUsers = async () => {
@@ -29,9 +32,18 @@ const UnapprovedUsers = () => {
     }
   };
 
+  
+
   useEffect(() => {
     fetchUsers();
   }, []);
+
+
+   // Navigate to User Details Page
+   const handleViewClick = (userId) => {
+    navigate(`/user-details/${userId}`);
+  };
+
 
   // ✅ Toggle Switch Function
   const toggleSwitch = async (record, type) => {
@@ -121,7 +133,7 @@ const UnapprovedUsers = () => {
       title: "Option",
       dataIndex: "option",
       key: "option",
-      render: () => <Button type="link">View</Button>,
+      render: (_, record) =>  <Button type="link" onClick={() => handleViewClick(record._id)}>View</Button>,
     },
   ];
 

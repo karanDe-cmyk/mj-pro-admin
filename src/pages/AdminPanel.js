@@ -35,6 +35,8 @@ const AdminPanel = () => {
         navigate("/");
     };
 
+    
+
     const menuItems = [
         { key: "dashboard", label: "Dashboard", path: "/admin/dashboard", icon: <i className="fa fa-home" /> },
         {

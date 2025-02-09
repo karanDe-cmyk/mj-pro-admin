@@ -45,8 +45,79 @@ const Dashboard = () => {
   const [selectedGame, setSelectedGame] = useState("");
   const [selectedSession, setSelectedSession] = useState("");
   const [error, setError] = useState(null); // Error state
-  const [profitLossData, setProfiltLossData] = useState([]);
-  // Fetch data for TotalUsers
+  const [profitLossData, setProfitLossData] = useState([]);
+  const [dashboardData2, setDashboardData2] = useState({
+    totalBidAmount: 0,
+    totalWinAmount: 0,
+    totalProfitAmount: 0,
+  });
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedGame2, setSelectedGame2] = useState("");
+  const [loadingButton, setLoadingButton] = useState(false);
+  const [loadingButton2, setLoadingButton2] = useState(false);
+  const [loadingButton3, setLoadingButton3] = useState(false);
+  // Handler for DatePicker changes.
+  // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
+  const handleDateChange2 = (date, dateString) => {
+    if (date) {
+      // Convert dateString from "YYYY-MM-DD" (default) to "DD-MM-YYYY"
+      const parts = dateString.split("-");
+      const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      setSelectedDate(formattedDate);
+    } else {
+      setSelectedDate("");
+    }
+  };
+
+  // Handler for game selection.
+  const handleGameChange2 = (value) => {
+    // console.log("Selected Game:", value);
+    setSelectedGame2(value);
+  };
+
+  // Submit handler that calls the API directly.
+  const handleSubmit = async () => {
+    // console.log("Submit clicked with:", { selectedGame2, selectedDate });
+    if (!selectedDate || !selectedGame2) {
+      message.error("Please select both a date and a game name.");
+      return;
+    }
+    try {
+      setLoadingButton(true);
+      // Prepare the request body.
+      const requestBody = {
+        gameName: selectedGame2,
+        date: selectedDate, // Expected in "DD-MM-YYYY" format.
+      };
+      // console.log("Posting to API with:", requestBody);
+
+      const response = await instance.post(
+        `/api/mainmarketdeclareResult/get-total-winnings/${appiD}`,
+        requestBody
+      );
+      // console.log("API response:", response.data);
+
+      // Assuming the response data has { totalPoints, totalWinningPoints }
+      const { totalPoints, totalWinningPoints } = response.data;
+      // Calculate profit (for example, difference between points and winning points).
+      const totalProfitAmount = totalPoints - totalWinningPoints;
+
+      // Set the dashboard data.
+      setDashboardData2({
+        totalBidAmount: totalPoints,
+        totalWinAmount: totalWinningPoints,
+        totalProfitAmount,
+      });
+    } catch (error) {
+      console.error("Error fetching total winnings:", error);
+      message.error("Error fetching total winnings");
+    } finally {
+      setLoadingButton(false);
+    }
+  };
+
+  // console.log(profitLossData)
+  // Fetch data for Total Users
   const fetchTotalUsers = async () => {
     try {
       const response = await instance.get(`/api/app/users/${appiD}`);
@@ -151,6 +222,7 @@ const Dashboard = () => {
     };
 
     try {
+      setLoadingButton2(true);
       const response = await instance.post(
         `/api/bid/todayDigitSummary/${appiD}`,
         body
@@ -164,12 +236,16 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error fetching bid summary:", error);
       message.error("Error fetching bid summary");
+    } finally {
+      setLoadingButton2(false);
     }
   };
 
   useEffect(() => {
     const fetchGames = async () => {
       try {
+        setLoadingButton2(true);
+
         const response = await instance.get(
           `/api/marketManagement/getMarketGames/${appiD}`
         );
@@ -181,12 +257,14 @@ const Dashboard = () => {
           );
           setMainMarketGamesList(filteredGames);
           setMainMarketGamesListLeft(filteredGames);
-          console.log("Main Market Games List:", filteredGames);
+          // console.log("Main Market Games List:", filteredGames);
         } else {
           console.error("Response data is not an array:", response.data);
         }
       } catch (error) {
         console.error("Error fetching market games:", error);
+      } finally {
+        setLoadingButton2(false);
       }
     };
 
@@ -227,7 +305,7 @@ const Dashboard = () => {
           `/api/gameRoutes/getGameList/${appiD}`
         );
 
-        console.log("API Response for Games List:", response.data);
+        // console.log("API Response for Games List:", response.data);
 
         // Ensure response.data is an array before setting state
         if (Array.isArray(response.data)) {
@@ -305,6 +383,47 @@ const Dashboard = () => {
     fetchStarlineData();
     fetchTotalGames();
   }, []);
+
+
+  useEffect(() => {
+    const fetchProfitLossData = async () => {
+      try {
+        setLoadingButton3(true);
+        setError(null);
+        // Call the API using a GET request.
+        const response = await instance.get(
+          `/api/users/total-profit-loss/${appiD}`
+        );
+        // console.log("Profit/Loss API response:", response.data);
+
+        if (response.data && response.data.success) {
+          const totalDeposit = response.data.totalDeposit || 0;
+          const totalWithdraw = response.data.totalWithdraw || 0;
+          const total = totalDeposit - totalWithdraw;
+          // Set the table data as a single-row array.
+          setProfitLossData([
+            {
+              key: 1,
+              deposit: totalDeposit,
+              withdraw: totalWithdraw,
+              total: total,
+              result: total,
+            },
+          ]);
+        } else {
+          setError("Error: Could not fetch profit/loss data.");
+        }
+      } catch (err) {
+        console.error("Error fetching profit/loss data:", err);
+        setError("Error fetching profit/loss data");
+      } finally {
+        setLoadingButton3(false);
+      }
+    };
+
+    fetchProfitLossData();
+  }, []); // Empty dependency array means this runs once on mount
+
 
   const fundRequestColumns = [
     {
@@ -416,7 +535,10 @@ const Dashboard = () => {
                 Admin Dashboard
               </Text>
               <div style={{ textAlign: "center", marginTop: 20 }}>
-                <Avatar size={80} src="https://via.placeholder.com/80" />
+                <Avatar
+                  size={80}
+                  src="https://img.icons8.com/?size=256w&id=110479&format=png"
+                />
                 <Title level={3} style={{ marginTop: 10, fontWeight: "bold" }}>
                   Admin
                 </Title>
@@ -439,13 +561,14 @@ const Dashboard = () => {
                   <DatePicker
                     style={{ width: "100%" }}
                     placeholder="Select Date"
+                    onChange={handleDateChange2}
                   />
                 </Col>
                 <Col span={24} style={{ marginTop: 10 }}>
                   <Select
                     placeholder="Select Game Name"
                     style={{ width: "100%" }}
-                    // onChange={handleGameChange}
+                    onChange={handleGameChange2}
                   >
                     {mainMarketGamesLeft.map((game) => (
                       <Option key={game._id} value={game.gameName}>
@@ -455,13 +578,19 @@ const Dashboard = () => {
                   </Select>
                 </Col>
                 <Col span={24} style={{ marginTop: 10 }}>
-                  <Button type="primary" block>
+                  <Button
+                    type="primary"
+                    block
+                    onClick={handleSubmit}
+                    loading={loadingButton}
+                  >
                     Submit
                   </Button>
                 </Col>
               </Row>
             </Card>
 
+            {/* Dashboard Cards */}
             <Card style={{ marginTop: 20 }}>
               <Row gutter={16}>
                 <Col span={24}>
@@ -469,7 +598,7 @@ const Dashboard = () => {
                     <Row justify="space-between" align="middle">
                       <Statistic
                         title="Total Bid Amount"
-                        value={dashboardData.totalBidAmount || 0}
+                        value={dashboardData2.totalBidAmount || 0}
                         prefix="Rs"
                       />
                       <Button type="primary">View</Button>
@@ -481,7 +610,7 @@ const Dashboard = () => {
                     <Row justify="space-between" align="middle">
                       <Statistic
                         title="Total Win Amount"
-                        value={dashboardData.totalWinAmount || 0}
+                        value={dashboardData2.totalWinAmount || 0}
                         prefix="Rs"
                       />
                       <Button type="primary">View</Button>
@@ -492,7 +621,7 @@ const Dashboard = () => {
                   <Card style={{ backgroundColor: "#f6ffed" }}>
                     <Statistic
                       title="Total Profit Amount"
-                      value={dashboardData.totalProfitAmount || 0}
+                      value={dashboardData2.totalProfitAmount || 0}
                       prefix="Rs"
                     />
                   </Card>
@@ -608,7 +737,12 @@ const Dashboard = () => {
                   </Select>
                 </Col>
                 <Col span={6}>
-                  <Button type="primary" block onClick={handleGetClick}>
+                  <Button
+                    type="primary"
+                    block
+                    onClick={handleGetClick}
+                    loading={loadingButton2}
+                  >
                     Get
                   </Button>
                 </Col>
@@ -658,23 +792,24 @@ const Dashboard = () => {
 
             {/* Profit / Loss Summary Table */}
             <Card style={{ marginTop: 20, width: "100%" }}>
-  <Title level={5}>
-    Profit/Loss Report On Date {new Date().toISOString().split("T")[0]}
-  </Title>
-  {loading ? (
-    <Spin />
-  ) : error ? (
-    <p>{error}</p>
-  ) : (
-    <Table
-      columns={profitLossColumns}
-      dataSource={profitLossData}
-      pagination={false}
-      rowKey="key"
-      scroll={{ x: 800 }} // Adjust this value if needed for your layout
-    />
-  )}
-</Card>
+              <Title level={5}>
+                Profit/Loss Report On Date{" "}
+                {new Date().toISOString().split("T")[0]}
+              </Title>
+              {loadingButton3 ? (
+                <Spin />
+              ) : error ? (
+                <p>{error}</p>
+              ) : (
+                <Table
+                  columns={profitLossColumns}
+                  dataSource={profitLossData}
+                  pagination={false}
+                  rowKey="key"
+                  scroll={{ x: 800 }} // Adjust this value if needed for your layout
+                />
+              )}
+            </Card>
 
             <Card style={{ marginTop: 20, width: "100%" }}>
               <Title level={5}>Fund Request Auto Deposit History</Title>
