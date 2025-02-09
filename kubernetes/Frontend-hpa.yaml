@@ -9,7 +9,7 @@ spec:
     kind: Deployment
     name: frontend-deployment
   minReplicas: 2
-  maxReplicas: 10  # Increase from 5 to 10
+  maxReplicas: 15  # Increase max replicas to 15
   metrics:
     - type: Resource
       resource:
