@@ -16,10 +16,10 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 75  # 75% CPU pe scale hoga
+          averageUtilization: 75  # Scale up if CPU usage exceeds 75%
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 70  # 70% Memory pe scale hoga
+          averageUtilization: 70  # Scale up if Memory usage exceeds 70%
