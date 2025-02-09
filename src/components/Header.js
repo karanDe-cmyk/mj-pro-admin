@@ -1,53 +1,43 @@
 import { useState } from "react";
+import { Layout, Dropdown, Menu, Button } from "antd";
+import { MenuFoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 
-const Header = ({ username, handleLogout }) => {
+const { Header: AntHeader } = Layout;
+
+const Header = ({ username = "Admin", onToggleSidebar, handleLogout }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const menu = (
+        <Menu>
+            <Menu.Item key="settings" onClick={() => navigate("/admin/settings/main")} icon={<SettingOutlined />}>
+                Settings
+            </Menu.Item>
+            <Menu.Item key="logout" onClick={handleLogout} icon={<LogoutOutlined />}>
+                Logout
+            </Menu.Item>
+        </Menu>
+    );
 
     return (
-        <header className="flex justify-between items-center bg-white shadow-md p-4 sticky top-0 z-10 w-full">
-            {/* Sidebar Toggle Button */}
-            <button onClick={() => alert("Toggle Sidebar")} className="text-gray-500 text-xl">
-                <i className="fas fa-bars"></i>
-            </button>
+        <AntHeader className="bg-white shadow-md flex justify-between items-center p-4 sticky top-0 z-50 w-full">
+            {/* ✅ Sidebar Toggle Button (Works in Mobile & Desktop) */}
+            <Button
+                type="text"
+                icon={<MenuFoldOutlined />}
+                onClick={onToggleSidebar} // ✅ Triggers sidebar toggle
+                className="text-gray-700 text-xl"
+            />
 
-            {/* Username with User Icon and Dropdown */}
-            <div className="relative ml-auto flex items-center">
-                {/* User Icon */}
-                <i className="fas fa-user-circle text-2xl text-gray-700 mr-2"></i>
-                <span className="font-medium text-gray-700 mr-2">
-                    <strong>{username}</strong>
-                </span>
-
-                {/* Dropdown Toggle */}
-                <button onClick={() => setDropdownOpen(!dropdownOpen)} className="text-gray-500 text-xl">
-                    <i className="fas fa-chevron-down"></i>
-                </button>
-
-                {/* Dropdown Menu */}
-                {dropdownOpen && (
-                    <div className="absolute right-0 mt-10 w-40 bg-white shadow-lg rounded-md border border-gray-200">
-                        <ul>
-                            <li>
-                                <button
-                                    onClick={() => alert("Settings")}
-                                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left flex items-center"
-                                >
-                                    <i className="fas fa-cogs mr-2 text-gray-500"></i> Settings
-                                </button>
-                            </li>
-                            <li>
-                                <button
-                                    onClick={handleLogout}
-                                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left flex items-center"
-                                >
-                                    <i className="fas fa-sign-out-alt mr-2 text-gray-500"></i> Logout
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                )}
-            </div>
-        </header>
+            {/* Username with Dropdown */}
+            <Dropdown overlay={menu} trigger={["click"]} open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                <div className="cursor-pointer flex items-center">
+                    <UserOutlined className="text-2xl text-gray-700 mr-2" />
+                    <span className="font-medium text-gray-700">{username}</span>
+                </div>
+            </Dropdown>
+        </AntHeader>
     );
 };
 

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Switch, TimePicker, Input, Form, Card, Row, Col, message,Modal, Empty, Spin } from "antd";
+import { Table, Button, Switch, TimePicker, Input, Form, Card, Row, Col, message,Modal, Empty, Spin, Select } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import moment from "moment";
 import axios from "../utils/axiosInstance"; 
 import { appiD } from "../utils/config"; 
+const { Option } = Select;
 
 const GameManagement = () => {
   const [form] = Form.useForm();
@@ -171,11 +172,31 @@ const GameManagement = () => {
           <Form form={form} layout="inline" onFinish={handleAddGame} style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap" }}>
 
           <div>
-              <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Market Name</label>
-              <Form.Item name="marketName" rules={[{ required: true, message: "Enter Market name" }]}>
-                <Input placeholder="Enter Market Name" style={{ width: "250px" }} />
-              </Form.Item>
-            </div>
+  <label
+    style={{
+      fontWeight: "500",
+      marginBottom: "5px",
+      display: "block",
+    }}
+  >
+    Market Name
+  </label>
+  <Form.Item
+    name="marketName"
+    rules={[{ required: true, message: "Select Market name" }]}
+  >
+    <Select style={{ width: "250px" }} placeholder="Select Market Name">
+      {/* Blank option at index 0 */}
+      <Select.Option value="">
+        {/* You can leave the text empty or provide a hint like "--Select--" */}
+        --Select Market Name--
+      </Select.Option>
+      {/* Valid option */}
+      <Select.Option value="Main Market">Main Market</Select.Option>
+    </Select>
+  </Form.Item>
+</div>
+
 
             <div>
               <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Game Name</label>

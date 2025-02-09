@@ -1,485 +1,701 @@
-import React, { useState, useEffect } from "react";
-import { FaUser, FaGamepad, FaCoins } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import {
+  Card,
+  Typography,
+  Avatar,
+  Statistic,
+  Select,
+  Button,
+  DatePicker,
+  Row,
+  Col,
+  Table,
+  Spin,
+  message,
+} from "antd";
+import {
+  UserOutlined,
+  AppstoreOutlined,
+  DollarOutlined,
+  FundOutlined,
+} from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
-import { apiUrl, appiD } from "../utils/config";
-import { Spin } from "antd";
+import { appiD } from "../utils/config";
+import moment from "moment";
+
+const { Title, Text } = Typography;
+const { Option } = Select;
+
 const Dashboard = () => {
-  const [totalBidAmount, setTotalBidAmount] = useState(0);
-  const [totalWinAmount, setTotalWinAmount] = useState(0);
-  const [totalProfitAmount, setTotalProfitAmount] = useState(0);
-  // const [countDash, setCountDash] = useState(null);
+  const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [bids, setBids] = useState(
-    Array(10).fill({ totalBids: 0, bidAmount: 0 })
-  );
-
-  // Generate random colors
-  const generateRandomColor = () => {
-    const colors = [
-      "bg-red-500",
-      "bg-green-500",
-      "bg-blue-500",
-      "bg-yellow-500",
-      "bg-purple-500",
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
-
-  useEffect(() => {
-    // Simulate fetching dynamic bid data
-    setBids(
-      bids.map((_, i) => ({
-        totalBids: Math.floor(Math.random() * 100),
-        bidAmount: Math.floor(Math.random() * 1000),
-      }))
-    );
-  }, []);
-  useEffect(() => {
-    const fetchData = () => {
-      setTotalBidAmount(15000);
-      setTotalWinAmount(50000);
-      setTotalProfitAmount(5000);
-    };
-
-    fetchData();
-  }, []);
-
-  const [dashboardData, setDashboardData] = useState({
-    users: 7,
-    games: 17,
-    unapprovedUsers: 2,
-    approvedUsers: 5,
-    mainMarketBidAmount: 0,
-    starlineBidAmount: 0,
+  const [fundRequests, setFundRequests] = useState([]);
+  const [gamesList, setGamesList] = useState([]);
+  const [starlineData, setStarlineData] = useState({ totalAmount: 0 });
+  const [mainMarketData, setMainMarketData] = useState({ totalAmount: 0 });
+  const [autoDepositHistory, setAutoDepositHistory] = useState([]);
+  const [totalUsers, setTotalUsers] = useState({ totalUsers: 0 });
+  const [approvedUsers, setApprovedUsers] = useState({ approvedUsers: 0 });
+  const [unapprovedUsers, setUnApprovedUsers] = useState({
+    unapprovedUsers: 0,
   });
-  const [date, setDate] = useState("");
-  const [gameName, setGameName] = useState();
-  console.log(gameName, "gameName");
-  const [marketTime, setMarketTime] = useState("");
-  const [fundRequests, setFundRequests] = useState([
-    {
-      id: 1,
-      username: "Bar - 1231231234",
-      amount: 1000,
-      txnId: "679a4cc9740dd",
-      date: "2025-01-29 09:14",
-      status: "Active",
-    },
-    {
-      id: 2,
-      username: "Bar - 1231231234",
-      amount: 1000,
-      txnId: "679a4cad243bc",
-      date: "2025-01-29 09:13",
-      status: "Active",
-    },
-    {
-      id: 3,
-      username: "Bar - 1231231234",
-      amount: 1000,
-      txnId: "679a4ca0dfe52",
-      date: "2025-01-29 09:13",
-      status: "Active",
-    },
-    {
-      id: 4,
-      username: "King - 9785575373",
-      amount: 1000,
-      txnId: "67757e095369e",
-      date: "2025-01-01 11:10",
-      status: "Active",
-    },
-  ]);
-
-  useEffect(() => {
-    // Simulating API call
-    const fetchData = () => {
-      const data = {
-        users: 7,
-        games: 17,
-        unapprovedUsers: 2,
-        approvedUsers: 5,
-        mainMarketBidAmount: 0,
-        starlineBidAmount: 0,
-      };
-      setDashboardData(data);
-    };
-    fetchData();
-  }, []);
-  const [count, setCount] = useState(null);
-  //   console.log("count", count?.data);
-  const fetchCount = async () => {
+  const [totalGames, setTotalGames] = useState({ totalGameCount: 0 });
+  const [mainMarketGamesList, setMainMarketGamesList] = useState([]);
+  const [mainMarketGamesListLeft, setMainMarketGamesListLeft] = useState([]);
+  const [selectedGame, setSelectedGame] = useState("");
+  const [selectedSession, setSelectedSession] = useState("");
+  const [error, setError] = useState(null); // Error state
+  const [profitLossData, setProfiltLossData] = useState([]);
+  // Fetch data for TotalUsers
+  const fetchTotalUsers = async () => {
     try {
-      const response = await instance.get(
-        `${apiUrl}/api/count/ankCount/3d88dae8-5904-40e9-b314-4906bc064bed?gameName=${gameName}&market=${marketTime}`
-      );
-      if (response) {
-        console.log("goodVibees", response?.data);
-        setCount(response.data);
+      const response = await instance.get(`/api/app/users/${appiD}`);
+      const data = response.data;
+      if (data.totalUsers !== undefined) {
+        setTotalUsers({ totalUsers: data.totalUsers });
       } else {
-        throw new Error("Failed to fetch user data");
+        console.error("Error in API response:", data.message);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error fetching Starline Bid Amount:", error);
     }
   };
 
-  const [starlinecount, setStarlineCount] = useState(null);
-  const fetchStarlineCount = async () => {
+  // Fetch data for ApprovedUsers
+  const fetchApprovedUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users/${appiD}`);
+      const data = response.data;
+      if (data.approvedUsers !== undefined) {
+        setApprovedUsers({ approvedUsers: data.approvedUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
+    }
+  };
+
+  // Fetch data for UnApprovedUsers
+  const fetchUnApprovedUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users/${appiD}`);
+      const data = response.data;
+      if (data.unapprovedUsers !== undefined) {
+        setUnApprovedUsers({ unapprovedUsers: data.unapprovedUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalUsers();
+    fetchApprovedUsers();
+    fetchUnApprovedUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchDepositHistory = async () => {
+      try {
+        setLoading(true); // Set loading to true before API call
+        const response = await instance.get(
+          `/api/userPayment/getpaymentResponse/${appiD}`
+        );
+        setAutoDepositHistory(response.data.data || []); // Ensure data is an array
+        setLoading(false); // Set loading to false after fetching
+      } catch (err) {
+        console.error("Error fetching deposit history:", err);
+        setError("Failed to fetch deposit history. Please try again.");
+        setLoading(false); // Stop loading on error
+      }
+    };
+
+    fetchDepositHistory();
+  }, []);
+
+  // Handler for Game Name selection
+  const handleGameChange = (value) => {
+    setSelectedGame(value);
+  };
+
+  // Handler for Session selection
+  const handleSessionChange = (value) => {
+    setSelectedSession(value);
+  };
+
+  const handleGetClick = async () => {
+    // Validate selections
+    if (!selectedGame || !selectedSession) {
+      message.error("Please select both a game name and a session");
+      return;
+    }
+
+    // Determine the open/close flags based on selection
+    let openFlag = false;
+    let closeFlag = false;
+    if (selectedSession === "open") {
+      openFlag = true;
+      closeFlag = false;
+    } else if (selectedSession === "close") {
+      openFlag = false;
+      closeFlag = true;
+    }
+
+    const body = {
+      gameName: selectedGame,
+      open: openFlag,
+      close: closeFlag,
+    };
+
+    try {
+      const response = await instance.post(
+        `/api/bid/todayDigitSummary/${appiD}`,
+        body
+      );
+      // Assuming response.data.data contains the summary for digits 0–9
+      if (response.data && response.data.data) {
+        setDashboardData(response.data.data);
+      } else {
+        message.error("Invalid response from server");
+      }
+    } catch (error) {
+      console.error("Error fetching bid summary:", error);
+      message.error("Error fetching bid summary");
+    }
+  };
+
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const response = await instance.get(
+          `/api/marketManagement/getMarketGames/${appiD}`
+        );
+        // Ensure the response is an array
+        if (Array.isArray(response.data)) {
+          // Filter out only the games with marketName exactly "Main Market"
+          const filteredGames = response.data.filter(
+            (game) => game.marketName === "Main Market"
+          );
+          setMainMarketGamesList(filteredGames);
+          setMainMarketGamesListLeft(filteredGames);
+          console.log("Main Market Games List:", filteredGames);
+        } else {
+          console.error("Response data is not an array:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching market games:", error);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  const mainMarketGames = mainMarketGamesList.filter(
+    (game) => game.marketName === "Main Market"
+  );
+
+  const mainMarketGamesLeft = mainMarketGamesListLeft.filter(
+    (game) => game.marketName === "Main Market"
+  );
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await instance.get(`/api/admin/dashboard`);
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+      setLoading(false);
+    };
+
+    const fetchFundRequests = async () => {
+      try {
+        const response = await instance.get(`/api/admin/fundRequests`);
+        setFundRequests(response.data || []);
+      } catch (error) {
+        console.error("Error fetching fund requests:", error);
+      }
+    };
+
+    const fetchGamesList = async () => {
+      try {
+        const response = await instance.get(
+          `/api/gameRoutes/getGameList/${appiD}`
+        );
+
+        console.log("API Response for Games List:", response.data);
+
+        // Ensure response.data is an array before setting state
+        if (Array.isArray(response.data)) {
+          setGamesList(response.data);
+        } else {
+          setGamesList([]); // Fallback to empty array if data is not an array
+          console.error(
+            "Error: Expected an array but received:",
+            response.data
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching games list:", error);
+        setGamesList([]); // Fallback to empty array on error
+      }
+    };
+
+    fetchDashboardData();
+    fetchFundRequests();
+    fetchGamesList();
+  }, []);
+
+  // Fetch data for Starline
+  const fetchStarlineData = async () => {
     try {
       const response = await instance.get(
         `/api/starlinebid/starline-total-bid-amount/${appiD}`
       );
-      if (response) {
-        // console.log("goodVibees", response?.data);
-        setStarlineCount(response.data.totalAmount);
+      const data = response.data;
+      if (data.totalAmount !== undefined) {
+        setStarlineData({ totalAmount: data.totalAmount });
       } else {
-        throw new Error("Failed to fetch user data");
+        console.error("Error in API response:", data.message);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error fetching Starline Bid Amount:", error);
     }
   };
 
+  // Fetch data for Main Market
+  const fetchMainMarketData = async () => {
+    try {
+      const response = await instance.get(`/api/bid/todayBids/${appiD}`);
+      const data = response.data;
+      if (data.totalAmount !== undefined) {
+        setMainMarketData({ totalAmount: data.totalAmount });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching MainMarketData Bid Amount:", error);
+    }
+  };
 
-  useEffect(() => {
-    fetchCount();
-    fetchStarlineCount();
-  }, []);
-  const [countDash, setCountDash] = useState(null);
-  console.log("countDash.......", countDash?.data);
-  const fetchCountDash = async () => {
+  // Fetch data for Total  Games
+  const fetchTotalGames = async () => {
     try {
       const response = await instance.get(
-        `${apiUrl}/api/count/dashboardCounts/3d88dae8-5904-40e9-b314-4906bc064bed`
+        `/api/marketManagement/games/totalCount/${appiD}`
       );
-      if (response) {
-        console.log("goodVibes", response);
-        setCountDash(response?.data);
+      const data = response.data;
+      if (data.totalGameCount !== undefined) {
+        setTotalGames({ totalGameCount: data.totalGameCount });
       } else {
-        throw new Error("Failed to fetch user data");
+        console.error("Error in API response:", data.message);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false); // Stop loading once data is fetched
+      console.error("Error fetching MainMarketData Bid Amount:", error);
     }
   };
 
+  // Call both fetch functions when the component mounts or appiD changes
   useEffect(() => {
-    fetchCountDash();
+    fetchMainMarketData();
+    fetchStarlineData();
+    fetchTotalGames();
   }, []);
-  const [gameList, setGameList] = useState(null);
-  console.log("gooVibesaaaaaaa", gameList?.data);
-  const fetchGameList = async () => {
-    try {
-      const response = await instance.get(
-        `${apiUrl}/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`
-      );
-      if (response) {
-        console.log("goodVibeedsdsdds", response);
-        setGameList(response?.data);
-      } else {
-        throw new Error("Failed to fetch user data");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-  useEffect(() => {
-    fetchGameList();
-  }, []);
+
+  const fundRequestColumns = [
+    {
+      title: "#",
+      key: "serial",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "User Name",
+      dataIndex: "username",
+      key: "username",
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+    },
+    {
+      title: "Txn ID",
+      dataIndex: "txnId",
+      key: "txnId",
+    },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "date",
+      // Format the createdAt date using moment.
+      render: (createdAt) => moment(createdAt).format("DD-MM-YYYY HH:mm:ss"),
+    },
+    {
+      title: "Type",
+      key: "type",
+      render: (_, record) => (
+        <>
+          <Button type="primary" style={{ marginRight: 8 }}>
+            {record.status}
+          </Button>
+        </>
+      ),
+    },
+  ];
+
+  // Table columns for Profit / Loss Summary
+  const profitLossColumns = [
+    {
+      title: "Deposit",
+      dataIndex: "deposit",
+      key: "deposit",
+    },
+    {
+      title: "Withdraw",
+      dataIndex: "withdraw",
+      key: "withdraw",
+    },
+    {
+      title: "Total",
+      dataIndex: "total",
+      key: "total",
+    },
+    {
+      title: "Result",
+      dataIndex: "result",
+      key: "result",
+      render: (result) => {
+        const isProfit = result > 0;
+        const isLoss = result < 0;
+        // Set background color based on profit or loss.
+        const bgColor = isProfit ? "cyan" : isLoss ? "tomato" : "inherit";
+        const textColor = isLoss ? "white" : "black";
+        return (
+          <div
+            style={{
+              backgroundColor: bgColor,
+              color: textColor,
+              padding: "5px",
+              borderRadius: "4px",
+              textAlign: "center",
+            }}
+          >
+            {isProfit
+              ? `Profit: ${result}`
+              : isLoss
+              ? `Loss: ${Math.abs(result)}`
+              : "No Profit/Loss"}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
-    <>
-      <div className="flex min-h-screen bg-gray-100">
-        {/* Left Sidebar */}
-        <div className="w-1/2 md:w-1/3 lg:w-1/4 p-6 bg-white shadow h-screen">
-          {/* Welcome Section */}
-          <div className="bg-blue-100 p-7  rounded shadow h-fit">
-            <h2 className="text-lg font-bold">Welcome Back!</h2>
-            <p className="text-sm text-gray-600">Admin Dashboard</p>
-            <div className="mt-1 flex items-center">
-              <img
-                src="https://via.placeholder.com/50"
-                alt="Admin"
-                className="w-12 h-12 rounded-full mr-4"
-              />
-              <div>
-                <p className="text-lg font-bold">Admin</p>
-                <p className="text-sm text-gray-600">
-                  {countDash?.data.unapprovedUserCount} Unapproved Users
-                </p>
-                <p className="text-sm text-gray-600">
-                  {countDash?.data.approvedUserCount} Approved Users
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Market Bid Details */}
-          {/* Below Market Bid Details */}
-
-          <div className="mt-2 bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-bold mb-4">Market Bid Details</h2>
-            <form>
-              <label className="block mb-2 text-sm font-medium text-gray-600">
-                Date
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2 border rounded mb-4"
-              />
-              <label className="block mb-2 text-sm font-medium text-gray-600">
-                Game Name
-              </label>
-              <select
-                value={count?.data?.gameCount}
-                onChange={(e) => setGameName(e.target.value)}
-                className="w-full p-2 border rounded mb-4"
-              >
-                <option value="">Select Games</option>
-                {gameList?.data?.map((game, index) => (
-                  <option key={index} value={game.name}>
-                    {game.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="submit"
-                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-              >
-                Submit
-              </button>
-            </form>
-
-            {/* New UI Section for Total Bid Amount and Total Profit Amount */}
-            <div className="mt-2 grid grid-cols-1 md:grid-cols-1 gap-4">
-              {/* Total Bid Amount Box */}
-              <div className="bg-white p-4 border border-gray-300 rounded shadow flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Bid Amount</p>
-                  <h2 className="text-lg font-bold text-center">
-                    Rs {totalBidAmount}
-                  </h2>
-                </div>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                  View
-                </button>
-              </div>
-
-              {/* Total Profit Amount Box */}
-              <div className="bg-white-100 p-4 border border-gray-300 rounded shadow flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Win Amount</p>
-                  <h2 className="text-lg font-bold text-center">
-                    Rs {totalWinAmount}
-                  </h2>
-                </div>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                  View
-                </button>
-              </div>
-
-              <div className="bg-green-100 p-4 border border-gray-300  text-center rounded shadow  ">
-                <p className="text-sm  text-gray-600">
-                  Total Profit Amount Rs.{totalProfitAmount}
-                </p>
-              </div>
-            </div>
-          </div>
+    <div style={{ padding: 20 }}>
+      {loading ? (
+        <div style={{ textAlign: "center", marginTop: 50 }}>
+          <Spin size="small" />
         </div>
-
-        <div className="flex-1 p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-3">
-            <div className="p-6 bg-white shadow rounded flex items-center">
-              <FaUser className="text-blue-500 text-2xl mr-4" />
-              {loading ? (
-                <Spin size="large" />
-              ) : (
-                <div>
-                  <h4 className="font-bold text-sm">Users</h4>
-                  <p>{countDash?.data?.totalUserCount}</p>
-                </div>
-              )}
-            </div>
-            <div className="p-4 bg-white shadow rounded flex items-center">
-              <FaGamepad className="text-green-500 text-2xl mr-4" />
-              {loading ? (
-                <Spin size="large" />
-              ) : (
-                <div>
-                  <h4 className="font-bold text-sm">Games</h4>
-                  <p>{countDash?.data?.gameCount}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 bg-white shadow rounded flex items-center">
-              <FaCoins className="text-yellow-500 text-2xl mr-4" />
-              {loading ? (
-                <Spin size="large" />
-              ) : (
-                <div>
-                  <h4 className="font-bold text-sm">Main Market Bid Amount</h4>
-                  <p>{countDash?.data?.totalBidRevenue}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 bg-white shadow rounded flex items-center">
-              <FaCoins className="text-purple-500 text-2xl mr-4" />
-              {loading ? (
-                <Spin size="large" />
-              ) : (
-                <div>
-                  <h4 className="font-bold text-sm">Starline Bid Amount</h4>
-                  <p>{starlinecount}</p>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="grid  grid-cols-1 sm:grid-cols-1 gap-4 bg-white p-6 rounded shadow">
-            <h2 className="text-lg font-bold mb-4">
-              Total Bids on Single Ank of Date {date || "YYYY-MM-DD"}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                  Game Name
-                </label>
-                <select
-                  value={gameName}
-                  onChange={(e) => setGameName(e.target.value)}
-                >
-                  <option value="">Select Games</option>
-                  {gameList?.data?.map((game, index) => (
-                    <option key={index} value={game?.gameName}>
-                      {game?.gameName}
-                    </option>
-                  ))}
-                </select>
+      ) : (
+        <Row gutter={[16, 16]}>
+          {/* Left Side */}
+          <Col xs={24} md={8}>
+            <Card style={{ borderRadius: 8, padding: 16 }}>
+              <Title level={2} style={{ fontWeight: "bold" }}>
+                Welcome Back!
+              </Title>
+              <Text
+                type="secondary"
+                style={{ fontSize: 18, fontWeight: "bold" }}
+              >
+                Admin Dashboard
+              </Text>
+              <div style={{ textAlign: "center", marginTop: 20 }}>
+                <Avatar size={80} src="https://via.placeholder.com/80" />
+                <Title level={3} style={{ marginTop: 10, fontWeight: "bold" }}>
+                  Admin
+                </Title>
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                  Unapproved Users:{" "}
+                  {unapprovedUsers.unapprovedUsers || "Failed to fetch"}
+                </Text>
+                <br />
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                  Approved Users:{" "}
+                  {approvedUsers.approvedUsers || "Failed to fetch"}
+                </Text>
               </div>
+            </Card>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                  Market Time
-                </label>
-                <select
-                  value={marketTime}
-                  onChange={(e) => setMarketTime(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
-                >
-                  <option value="">Select Market Time</option>
-                  <option value="open">Open</option>
-                  <option value="close">Close</option>
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <button
-                  className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 w-full"
-                  onClick={() => fetchCount()}
-                >
-                  Get
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 bg-white p-6 rounded shadow">
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-              {count?.data.map((bid, i) => (
-                <div
-                  key={i}
-                  className="bg-gray-50 border border-gray-300 rounded shadow text-center flex flex-col justify-between h-full"
-                >
-                  {/* Total Bids */}
-                  <div className=" font-semibold text-gray-900 mb-2 mt-2">
-                    Total Bids: {bid.count}
-                  </div>
-
-                  {/* Bid Amount */}
-                  <div className="text-2xl font-bold text-gray-900 my-2 md:text-4xl">
-                    {bid.panna}
-                  </div>
-
-                  {/* Ank with Random Background Color - Full Width at Bottom */}
-                  <div
-                    className={`text-white  mt-4 w-full ${generateRandomColor()}`}
+            <Card style={{ marginTop: 20 }}>
+              <Title level={5}>Market Bid Details</Title>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    placeholder="Select Date"
+                  />
+                </Col>
+                <Col span={24} style={{ marginTop: 10 }}>
+                  <Select
+                    placeholder="Select Game Name"
+                    style={{ width: "100%" }}
+                    // onChange={handleGameChange}
                   >
-                    Ank {bid.digit}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                    {mainMarketGamesLeft.map((game) => (
+                      <Option key={game._id} value={game.gameName}>
+                        {game.gameName}
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col span={24} style={{ marginTop: 10 }}>
+                  <Button type="primary" block>
+                    Submit
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
 
-          {/* Fund Request Auto Deposit History */}
-        </div>
-      </div>
-      <div className="mt-2 bg-white p-6 rounded shadow">
-        <h2 className="text-lg font-bold mb-4">
-          Fund Request Auto Deposit History
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="table-auto w-full border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-4 py-2 text-left">
-                  #
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left">
-                  User Name
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left">
-                  Amount
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left">
-                  Txn ID
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left">
-                  Date
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {fundRequests.map((request) => (
-                <tr key={request.id}>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {request.id}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {request.username}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {request.amount}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {request.txnId}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {request.date}
-                  </td>
-                  <td className="border flex grid-cols-1 border-gray-300 px-4 py-2">
-                    <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">
-                      {request.status}
-                    </button>
-                    <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                      Cancel
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+            <Card style={{ marginTop: 20 }}>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <Card>
+                    <Row justify="space-between" align="middle">
+                      <Statistic
+                        title="Total Bid Amount"
+                        value={dashboardData.totalBidAmount || 0}
+                        prefix="Rs"
+                      />
+                      <Button type="primary">View</Button>
+                    </Row>
+                  </Card>
+                </Col>
+                <Col span={24} style={{ marginTop: 10 }}>
+                  <Card>
+                    <Row justify="space-between" align="middle">
+                      <Statistic
+                        title="Total Win Amount"
+                        value={dashboardData.totalWinAmount || 0}
+                        prefix="Rs"
+                      />
+                      <Button type="primary">View</Button>
+                    </Row>
+                  </Card>
+                </Col>
+                <Col span={24} style={{ marginTop: 10 }}>
+                  <Card style={{ backgroundColor: "#f6ffed" }}>
+                    <Statistic
+                      title="Total Profit Amount"
+                      value={dashboardData.totalProfitAmount || 0}
+                      prefix="Rs"
+                    />
+                  </Card>
+                </Col>
+              </Row>
+            </Card>
+          </Col>
+
+          {/* Right Side */}
+          <Col xs={24} md={16}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Card>
+                  <Statistic
+                    title={
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Users
+                      </span>
+                    }
+                    value={totalUsers.totalUsers || "Failed to fetch"}
+                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
+                    prefix={
+                      <UserOutlined
+                        style={{ fontSize: "24px", fontWeight: "bold" }}
+                      />
+                    }
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card>
+                  <Statistic
+                    title={
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Games
+                      </span>
+                    }
+                    value={totalGames.totalGameCount || "Failed to fetch"}
+                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
+                    prefix={
+                      <AppstoreOutlined
+                        style={{ fontSize: "24px", fontWeight: "bold" }}
+                      />
+                    }
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card>
+                  <Statistic
+                    title={
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Main Market Bid Amount
+                      </span>
+                    }
+                    value={mainMarketData.totalAmount || "Failed to fetch"}
+                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
+                    prefix={
+                      <DollarOutlined
+                        style={{ fontSize: "24px", fontWeight: "bold" }}
+                      />
+                    }
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card>
+                  <Statistic
+                    title={
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Starline Bid Amount
+                      </span>
+                    }
+                    value={starlineData.totalAmount || "Failed to fetch"}
+                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
+                    prefix={
+                      <FundOutlined
+                        style={{ fontSize: "24px", fontWeight: "bold" }}
+                      />
+                    }
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            <Card style={{ marginTop: 20 }}>
+              <Title level={5}>
+                Total Bids on Single Ank of Date{" "}
+                {new Date().toISOString().split("T")[0]}
+              </Title>
+              <Row gutter={16} align="middle">
+                <Col span={9}>
+                  <Select
+                    placeholder="Select Game Name"
+                    style={{ width: "100%" }}
+                    onChange={handleGameChange}
+                  >
+                    {mainMarketGames.map((game) => (
+                      <Option key={game._id} value={game.gameName}>
+                        {game.gameName}
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col span={9}>
+                  <Select
+                    placeholder="Select Session"
+                    style={{ width: "100%" }}
+                    onChange={handleSessionChange} // You can still capture the selection here
+                  >
+                    <Option value="open">Open</Option>
+                    <Option value="close">Close</Option>
+                  </Select>
+                </Col>
+                <Col span={6}>
+                  <Button type="primary" block onClick={handleGetClick}>
+                    Get
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
+
+            {/* Dashboard Row */}
+            <Row gutter={[16, 16]} style={{ marginTop: 20 }}>
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
+                // Calculate a unique hue for each card
+                const hue = 36 * ank; // 360 / 10 * ank
+                const color = `hsl(${hue}, 70%, 50%)`;
+                // Extract summary data for the digit or use default values
+                const digitData = dashboardData[ank] || {
+                  totalUsers: 0,
+                  totalAmount: 0,
+                };
+
+                return (
+                  <Col span={6} key={ank}>
+                    <Card style={{ textAlign: "center", borderColor: color }}>
+                      <Text style={{ fontWeight: "bold", fontSize: "18px" }}>
+                        Total Bids {digitData.totalUsers}
+                      </Text>
+                      <Title
+                        level={3}
+                        style={{ fontWeight: "bold", fontSize: "32px" }}
+                      >
+                        {digitData.totalAmount}
+                      </Title>
+                      <Button
+                        block
+                        style={{
+                          backgroundColor: color,
+                          color: "white",
+                          fontWeight: "bold",
+                          fontSize: "16px",
+                        }}
+                      >
+                        Ank {ank}
+                      </Button>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+
+            {/* Profit / Loss Summary Table */}
+            <Card style={{ marginTop: 20, width: "100%" }}>
+  <Title level={5}>
+    Profit/Loss Report On Date {new Date().toISOString().split("T")[0]}
+  </Title>
+  {loading ? (
+    <Spin />
+  ) : error ? (
+    <p>{error}</p>
+  ) : (
+    <Table
+      columns={profitLossColumns}
+      dataSource={profitLossData}
+      pagination={false}
+      rowKey="key"
+      scroll={{ x: 800 }} // Adjust this value if needed for your layout
+    />
+  )}
+</Card>
+
+            <Card style={{ marginTop: 20, width: "100%" }}>
+              <Title level={5}>Fund Request Auto Deposit History</Title>
+              {loading ? (
+                <Spin />
+              ) : error ? (
+                <p>{error}</p>
+              ) : (
+                <Table
+                  columns={fundRequestColumns}
+                  dataSource={autoDepositHistory}
+                  rowKey="_id"
+                  // Optional: enable horizontal scrolling if your table is wider than the viewport
+                  scroll={{ x: true }}
+                />
+              )}
+            </Card>
+          </Col>
+        </Row>
+      )}
+    </div>
   );
 };
 

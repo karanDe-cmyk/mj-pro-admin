@@ -200,7 +200,7 @@ const MarketDeclareResult = () => {
   // ---------------------------
   const handleDeleteDeclaredResult = async (declaredId) => {
     try {
-      await instance.delete(`/api/mainmarketdeclareResult/declareResult/${appiD}/${declaredId}`);
+      await instance.delete(`/api/mainmarketdeclareResult/delete/${appiD}/${declaredId}`);
       message.success("Declared result deleted successfully!");
       fetchDeclaredResults();
     } catch (error) {
