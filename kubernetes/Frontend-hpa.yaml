@@ -16,10 +16,10 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 60  # Frontend ke liye thoda kam threshold
+          averageUtilization: 60  # Scale up if CPU usage exceeds 60%
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 65
+          averageUtilization: 65  # Scale up if Memory usage exceeds 65%
