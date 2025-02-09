@@ -9,17 +9,11 @@ spec:
     kind: Deployment
     name: frontend-deployment
   minReplicas: 2
-  maxReplicas: 6
+  maxReplicas: 5
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 75  # Scale up if CPU usage exceeds 75%
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 70  # Scale up if Memory usage exceeds 70%
+          averageUtilization: 50
