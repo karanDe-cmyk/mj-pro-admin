@@ -16,10 +16,10 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 80
+          averageUtilization: 75  # 75% CPU pe scale hoga
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 75
+          averageUtilization: 70  # 70% Memory pe scale hoga
