@@ -12,7 +12,6 @@ spec:
       app: frontend
   template:
     metadata:
-      name: frontend
       labels:
         app: frontend
     spec:
@@ -24,10 +23,10 @@ spec:
           resources:
             limits:
               memory: "500Mi"
-              cpu: "400m"
+              cpu: "500m"
             requests:
-              memory: "200Mi"
-              cpu: "200m"  
+              memory: "250Mi"
+              cpu: "250m"  
 ---
 apiVersion: v1
 kind: Service
@@ -35,11 +34,10 @@ metadata:
   name: frontend-service
   namespace: matka
 spec:
-  type: NodePort
+  type: LoadBalancer  # NodePort se LoadBalancer me convert kiya for external access
   selector:
     app: frontend
   ports:
-    - port: 3000
+    - port: 80
       targetPort: 3000
       protocol: TCP
-      nodePort: 31000
