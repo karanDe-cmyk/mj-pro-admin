@@ -35,14 +35,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service
+  name: mongo-service
   namespace: matka
 spec:
-  type: NodePort
   selector:
     app: mongodb
   ports:
     - port: 27017
       targetPort: 27017
-      nodePort: 31017  # External access port for MongoDB (optional, you can change this)
-  clusterIP: None
+      protocol: TCP
