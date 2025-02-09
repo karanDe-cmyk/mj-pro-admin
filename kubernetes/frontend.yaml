@@ -3,19 +3,43 @@ kind: Deployment
 metadata:
   name: frontend-deployment
   namespace: matka
+  labels:
+    app: frontend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: frontend
   template:
     metadata:
+      name: frontend
       labels:
         app: frontend
     spec:
       containers:
-      - name: matka-frontend
-        image: saurav547/matka-frontend:v1.3
-        ports:
-        - containerPort: 3000
-        
+        - name: frontend
+          image: saurav547/matka-frontend:v1.3
+          ports:
+            - containerPort: 3000
+            resources:
+              requests:
+                memory: "900Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: matka
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      nodePort: 31000
