@@ -21,13 +21,13 @@ spec:
           image: saurav547/matka-backend:v1.6
           ports:
             - containerPort: 5001
-              resurces:
-              limits:
-                memory: "500Mi"
-                cpu: "400m"
-              requests:
-                memory: "200Mi"
-                cpu: "200m"
+          resources:
+            limits:
+              memory: "500Mi"
+              cpu: "400m"
+            requests:
+              memory: "200Mi"
+              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
