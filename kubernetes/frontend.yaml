@@ -21,13 +21,13 @@ spec:
           image: saurav547/matka-frontend:v1.3
           ports:
             - containerPort: 3000
-              resources:
-              limits:
-                memory: "1Gi"
-                cpu: "500m"
-              requests:
-                memory: "750MI"
-                cpu: "200m"
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+            requests:
+              memory: "750Mi"
+              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
