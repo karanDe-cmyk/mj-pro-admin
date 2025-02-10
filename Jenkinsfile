@@ -56,15 +56,6 @@ pipeline {
                 }
             }
         }
-
-        stage("Docker Cleaning up local images"){
-            steps{
-                script{
-                 echo "Cleaning up local images"
-                 sh "docker rmi $(docker images -q) || true"
-                }
-            }
-        }
     }
 
     post {
