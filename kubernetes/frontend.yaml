@@ -17,17 +17,17 @@ spec:
         app: frontend
     spec:
       containers:
-        - name: frontend
+        - name: backend
           image: saurav547/matka-frontend:v1.4
           ports:
             - containerPort: 3000
           resources:
-            requests:
-              memory: "900Mi"
-              cpu: "250m"
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "500Mi"
+              cpu: "400m"
+            requests:
+              memory: "200Mi"
+              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
@@ -43,16 +43,3 @@ spec:
       targetPort: 3000
       protocol: TCP
       nodePort: 31000
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: frontend-vpa
-  namespace: matka
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: frontend-deployment
-  updatePolicy:
-    updateMode: "Auto"  # "Auto" will automatically update resource requests and limits
