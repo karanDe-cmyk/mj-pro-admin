@@ -20,14 +20,7 @@ spec:
           image: saurav547/matka-frontend:v1.4
           ports:
             - containerPort: 3000
-          resources:
-            requests:
-              cpu: "300m"      # Minimum guaranteed CPU
-              memory: "512Mi"  # Minimum guaranteed RAM
-            limits:
-              cpu: "600m"      # Max CPU per pod
-              memory: "768Mi"  # Max RAM per pod
-
+         
 ---
 apiVersion: v1
 kind: Service
