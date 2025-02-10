@@ -2,5 +2,5 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: mongodb-storage
-provisioner: kubernetes.io/no-provisioner
+provisioner: kubernetes.io/no-provisioner  # ⚠️ Change if using cloud storage (e.g., AWS EBS, GCE PD)
 volumeBindingMode: WaitForFirstConsumer
