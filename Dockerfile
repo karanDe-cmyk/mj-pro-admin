@@ -2,26 +2,26 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# Install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm install --frozen-lockfile
+RUN npm install
 
 # Copy source code and build the application
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve React App using a lightweight Node.js image
+# Stage 2: Serve React App using Node.js
 FROM node:22-alpine AS production
 WORKDIR /app
 
-# Install serve (for serving static files)
+# Install a lightweight static file server
 RUN npm install -g serve
 
 # Copy built React files from previous stage
 COPY --from=build /app/build ./build
 
-# Expose the required port
+# Expose port 3000 for the React app
 EXPOSE 3000
 
-# Start the server
+# Start the static file server on port 3000
 CMD ["serve", "-s", "build", "-l", "3000"]
