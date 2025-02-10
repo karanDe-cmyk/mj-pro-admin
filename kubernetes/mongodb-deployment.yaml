@@ -14,30 +14,30 @@ spec:
         app: mongodb
     spec:
       containers:
-        - name: mongodb
-          image: mongo:latest
-          env:
-            - name: MONGO_INITDB_ROOT_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-credentials
-                  key: MONGO_USER
-            - name: MONGO_INITDB_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-credentials
-                  key: MONGO_PASSWORD
-            - name: MONGO_INITDB_DATABASE
-              value: matka-app   # Your database name
-          ports:
-            - containerPort: 27017
-          volumeMounts:
-            - name: mongodb-storage
-              mountPath: /data/db
-      volumes:
+      - name: mongodb
+        image: mongo:latest
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-credentials
+              key: MONGO_USER
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-credentials
+              key: MONGO_PASSWORD
+        - name: MONGO_INITDB_DATABASE
+          value: matka-app
+        ports:
+        - containerPort: 27017
+        volumeMounts:
         - name: mongodb-storage
-          persistentVolumeClaim:
-            claimName: mongodb-pvc
+          mountPath: /data/db
+      volumes:
+      - name: mongodb-storage
+        persistentVolumeClaim:
+          claimName: mongodb-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -45,13 +45,9 @@ metadata:
   name: mongodb-service
   namespace: matka
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: mongodb
   ports:
     - port: 27017
       targetPort: 27017
-      nodePort: 30000  # Change this if needed
-
-      targetPort: 27017
-      nodePort: 30000  # NodePort set to 30000, change if needed
