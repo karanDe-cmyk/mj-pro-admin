@@ -1,27 +1,27 @@
-# Stage 1: Build Stage
-FROM node:22 AS build
+# Stage 1: Build React App
+FROM node:22-alpine AS build
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --frozen-lockfile
 
-# Copy source files and build the application
+# Copy source code and build the application
 COPY . .
 RUN npm run build
 
-# Stage 2: Production Stage
-FROM nginx:alpine AS production
-WORKDIR /usr/share/nginx/html
+# Stage 2: Serve React App using a lightweight Node.js image
+FROM node:22-alpine AS production
+WORKDIR /app
 
-# Remove default nginx static assets and copy built React files
-RUN rm -rf ./*
-COPY --from=build /app/build ./
+# Install serve (for serving static files)
+RUN npm install -g serve
+
+# Copy built React files from previous stage
+COPY --from=build /app/build ./build
 
 # Expose the required port
-EXPOSE 80
+EXPOSE 3000
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
-
-
+# Start the server
+CMD ["serve", "-s", "build", "-l", "3000"]
