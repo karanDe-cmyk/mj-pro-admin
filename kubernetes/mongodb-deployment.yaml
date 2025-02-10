@@ -9,9 +9,17 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: mongodb-storage  # ✅ Updated StorageClass
-  hostPath:
-    path: "/data/mongodb"
+  storageClassName: mongodb-storage
+  local:  # ✅ hostPath ki jagah local volume use kiya hai (for on-prem clusters)
+    path: "/mnt/data/mongodb"
+  nodeAffinity:  # ✅ Ensure this PV is bound to a specific node
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - ip-172-31-47-229  # ⚠️ Replace this with the actual node name
 
 
 ---
@@ -59,7 +67,7 @@ spec:
                   name: mongodb-credentials
                   key: MONGO_PASSWORD
             - name: MONGO_INITDB_DATABASE
-              value: matka-app   # Your database name
+              value: matka-app
           ports:
             - containerPort: 27017
           volumeMounts:
@@ -70,6 +78,7 @@ spec:
           persistentVolumeClaim:
             claimName: mongodb-pvc
 
+
 ---
 apiVersion: v1
 kind: Service
@@ -77,10 +86,10 @@ metadata:
   name: mongodb-service
   namespace: matka
 spec:
-  type: LoadBalancer
+  type: ClusterIP  # ✅ LoadBalancer se ClusterIP pe switch kiya for security
   selector:
     app: mongodb
   ports:
     - port: 27017
       targetPort: 27017
-      nodePort: 30000  # NodePort set to 30000, change if needed
+
