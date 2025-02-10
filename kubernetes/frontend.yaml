@@ -1,33 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app: frontend-deployment
   name: frontend-deployment
   namespace: matka
+  labels:
+    app: frontend
+    service: matka
 spec:
-  replicas: 2  # Keep replicas >= 2 for high availability
+  replicas: 2
   selector:
     matchLabels:
-      app: frontend-deployment
+      app: frontend
+      service: matka
   template:
     metadata:
+      name: frontend
       labels:
-        app: frontend-deployment
+        app: frontend
+        service: matka
     spec:
       containers:
-      - name: matka-frontend
-        image: saurav547/matka-frontend:v1.4
-        ports:
-        - containerPort: 3000
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-
+        - name: frontend
+          image: saurav547/matka-frontend:v1.4
+          ports:
+            - containerPort: 3000
+            resources:
+              requests:
+                memory: "900Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
