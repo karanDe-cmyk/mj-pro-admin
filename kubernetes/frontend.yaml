@@ -1,32 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    app: frontend-deployment
   name: frontend-deployment
   namespace: matka
-  labels:
-    app: frontend
 spec:
-  replicas: 2  # HPA will handle scaling
+  replicas: 2  # Keep replicas >= 2 for high availability
   selector:
     matchLabels:
-      app: frontend
+      app: frontend-deployment
   template:
     metadata:
       labels:
-        app: frontend
+        app: frontend-deployment
     spec:
       containers:
-        - name: frontend
-          image: saurav547/matka-frontend:v1.4
-          ports:
-            - containerPort: 3000
-          resources:
-            requests:
-              cpu: "1000m"      # Minimum guaranteed CPU
-              memory: "1.2Gi"  # Minimum guaranteed RAM
-            limits:
-              cpu: "1200m"      # Max CPU per pod
-              memory: "1.5Gi"  # Max RAM per pod
+      - name: matka-frontend
+        image: saurav547/matka-frontend:v1.4
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
 
 ---
 apiVersion: v1
