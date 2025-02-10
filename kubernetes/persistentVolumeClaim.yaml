@@ -6,7 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: mongodb-storage
+  storageClassName: ""
   resources:
     requests:
       storage: 5Gi
