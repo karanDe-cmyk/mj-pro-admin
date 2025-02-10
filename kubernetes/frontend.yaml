@@ -19,7 +19,7 @@ spec:
         - name: frontend
           image: saurav547/matka-frontend:v1.6
           ports:
-            - containerPort: 80
+            - containerPort: 3000
           resources:
             requests:
               cpu: "300m"      # Minimum guaranteed CPU
