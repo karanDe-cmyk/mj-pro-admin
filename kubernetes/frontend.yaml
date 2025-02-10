@@ -5,26 +5,22 @@ metadata:
   namespace: matka
   labels:
     app: frontend
-    service: matka
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: frontend
-      service: matka
   template:
     metadata:
       name: frontend
       labels:
         app: frontend
-        service: matka
     spec:
       containers:
         - name: frontend
           image: saurav547/matka-frontend:v1.4
           ports:
             - containerPort: 3000
-            
 ---
 apiVersion: v1
 kind: Service
