@@ -26,7 +26,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: manual
+  storageClassName: mongodb-storage
 
 ---
 apiVersion: apps/v1
