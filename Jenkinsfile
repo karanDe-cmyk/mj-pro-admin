@@ -56,6 +56,15 @@ pipeline {
                 }
             }
         }
+
+        stage("Docker Cleaning up local images"){
+            steps{
+                script{
+                 echo "Cleaning up local images"
+                 sh "docker rmi saurav547/matka-backend:${params.FRONTEND_DOCKER_TAG} || true"
+                }
+            }
+        }
     }
 
     post {
