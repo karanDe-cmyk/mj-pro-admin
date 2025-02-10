@@ -71,7 +71,6 @@ const AdminPanel = () => {
             icon: <i className="fa fa-star" aria-hidden="true"></i>,
             children: [
                 { label: "Game Name", path: "/admin/starline-management/game-name" },
-                { label: "All Bid History", path: "/admin/starline-management/all-bid-history" },
                 { label: "Bid History", path: "/admin/starline-management/bid-history" },
                 { label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
                 { label: "Game Rates", path: "/admin/starline-management/game-rates" },
