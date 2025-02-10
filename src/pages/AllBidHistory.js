@@ -84,27 +84,47 @@ const AllBidHistory = () => {
           return; // Stop execution, no need to set empty data
         }
       } else {
-        // ✅ Fetch Starline Bids
+        // ✅ Build query parameters to fetch Starline Bids
         let queryParams = `/api/starlinebid/getallbid?`;
-        if (selectedDate) queryParams += `date=${selectedDate}&`;
-        if (selectedMarket) queryParams += `market=${selectedMarket}&`;
-        if (selectedGameName) queryParams += `gamename=${selectedGameName}`;
-
-        queryParams = queryParams.replace(/[?&]$/, ""); // Remove trailing "&" or "?"
-
+        if (selectedDate) {
+          queryParams += `date=${encodeURIComponent(selectedDate)}&`;
+        }
+        if (selectedMarket) {
+          queryParams += `market=${encodeURIComponent(selectedMarket)}&`;
+        }
+        if (selectedGameName) {
+          queryParams += `gamename=${encodeURIComponent(selectedGameName)}&`;
+        }
+        // Remove any trailing "?" or "&"
+        queryParams = queryParams.replace(/[?&]$/, "");
+      
+        // ✅ Fetch the bids from the API
         response = await axiosInstance.get(queryParams);
-
+      
         // ✅ Check if data exists
         if (response.data && response.data.length > 0) {
-          filteredData = response.data;
+          // Further filter data on the client side to ensure that
+          // each item matches all provided filter values exactly.
+          const filteredData = response.data.filter(item => {
+            return (
+              (!selectedDate || item.date === selectedDate) &&
+              (!selectedMarket || item.market === selectedMarket) &&
+              (!selectedGameName || item.gamename === selectedGameName)
+            );
+          });
+      
+          if (filteredData.length > 0) {
+            // ✅ Update state with the filtered bid history
+            setBidHistoryData(filteredData);
+          } else {
+            setError("No data found for the selected filters.");
+            return; // Stop execution, no need to set empty data
+          }
         } else {
           setError("No data found for the selected filters.");
-          return; // Stop execution, no need to set empty data
+          return; // Stop execution if there is no data at all
         }
       }
-
-      // ✅ Update state with filtered bid history
-      setBidHistoryData(filteredData);
     } catch (err) {
       console.error("Error fetching bid history:", err);
       setError("Failed to load bid history. Please try again.");

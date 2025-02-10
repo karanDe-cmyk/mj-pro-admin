@@ -3,16 +3,15 @@ import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
-import { Layout, Menu, Drawer, Button } from "antd";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Layout, Menu } from "antd";
 import Header from "../components/Header";
+
 const { Sider, Content } = Layout;
 
 const AdminPanel = () => {
     const dispatch = useDispatch();
     const [collapsed, setCollapsed] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -34,8 +33,6 @@ const AdminPanel = () => {
         localStorage.removeItem("accessToken");
         navigate("/");
     };
-
-
 
     const menuItems = [
         { key: "dashboard", label: "Dashboard", path: "/admin/dashboard", icon: <i className="fa fa-home" /> },
@@ -89,11 +86,11 @@ const AdminPanel = () => {
                 { label: "Bank Details", path: "/admin/settings/bank-details" },
                 { label: "App Links", path: "/admin/settings/app-links" },
                 { label: "Home Title", path: "/admin/settings/home-title" },
-                { label: "UPI Payment ID", path: "/admin/settings/upi-payment" }, // Added UPI Payment ID
-                { label: "Other Settings", path: "/admin/settings/other-settings" }, // Added Other Settings
-                { label: "How To Play", path: "/admin/settings/how-to-play" }, // Added How To Play
-                { label: "Refer & Earn", path: "/admin/settings/refer-earn" }, // Added Refer & Earn
-                { label: "Welcome Settings", path: "/admin/settings/welcome-settings" }, // Added Welcome Settings
+                { label: "UPI Payment ID", path: "/admin/settings/upi-payment" },
+                { label: "Other Settings", path: "/admin/settings/other-settings" },
+                { label: "How To Play", path: "/admin/settings/how-to-play" },
+                { label: "Refer & Earn", path: "/admin/settings/refer-earn" },
+                { label: "Welcome Settings", path: "/admin/settings/welcome-settings" },
             ],
         },
         { key: "all-bid-history", label: "All Bid History", path: "/admin/starline-management/all-bid-history", icon: <i className="fa fa-history" /> },
@@ -128,7 +125,12 @@ const AdminPanel = () => {
                 style={{ height: "100vh", overflowY: "hidden", position: "fixed", left: 0 }}
             >
                 <div className="p-4 text-white text-center text-lg font-bold">Admin Panel</div>
-                <Menu theme="dark" mode="inline" style={{ height: "calc(100vh - 64px)", overflowY: "auto" }}>
+                <Menu
+                    theme="dark"
+                    mode="inline"
+                    // Removed the overflowY style so no scrollbar is shown
+                    style={{ height: "calc(100vh - 64px)" }}
+                >
                     {renderMenu(menuItems)}
                 </Menu>
             </Sider>
@@ -143,7 +145,6 @@ const AdminPanel = () => {
                     <Outlet />
                 </Content>
             </Layout>
-
         </Layout>
     );
 };
