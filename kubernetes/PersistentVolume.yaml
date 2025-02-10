@@ -9,5 +9,6 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
+    storageClassName: mongodb-storage
   hostPath:
     path: /data/db
