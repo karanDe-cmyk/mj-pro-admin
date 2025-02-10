@@ -174,7 +174,7 @@ const MarketDeclareResult = () => {
           winners: winners.length > 0 ? winners : [],
         }
       );
-      console.log(response);
+      // console.log(response);
       if (response.data.success === false) {
         alert(response.data.message);
       } else {

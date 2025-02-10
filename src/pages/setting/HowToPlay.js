@@ -63,9 +63,9 @@ const HowToPlay = () => {
       });
 
       alert("How to Play Content Updated Successfully!");
-      console.log("Updated Description:", description);
-      console.log("Updated Content:", howToPlayContent);
-      console.log("Updated Video Link:", videoLink);
+      // console.log("Updated Description:", description);
+      // console.log("Updated Content:", howToPlayContent);
+      // console.log("Updated Video Link:", videoLink);
     } catch (error) {
       console.error("Error updating How to Play content:", error);
       alert("Failed to update How to Play content.");

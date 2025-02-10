@@ -54,7 +54,7 @@ const DeclareResult = () => {
   useEffect(() => {
     const fetchGameList = async () => {
       try {
-        const response = await instance.get(`${apiUrl}/api/gameRoutes/getGameList/3d88dae8-5904-40e9-b314-4906bc064bed`);
+        const response = await instance.get(`/api/gameRoutes/getGameList`);
         if (response?.data) {
           setGameList(response?.data);
         } else {
@@ -79,7 +79,7 @@ const DeclareResult = () => {
   
     try {
       const response = await instance.get(
-        `${apiUrl}/api/declareResults/showWinnerList/3d88dae8-5904-40e9-b314-4906bc064bed/${selectedGame}/${pannaValue}`
+        `/api/declareResults/showWinnerList/${selectedGame}/${pannaValue}`
       );
       if (response?.data) {
         setWinnerList(response.data);
@@ -109,12 +109,12 @@ const DeclareResult = () => {
     };
 
     instance
-      .post(`${apiUrl}/api/declareResults/addDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed`, declareResultBody)
+      .post(`/api/declareResults/addDeclareResult`, declareResultBody)
       .then(() => {
         setLoadingDeclaredResults(true);
 
         return instance.get(
-          `${apiUrl}/api/declareResults/getDeclareResult/3d88dae8-5904-40e9-b314-4906bc064bed/${values.gameName}/${values.market}/${pannaValue}`,
+          `/api/declareResults/getDeclareResult/${values.gameName}/${values.market}/${pannaValue}`,
           { params: declareResultBody }
         );
       })

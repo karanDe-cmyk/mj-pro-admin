@@ -12,10 +12,10 @@ instance.interceptors.request.use(
 
             if (accessToken) {
                 // Log the Authorization header to check if the token is set
-                console.log("Authorization Token in Request Header:", config.headers.Authorization);
+                // console.log("Authorization Token in Request Header:", config.headers.Authorization);
                 config.headers.Authorization = `Bearer ${accessToken}`;
             } else {
-                console.log("No Authorization token found in localStorage.");
+                // console.log("No Authorization token found in localStorage.");
             }
 
             return config;
@@ -39,9 +39,9 @@ instance.interceptors.request.use(
 
             if (accessToken) {
                 config.headers.Authorization = `Bearer ${accessToken}`;
-                console.log("Authorization Token in Request Header:", config.headers.Authorization);
+                // console.log("Authorization Token in Request Header:", config.headers.Authorization);
             } else {
-                console.log("No Authorization token found in localStorage.");
+                // console.log("No Authorization token found in localStorage.");
             }
 
             return config;

@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl,  } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined,WhatsAppOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 
 const UnapprovedUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true); // Spinner for initial data loading
   const [selectedId, setSelectedId] = useState(null); // Store selected user ID for switch spinner
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate(); // React Router navigation
 
   // ✅ Fetch Users with Spinner
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const response = await instance.get(
-        `${apiUrl}/api/auth/userStatus?status=false`
+        `/api/auth/userStatus?status=false`
       );
       if (response?.data) {
-        console.log("Fetched Users:", response.data);
+        // console.log("Fetched Users:", response.data);
         setUsers(response.data);
       } else {
         throw new Error("Failed to fetch user data");
@@ -34,6 +35,19 @@ const UnapprovedUsers = () => {
     fetchUsers();
   }, []);
 
+
+    // Navigate to User Details Page
+    const handleViewClick = (userId) => {
+      navigate(`/user-details/${userId}`);
+    };
+
+     // Handle WhatsApp icon click to open WhatsApp chat
+ const handleWhatsAppClick = (userWhatsappNumber) => {
+  if (userWhatsappNumber) {
+    window.open(`https://wa.me/+91${userWhatsappNumber}`, "_blank");
+  }
+};
+
   // ✅ Toggle Switch Function for Active Status
   const toggleSwitch = async (record) => {
     // Optimistic UI Update: Immediately toggle the status
@@ -47,7 +61,7 @@ const UnapprovedUsers = () => {
 
     try {
       const response = await instance.post(
-        `${apiUrl}/api/auth/userStatusUpdate/${record._id}`,
+        `/api/auth/userStatusUpdate/${record._id}`,
         {
           type: "status",
           value: !record.status, // Toggle the status
@@ -55,7 +69,7 @@ const UnapprovedUsers = () => {
       );
 
       if (response) {
-        console.log("User status updated successfully", response);
+        // console.log("User status updated successfully", response);
         fetchUsers(); // ✅ Refresh table after toggle
       } else {
         throw new Error("Failed to update user status");
@@ -73,7 +87,25 @@ const UnapprovedUsers = () => {
     { title: "Member Name", dataIndex: "userName", key: "userName" },
     { title: "Member Mobile No", dataIndex: "userNumber", key: "userNumber" },
     { title: "Member Whatsapp No", dataIndex: "userWhatsappNumber", key: "userWhatsappNumber" },
-    { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
+     {
+          title: "Member Whatsapp No",
+          dataIndex: "userWhatsappNumber",
+          key: "userWhatsappNumber",
+          render: (text, record) => (
+            <span>
+              {text}
+              {text && (
+                <>
+                  &nbsp;
+                  <WhatsAppOutlined
+                    style={{ color: "green", cursor: "pointer" }}
+                    onClick={() => handleWhatsAppClick(text)}
+                  />
+                </>
+              )}
+            </span>
+          ),
+        },
     {
       title: "Active",
       dataIndex: "status",
@@ -87,12 +119,12 @@ const UnapprovedUsers = () => {
         </Spin>
       ),
     },
-    {
-      title: "Option",
-      dataIndex: "option",
-      key: "option",
-      render: () => <Button type="link">View</Button>,
-    },
+   {
+         title: "Option",
+         dataIndex: "option",
+         key: "option",
+         render: (_, record) =>  <Button type="link" onClick={() => handleViewClick(record._id)}>View</Button>,
+       },
   ];
 
   return (
@@ -101,7 +133,6 @@ const UnapprovedUsers = () => {
 
       {/* Top Actions */}
       <div className="flex justify-end mb-4">
-        <Button type="primary">Approved Users List</Button>
         <Input
           prefix={<SearchOutlined />}
           placeholder="Search..."

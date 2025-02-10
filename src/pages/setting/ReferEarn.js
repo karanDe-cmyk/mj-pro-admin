@@ -64,7 +64,7 @@ const ReferEarn = () => {
 
       await axiosInstance.put(`/api/settings/referandearn/${id}`, updatedData);
       alert("Refer & Earn Updated Successfully!");
-      console.log("Updated Data:", updatedData);
+      // console.log("Updated Data:", updatedData);
     } catch (error) {
       console.error("Error updating Refer & Earn data:", error);
       alert("Failed to update data.");

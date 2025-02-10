@@ -37,7 +37,7 @@ const WithDrawRequest = () => {
     const confirmApprove = window.confirm("Are you sure you want to approve this request?");
     if (confirmApprove) {
       try {
-        const response = await axios.patch(`/api/users/withdrawals/status/3d88dae8-5904-40e9-b314-4906bc064bed/${id}`, { status: 'approved' });
+        const response = await axios.patch(`/api/users/withdrawals/status/${id}`, { status: 'approved' });
         if (response.data) {
           setRequests((prevRequests) =>
             prevRequests.map((req) =>
@@ -56,7 +56,7 @@ const WithDrawRequest = () => {
     const confirmReject = window.confirm("Are you sure you want to reject this request?");
     if (confirmReject) {
       try {
-        const response = await axios.patch(`/api/users/withdrawals/status/3d88dae8-5904-40e9-b314-4906bc064bed/${id}`, { status: 'rejected' });
+        const response = await axios.patch(`/api/users/withdrawals/status/${id}`, { status: 'rejected' });
         if (response.data) {
           setRequests((prevRequests) =>
             prevRequests.map((req) =>

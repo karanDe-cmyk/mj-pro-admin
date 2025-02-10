@@ -13,7 +13,7 @@ const RemoveMoney = () => {
     // Fetch users from API using Axios
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`/api/app/users`);
+        const response = await axios.get(`/api/app/userslist`);
         const data = response.data;
 
         if (Array.isArray(data) && data.length > 0) {

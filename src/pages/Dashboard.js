@@ -56,6 +56,8 @@ const Dashboard = () => {
   const [loadingButton, setLoadingButton] = useState(false);
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [loadingButton3, setLoadingButton3] = useState(false);
+  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  
   // Handler for DatePicker changes.
   // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
   const handleDateChange2 = (date, dateString) => {
@@ -416,6 +418,141 @@ const Dashboard = () => {
     fetchProfitLossData();
   }, []); // Empty dependency array means this runs once on mount
 
+
+   // Fetch withdrawal requests from the backend
+   useEffect(() => {
+    const fetchWithdrawals = async () => {
+      setLoading(true);
+      try {
+        const response = await instance.get("/api/users/todaywithdrawals");
+        setWithdrawalHistory(response.data);
+      } catch (err) {
+        console.error("Error fetching withdrawal requests:", err);
+        setError("Failed to fetch withdrawal requests.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWithdrawals();
+  }, []);
+
+  const handleApprove = async (id) => {
+   
+      try {
+        await instance.patch(`/api/users/withdrawals/status/${id}`, {
+          status: "approved",
+        });
+        message.success("Withdrawal request approved.");
+        setWithdrawalHistory((prev) =>
+          prev.map((req) =>
+            req._id === id ? { ...req, status: "approved" } : req
+          )
+        );
+      } catch (error) {
+        console.error("Error approving withdrawal request:", error);
+        message.error("Error approving withdrawal request.");
+      }
+    
+  };
+
+  // Reject a withdrawal request
+  const handleReject = async (id) => {
+     
+      try {
+        await instance.patch(`/api/users/withdrawals/status/${id}`, {
+          status: "rejected",
+        });
+        message.success("Withdrawal request rejected.");
+        setWithdrawalHistory((prev) =>
+          prev.map((req) =>
+            req._id === id ? { ...req, status: "rejected" } : req
+          )
+        );
+      } catch (error) {
+        console.error("Error rejecting withdrawal request:", error);
+        message.error("Error rejecting withdrawal request.");
+      }
+    
+  };
+
+  // Define table columns
+  const withdrawalColumns = [
+    {
+      title: "#",
+      key: "index",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+    },
+    {
+      title: "Payment Method",
+      dataIndex: "payment_method",
+      key: "payment_method",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => status.charAt(0).toUpperCase() + status.slice(1),
+    },
+    {
+      title: "Time",
+      dataIndex: "time",
+      key: "time",
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (text, record) => {
+        // If already approved or rejected, show "Action Taken"
+        if (record.status === "approved" || record.status === "rejected") {
+          return <span style={{ fontWeight: "bold" }}>Action Taken</span>;
+        }
+        return (
+          <>
+            <button
+              onClick={() => handleApprove(record._id)}
+              style={{
+                marginRight: "8px",
+                backgroundColor: "blue",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => handleReject(record._id)}
+              style={{
+                backgroundColor: "red",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
+            >
+              Reject
+            </button>
+          </>
+        );
+      },
+    }
+    
+  ];
+
   const fundRequestColumns = [
     {
       title: "#",
@@ -497,8 +634,8 @@ const Dashboard = () => {
             {isProfit
               ? `Profit: ${result}`
               : isLoss
-              ? `Loss: ${Math.abs(result)}`
-              : "No Profit/Loss"}
+                ? `Loss: ${Math.abs(result)}`
+                : "No Profit/Loss"}
           </div>
         );
       },
@@ -623,80 +760,121 @@ const Dashboard = () => {
 
           {/* Right Side */}
           <Col xs={24} md={16}>
-            <Row gutter={16}>
-              <Col span={12}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12}>
+
                 <Card>
-                  <Statistic
-                    title={
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Users
-                      </span>
-                    }
-                    value={totalUsers.totalUsers ?? "Failed to fetch"} // ✅ Fix applied here
-                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
-                    prefix={
-                      <UserOutlined
-                        style={{ fontSize: "24px", fontWeight: "bold" }}
-                      />
-                    }
-                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {/* Title & Value */}
+                    <div>
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Users</span>
+                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                        {totalUsers.totalUsers ?? "Failed to fetch"}
+                      </div>
+                    </div>
+                    {/* Icon */}
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff", // Blue background
+                        borderRadius: "50%", // Circular shape
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <UserOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                    </div>
+                  </div>
                 </Card>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
+
                 <Card>
-                  <Statistic
-                    title={
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Games
-                      </span>
-                    }
-                    value={totalGames.totalGameCount ?? "Failed to fetch"} // ✅ Fix applied here
-                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
-                    prefix={
-                      <AppstoreOutlined
-                        style={{ fontSize: "24px", fontWeight: "bold" }}
-                      />
-                    }
-                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {/* Title & Value */}
+                    <div>
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Games</span>
+                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                        {totalGames.totalGameCount ?? "Failed to fetch"}
+                      </div>
+                    </div>
+                    {/* Icon */}
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <AppstoreOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                    </div>
+                  </div>
                 </Card>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
+
                 <Card>
-                  <Statistic
-                    title={
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Main Market Bid Amount
-                      </span>
-                    }
-                    value={mainMarketData.totalAmount ?? "Failed to fetch"} // ✅ Fix here
-                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
-                    prefix={
-                      <DollarOutlined
-                        style={{ fontSize: "24px", fontWeight: "bold" }}
-                      />
-                    }
-                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {/* Title & Value */}
+                    <div>
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Main Market Bid Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                        {mainMarketData.totalAmount ?? "Failed to fetch"}
+                      </div>
+                    </div>
+                    {/* Icon */}
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <DollarOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                    </div>
+                  </div>
                 </Card>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
+
                 <Card>
-                  <Statistic
-                    title={
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Starline Bid Amount
-                      </span>
-                    }
-                    value={starlineData.totalAmount ?? "Failed to fetch"} // ✅ Fix here
-                    valueStyle={{ fontWeight: "bold", fontSize: "28px" }}
-                    prefix={
-                      <FundOutlined
-                        style={{ fontSize: "24px", fontWeight: "bold" }}
-                      />
-                    }
-                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {/* Title & Value */}
+                    <div>
+                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Starline Bid Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                        {starlineData.totalAmount ?? "Failed to fetch"}
+                      </div>
+                    </div>
+                    {/* Icon */}
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                    </div>
+                  </div>
                 </Card>
               </Col>
             </Row>
+
 
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>
@@ -741,7 +919,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Dashboard Row */}
-            <Row gutter={[16, 16]} style={{ marginTop: 20 }}>
+            <Row  gutter={[16, 16]} style={{ marginTop: 20 }}>
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
                 // Calculate a unique hue for each card
                 const hue = 36 * ank; // 360 / 10 * ank
@@ -753,7 +931,7 @@ const Dashboard = () => {
                 };
 
                 return (
-                  <Col span={6} key={ank}>
+                  <Col xs={24} sm={6} key={ank}>
                     <Card style={{ textAlign: "center", borderColor: color }}>
                       <Text style={{ fontWeight: "bold", fontSize: "18px" }}>
                         Total Bids {digitData.totalUsers}
@@ -782,45 +960,65 @@ const Dashboard = () => {
             </Row>
 
             {/* Profit / Loss Summary Table */}
-            <Card style={{ marginTop: 20, width: "100%" }}>
-              <Title level={5}>
-                Profit/Loss Report On Date{" "}
-                {new Date().toISOString().split("T")[0]}
-              </Title>
-              {loadingButton3 ? (
-                <Spin />
-              ) : error ? (
-                <p>{error}</p>
-              ) : (
-                <Table
-                  columns={profitLossColumns}
-                  dataSource={profitLossData}
-                  pagination={false}
-                  rowKey="key"
-                  scroll={{ x: 800 }} // Adjust this value if needed for your layout
-                />
-              )}
-            </Card>
-
-            <Card style={{ marginTop: 20, width: "100%" }}>
-              <Title level={5}>Fund Request Auto Deposit History</Title>
-              {loading ? (
-                <Spin />
-              ) : error ? (
-                <p>{error}</p>
-              ) : (
-                <Table
-                  columns={fundRequestColumns}
-                  dataSource={autoDepositHistory}
-                  rowKey="_id"
-                  // Optional: enable horizontal scrolling if your table is wider than the viewport
-                  scroll={{ x: true }}
-                />
-              )}
-            </Card>
           </Col>
         </Row>
       )}
+      <Card style={{ marginTop: 20, width: "100%" }}>
+        <Title level={5}>
+          Profit/Loss Report On Date{" "}
+          {new Date().toISOString().split("T")[0]}
+        </Title>
+        {loadingButton3 ? (
+          <Spin />
+        ) : error ? (
+          <p>{error}</p>
+        ) : (
+          <Table
+            columns={profitLossColumns}
+            dataSource={profitLossData}
+            pagination={false}
+            rowKey="key"
+            scroll={{ x: 800 }} // Adjust this value if needed for your layout
+          />
+        )}
+      </Card>
+
+      <Card style={{ marginTop: 20, width: "100%" }}>
+        <Title level={5}>Fund Request Auto Deposit History</Title>
+        {loading ? (
+          <Spin />
+        ) : error ? (
+          <p>{error}</p>
+        ) : (
+          <Table
+            columns={fundRequestColumns}
+            dataSource={autoDepositHistory}
+            rowKey="_id"
+            // Optional: enable horizontal scrolling if your table is wider than the viewport
+            scroll={{ x: true }}
+          />
+        )}
+      </Card>
+
+      <Card style={{ marginTop: 20, width: "100%" }}>
+                    <Title level={5}>
+                      Withdraw Request History{" "}
+                      {new Date().toISOString().split("T")[0]}
+                    </Title>
+                    {loading ? (
+                      <Spin />
+                    ) : error ? (
+                      <p>{error}</p>
+                    ) : (
+                      <Table
+                        columns={withdrawalColumns}
+                        dataSource={withdrawalHistory}
+                        rowKey="_id"
+                        scroll={{ x: true }}
+                      />
+                    )}
+                  </Card>
+                  
     </div>
   );
 };

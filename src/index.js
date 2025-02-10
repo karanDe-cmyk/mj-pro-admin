@@ -4,12 +4,13 @@ import { Provider } from 'react-redux';
 import { store } from './app/store'; // Ensure this path points to your Redux store
 import './index.css';
 import App from './App';
+import 'antd/dist/reset.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
+
     <Provider store={store}>
       <App />
     </Provider>
-  </React.StrictMode>
+
 );

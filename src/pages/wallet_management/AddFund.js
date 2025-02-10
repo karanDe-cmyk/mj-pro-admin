@@ -13,7 +13,7 @@ const AddFund = () => {
     // Fetch users from API using Axios instance
     const fetchUsers = async () => {
       try {
-        const response = await axiosInstance.get(`/api/app/users`);
+        const response = await axiosInstance.get(`/api/app/userslist`);
         const data = response.data; // Extracting response data
 
         if (Array.isArray(data) && data.length > 0) {
@@ -42,34 +42,37 @@ const AddFund = () => {
   };
 
   // Handle form submit (Adding Balance)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Handle form submit (Adding Balance)
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!amount || amount <= 0) {
-      alert("Please enter a valid amount!");
-      return;
-    }
+  if (!amount || amount <= 0) {
+    alert("Please enter a valid amount!");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const response = await axiosInstance.post(`/api/wallet/add-balance`, {
-        email: selectedUser,
-        amount: parseFloat(amount),
-      });
+  try {
+    const response = await axiosInstance.post(`/api/deposit/Addfunds`, {
+      email: selectedUser,
+      amount: parseFloat(amount),
+    });
 
-      const result = response.data; // Extract response data
-      alert(`Balance added successfully! New Balance: ₹${result.walletBalance}`);
-      setWalletBalance(result.walletBalance);
-      setAmount(""); // Reset amount input
-    } catch (error) {
-      console.error("Error adding balance:", error);
-      alert("Failed to add balance. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const result = response.data; // Extract response data
+    alert("Balance added successfully!");
 
+    // Update wallet balance by adding the added amount
+    setWalletBalance((prevBalance) => prevBalance + result.requestAmount);
+
+    setAmount(""); // Reset amount input
+  } catch (error) {
+    console.error("Error adding balance:", error);
+    alert("Failed to add balance. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md">

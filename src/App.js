@@ -28,7 +28,7 @@ import AddFund from './pages/wallet_management/AddFund';
 import RemoveMoney from './pages/wallet_management/RemoveMoney';
 import DeclareResult from './pages/DeclareResult';
 import GameName from './pages/starline management/GameName';
-import AllBidHistory from './pages/starline management/AllBidHistory';
+import AllBidHistory from './pages/AllBidHistory';
 import BidHistory from './pages/starline management/BidHistory';
 
 import GameRates from './pages/starline management/GameRates';
@@ -52,9 +52,8 @@ import UserDetails from './pages/UserDetails';
 
 
 const App = () => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated');
-  console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
-  console.log("accessToken:", localStorage.getItem('accessToken'));
+  // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
+  // console.log("accessToken:", localStorage.getItem('accessToken'));
 
   return (
     <Router>

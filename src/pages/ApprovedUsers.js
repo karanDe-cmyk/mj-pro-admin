@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
 import { apiUrl,  } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined,WhatsAppOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 
@@ -18,7 +18,7 @@ const UnapprovedUsers = () => {
     setLoading(true); // Show global loading spinner while fetching users
     try {
       const response = await instance.get(
-        `${apiUrl}/api/auth/userStatus?status=true`
+        `/api/auth/userStatus?status=true`
       );
       if (response?.data) {
         setUsers(response.data);
@@ -44,32 +44,42 @@ const UnapprovedUsers = () => {
     navigate(`/user-details/${userId}`);
   };
 
-
+ // Handle WhatsApp icon click to open WhatsApp chat
+ const handleWhatsAppClick = (userWhatsappNumber) => {
+  if (userWhatsappNumber) {
+    window.open(`https://wa.me/+91${userWhatsappNumber}`, "_blank");
+  }
+};
   // ✅ Toggle Switch Function
   const toggleSwitch = async (record, type) => {
     setLoadingSwitch(record._id); // Show loading spinner for the switch being toggled
-
+  
+    // Compute the new value for the given type (e.g., status, betting, etc.)
+    const newValue = !record[type];
+  
     try {
       const response = await instance.post(
-        `${apiUrl}/api/auth/userStatusUpdate/${record._id}`,
+        `/api/auth/userStatusUpdate/${record._id}`,
         {
           type,
-          value: !record[type], // Toggle the value of the status
+          value: newValue, // Toggle the value of the status
         }
       );
-
+  
       if (response) {
-        console.log(`User ${type} updated successfully`);
-
-        // ✅ Refresh table when "Active" (status) is toggled OFF
-        if (type === "status" && !record.status) {
-          console.log("Status OFF - Refreshing table");
-          await fetchUsers(); // Re-fetch users when status is toggled off
+        // console.log(`User ${type} updated successfully`);
+  
+        // If the status is toggled off, remove the user from the table instantly
+        if (type === "status" && newValue === false) {
+          // console.log("Status OFF - Removing user from table");
+          setUsers((prevUsers) =>
+            prevUsers.filter((user) => user._id !== record._id)
+          );
         } else {
-          // ✅ Update the local users state correctly for other switches (Betting, Transfer)
+          // For other switches (or if status is toggled on), update the local users state accordingly
           setUsers((prevUsers) =>
             prevUsers.map((user) =>
-              user._id === record._id ? { ...user, [type]: !user[type] } : user
+              user._id === record._id ? { ...user, [type]: newValue } : user
             )
           );
         }
@@ -88,7 +98,25 @@ const UnapprovedUsers = () => {
     { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
     { title: "Member Mobile No", dataIndex: "userNumber", key: "userNumber" },
-    { title: "Member Whatsapp No", dataIndex: "userWhatsappNumber", key: "userWhatsappNumber" },
+    {
+      title: "Member Whatsapp No",
+      dataIndex: "userWhatsappNumber",
+      key: "userWhatsappNumber",
+      render: (text, record) => (
+        <span>
+          {text}
+          {text && (
+            <>
+              &nbsp;
+              <WhatsAppOutlined
+                style={{ color: "green", cursor: "pointer" }}
+                onClick={() => handleWhatsAppClick(text)}
+              />
+            </>
+          )}
+        </span>
+      ),
+    },
     { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
     {
       title: "Betting",
@@ -143,7 +171,6 @@ const UnapprovedUsers = () => {
 
       {/* Top Actions */}
       <div className="flex justify-end mb-4">
-        <Button type="primary">Approved Users List</Button>
         <Input
           prefix={<SearchOutlined />}
           placeholder="Search..."

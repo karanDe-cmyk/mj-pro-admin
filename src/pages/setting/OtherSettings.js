@@ -3,7 +3,8 @@ import moment from "moment";
 import instance from "../../utils/axiosInstance";  // Importing your custom axios instance
 import {  } from "../../utils/config";
 
-const OtherSettings = ({  }) => {
+
+const OtherSettings = () => {
   const [settings, setSettings] = useState({
     marketOpenTime: moment().format("hh:mm"), // 12-hour format
     amPm: moment().format("A"), // AM or PM
@@ -70,7 +71,7 @@ const OtherSettings = ({  }) => {
       await instance.put(`/api/settings/othersettings/${settings.id}`, updatedData);
 
       alert("Settings Updated Successfully!");
-      console.log("Updated Settings:", updatedData);
+      // console.log("Updated Settings:", updatedData);
     } catch (error) {
       console.error("Error updating settings:", error);
       alert("Failed to update settings.");

@@ -27,7 +27,7 @@ const BidDateWise = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Selected Date:", date);
+        // console.log("Selected Date:", date);
         
     };
 

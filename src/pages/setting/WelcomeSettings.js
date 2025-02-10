@@ -57,7 +57,7 @@ const WelcomeSettings = () => {
 
       await axiosInstance.put(`/api/settings/welcome/${id}`, updatedData);
       alert("Welcome Page Updated Successfully!");
-      console.log("Updated Data:", updatedData);
+      // console.log("Updated Data:", updatedData);
     } catch (error) {
       console.error("Error updating Welcome Page data:", error);
       alert("Failed to update data.");

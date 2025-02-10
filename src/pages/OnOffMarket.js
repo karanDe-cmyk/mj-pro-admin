@@ -33,8 +33,8 @@ const UpdateMarket = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Selected Market:', selectedMarket);
-    console.log('Selected Status:', selectedStatus);
+    // console.log('Selected Market:', selectedMarket);
+    // console.log('Selected Status:', selectedStatus);
     alert(`Market: ${selectedMarket}, Status: ${selectedStatus}`);
   };
 

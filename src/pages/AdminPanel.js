@@ -35,7 +35,7 @@ const AdminPanel = () => {
         navigate("/");
     };
 
-    
+
 
     const menuItems = [
         { key: "dashboard", label: "Dashboard", path: "/admin/dashboard", icon: <i className="fa fa-home" /> },
@@ -85,11 +85,15 @@ const AdminPanel = () => {
             label: "Settings",
             icon: <i className="fa fa-cog" />,
             children: [
-                { key: "general-settings", label: "General Setting", path: "/admin/settings/main" },
-                { key: "bank-details", label: "Bank Details", path: "/admin/settings/bank-details" },
-                { key: "app-links", label: "App Links", path: "/admin/settings/app-links" },
-                { key: "home-title", label: "Home Title", path: "/admin/settings/home-title" },
-                { key: "upi-payment", label: "UPI Payment ID", path: "/admin/settings/upi-payment" },
+                { label: "General Setting", path: "/admin/settings/main" },
+                { label: "Bank Details", path: "/admin/settings/bank-details" },
+                { label: "App Links", path: "/admin/settings/app-links" },
+                { label: "Home Title", path: "/admin/settings/home-title" },
+                { label: "UPI Payment ID", path: "/admin/settings/upi-payment" }, // Added UPI Payment ID
+                { label: "Other Settings", path: "/admin/settings/other-settings" }, // Added Other Settings
+                { label: "How To Play", path: "/admin/settings/how-to-play" }, // Added How To Play
+                { label: "Refer & Earn", path: "/admin/settings/refer-earn" }, // Added Refer & Earn
+                { label: "Welcome Settings", path: "/admin/settings/welcome-settings" }, // Added Welcome Settings
             ],
         },
         { key: "all-bid-history", label: "All Bid History", path: "/admin/starline-management/all-bid-history", icon: <i className="fa fa-history" /> },
@@ -116,16 +120,30 @@ const AdminPanel = () => {
 
     return (
         <Layout style={{ minHeight: "100vh" }}>
-            <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="dark">
+            <Sider
+                collapsible
+                collapsed={collapsed}
+                onCollapse={setCollapsed}
+                theme="dark"
+                style={{ height: "100vh", overflowY: "hidden", position: "fixed", left: 0 }}
+            >
                 <div className="p-4 text-white text-center text-lg font-bold">Admin Panel</div>
-                <Menu theme="dark" mode="inline">{renderMenu(menuItems)}</Menu>
+                <Menu theme="dark" mode="inline" style={{ height: "calc(100vh - 64px)", overflowY: "auto" }}>
+                    {renderMenu(menuItems)}
+                </Menu>
             </Sider>
-            <Layout>
-                <Header username={username} handleLogout={handleLogout} onToggleSidebar={() => setCollapsed(!collapsed)} />
-                <Content style={{ padding: "16px", background: "#fff" }}>
+
+            <Layout style={{ marginLeft: collapsed ? "80px" : "200px", transition: "margin-left 0.3s" }}>
+                <Header
+                    username={username}
+                    handleLogout={handleLogout}
+                    onToggleSidebar={() => setCollapsed(!collapsed)}
+                />
+                <Content style={{ padding: "16px", background: "#fff", overflowY: "auto", minHeight: "100vh" }}>
                     <Outlet />
                 </Content>
             </Layout>
+
         </Layout>
     );
 };

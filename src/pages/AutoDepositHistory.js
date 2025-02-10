@@ -1,88 +1,142 @@
 import React, { useState, useEffect } from "react";
-import axios from "../utils/axiosInstance"; // Import axios instance
- // Import API ID
+import { Table, DatePicker, Spin, Alert, Input } from "antd";
+import axios from "../utils/axiosInstance";
+import moment from "moment";
+
+const { Search } = Input;
 
 const AutoDepositHistory = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const [data, setData] = useState([]); // Original Data
+  const [filteredData, setFilteredData] = useState([]); // Filtered Data
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null); // Selected Date
+  const [searchText, setSearchText] = useState(""); // Search Input
 
+  // ✅ Fetch Deposit History on Component Mount
   useEffect(() => {
     const fetchDepositHistory = async () => {
       try {
-        setLoading(true); // Set loading to true before API call
+        setLoading(true);
         const response = await axios.get(`/api/userPayment/getpaymentResponse`);
-        setData(response.data.data || []); // Ensure data is an array
-        setLoading(false); // Set loading to false after fetching
+        setData(response.data.data || []);
+        setFilteredData(response.data.data || []);
       } catch (err) {
-        console.error("Error fetching deposit history:", err);
         setError("Failed to fetch deposit history. Please try again.");
-        setLoading(false); // Stop loading on error
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchDepositHistory();
   }, []);
 
+  const handleDateChange = (date) => {
+    if (!date) {
+        setFilteredData(data);
+        setSelectedDate(null);
+        return;
+    }
+
+    // ✅ Convert selected date to "YYYY-MM-DD" without shifting timezones
+    const selectedDateStr = moment(date).format("YYYY-MM-DD");
+    setSelectedDate(selectedDateStr);
+
+    // console.log("Selected Date (Final Fixed):", selectedDateStr); // Debugging
+
+    // ✅ Convert `createdAt` timestamps to the same "YYYY-MM-DD" format
+    const filtered = data.filter((item) => {
+        const txnDateStr = moment(item.createdAt).format("YYYY-MM-DD"); // Convert to "Txn Date"
+        // console.log(`Txn Date: ${txnDateStr} | Selected Date: ${selectedDateStr}`); // Debugging
+        return txnDateStr === selectedDateStr;
+    });
+
+    // console.log("Final Filtered Data:", filtered); // Debugging
+
+    setFilteredData(filtered);
+};
+
+
+
+
+
+
+  // ✅ Search Functionality (Filters by Username or Txn ID)
+  const handleSearch = (value) => {
+    setSearchText(value);
+    const lowercasedValue = value.toLowerCase();
+
+    const filtered = data.filter((item) => {
+      const matchesSearch =
+        item.username.toLowerCase().includes(lowercasedValue) ||
+        item.txnId.toLowerCase().includes(lowercasedValue);
+
+      if (selectedDate) {
+        const itemDateStr = moment(item.createdAt).format("YYYY-MM-DD");
+        return matchesSearch && itemDateStr === selectedDate;
+      }
+
+      return matchesSearch;
+    });
+
+    setFilteredData(filtered);
+  };
+
+  // ✅ Table Columns
+  const columns = [
+    { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
+    { title: "User Name", dataIndex: "username", key: "username" },
+    { title: "Amount", dataIndex: "amount", key: "amount", render: (amount) => `₹ ${amount}` },
+    { title: "Txn ID", dataIndex: "txnId", key: "txnId", render: (txnId) => txnId || "N/A" },
+    {
+      title: "Txn Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => moment(date).format("DD-MM-YYYY"),
+    },
+  ];
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-    <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md">
-      <h2 className="text-xl font-bold mb-4">Auto Deposit History</h2>
-  
-      {/* Loading Indicator */}
-      {loading ? (
-        <div className="flex justify-center items-center space-x-4 py-10">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-          <p className="text-xl text-gray-600">Loading...</p>
+      <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md">
+        <h2 className="text-xl font-bold mb-4">Auto Deposit History</h2>
+
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+          {/* ✅ Date Picker for Filtering */}
+          <DatePicker
+            onChange={handleDateChange}
+            className="mb-2 md:mb-0"
+            format="DD-MM-YYYY"
+          />
+
+          {/* ✅ Search Bar for Filtering */}
+          <Search
+            placeholder="Search by Username or Txn ID"
+            onSearch={handleSearch}
+            enterButton
+            value={searchText}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full md:w-64"
+          />
         </div>
-      ) : (
-        <>
-          {/* Error Message */}
-          {error && <p className="text-red-500 text-center">{error}</p>}
-  
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-auto border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">#</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">User Name</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Amount</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Txn ID</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Txn Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-4">
-                      No data available in table
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((item, index) => (
-                    <tr key={item._id} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-2">{index + 1}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.username}</td>
-                      <td className="border border-gray-300 px-4 py-2">₹ {item.amount}</td>
-                      <td className="border border-gray-300 px-4 py-2">{item.txnId || "N/A"}</td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {new Date(item.createdAt).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+
+        {/* ✅ Display Loading, Error, or Table */}
+        {loading ? (
+          <div className="flex justify-center items-center py-10">
+            <Spin size="large" />
           </div>
-        </>
-      )}
+        ) : error ? (
+          <Alert message={error} type="error" showIcon className="mb-4" />
+        ) : (
+          <Table
+            dataSource={filteredData.map((item, index) => ({ ...item, key: index }))}
+            columns={columns}
+            pagination={{ pageSize: 10 }}
+            bordered
+            scroll={{ x: 700 }} // ✅ Enables horizontal scrolling
+          />
+        )}
+      </div>
     </div>
-  </div>
-  
   );
 };
 

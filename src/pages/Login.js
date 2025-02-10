@@ -1,85 +1,114 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { login } from '../features/auth/authSlice';
-import instance from '../utils/axiosInstance';
-import { apiUrl } from '../utils/config';
+import React, { useState, useEffect } from "react";
+import { Form, Input, Button, Card, Typography, Avatar, message } from "antd";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../features/auth/authSlice";
+import instance from "../utils/axiosInstance";
+import { apiUrl } from "../utils/config";
+import "antd/dist/reset.css";
+
+const { Title, Text } = Typography;
+
 const Login = () => {
-    const [username, setUsername] = useState('check');
-    const [password, setPassword] = useState('check');
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  // 🔹 Prevent logged-in users from accessing login page
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("isAuthenticated");
+    if (isAuthenticated === "true") {
+      navigate("/admin/dashboard");
+    }
+  }, [navigate]);
 
-        try {
-            console.log("API URL:", `${apiUrl}/api/auth/adminLogin`);
-            console.log("Sending:", { username, password });
+  const handleLogin = async (values) => {
+    setLoading(true);
+    try {
+      // console.log("API URL:", `${apiUrl}/api/auth/adminLogin`);
+      // console.log("Sending:", values);
 
-            const response = await instance.post(`${apiUrl}/api/auth/adminLogin`, { username, password });
+      const response = await instance.post(`${apiUrl}/api/auth/adminLogin`, values);
 
-            if (response && response.data) {
-                console.log("API Response after login:", response.data);
+      if (response && response.data) {
+        // console.log("API Response after login:", response.data);
 
-                const token = response.data.token;
-                if (token) {
-                    localStorage.setItem("accessToken", token);
-                    localStorage.setItem("isAuthenticated", "true");
-                    console.log("Token stored in localStorage:", token);
-                    navigate("/admin/dashboard");
-                } else {
-                    console.error("No token received in API response.");
-                }
-            }
-        } catch (error) {
-            console.error("Login failed:", error);
+        const token = response.data.token;
+        if (token) {
+          localStorage.setItem("accessToken", token);
+          localStorage.setItem("isAuthenticated", "true");
 
-            if (error.response) {
-                console.error("Error Status:", error.response.status);
-                console.error("Error Data:", error.response.data);
-            }
+          dispatch(login({ token })); // 🔹 Dispatch login action
+          message.success("Login successful!");
 
-            alert("Invalid credentials. Please try again.");
+          navigate("/admin/dashboard");
+        } else {
+          console.error("No token received in API response.");
+          message.error("Login failed. No token received.");
         }
-    };
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error.response) {
+        message.error(error.response.data.message || "Invalid credentials. Please try again.");
+      } else {
+        message.error("Network error. Please check your connection.");
+      }
+    }
+    setLoading(false);
+  };
 
+  return (
+    <div style={styles.container}>
+      <Card style={styles.card}>
+        <Title level={3}>Welcome Back!</Title>
+        <Text type="secondary">Sign in to continue to Admin Console.</Text>
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-center mb-6">Welcome Back!</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label htmlFor="username" className="block text-gray-700">Username</label>
-                        <input
-                            type="text"
-                            id="username"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="password" className="block text-gray-700">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
-                    >
-                        Log In
-                    </button>
-                </form>
-            </div>
+        <div style={styles.avatarContainer}>
+          <Avatar size={60} src="https://via.placeholder.com/50" />
+          <Title level={4} style={{ marginTop: 10 }}>Main Kalyan</Title>
         </div>
-    );
+
+        <Form layout="vertical" onFinish={handleLogin} initialValues={{ username: "check", password: "check" }}>
+          <Form.Item name="username" label="Username" rules={[{ required: true, message: "Please enter your username" }]}> 
+            <Input prefix={<UserOutlined />} placeholder="Enter username" />
+          </Form.Item>
+
+          <Form.Item name="password" label="Password" rules={[{ required: true, message: "Please enter your password" }]}> 
+            <Input.Password prefix={<LockOutlined />} placeholder="Enter password" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading} block>
+              Log In
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
+  );
+};
+
+// 🔹 Styles
+const styles = {
+  container: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    backgroundColor: "#f3f4f6",
+    padding: 20,
+  },
+  card: {
+    width: 400,
+    textAlign: "center",
+    borderRadius: 8,
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+  },
+  avatarContainer: {
+    margin: "20px 0",
+  },
 };
 
 export default Login;
