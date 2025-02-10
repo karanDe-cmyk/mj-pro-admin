@@ -6,28 +6,29 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 2
+  replicas: 2  # HPA will handle scaling
   selector:
     matchLabels:
       app: frontend
   template:
     metadata:
-      name: frontend
       labels:
         app: frontend
     spec:
       containers:
         - name: frontend
-          image: saurav547/matka-frontend:v1.3
+          image: saurav547/matka-frontend:v1.6
           ports:
             - containerPort: 3000
-            resources:
-              requests:
-                memory: "900Mi"
-                cpu: "250m"
-              limits:
-                memory: "1Gi"
-                cpu: "500m"
+          resources:
+            requests:
+              cpu: "300m"      # Minimum guaranteed CPU
+              memory: "512Mi"  # Minimum guaranteed RAM
+            limits:
+              cpu: "600m"      # Max CPU per pod
+              memory: "768Mi"  # Max RAM per pod
+
+         
 ---
 apiVersion: v1
 kind: Service
@@ -35,7 +36,7 @@ metadata:
   name: frontend-service
   namespace: matka
 spec:
-  type: NodePort
+  type: LoadBalancer 
   selector:
     app: frontend
   ports:
