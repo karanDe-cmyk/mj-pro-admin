@@ -19,7 +19,7 @@ spec:
         - name: frontend
           image: saurav547/matka-frontend:v1.5
           ports:
-            - containerPort: 80
+            - containerPort: 3000
           resources:
             requests:
               cpu: "300m"      # Minimum guaranteed CPU
@@ -40,7 +40,7 @@ spec:
   selector:
     app: frontend
   ports:
-    - port: 80
-      targetPort: 80
+    - port: 3000
+      targetPort: 3000
       protocol: TCP
       nodePort: 31000
