@@ -97,7 +97,7 @@ const UnapprovedUsers = () => {
   const columns = [
     { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
-    { title: "Member Mobile No", dataIndex: "userNumber", key: "userNumber" },
+    { title: "Member Mobile No", dataIndex: "phone", key: "phone" },
     {
       title: "Member Whatsapp No",
       dataIndex: "userWhatsappNumber",
