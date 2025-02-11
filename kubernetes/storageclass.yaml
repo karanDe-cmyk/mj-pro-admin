@@ -2,5 +2,6 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: mongodb-storage
-provisioner: kubernetes.io/no-provisioner  # ⚠️ Manual PV ke liye sahi
+provisioner: kubernetes.io/no-provisioner  # ✅ Manual PV ke liye sahi
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true  # ✅ Agar future me storage badhani ho to useful hoga
