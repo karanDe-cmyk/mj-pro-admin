@@ -11,7 +11,9 @@ const { Sider, Content } = Layout;
 const AdminPanel = () => {
     const dispatch = useDispatch();
     const [collapsed, setCollapsed] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 650);
+    const [showSidebar, setShowSidebar] = useState(!isMobile); // ✅ Controls sidebar visibility
+
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -19,13 +21,33 @@ const AdminPanel = () => {
 
     useEffect(() => {
         const handleResize = () => {
-            setIsMobile(window.innerWidth <= 768);
+            const isSmallScreen = window.innerWidth <= 600;
+            setIsMobile(isSmallScreen);
+            setShowSidebar(!isSmallScreen);
         };
+
         window.addEventListener("resize", handleResize);
         return () => {
             window.removeEventListener("resize", handleResize);
         };
     }, []);
+
+    // ✅ Hide sidebar when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isMobile && showSidebar) {
+                const sidebar = document.getElementById("sidebar");
+                if (sidebar && !sidebar.contains(event.target)) {
+                    setShowSidebar(false);
+                }
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isMobile, showSidebar]);
 
     const handleLogout = () => {
         dispatch(logout());
@@ -118,38 +140,43 @@ const AdminPanel = () => {
 
     return (
         <Layout style={{ minHeight: "100vh" }}>
-          <Sider
-                collapsible
-                collapsed={collapsed}
-                onCollapse={setCollapsed}
-                theme="dark"
-                style={{
-                    height: "100vh",
-                    overflowY: "auto",  // Allows scrolling
-                    position: "fixed",
-                    left: 0,
-                    scrollbarWidth: "none", // Hide scrollbar in Firefox
-                    msOverflowStyle: "none", // Hide scrollbar in IE/Edge
-                }}
-                className="custom-scrollbar" // Add this class for more control
-            >
-                <div className="p-4 text-white text-center text-lg font-bold">Admin Panel</div>
-                <Menu
+            {/* ✅ Sidebar - Only Show When `showSidebar` is True */}
+            {showSidebar && (
+                <Sider
+                    id="sidebar"
+                    collapsible
+                    collapsed={collapsed}
+                    onCollapse={setCollapsed}
                     theme="dark"
-                    mode="inline"
-                    // Removed the overflowY style so no scrollbar is shown
-                    style={{ height: "calc(100vh - 64px)" }}
+                    style={{
+                        height: "100vh",
+                        overflowY: "auto",
+                        position: "fixed",
+                        left: 0,
+                        zIndex: 1000, // Keep it above other content
+                        width: collapsed ? 80 : 200,
+                        transition: "width 0.3s",
+                        scrollbarWidth: "none", // Hide scrollbar in Firefox
+                        msOverflowStyle: "none"
+                    }}
+                    className="custom-scrollbar"
                 >
-                    {renderMenu(menuItems)}
-                </Menu>
-            </Sider>
 
-            <Layout style={{ marginLeft: collapsed ? "80px" : "200px", transition: "margin-left 0.3s" }}>
-                <Header
-                    username={username}
-                    handleLogout={handleLogout}
-                    onToggleSidebar={() => setCollapsed(!collapsed)}
-                />
+                    <div className="p-4 text-white text-center text-lg font-bold">Admin Panel</div>
+                    <Menu theme="dark" mode="inline">
+                        {renderMenu(menuItems)}
+                    </Menu>
+                </Sider>
+            )}
+
+            <Layout
+                style={{
+                    marginLeft: showSidebar && !isMobile ? (collapsed ? "80px" : "200px") : "0px",
+                    transition: "margin-left 0.3s",
+                }}
+            >
+                {/* ✅ Pass toggleSidebar function to Header */}
+                <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} />
                 <Content style={{ padding: "16px", background: "#fff", overflowY: "auto", minHeight: "100vh" }}>
                     <Outlet />
                 </Content>

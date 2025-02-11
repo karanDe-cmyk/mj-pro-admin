@@ -191,7 +191,7 @@ const UserBidHistory = () => {
       </div>
 
       {/* ✅ BID HISTORY TABLE */}
-      <Table columns={columns} dataSource={bidHistory} pagination={{ pageSize: 5 }} loading={filterLoading} />
+      <Table columns={columns} dataSource={bidHistory} pagination={{ pageSize: 5 }} loading={filterLoading}  scroll={{ x: 1000 }} />
 
       {/* ✅ Edit Modal */}
       <Modal title="Edit Bid" open={editModalOpen} onCancel={() => setEditModalOpen(false)} onOk={handleEditSubmit} confirmLoading={editLoading}>

@@ -237,6 +237,8 @@ const DeclareResult = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <div className="overflow-x-auto">
+
 
         <table className="min-w-full bg-white border">
           <thead>
@@ -285,8 +287,9 @@ const DeclareResult = () => {
           </tbody>
         </table>
       </div>
+      </div>
              {/* Game Result History Section */}
-             <div className="mt-6 bg-white p-4 shadow-md rounded-lg">
+             <div className="mt-6 overflow-x-auto bg-white p-4 shadow-md rounded-lg">
         <h3 className="text-lg font-semibold mb-3">Game Result History</h3>
 
         {loadingGameResult ? (

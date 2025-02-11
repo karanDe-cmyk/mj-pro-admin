@@ -5,7 +5,7 @@ import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ApprovedUsers from './pages/ApprovedUsers';
-import UnapprovedUsers from './pages/UnapprovedUsers'; 
+import UnapprovedUsers from './pages/UnapprovedUsers';
 import GameManagement from './pages/GameManagement';
 import GameRate from './pages/GameRate';
 import OnOffMarket from './pages/OnOffMarket';
@@ -69,7 +69,9 @@ const App = () => {
             <Route path="user-management">
               <Route path="approved" element={<ApprovedUsers />} />
               <Route path="unapproved" element={<UnapprovedUsers />} />
+              <Route path="user-details/:userId" element={<UserDetails />} />
             </Route>
+
             <Route path="game-management">
               <Route path="game-name" element={<GameManagement />} />
               <Route path="game-rates" element={<GameRate />} />
@@ -99,7 +101,6 @@ const App = () => {
             </Route>
             <Route path="starline-management">
               <Route path="game-name" element={<GameName />} />
-              
               <Route path="bid-history" element={<BidHistory />} />
               <Route path="declare-result-starline" element={<DeclareResultStarline />} />
               <Route path="game-rates" element={<GameRates />} />
@@ -120,8 +121,11 @@ const App = () => {
               <Route path="how-to-play" element={<HowToPlay />} />
               <Route path="refer-earn" element={<ReferEarn />} />
               <Route path="welcome-settings" element={<WelcomeSettings />} />
-              <Route path="qr-code" element={<QrCode />} />
+              <Route path="qr-code" element={<QrCode />} />
+
+
             </Route>
+
             <Route path="all-bid-history" element={<AllBidHistory />} />
           </Route>
 

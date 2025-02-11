@@ -148,7 +148,7 @@ const UnapprovedUsers = () => {
           <Spin size="large" />
         </div>
       ) : (
-        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id" />
+        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id"  scroll={{ x: 1000 }} />
       )}
 
       {/* Pagination */}

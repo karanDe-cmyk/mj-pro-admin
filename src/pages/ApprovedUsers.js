@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl,  } from "../utils/config";
+import { apiUrl, } from "../utils/config";
 import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
-import { SearchOutlined,WhatsAppOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { SearchOutlined, WhatsAppOutlined } from "@ant-design/icons";
+import { useNavigate, useParams } from "react-router-dom";
+import UserDetails from "./UserDetails";
 
 
 const UnapprovedUsers = () => {
@@ -32,31 +33,36 @@ const UnapprovedUsers = () => {
     }
   };
 
-  
+
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // const handleViewClick = (userId) => {
+  //   navigate(`/user-details/${userId}`);
+  // };
 
-   // Navigate to User Details Page
-   const handleViewClick = (userId) => {
-    navigate(`/user-details/${userId}`);
+
+  // Navigate to User Details Page
+  const handleViewClick = (userId) => {
+    navigate(`/admin/user-management/user-details/${userId}`);
+
+    // <UserDetails userId={userId} />
   };
-
- // Handle WhatsApp icon click to open WhatsApp chat
- const handleWhatsAppClick = (userWhatsappNumber) => {
-  if (userWhatsappNumber) {
-    window.open(`https://wa.me/+91${userWhatsappNumber}`, "_blank");
-  }
-};
+  // Handle WhatsApp icon click to open WhatsApp chat
+  const handleWhatsAppClick = (userWhatsappNumber) => {
+    if (userWhatsappNumber) {
+      window.open(`https://wa.me/+91${userWhatsappNumber}`, "_blank");
+    }
+  };
   // ✅ Toggle Switch Function
   const toggleSwitch = async (record, type) => {
     setLoadingSwitch(record._id); // Show loading spinner for the switch being toggled
-  
+
     // Compute the new value for the given type (e.g., status, betting, etc.)
     const newValue = !record[type];
-  
+
     try {
       const response = await instance.post(
         `/api/auth/userStatusUpdate/${record._id}`,
@@ -65,10 +71,10 @@ const UnapprovedUsers = () => {
           value: newValue, // Toggle the value of the status
         }
       );
-  
+
       if (response) {
         // console.log(`User ${type} updated successfully`);
-  
+
         // If the status is toggled off, remove the user from the table instantly
         if (type === "status" && newValue === false) {
           // console.log("Status OFF - Removing user from table");
@@ -161,7 +167,7 @@ const UnapprovedUsers = () => {
       title: "Option",
       dataIndex: "option",
       key: "option",
-      render: (_, record) =>  <Button type="link" onClick={() => handleViewClick(record._id)}>View</Button>,
+      render: (_, record) => <Button type="link" onClick={() => handleViewClick(record._id)}>View</Button>,
     },
   ];
 
@@ -186,7 +192,7 @@ const UnapprovedUsers = () => {
           <Spin size="large" />
         </div>
       ) : (
-        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id" />
+        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id" scroll={{ x: 1000 }} />
       )}
 
       {/* Pagination */}

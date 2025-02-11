@@ -213,7 +213,8 @@ const BidHistory = () => {
           <Table
             columns={columns}
             dataSource={bidHistoryData.map((item, index) => ({ ...item, key: index }))}
-            pagination={{ pageSize: 10 }}
+            pagination={{ pageSize: 10 }} 
+            scroll={{ x: 1000 }}
           />
         )}
       </div>

@@ -342,7 +342,7 @@ const MarketDeclareResult = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <Card
+      <Card scroll={{ x: 1000 }}
         title={<Title level={4} style={{ marginBottom: 0 }}>Select Market Game</Title>}
         bordered={false}
         style={{ maxWidth: "92%", margin: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", padding: "10px" }}
@@ -435,17 +435,18 @@ const MarketDeclareResult = () => {
 
           {/* Buttons Section */}
           <Row gutter={12} justify="center">
-            <Col>
-              <Button type="primary" onClick={fetchWinners}>
-                Show Winners
-              </Button>
-            </Col>
-            <Col>
-              <Button type="primary" loading={loadingDeclareResult} onClick={declareWinner}>
-                Declare Result
-              </Button>
-            </Col>
-          </Row>
+  <Col style={{ margin: "10px" }}>
+    <Button type="primary" onClick={fetchWinners}>
+      Show Winners
+    </Button>
+  </Col>
+  <Col style={{ margin: "10px" }}>
+    <Button type="primary" loading={loadingDeclareResult} onClick={declareWinner}>
+      Declare Result
+    </Button>
+  </Col>
+</Row>
+
         </Form>
       </Card>
       <Modal
@@ -530,7 +531,7 @@ const MarketDeclareResult = () => {
       </Modal>
       <div style={{maxWidth:"92%"}} className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
         <h2 className="text-lg font-bold mb-4">Game Result History</h2>
-        <Table
+        <Table  scroll={{ x: 1000 }}
           columns={gameResultColumns}
           dataSource={gameResults}
          

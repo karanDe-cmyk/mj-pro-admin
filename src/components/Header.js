@@ -22,11 +22,11 @@ const Header = ({ username = "Admin", onToggleSidebar, handleLogout }) => {
 
     return (
         <AntHeader className="bg-white shadow-md flex justify-between items-center p-4 sticky top-0 z-50 w-full">
-            {/* ✅ Sidebar Toggle Button (Works in Mobile & Desktop) */}
+            {/* ✅ Sidebar Toggle Button */}
             <Button
                 type="text"
                 icon={<MenuFoldOutlined />}
-                onClick={onToggleSidebar} // ✅ Triggers sidebar toggle
+                onClick={onToggleSidebar} // ✅ Toggle sidebar visibility
                 className="text-gray-700 text-xl"
             />
 

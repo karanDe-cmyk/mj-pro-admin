@@ -1022,6 +1022,7 @@ const UserDetails = () => {
               dataSource={depositTransactions}
               rowKey="_id" // Use the unique transaction ID as the key
               pagination={{ pageSize: 10 }}
+              scroll={{ x: 1000 }}
             />
           </Card>
         </Col>
@@ -1050,6 +1051,7 @@ const UserDetails = () => {
             dataSource={withdrawData}
             rowKey="_id"
             pagination={{ pageSize: 10 }}
+            scroll={{ x: 1000 }}
           />
         </Card>
 
@@ -1077,6 +1079,8 @@ const UserDetails = () => {
             dataSource={data}
             pagination={{ pageSize: 10 }}
             loading={loading}
+            scroll={{ x: 1000 }}
+
           />
         </Card>
 
@@ -1107,6 +1111,8 @@ const UserDetails = () => {
                   dataSource={winningData}
                   pagination={{ pageSize: 5 }}
                   loading={loading}
+                  scroll={{ x: 1000 }}
+
                 />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
                   {`Showing ${startIndex} to ${endIndex} of ${winningData.length} entries`}
@@ -1121,7 +1127,9 @@ const UserDetails = () => {
                   dataSource={getTodaysWinningData()} // Fetch today's filtered winning history
                   pagination={{
                     pageSize: 10,
+                    
                   }}
+                  scroll={{ x: 1000 }}
                 />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
                   {`Showing ${startIndex} to ${endIndex} of ${
@@ -1139,6 +1147,7 @@ const UserDetails = () => {
               dataSource={transactionHistoryDataAll}
               pagination={{ pageSize: 10 }}
               loading={loading}
+              scroll={{ x: 1000 }}
             />
           </Card>
         </div>
