@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongodb
+  name: mongo
   namespace: matka
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mongodb
+      app: mongo
   template:
     metadata:
       labels:
-        app: mongodb
+        app: mongo
     spec:
       containers:
-        - name: mongodb
+        - name: mongo
           image: mongo:latest
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
@@ -32,26 +32,15 @@ spec:
           ports:
             - containerPort: 27017
           volumeMounts:
-            - name: mongodb-storage
+            - name: mongo-storage
               mountPath: /data/db
+            - name: config-volume
+              mountPath: /etc/mongod.conf
+              subPath: mongod.conf
       volumes:
-        - name: mongodb-storage
+        - name: mongo-storage
           persistentVolumeClaim:
-            claimName: mongodb-pvc
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: mongo-service
-  namespace: matka
-spec:
-  type: LoadBalancer  # Agar external access chahiye
-  selector:
-    app: mongodb
-  ports:
-    - port: 27017
-      targetPort: 27017
-      nodePort: 30001  # Custom NodePort, optional
-      protocol: TCP
+            claimName: mongo-pvc
+        - name: config-volume
+          configMap:
+            name: mongo-config
