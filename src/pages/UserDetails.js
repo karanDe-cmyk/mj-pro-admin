@@ -205,6 +205,35 @@ const UserDetails = () => {
     fetchWinningData();
   }, [userData]);
 
+
+  
+  const handleStatusUpdate = async (newStatus) => {
+    try {
+      const response = await instance.post(
+        `/api/auth/userStatusUpdate/${userData._id}`,
+        { type: "status", value: newStatus },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        setUserData((prev) => ({ ...prev, status: newStatus })); // Update UI instantly
+        message.success("Status updated successfully!");
+      } else {
+        message.error("Failed to update status.");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      message.error("Error updating status.");
+    }
+  };
+  
+
+
+
   const fetchWinningData = async () => {
     try {
       setLoading(true);
@@ -227,28 +256,30 @@ const UserDetails = () => {
 
   const formatWinningData = (records) => {
     const formattedData = records.flatMap((record) =>
-        record.winners.map((winner) => ({
-            key: `${record._id}-${winner._id}`,
-            market: record.marketName || "Starline",
-            gameName: record.gameName || record.market,
-            bidAmount: winner.points,
-            winningAmount: winner.winningAmount || winner.winningPoints,
-            status: "Win",
-            date: moment(record.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
-        }))
+      record.winners.map((winner) => ({
+        key: `${record._id}-${winner._id}`,
+        market: record.marketName || "Starline",
+        gameName: record.gameName || record.market,
+        bidAmount: winner.points,
+        winningAmount: winner.winningAmount || winner.winningPoints,
+        status: "Win",
+        date: moment(record.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
+      }))
     );
 
     // Sort by latest date (Descending)
-    const sortedData = formattedData.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sortedData = formattedData.sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
 
     // Assign proper sequential S.No (1,2,3,4...)
     const finalData = sortedData.map((item, index) => ({
-        ...item,
-        sNo: index + 1, // Ensure sNo starts from 1 and increments
+      ...item,
+      sNo: index + 1, // Ensure sNo starts from 1 and increments
     }));
 
     setWinningData(finalData);
-};
+  };
 
   useEffect(() => {
     if (!userData?._id) return; // Ensure user ID is available
@@ -658,9 +689,6 @@ const UserDetails = () => {
     },
   ];
 
- 
-
-
   const walletHistoryData = [
     {
       id: 1,
@@ -686,8 +714,6 @@ const UserDetails = () => {
 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, filteredData.length);
-
-
 
   const transactionHistoryColumnsAll = [
     {
@@ -791,24 +817,49 @@ const UserDetails = () => {
                       />
                     </Text>
                   </Col>
-                  <Col>
-                    <Text>
-                      Active:{" "}
-                      <Badge
-                        status={userData.status ? "true" : "false"}
-                        text={userData.status ? "Yes" : "No"}
-                      />
-                    </Text>
-                    <br />
-                    <Text>
-                      Banned:{" "}
-                      <Badge
-                        // Assuming banned is the opposite of active
-                        status={!userData.status ? "false" : "true"}
-                        text={!userData.status ? "Yes" : "No"}
-                      />
-                    </Text>
-                  </Col>
+                  <Col style={{ padding: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+      {/* Active Button */}
+      <Row align="middle" style={{ marginBottom: "10px" }}>
+        <Text strong style={{ marginRight: "10px", fontSize: "16px" }}>Active:</Text>
+        <Button
+          onClick={() => handleStatusUpdate(true)}
+          style={{
+            backgroundColor: userData.status ? "#28a745" : "#dc3545",
+            color: "white",
+            fontWeight: "bold",
+            border: "none",
+            padding: "5px 15px",
+            borderRadius: "5px",
+            cursor: "pointer",
+            minWidth: "70px",
+            textAlign: "center",
+          }}
+        >
+          {userData.status ? "Yes" : "No"}
+        </Button>
+      </Row>
+
+      {/* Banned Button */}
+      <Row align="middle">
+        <Text strong style={{ marginRight: "10px", fontSize: "16px" }}>Banned:</Text>
+        <Button
+          onClick={() => handleStatusUpdate(false)}
+          style={{
+            backgroundColor: !userData.status ? "#28a745" : "#dc3545",
+            color: "white",
+            fontWeight: "bold",
+            border: "none",
+            padding: "5px 15px",
+            borderRadius: "5px",
+            cursor: "pointer",
+            minWidth: "70px",
+            textAlign: "center",
+          }}
+        >
+          {!userData.status ? "Yes" : "No"}
+        </Button>
+      </Row>
+    </Col>
                 </Row>
                 <div style={{ marginTop: "20px" }}>
                   <Text>Available Balance: </Text>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Table, Button, Form, Select, DatePicker, Input, message } from "antd";
+import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typography, Col, Row, Card, Divider } from "antd";
 import instance from "../utils/axiosInstance";
-
 import moment from "moment";
+
+const { Title } = Typography;
 
 const MarketDeclareResult = () => {
   const [form] = Form.useForm();
@@ -68,7 +69,7 @@ const MarketDeclareResult = () => {
   // FETCH DECLARED RESULTS (MERGED)
   // ---------------------------
   const fetchDeclaredResults = async () => {
-  
+
     try {
       setLoading(true);
       const response = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
@@ -185,7 +186,7 @@ const MarketDeclareResult = () => {
     } catch (error) {
       message.error(
         (error.response && error.response.data && error.response.data.message) ||
-          "Failed to declare winner."
+        "Failed to declare winner."
       );
     } finally {
       setLoadingDeclareResult(false);
@@ -301,12 +302,13 @@ const MarketDeclareResult = () => {
               type="danger"
               size="small"
               onClick={() => handleDeleteDeclaredResult(record.open.id)}
+              style={{ backgroundColor: 'red', borderColor: 'red', color: 'white', marginLeft: '8px' }}
             >
               Delete
             </Button>
           </div>
         ) : (
-          ""
+          "━━"
         ),
     },
     {
@@ -317,15 +319,17 @@ const MarketDeclareResult = () => {
           <div>
             <span>{record.close.value}</span>{" "}
             <Button
-              type="danger"
+              type="primary"
               size="small"
               onClick={() => handleDeleteDeclaredResult(record.close.id)}
+              style={{ backgroundColor: 'red', borderColor: 'red', color: 'white', marginLeft: '8px' }}
             >
               Delete
             </Button>
+
           </div>
         ) : (
-          ""
+          "━━"
         ),
     },
     {
@@ -338,67 +342,112 @@ const MarketDeclareResult = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md">
-        <h1 className="text-lg font-bold mb-4">Select Market Game</h1>
-        <Form form={form}>
-          <Form.Item name="resultDate" label="Date" rules={[{ required: true }]}>
-            <DatePicker format="DD-MM-YYYY" />
-          </Form.Item>
-          <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]}>
-            <Select onChange={handleMarketChange} placeholder="Select Market" loading={loading}>
-              {marketGameList.map((market, index) => (
-                <Select.Option key={index} value={market}>
-                  {market}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]}>
-            <Select
-              onChange={(value) => setSelectedGameName(value)}
-              placeholder="Select Game"
-              disabled={!gameOptions.length}
-            >
-              {gameOptions.map((game, index) => (
-                <Select.Option key={index} value={game}>
-                  {game}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]}>
-            <Select>
-              <Select.Option value="open">Open</Select.Option>
-              <Select.Option value="close">Close</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="panna" label="Panna" rules={[{ required: true }]}>
-            <Select onChange={handlePannaChange}>
-              {pannaOptions.map((panna) => (
-                <Select.Option key={panna} value={panna}>
-                  {panna}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="digit" label="Digit">
-            <Input value={digitValue} readOnly />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" onClick={fetchWinners}>
-              Show Winners
-            </Button>
-            <Button
-              type="primary"
-              loading={loadingDeclareResult}
-              onClick={declareWinner}
-              className="ml-2"
-            >
-              Declare Result
-            </Button>
-          </Form.Item>
+      <Card
+        title={<Title level={4} style={{ marginBottom: 0 }}>Select Market Game</Title>}
+        bordered={false}
+        style={{ maxWidth: "92%", margin: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", padding: "10px" }}
+      >
+        <Form form={form} layout="vertical">
+
+          {/* Date Picker Section */}
+          <div style={{ marginBottom: "12px" }}>
+            <Title level={5} style={{ marginBottom: "4px" }}>Select Date</Title>
+            <Form.Item name="resultDate" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+              <DatePicker format="DD-MM-YYYY" style={{ width: "150px" }} />
+            </Form.Item>
+          </div>
+
+          <Divider style={{ margin: "10px 0" }} />
+
+          {/* Market & Game Selection */}
+          <div>
+            <Title level={5} style={{ marginBottom: "4px" }}>Market & Game Selection</Title>
+            <Row gutter={12}>
+              {/* Market Name */}
+              <Col xs={24} sm={12}>
+                <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select
+                    onChange={handleMarketChange}
+                    placeholder="Select Market"
+                    loading={loading}
+                    style={{ width: "100%" }}
+                  >
+                    {marketGameList.map((market, index) => (
+                      <Select.Option key={index} value={market}>
+                        {market}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Game Name */}
+              <Col xs={24} sm={12}>
+                <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select
+                    onChange={(value) => setSelectedGameName(value)}
+                    placeholder="Select Game"
+                    disabled={!gameOptions.length}
+                    style={{ width: "100%" }}
+                  >
+                    {gameOptions.map((game, index) => (
+                      <Select.Option key={index} value={game}>
+                        {game}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Game Type */}
+              <Col xs={24} sm={12}>
+                <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select placeholder="Select Type" style={{ width: "100%" }}>
+                    <Select.Option value="open">Open</Select.Option>
+                    <Select.Option value="close">Close</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Panna */}
+              <Col xs={24} sm={12}>
+                <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select onChange={handlePannaChange} placeholder="Select Panna" style={{ width: "100%" }}>
+                    {pannaOptions.map((panna) => (
+                      <Select.Option key={panna} value={panna}>
+                        {panna}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Digit (Read-only) */}
+              <Col xs={24} sm={12}>
+                <Form.Item name="digit" label="Digit" style={{ marginBottom: "8px" }}>
+                  <Input value={digitValue} readOnly />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          <Divider style={{ margin: "10px 0" }} />
+
+          {/* Buttons Section */}
+          <Row gutter={12} justify="center">
+            <Col>
+              <Button type="primary" onClick={fetchWinners}>
+                Show Winners
+              </Button>
+            </Col>
+            <Col>
+              <Button type="primary" loading={loadingDeclareResult} onClick={declareWinner}>
+                Declare Result
+              </Button>
+            </Col>
+          </Row>
         </Form>
-      </div>
+      </Card>
       <Modal
         title="Show Winner List"
         open={isWinnerModalVisible}
@@ -479,11 +528,12 @@ const MarketDeclareResult = () => {
           </Form.Item>
         </Form>
       </Modal>
-      <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
+      <div style={{maxWidth:"92%"}} className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
         <h2 className="text-lg font-bold mb-4">Game Result History</h2>
         <Table
           columns={gameResultColumns}
           dataSource={gameResults}
+         
           pagination={false}
           rowKey={(record) =>
             `${record.gameName}_${moment(record.date).format("DD-MM-YYYY")}`

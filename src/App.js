@@ -48,6 +48,7 @@ import HowToPlay from "./pages/setting/HowToPlay"; // Import the component
 import ReferEarn from "./pages/setting/ReferEarn"; // Import the component
 import WelcomeSettings from "./pages/setting/WelcomeSettings"; // Import the component
 import UserDetails from './pages/UserDetails';
+import QrCode from './pages/setting/QrCode';
 
 
 
@@ -98,7 +99,7 @@ const App = () => {
             </Route>
             <Route path="starline-management">
               <Route path="game-name" element={<GameName />} />
-              <Route path="all-bid-history" element={<AllBidHistory />} />
+              
               <Route path="bid-history" element={<BidHistory />} />
               <Route path="declare-result-starline" element={<DeclareResultStarline />} />
               <Route path="game-rates" element={<GameRates />} />
@@ -119,9 +120,9 @@ const App = () => {
               <Route path="how-to-play" element={<HowToPlay />} />
               <Route path="refer-earn" element={<ReferEarn />} />
               <Route path="welcome-settings" element={<WelcomeSettings />} />
-
+              <Route path="qr-code" element={<QrCode />} />
             </Route>
-            
+            <Route path="all-bid-history" element={<AllBidHistory />} />
           </Route>
 
           <Route path="/user-details/:userId" element={<UserDetails />} />

@@ -22,6 +22,7 @@ import {
 import instance from "../utils/axiosInstance";
 
 import moment from "moment";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -57,7 +58,7 @@ const Dashboard = () => {
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [loadingButton3, setLoadingButton3] = useState(false);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
-  
+  const navigate = useNavigate();
   // Handler for DatePicker changes.
   // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
   const handleDateChange2 = (date, dateString) => {
@@ -419,8 +420,8 @@ const Dashboard = () => {
   }, []); // Empty dependency array means this runs once on mount
 
 
-   // Fetch withdrawal requests from the backend
-   useEffect(() => {
+  // Fetch withdrawal requests from the backend
+  useEffect(() => {
     const fetchWithdrawals = async () => {
       setLoading(true);
       try {
@@ -438,42 +439,42 @@ const Dashboard = () => {
   }, []);
 
   const handleApprove = async (id) => {
-   
-      try {
-        await instance.patch(`/api/users/withdrawals/status/${id}`, {
-          status: "approved",
-        });
-        message.success("Withdrawal request approved.");
-        setWithdrawalHistory((prev) =>
-          prev.map((req) =>
-            req._id === id ? { ...req, status: "approved" } : req
-          )
-        );
-      } catch (error) {
-        console.error("Error approving withdrawal request:", error);
-        message.error("Error approving withdrawal request.");
-      }
-    
+
+    try {
+      await instance.patch(`/api/users/withdrawals/status/${id}`, {
+        status: "approved",
+      });
+      message.success("Withdrawal request approved.");
+      setWithdrawalHistory((prev) =>
+        prev.map((req) =>
+          req._id === id ? { ...req, status: "approved" } : req
+        )
+      );
+    } catch (error) {
+      console.error("Error approving withdrawal request:", error);
+      message.error("Error approving withdrawal request.");
+    }
+
   };
 
   // Reject a withdrawal request
   const handleReject = async (id) => {
-     
-      try {
-        await instance.patch(`/api/users/withdrawals/status/${id}`, {
-          status: "rejected",
-        });
-        message.success("Withdrawal request rejected.");
-        setWithdrawalHistory((prev) =>
-          prev.map((req) =>
-            req._id === id ? { ...req, status: "rejected" } : req
-          )
-        );
-      } catch (error) {
-        console.error("Error rejecting withdrawal request:", error);
-        message.error("Error rejecting withdrawal request.");
-      }
-    
+
+    try {
+      await instance.patch(`/api/users/withdrawals/status/${id}`, {
+        status: "rejected",
+      });
+      message.success("Withdrawal request rejected.");
+      setWithdrawalHistory((prev) =>
+        prev.map((req) =>
+          req._id === id ? { ...req, status: "rejected" } : req
+        )
+      );
+    } catch (error) {
+      console.error("Error rejecting withdrawal request:", error);
+      message.error("Error rejecting withdrawal request.");
+    }
+
   };
 
   // Define table columns
@@ -550,7 +551,7 @@ const Dashboard = () => {
         );
       },
     }
-    
+
   ];
 
   const fundRequestColumns = [
@@ -670,15 +671,18 @@ const Dashboard = () => {
                 <Title level={3} style={{ marginTop: 10, fontWeight: "bold" }}>
                   Admin
                 </Title>
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                  Unapproved Users:{" "}
-                  {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
-                </Text>
-                <br />
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                  Approved Users:{" "}
-                  {approvedUsers.approvedUsers ?? "Failed to fetch"}
-                </Text>
+                <div style={{padding: '5px'}}>
+
+                  <Text onClick={() => navigate("/admin/user-management/unapproved")} style={{  marginBottom: '5px', fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+                    Unapproved Users:{" "}
+                    {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
+                  </Text>
+                  <br />
+                  <Text onClick={() => navigate("/admin/user-management/approved")} style={{ fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+                    Approved Users:{" "}
+                    {approvedUsers.approvedUsers ?? "Failed to fetch"}
+                  </Text>
+                </div>
               </div>
             </Card>
 
@@ -764,9 +768,9 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
 
                 <Card>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div onClick={() => navigate("/admin/user-management/approved")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     {/* Title & Value */}
-                    <div>
+                    <div >
                       <span style={{ fontWeight: "bold", fontSize: "20px" }}>Users</span>
                       <div style={{ fontWeight: "bold", fontSize: "28px" }}>
                         {totalUsers.totalUsers ?? "Failed to fetch"}
@@ -792,9 +796,9 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
 
                 <Card>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div onClick={() => navigate("/admin/game-management/game-name")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     {/* Title & Value */}
-                    <div>
+                    <div >
                       <span style={{ fontWeight: "bold", fontSize: "20px" }}>Games</span>
                       <div style={{ fontWeight: "bold", fontSize: "28px" }}>
                         {totalGames.totalGameCount ?? "Failed to fetch"}
@@ -820,7 +824,7 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
 
                 <Card>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div onClick={() => navigate("/admin/all-bid-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     {/* Title & Value */}
                     <div>
                       <span style={{ fontWeight: "bold", fontSize: "20px" }}>Main Market Bid Amount</span>
@@ -848,7 +852,7 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
 
                 <Card>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div onClick={() => navigate("/admin/all-bid-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     {/* Title & Value */}
                     <div>
                       <span style={{ fontWeight: "bold", fontSize: "20px" }}>Starline Bid Amount</span>
@@ -919,7 +923,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Dashboard Row */}
-            <Row  gutter={[16, 16]} style={{ marginTop: 20 }}>
+            <Row gutter={[16, 16]} style={{ marginTop: 20 }}>
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
                 // Calculate a unique hue for each card
                 const hue = 36 * ank; // 360 / 10 * ank
@@ -1001,24 +1005,24 @@ const Dashboard = () => {
       </Card>
 
       <Card style={{ marginTop: 20, width: "100%" }}>
-                    <Title level={5}>
-                      Withdraw Request History{" "}
-                      {new Date().toISOString().split("T")[0]}
-                    </Title>
-                    {loading ? (
-                      <Spin />
-                    ) : error ? (
-                      <p>{error}</p>
-                    ) : (
-                      <Table
-                        columns={withdrawalColumns}
-                        dataSource={withdrawalHistory}
-                        rowKey="_id"
-                        scroll={{ x: true }}
-                      />
-                    )}
-                  </Card>
-                  
+        <Title level={5}>
+          Withdraw Request History{" "}
+          {new Date().toISOString().split("T")[0]}
+        </Title>
+        {loading ? (
+          <Spin />
+        ) : error ? (
+          <p>{error}</p>
+        ) : (
+          <Table
+            columns={withdrawalColumns}
+            dataSource={withdrawalHistory}
+            rowKey="_id"
+            scroll={{ x: true }}
+          />
+        )}
+      </Card>
+
     </div>
   );
 };

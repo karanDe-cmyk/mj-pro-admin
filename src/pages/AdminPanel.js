@@ -90,9 +90,11 @@ const AdminPanel = () => {
                 { label: "How To Play", path: "/admin/settings/how-to-play" },
                 { label: "Refer & Earn", path: "/admin/settings/refer-earn" },
                 { label: "Welcome Settings", path: "/admin/settings/welcome-settings" },
+                { label: "Qr Code", path: "/admin/settings/qr-code" },
+
             ],
         },
-        { key: "all-bid-history", label: "All Bid History", path: "/admin/starline-management/all-bid-history", icon: <i className="fa fa-history" /> },
+        { key: "all-bid-history", label: "All Bid History", path: "/admin/all-bid-history", icon: <i className="fa fa-history" /> },
         { key: "auto-deposit-history", label: "Auto Deposit History", path: "/admin/auto-deposit-history", icon: <i className="fa fa-history" /> },
         { key: "notice-management", label: "Notice Management", path: "/admin/notice-management", icon: <i className="fa fa-bell" /> },
     ];
@@ -116,13 +118,21 @@ const AdminPanel = () => {
 
     return (
         <Layout style={{ minHeight: "100vh" }}>
-            <Sider
+          <Sider
                 collapsible
                 collapsed={collapsed}
                 onCollapse={setCollapsed}
                 theme="dark"
-                style={{ height: "100vh", overflowY: "hidden", position: "fixed", left: 0 }}
-            >
+                style={{
+                    height: "100vh",
+                    overflowY: "auto",  // Allows scrolling
+                    position: "fixed",
+                    left: 0,
+                    scrollbarWidth: "none", // Hide scrollbar in Firefox
+                    msOverflowStyle: "none", // Hide scrollbar in IE/Edge
+                }}
+                className="custom-scrollbar" // Add this class for more control
+            >
                 <div className="p-4 text-white text-center text-lg font-bold">Admin Panel</div>
                 <Menu
                     theme="dark"

@@ -71,15 +71,20 @@ const GameManagement = () => {
   const handleUpdate = async () => {
     try {
       const values = await editForm.validateFields();
+  
       const updatedGame = {
         gameName: values.gameName,
-        weekends: values.weekends.map((day) => ({
-          ...day,
-          openTime: day.openTime.format("hh:mm A"),
-          closeTime: day.closeTime.format("hh:mm A"),
-        })),
+        openTime: values.openTime ? values.openTime.format("hh:mm A") : null, // Save main game open time
+        closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null, // Save main game close time
+        weekends: values.weekends
+          ? values.weekends.map((day) => ({
+              ...day,
+              openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
+              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+            }))
+          : [], // Handle empty weekends array
       };
-
+  
       await axios.put(`/api/marketManagement/updateMarketGame/${editingGame._id}`, updatedGame);
       message.success("Game updated successfully!");
       setIsModalOpen(false);
@@ -89,6 +94,7 @@ const GameManagement = () => {
       message.error("Failed to update game.");
     }
   };
+  
 
   const columns = [
     { title: "#", dataIndex: "sNo", key: "sNo", render: (_, __, index) => index + 1, width: 50 },
@@ -136,17 +142,20 @@ const GameManagement = () => {
   const handleEdit = (record) => {
     setEditingGame(record);
     setIsModalOpen(true);
-
+  
     editForm.setFieldsValue({
       gameName: record.gameName,
+      openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null, // Set default Open Time for main game
+      closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null, // Set default Close Time for main game
       weekends: record.weekends.map((day) => ({
         ...day,
-        openTime: moment(day.openTime, "hh:mm A"),
-        closeTime: moment(day.closeTime, "hh:mm A"),
+        openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null, // Set default Open Time for weekends
+        closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null, // Set default Close Time for weekends
         is_open: day.is_open,
       })),
     });
   };
+  
 
   const handleDelete = async (id) => {
     try {
@@ -246,37 +255,62 @@ const GameManagement = () => {
           ) : games.length === 0 ? (
             <Empty description="No Games Available" />
           ) : (
-            <Table columns={columns} dataSource={games} loading={loading} pagination={{ pageSize: 5 }} bordered />
+            <Table
+            columns={columns}
+            dataSource={games}
+            loading={loading}
+            pagination={{ pageSize: 5 }}
+            bordered
+            scroll={{ x: 1000 }} // Scrolls when content exceeds 1000px width
+          />
           )}
         </Card>
       </Card>
 
        {/* Edit Modal */}
        <Modal title="Edit Game" open={isModalOpen} onCancel={() => setIsModalOpen(false)} onOk={handleUpdate} width={700}>
-        <Form form={editForm} layout="vertical">
-          <Form.Item label="Game Name" name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
-            <Input />
-          </Form.Item>
-          <Row gutter={[16, 16]}>
-            {editingGame &&
-              editingGame.weekends.map((day, index) => (
-                <Col span={12} key={day.day}>
-                  <Card size="small" title={day.day} style={{ textAlign: "center" }}>
-                    <Form.Item name={["weekends", index, "openTime"]} label="Open Time" rules={[{ required: true }]}>
-                      <TimePicker format="hh:mm A" use12Hours />
-                    </Form.Item>
-                    <Form.Item name={["weekends", index, "closeTime"]} label="Close Time" rules={[{ required: true }]}>
-                      <TimePicker format="hh:mm A" use12Hours />
-                    </Form.Item>
-                    <Form.Item name={["weekends", index, "is_open"]} label="Is Active" valuePropName="checked">
-                      <Switch />
-                    </Form.Item>
-                  </Card>
-                </Col>
-              ))}
-          </Row>
-        </Form>
-      </Modal>
+  <Form form={editForm} layout="vertical">
+    {/* Game Name Field */}
+    <Form.Item label="Game Name" name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
+      <Input />
+    </Form.Item>
+
+    {/* Open Time & Close Time for Main Game */}
+    <Row gutter={[16, 16]}>
+      <Col span={12}>
+        <Form.Item label="Open Time" name="openTime" rules={[{ required: true, message: "Enter open time" }]}>
+          <TimePicker format="hh:mm A" use12Hours />
+        </Form.Item>
+      </Col>
+      <Col span={12}>
+        <Form.Item label="Close Time" name="closeTime" rules={[{ required: true, message: "Enter close time" }]}>
+          <TimePicker format="hh:mm A" use12Hours />
+        </Form.Item>
+      </Col>
+    </Row>
+
+    {/* Weekend Open & Close Time */}
+    <Row gutter={[16, 16]}>
+      {editingGame &&
+        editingGame.weekends.map((day, index) => (
+          <Col span={12} key={day.day}>
+            <Card size="small" title={day.day} style={{ textAlign: "center" }}>
+              <Form.Item name={["weekends", index, "openTime"]} label="Open Time" rules={[{ required: true }]}>
+                <TimePicker format="hh:mm A" use12Hours />
+              </Form.Item>
+              <Form.Item name={["weekends", index, "closeTime"]} label="Close Time" rules={[{ required: true }]}>
+                <TimePicker format="hh:mm A" use12Hours />
+              </Form.Item>
+              <Form.Item name={["weekends", index, "is_open"]} label="Is Active" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
+        ))}
+    </Row>
+  </Form>
+</Modal>
+
 
     </div>
   );
