@@ -95,10 +95,10 @@ const GameManagement = () => {
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null, // Save main game close time
         weekends: values.weekends
           ? values.weekends.map((day) => ({
-              ...day,
-              openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
-              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-            }))
+            ...day,
+            openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
+            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+          }))
           : [], // Handle empty weekends array
       };
 
@@ -205,10 +205,10 @@ const GameManagement = () => {
   };
 
   return (
-    <div style={{ padding: "40px", maxWidth: "1400px", margin: "auto" }}>
+    <div style={{ padding: "8px", maxWidth: "1400px", margin: "auto" }}>
       <Card
         style={{
-          padding: "3px",
+          padding: "30px",
           borderRadius: "10px",
           boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
         }}
@@ -227,10 +227,11 @@ const GameManagement = () => {
         {/* ADD GAME SECTION */}
         <Card
           style={{
-            padding: "25px",
+            padding: "10px",
             borderRadius: "8px",
             marginBottom: "25px",
-            backgroundColor: "#f8f8f8",
+            backgroundColor: "#f7fcf8",
+            overflowX: "auto", // Enables horizontal scrolling on small screens
           }}
         >
           <h3
@@ -238,171 +239,123 @@ const GameManagement = () => {
               fontSize: "20px",
               fontWeight: "600",
               marginBottom: "15px",
+              textAlign: "center", // Centers heading on small screens
             }}
           >
             Add Game
           </h3>
+
           <Form
             form={form}
-            layout="inline"
+            layout="vertical" // Changed to vertical for better stacking on mobile
             onFinish={handleAddGame}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-            }}
           >
-            <div>
-              <label
-                style={{
-                  fontWeight: "500",
-                  marginBottom: "5px",
-                  display: "block",
-                }}
-              >
-                Market Name
-              </label>
-              <Form.Item
-                name="marketName"
-                rules={[{ required: true, message: "Select Market name" }]}
-              >
-                <Select
-                  style={{ width: "250px" }}
-                  placeholder="Select Market Name"
-                >
-                  {/* Blank option at index 0 */}
-                  <Select.Option value="">
-                    {/* You can leave the text empty or provide a hint like "--Select--" */}
-                    --Select Market Name--
-                  </Select.Option>
-                  {/* Valid option */}
-                  <Select.Option value="Main Market">Main Market</Select.Option>
-                </Select>
-              </Form.Item>
-            </div>
+            <Row gutter={[16, 16]}>
+              {/* Market Name */}
+              <Col xs={24} sm={12} md={8}>
+                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                  Market Name
+                </label>
+                <Form.Item name="marketName" rules={[{ required: true, message: "Select Market name" }]}>
+                  <Select placeholder="Select Market Name" style={{ width: "100%" }}>
+                    <Select.Option value="">--Select Market Name--</Select.Option>
+                    <Select.Option value="Main Market">Main Market</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-            <div>
-              <label
-                style={{
-                  fontWeight: "500",
-                  marginBottom: "5px",
-                  display: "block",
-                }}
-              >
-                Game Name
-              </label>
-              <Form.Item
-                name="gameName"
-                rules={[{ required: true, message: "Enter game name" }]}
-              >
-                <Input
-                  placeholder="Enter Game Name"
-                  style={{ width: "250px" }}
-                />
-              </Form.Item>
-            </div>
+              {/* Game Name */}
+              <Col xs={24} sm={12} md={8}>
+                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                  Game Name
+                </label>
+                <Form.Item name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
+                  <Input placeholder="Enter Game Name" style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
 
-            <div>
-              <label
-                style={{
-                  fontWeight: "500",
-                  marginBottom: "5px",
-                  display: "block",
-                }}
-              >
-                Market Open Time
-              </label>
-              <Form.Item
-                name="openTime"
-                rules={[{ required: true, message: "Select open time" }]}
-              >
-                <TimePicker
-                  format="hh:mm A"
-                  use12Hours
-                  style={{ width: "170px" }}
-                />
-              </Form.Item>
-            </div>
+              {/* Market Open Time */}
+              <Col xs={24} sm={12} md={8}>
+                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                  Market Open Time
+                </label>
+                <Form.Item name="openTime" rules={[{ required: true, message: "Select open time" }]}>
+                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
 
-            <div>
-              <label
-                style={{
-                  fontWeight: "500",
-                  marginBottom: "5px",
-                  display: "block",
-                }}
-              >
-                Market Close Time
-              </label>
-              <Form.Item
-                name="closeTime"
-                rules={[{ required: true, message: "Select close time" }]}
-              >
-                <TimePicker
-                  format="hh:mm A"
-                  use12Hours
-                  style={{ width: "170px" }}
-                />
-              </Form.Item>
-            </div>
+              {/* Market Close Time */}
+              <Col xs={24} sm={12} md={8}>
+                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                  Market Close Time
+                </label>
+                <Form.Item name="closeTime" rules={[{ required: true, message: "Select close time" }]}>
+                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
 
-            <div>
-              <label
-                style={{
-                  fontWeight: "500",
-                  marginBottom: "5px",
-                  display: "block",
-                }}
-              >
-                Market On/Off
-              </label>
-              <Form.Item name="marketOnOff" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-            </div>
+              {/* Market On/Off */}
+              <Col xs={24} sm={12} md={8}>
+                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                  Market On/Off
+                </label>
+                <Form.Item name="marketOnOff" valuePropName="checked">
+                  <Switch />
+                </Form.Item>
+              </Col>
 
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                icon={<PlusOutlined />}
-                style={{ fontWeight: "600" }}
-              >
-                Add Game
-              </Button>
-            </Form.Item>
+              {/* Add Game Button */}
+              <Col xs={24} style={{ textAlign: "center" }}>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" icon={<PlusOutlined />} style={{ fontWeight: "600" }}>
+                    Add Game
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
         </Card>
 
-        {/* TABLE SECTION */}
-        <Card style={{ padding: "20px", borderRadius: "8px" }}>
-          <h3
-            style={{
-              fontSize: "20px",
-              fontWeight: "600",
-              marginBottom: "15px",
-            }}
-          >
-            Game List
-          </h3>
 
-          {firstLoad ? (
-            <div style={{ textAlign: "center", padding: "50px" }}>
-              <Spin size="large" />
-            </div>
-          ) : games.length === 0 ? (
-            <Empty description="No Games Available" />
-          ) : (
-            <Table
-              columns={columns}
-              dataSource={games}
-              loading={loading}
-              pagination={{ pageSize: 5 }}
-              bordered
-              scroll={{ x: 1000 }} // Scrolls when content exceeds 1000px width
-            />
-          )}
-        </Card>
+        {/* TABLE SECTION */}
+        <Card
+  style={{
+    borderRadius: "8px",
+   
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Adds a subtle shadow
+    overflowX: "auto", // Ensures horizontal scrolling on small screens
+  }}
+>
+  <h3
+    style={{
+      fontSize: "20px",
+      fontWeight: "600",
+      marginBottom: "15px",
+      textAlign: "center", // Centers title on smaller screens
+    }}
+  >
+    Game List
+  </h3>
+
+  {firstLoad ? (
+    <div style={{ textAlign: "center", padding: "10px" }}>
+      <Spin size="large" />
+    </div>
+  ) : games.length === 0 ? (
+    <Empty description="No Games Available" style={{ padding: "10px" }} />
+  ) : (
+    <Table
+      columns={columns}
+      dataSource={games}
+      loading={loading}
+      pagination={{ pageSize: 5 }}
+      bordered
+      scroll={{ x: "max-content" }} // Allows table to adjust dynamically
+      style={{ whiteSpace: "nowrap" }} // Prevents text wrapping issues
+    />
+  )}
+</Card>
+
       </Card>
 
       {/* Edit Modal */}

@@ -118,6 +118,7 @@ const AdminPanel = () => {
         },
         { key: "all-bid-history", label: "All Bid History", path: "/admin/all-bid-history", icon: <i className="fa fa-history" /> },
         { key: "auto-deposit-history", label: "Auto Deposit History", path: "/admin/auto-deposit-history", icon: <i className="fa fa-history" /> },
+        { key: "slider-management", label: "Slider Management", path: "/admin/slider-management", icon: <i className="fa fa-sliders" />},
         { key: "notice-management", label: "Notice Management", path: "/admin/notice-management", icon: <i className="fa fa-bell" /> },
     ];
 
@@ -176,7 +177,7 @@ const AdminPanel = () => {
                 }}
             >
                 {/* ✅ Pass toggleSidebar function to Header */}
-                <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} />
+                <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} handleLogout={handleLogout} />
                 <Content style={{ padding: "16px", background: "#fff", overflowY: "auto", minHeight: "100vh" }}>
                     <Outlet />
                 </Content>

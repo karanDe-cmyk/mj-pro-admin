@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming you have an axios instance
-import {  } from "../../utils/config"; // Ensure you have the correct 
+
 
 const ReferEarn = () => {
   const [referDescription, setReferDescription] = useState("");

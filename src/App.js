@@ -49,8 +49,7 @@ import ReferEarn from "./pages/setting/ReferEarn"; // Import the component
 import WelcomeSettings from "./pages/setting/WelcomeSettings"; // Import the component
 import UserDetails from './pages/UserDetails';
 import QrCode from './pages/setting/QrCode';
-
-
+import SliderManagement from './pages/setting/SliderManagement';
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -127,8 +126,11 @@ const App = () => {
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
-          </Route>
+            <Route path="slider-management" element={<SliderManagement/>} />
 
+            
+          </Route>
+        
           <Route path="/user-details/:userId" element={<UserDetails />} />
         </Route>
 

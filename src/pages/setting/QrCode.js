@@ -1,37 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance"; // Axios instance
 import { Card, Table, Input, Button, Select, Image, Drawer, Upload, message, Form } from "antd";
 import { DeleteOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
 
 const { Search } = Input;
+const { Option } = Select;
 
 const QrCode = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchText, setSearchText] = useState("");
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [sliderImages, setSliderImages] = useState([
-    {
-      id: 1,
-      image: "https://via.placeholder.com/80", // Sample Image
-      upiId: "user@upi",
-      status: "Active",
-    },
-    {
-      id: 2,
-      image: "https://via.placeholder.com/80", // Sample Image
-      upiId: "test@upi",
-      status: "Inactive",
-    },
-  ]);
-
-  const [filteredData, setFilteredData] = useState(sliderImages);
+  const [qrCodes, setQrCodes] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+
+  // 🔹 Fetch QR Codes from API
+  const fetchQrCodes = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get("/api/settings/qrcode");
+      const formattedData = response.data.data.map(item => ({
+        key: item._id,
+        id: item._id,
+        image: item.qrCodeImage,
+        upiId: item.upiId,
+        status: "Active",
+      }));
+      setQrCodes(formattedData);
+    } catch (error) {
+      message.error("Failed to fetch QR codes.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQrCodes();
+  }, []);
 
   const handleSearch = (value) => {
     setSearchText(value);
-    const filtered = sliderImages.filter((item) =>
+    const filtered = qrCodes.filter((item) =>
       item.upiId.toLowerCase().includes(value.toLowerCase())
     );
-    setFilteredData(filtered);
+    setQrCodes(filtered);
   };
 
   const handlePageSizeChange = (value) => {
@@ -47,43 +59,50 @@ const QrCode = () => {
     form.resetFields();
   };
 
-  const handleDelete = (id) => {
-    const updatedData = sliderImages.filter((item) => item.id !== id);
-    setSliderImages(updatedData);
-    setFilteredData(updatedData);
-    message.success("QR Code Deleted Successfully");
+  // 🔹 Delete QR Code from API
+  const handleDelete = async (id) => {
+    try {
+      await axiosInstance.delete(`/api/settings/qrcode/${id}`);
+      message.success("QR Code Deleted Successfully");
+      fetchQrCodes(); // Refresh list after deletion
+    } catch (error) {
+      message.error("Failed to delete QR code.");
+    }
   };
 
-  const handleFormSubmit = (values) => {
-    if (!values.image || values.image.length === 0) {
+  // 🔹 Upload QR Code Image and UPI ID to API
+  const handleFormSubmit = async (values) => {
+    if (!values.qrImage || values.qrImage.length === 0) {
       message.error("Please upload an image");
       return;
     }
 
-    const file = values.image[0].originFileObj;
-    const imageUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("qrImage", values.qrImage[0].originFileObj);
+    formData.append("upiId", values.upiId);
 
-    const newImage = {
-      id: sliderImages.length + 1,
-      image: imageUrl,
-      upiId: values.upiId,
-      status: "Active",
-    };
+    try {
+      await axiosInstance.post("/api/settings/qrcode", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-    const updatedData = [...sliderImages, newImage];
-    setSliderImages(updatedData);
-    setFilteredData(updatedData);
-    message.success("QR Code Added Successfully");
-    closeDrawer();
+      message.success("QR Code Added Successfully");
+      fetchQrCodes(); // Refresh list after adding
+      closeDrawer();
+    } catch (error) {
+      message.error("Failed to upload QR code.");
+    }
   };
 
   const columns = [
-    { title: "#", dataIndex: "id", key: "id", width: 50 },
+    { title: "#", dataIndex: "id", key: "id", width: 50, render: (_, __, index) => index + 1 },
     {
       title: "QR Image",
       dataIndex: "image",
       key: "image",
-      render: (imgSrc) => <Image src={imgSrc} width={80} height={50} style={{ borderRadius: 5 }} />,
+      render: (imgSrc) => (
+        <Image src={imgSrc} width={150} height={100} style={{ borderRadius: 10 }} />
+      ),
     },
     { title: "UPI ID", dataIndex: "upiId", key: "upiId" },
     { title: "Status", dataIndex: "status", key: "status" },
@@ -102,7 +121,7 @@ const QrCode = () => {
   return (
     <Card className="max-w-6xl mx-auto p-6 shadow-md bg-white">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold">QR Code Management</h2>
+        <h2 className="text-lg font-bold">QR Code</h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={showDrawer}>
           Add QR Code Image
         </Button>
@@ -112,9 +131,9 @@ const QrCode = () => {
         <div className="flex items-center">
           <span className="mr-2">Show</span>
           <Select value={pageSize} onChange={handlePageSizeChange} className="w-20">
-            <Select.Option value={10}>10</Select.Option>
-            <Select.Option value={20}>20</Select.Option>
-            <Select.Option value={50}>50</Select.Option>
+            <Option value={10}>10</Option>
+            <Option value={20}>20</Option>
+            <Option value={50}>50</Option>
           </Select>
           <span className="ml-2">entries</span>
         </div>
@@ -127,15 +146,24 @@ const QrCode = () => {
         />
       </div>
 
-      <Table columns={columns} dataSource={filteredData} pagination={{ pageSize }} bordered />
+      <Table
+        columns={columns}
+        dataSource={qrCodes}
+        pagination={{ pageSize }}
+        loading={loading}
+        bordered
+        scroll={{ x: 1000 }}
+      />
 
       {/* Drawer for Adding QR Code */}
       <Drawer title="Add QR Code" width={400} onClose={closeDrawer} open={drawerVisible}>
         <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
           <Form.Item
-            name="image"
+            name="qrImage"
             label="QR Code Image (Allow Only .jpeg, .jpg, .png)"
             rules={[{ required: true, message: "Please upload an image!" }]}
+            valuePropName="fileList"
+            getValueFromEvent={(e) => e && e.fileList ? e.fileList : []}
           >
             <Upload beforeUpload={() => false} listType="picture">
               <Button icon={<UploadOutlined />}>Upload Image</Button>
