@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Form, Input, Select, Button, Table, message, Spin, Modal } from "antd";
+import React, { useState, useEffect, useRef } from "react";
+import { Form, Input, Select, Button, Table, message, Spin, Modal, Row, Col } from "antd";
 import axios from "../utils/axiosInstance";
 
 
@@ -15,7 +15,7 @@ const UserBidHistory = () => {
   const [editingBid, setEditingBid] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState({});
-
+  const printRef = useRef();
   // ✅ Fetch Markets & Games on Component Mount
   useEffect(() => {
     fetchMarketAndGames();
@@ -156,42 +156,79 @@ const UserBidHistory = () => {
       ),
     },
   ];
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "auto" }}>
       <div style={{ background: "#fff", padding: "20px", borderRadius: "8px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}>
-        <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>Bid History Report</h1>
+        <div className=" flex justify-between">
 
-        {/* ✅ FILTER FORM */}
-        <Form form={form} onFinish={onFinish} layout="inline" style={{ display: "flex", flexWrap: "wrap", gap: "15px" }}>
-          <Form.Item name="date" label="Select Date" rules={[{ required: true, message: "Please select a date" }]}>
-            <Input type="date" />
-          </Form.Item>
+          <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>Bid History Report</h1>
+          <span onClick={handlePrint} style={{ cursor: 'pointer' }}> Print</span>
 
-          <Form.Item name="marketName" label="Market Name" rules={[{ required: true, message: "Please select a market" }]}>
-            <Select placeholder="Select Market" style={{ width: "200px" }} loading={loading}>
-              {markets.map((market, index) => (
-                <Select.Option key={index} value={market}>{market}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+        </div>
+      
 
-          <Form.Item name="gameName" label="Game Name" rules={[{ required: true, message: "Please select a game" }]}>
-            <Select placeholder="Select Game" style={{ width: "200px" }} loading={loading}>
-              {games.map((game, index) => (
-                <Select.Option key={index} value={game}>{game}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+        <Form form={form} onFinish={onFinish} layout="vertical">
+          <Row gutter={[16, 16]} align="middle">
+            {/* 📅 Date Picker */}
+            <Col xs={24} sm={12} md={8} lg={6} xl={6}>
+              <Form.Item
+                name="date"
+                label="Select Date"
+                rules={[{ required: true, message: "Please select a date" }]}
+              >
+                <Input type="date" />
+              </Form.Item>
+            </Col>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={filterLoading}>Submit</Button>
-          </Form.Item>
+            {/* 🏬 Market Name */}
+            <Col xs={24} sm={12} md={8} lg={6} xl={6}>
+              <Form.Item
+                name="marketName"
+                label="Market Name"
+                rules={[{ required: true, message: "Please select a market" }]}
+              >
+                <Select placeholder="Select Market" loading={loading}>
+                  {markets.map((market, index) => (
+                    <Select.Option key={index} value={market}>{market}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            {/* 🎮 Game Name */}
+            <Col xs={24} sm={12} md={8} lg={6} xl={6}>
+              <Form.Item
+                name="gameName"
+                label="Game Name"
+                rules={[{ required: true, message: "Please select a game" }]}
+              >
+                <Select placeholder="Select Game" loading={loading}>
+                  {games.map((game, index) => (
+                    <Select.Option key={index} value={game}>{game}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            {/* 🔎 Submit Button */}
+            <Col xs={24} sm={12} md={8} lg={6} xl={6} style={{ textAlign: "right" }}>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={filterLoading}>
+                  Submit
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
+
       </div>
 
       {/* ✅ BID HISTORY TABLE */}
-      <Table columns={columns} dataSource={bidHistory} pagination={{ pageSize: 5 }} loading={filterLoading}  scroll={{ x: 1000 }} />
+      <Table columns={columns} dataSource={bidHistory} pagination={{ pageSize: 5 }} loading={filterLoading} scroll={{ x: 1000 }} />
 
       {/* ✅ Edit Modal */}
       <Modal title="Edit Bid" open={editModalOpen} onCancel={() => setEditModalOpen(false)} onOk={handleEditSubmit} confirmLoading={editLoading}>
