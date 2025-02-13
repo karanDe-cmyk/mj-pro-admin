@@ -20,7 +20,7 @@ const AutoDepositHistory = () => {
       try {
         setLoading(true);
         const response = await axios.get(`/api/userPayment/getpaymentResponse`);
-        console.log("API Response:", response.data); // ✅ Debug: Check API data
+        // console.log("API Response:", response.data); // ✅ Debug: Check API data
 
         const allTransactions = response.data.data || [];
         setData(allTransactions);
@@ -56,18 +56,18 @@ const AutoDepositHistory = () => {
 
     // ✅ Convert selected date properly
     const selectedDateStr = moment(date).format("YYYY-MM-DD");
-    console.log("📅 Selected Date:", selectedDateStr);
+    // console.log("📅 Selected Date:", selectedDateStr);
 
     setSelectedDate(selectedDateStr);
 
     // ✅ Convert and filter transactions
     const filtered = data.filter((item) => {
       const itemDateStr = moment.utc(item.createdAt).format("YYYY-MM-DD");
-      console.log(`📝 Checking ${itemDateStr} vs ${selectedDateStr}`);
+      // console.log(`📝 Checking ${itemDateStr} vs ${selectedDateStr}`);
       return itemDateStr === selectedDateStr;
     });
 
-    console.log("✅ Filtered Data:", filtered);
+    // console.log("✅ Filtered Data:", filtered);
     setFilteredData(filtered);
   };
 
@@ -115,7 +115,7 @@ const AutoDepositHistory = () => {
           <DatePicker
   value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null} // ✅ Ensure correct format
   onChange={(date) => {
-    console.log("🟢 DatePicker Selected:", date ? date.format("YYYY-MM-DD") : "None");
+    // console.log("🟢 DatePicker Selected:", date ? date.format("YYYY-MM-DD") : "None");
     handleDateChange(date ? date.format("YYYY-MM-DD") : null); // ✅ Pass only formatted date
   }}
   format="DD-MM-YYYY"
