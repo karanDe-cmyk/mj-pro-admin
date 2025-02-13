@@ -1,90 +1,88 @@
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
-import { apiUrl, } from "../utils/config";
-import { Table, Input, Button, Switch, Pagination, Spin } from "antd";
+import { Table, Input, Button, Switch, Pagination, Spin, Select } from "antd";
 import { SearchOutlined, WhatsAppOutlined } from "@ant-design/icons";
-import { useNavigate, useParams } from "react-router-dom";
-import UserDetails from "./UserDetails";
+import { useNavigate } from "react-router-dom";
 
+const { Option } = Select;
 
 const UnapprovedUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false); // For global loading
-  const [loadingSwitch, setLoadingSwitch] = useState(null); // For loading spinner on individual switch
+  const [users, setUsers] = useState([]); // Original users data
+  const [filteredUsers, setFilteredUsers] = useState([]); // Filtered users data
+  const [loading, setLoading] = useState(false);
+  const [loadingSwitch, setLoadingSwitch] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate(); // React Router navigation
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10); // Default 10 entries per page
+  const navigate = useNavigate();
 
-  // ✅ Fetch Users with Spinner
+  // ✅ Fetch Users
   const fetchUsers = async () => {
-    setLoading(true); // Show global loading spinner while fetching users
+    setLoading(true);
     try {
-      const response = await instance.get(
-        `/api/auth/userStatus?status=true`
-      );
+      const response = await instance.get(`/api/auth/userStatus?status=true`);
       if (response?.data) {
         setUsers(response.data);
+        setFilteredUsers(response.data); // Initialize filtered users
       } else {
         throw new Error("Failed to fetch user data");
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
-      setLoading(false); // Hide global loading spinner after fetching data
+      setLoading(false);
     }
   };
-
-
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // const handleViewClick = (userId) => {
-  //   navigate(`/user-details/${userId}`);
-  // };
+  // ✅ Search Filter (Live Search)
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredUsers(users); // If empty, show all users
+    } else {
+      const lowercasedSearch = searchTerm.toLowerCase();
+      setFilteredUsers(
+        users.filter(
+          (user) =>
+            user.userName?.toLowerCase().includes(lowercasedSearch) ||
+            user.phone?.toLowerCase().includes(lowercasedSearch) ||
+            user.userWhatsappNumber?.toLowerCase().includes(lowercasedSearch) ||
+            user.walletBalance?.toString().includes(lowercasedSearch)
+        )
+      );
+    }
+  }, [searchTerm, users]);
 
-
-  // Navigate to User Details Page
+  // ✅ Navigate to User Details
   const handleViewClick = (userId) => {
     navigate(`/admin/user-management/user-details/${userId}`);
-
-    // <UserDetails userId={userId} />
   };
-  // Handle WhatsApp icon click to open WhatsApp chat
+
+  // ✅ WhatsApp Click
   const handleWhatsAppClick = (userWhatsappNumber) => {
     if (userWhatsappNumber) {
       window.open(`https://wa.me/+91${userWhatsappNumber}`, "_blank");
     }
   };
-  // ✅ Toggle Switch Function
+
+  // ✅ Toggle Switch
   const toggleSwitch = async (record, type) => {
-    setLoadingSwitch(record._id); // Show loading spinner for the switch being toggled
-
-    // Compute the new value for the given type (e.g., status, betting, etc.)
+    setLoadingSwitch(record._id);
     const newValue = !record[type];
-
     try {
       const response = await instance.post(
         `/api/auth/userStatusUpdate/${record._id}`,
-        {
-          type,
-          value: newValue, // Toggle the value of the status
-        }
+        { type, value: newValue }
       );
-
       if (response) {
-        // console.log(`User ${type} updated successfully`);
-
-        // If the status is toggled off, remove the user from the table instantly
         if (type === "status" && newValue === false) {
-          // console.log("Status OFF - Removing user from table");
-          setUsers((prevUsers) =>
-            prevUsers.filter((user) => user._id !== record._id)
-          );
+          setUsers((prev) => prev.filter((user) => user._id !== record._id));
         } else {
-          // For other switches (or if status is toggled on), update the local users state accordingly
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
+          setUsers((prev) =>
+            prev.map((user) =>
               user._id === record._id ? { ...user, [type]: newValue } : user
             )
           );
@@ -95,20 +93,19 @@ const UnapprovedUsers = () => {
     } catch (error) {
       console.error("Error updating user status:", error);
     } finally {
-      setLoadingSwitch(null); // Hide loading spinner for the individual switch after the operation
+      setLoadingSwitch(null);
     }
   };
 
-  // Table Columns
+  // ✅ Table Columns
   const columns = [
     { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
-    { title: "Member Mobile No", dataIndex: "phone", key: "phone" },
     {
       title: "Member Whatsapp No",
       dataIndex: "userWhatsappNumber",
       key: "userWhatsappNumber",
-      render: (text, record) => (
+      render: (text) => (
         <span>
           {text}
           {text && (
@@ -171,34 +168,66 @@ const UnapprovedUsers = () => {
     },
   ];
 
+  // ✅ Pagination Logic
+  const indexOfLastEntry = currentPage * entriesPerPage;
+  const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstEntry, indexOfLastEntry);
+
   return (
     <div className="p-6 bg-white rounded-md shadow-md">
       <h2 className="text-xl font-bold mb-4">User List</h2>
 
-      {/* Top Actions */}
-      <div className="flex justify-end mb-4">
+      {/* 🔎 Search Bar */}
+      <div className="flex justify-between mb-4">
+        {/* 🔽 Entries Per Page Selector */}
+        <Select
+          defaultValue={entriesPerPage}
+          onChange={(value) => {
+            setEntriesPerPage(value);
+            setCurrentPage(1); // Reset to first page on change
+          }}
+          style={{ width: 100 }}
+        >
+          <Option value={5}>5</Option>
+          <Option value={10}>10</Option>
+          <Option value={20}>20</Option>
+        </Select>
         <Input
           prefix={<SearchOutlined />}
           placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ width: 200, marginLeft: 10 }}
+          style={{ width: 200 }}
         />
+
+
       </div>
 
-      {/* Global Loading Spinner */}
+      {/* 🔄 Global Loading Spinner */}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <Spin size="large" />
         </div>
       ) : (
-        <Table columns={columns} dataSource={users} pagination={false} rowKey="_id" scroll={{ x: 1000 }} />
+        <Table
+          columns={columns}
+          dataSource={currentUsers}
+          pagination={false}
+          rowKey="_id"
+          scroll={{ x: 1000 }}
+        />
       )}
 
-      {/* Pagination */}
+      {/* 📜 Pagination */}
       <div className="flex justify-between items-center mt-4">
-        <span>Showing {users.length} entries</span>
-        <Pagination defaultCurrent={1} total={users.length} />
+        <span>Showing {currentUsers.length} of {filteredUsers.length} entries</span>
+        <Pagination
+          current={currentPage}
+          total={filteredUsers.length}
+          pageSize={entriesPerPage}
+          showSizeChanger={false}
+          onChange={(page) => setCurrentPage(page)}
+        />
       </div>
     </div>
   );

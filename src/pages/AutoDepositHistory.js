@@ -2,15 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Table, DatePicker, Spin, Alert, Input } from "antd";
 import axios from "../utils/axiosInstance";
 import moment from "moment";
+import dayjs from "dayjs";
 
 const { Search } = Input;
 
 const AutoDepositHistory = () => {
-  const [data, setData] = useState([]); // Original Data
+  const [data, setData] = useState([]); // Full Data from API
   const [filteredData, setFilteredData] = useState([]); // Filtered Data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null); // Selected Date
+  const [selectedDate, setSelectedDate] = useState(moment().format("YYYY-MM-DD")); // Default: Today
   const [searchText, setSearchText] = useState(""); // Search Input
 
   // ✅ Fetch Deposit History on Component Mount
@@ -19,10 +20,20 @@ const AutoDepositHistory = () => {
       try {
         setLoading(true);
         const response = await axios.get(`/api/userPayment/getpaymentResponse`);
-        setData(response.data.data || []);
-        setFilteredData(response.data.data || []);
+        console.log("API Response:", response.data); // ✅ Debug: Check API data
+
+        const allTransactions = response.data.data || [];
+        setData(allTransactions);
+
+        // ✅ Filter transactions only for today on load
+        const todayStr = moment().utc().format("YYYY-MM-DD");
+        const todayData = allTransactions.filter((item) =>
+          moment.utc(item.createdAt).format("YYYY-MM-DD") === todayStr
+        );
+        setFilteredData(todayData);
       } catch (err) {
-        setError("Failed to fetch deposit history. Please try again.");
+        console.error("API Fetch Error:", err);
+        setError("Failed to fetch deposit history.");
       } finally {
         setLoading(false);
       }
@@ -30,53 +41,50 @@ const AutoDepositHistory = () => {
     fetchDepositHistory();
   }, []);
 
+  // ✅ Handle Date Change (Fix Timezone Issue)
   const handleDateChange = (date) => {
     if (!date) {
-        setFilteredData(data);
-        setSelectedDate(null);
-        return;
+      console.warn("🚨 No date selected! Defaulting to today.");
+      const todayStr = moment().utc().format("YYYY-MM-DD");
+      setSelectedDate(todayStr);
+      const todayData = data.filter(
+        (item) => moment.utc(item.createdAt).format("YYYY-MM-DD") === todayStr
+      );
+      setFilteredData(todayData);
+      return;
     }
 
-    // ✅ Convert selected date to "YYYY-MM-DD" without shifting timezones
+    // ✅ Convert selected date properly
     const selectedDateStr = moment(date).format("YYYY-MM-DD");
+    console.log("📅 Selected Date:", selectedDateStr);
+
     setSelectedDate(selectedDateStr);
 
-    // console.log("Selected Date (Final Fixed):", selectedDateStr); // Debugging
-
-    // ✅ Convert `createdAt` timestamps to the same "YYYY-MM-DD" format
+    // ✅ Convert and filter transactions
     const filtered = data.filter((item) => {
-        const txnDateStr = moment(item.createdAt).format("YYYY-MM-DD"); // Convert to "Txn Date"
-        // console.log(`Txn Date: ${txnDateStr} | Selected Date: ${selectedDateStr}`); // Debugging
-        return txnDateStr === selectedDateStr;
+      const itemDateStr = moment.utc(item.createdAt).format("YYYY-MM-DD");
+      console.log(`📝 Checking ${itemDateStr} vs ${selectedDateStr}`);
+      return itemDateStr === selectedDateStr;
     });
 
-    // console.log("Final Filtered Data:", filtered); // Debugging
-
+    console.log("✅ Filtered Data:", filtered);
     setFilteredData(filtered);
-};
+  };
 
-
-
-
-
-
-  // ✅ Search Functionality (Filters by Username or Txn ID)
+  // ✅ Search Functionality (Only for Selected Date)
   const handleSearch = (value) => {
     setSearchText(value);
     const lowercasedValue = value.toLowerCase();
 
-    const filtered = data.filter((item) => {
-      const matchesSearch =
-        item.username.toLowerCase().includes(lowercasedValue) ||
-        item.txnId.toLowerCase().includes(lowercasedValue);
+    const baseData = data.filter(
+      (item) => moment.utc(item.createdAt).format("YYYY-MM-DD") === selectedDate
+    );
 
-      if (selectedDate) {
-        const itemDateStr = moment(item.createdAt).format("YYYY-MM-DD");
-        return matchesSearch && itemDateStr === selectedDate;
-      }
-
-      return matchesSearch;
-    });
+    const filtered = baseData.filter(
+      (item) =>
+        item.username?.toLowerCase().includes(lowercasedValue) ||
+        item.txnId?.toLowerCase().includes(lowercasedValue)
+    );
 
     setFilteredData(filtered);
   };
@@ -84,14 +92,14 @@ const AutoDepositHistory = () => {
   // ✅ Table Columns
   const columns = [
     { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
-    { title: "User Name", dataIndex: "username", key: "username" },
+    { title: "User Name", dataIndex: "username", key: "username", render: (username) => username || "N/A" },
     { title: "Amount", dataIndex: "amount", key: "amount", render: (amount) => `₹ ${amount}` },
     { title: "Txn ID", dataIndex: "txnId", key: "txnId", render: (txnId) => txnId || "N/A" },
     {
       title: "Txn Date",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => moment(date).format("DD-MM-YYYY"),
+      render: (date) => moment.utc(date).local().format("DD-MM-YYYY"), // ✅ Convert UTC to Local Time
     },
   ];
 
@@ -101,12 +109,22 @@ const AutoDepositHistory = () => {
         <h2 className="text-xl font-bold mb-4">Auto Deposit History</h2>
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-          {/* ✅ Date Picker for Filtering */}
+          {/* ✅ Date Picker with Fix */}
+        
+
           <DatePicker
-            onChange={handleDateChange}
-            className="mb-2 md:mb-0"
-            format="DD-MM-YYYY"
-          />
+  value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null} // ✅ Ensure correct format
+  onChange={(date) => {
+    console.log("🟢 DatePicker Selected:", date ? date.format("YYYY-MM-DD") : "None");
+    handleDateChange(date ? date.format("YYYY-MM-DD") : null); // ✅ Pass only formatted date
+  }}
+  format="DD-MM-YYYY"
+  style={{ width: 180, padding: "10px" }} // ✅ Improved UI
+  allowClear={false} // ✅ Prevents clearing the default date
+  defaultPickerValue={dayjs()} // ✅ Opens calendar in current month/year
+  placeholder="Select Date"
+  //suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />} // ✅ Adds a calendar icon
+/>
 
           {/* ✅ Search Bar for Filtering */}
           <Search

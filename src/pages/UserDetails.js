@@ -13,7 +13,7 @@ import {
   Modal,
   Form,
   Input,
-  message,
+  message, Tag
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -24,14 +24,17 @@ import { useParams } from "react-router-dom";
 import instance from "../utils/axiosInstance";
 import moment from "moment";
 
+const { Search } = Input;
+
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 const UserDetails = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [withdrawData, setWithdrawData] = useState([]);
+  const [search, setSearch] = useState(""); // Search input
 
   const [modalVisible, setModalVisible] = useState(false);
   // State to track which action to perform ("add" or "withdraw")
@@ -40,10 +43,10 @@ const UserDetails = () => {
   const [amount, setAmount] = useState("");
   const [depositTransactions, setDepositTransactions] = useState([]);
   const [winningData, setWinningData] = useState([]);
-
+  const [entries, setEntries] = useState(5);
   const { userId } = useParams();
 
-  //   console.log("userId", userId);
+  // console.log("userId....", userId);
 
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -205,35 +208,6 @@ const UserDetails = () => {
     fetchWinningData();
   }, [userData]);
 
-
-  
-  const handleStatusUpdate = async (newStatus) => {
-    try {
-      const response = await instance.post(
-        `/api/auth/userStatusUpdate/${userData._id}`,
-        { type: "status", value: newStatus },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-  
-      if (response.status === 200) {
-        setUserData((prev) => ({ ...prev, status: newStatus })); // Update UI instantly
-        message.success("Status updated successfully!");
-      } else {
-        message.error("Failed to update status.");
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      message.error("Error updating status.");
-    }
-  };
-  
-
-
-
   const fetchWinningData = async () => {
     try {
       setLoading(true);
@@ -268,9 +242,7 @@ const UserDetails = () => {
     );
 
     // Sort by latest date (Descending)
-    const sortedData = formattedData.sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
+    const sortedData = formattedData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Assign proper sequential S.No (1,2,3,4...)
     const finalData = sortedData.map((item, index) => ({
@@ -425,17 +397,30 @@ const UserDetails = () => {
     setPageSize(Number(value));
     setCurrentPage(1); // Reset to first page when page size changes
   };
-
-  const getTodaysWinningData = () => {
+  const winningFilteredData = winningData.filter((record) =>
+    Object.values(record).some(
+      (value) =>
+        value &&
+        value.toString().toLowerCase().includes(search.toLowerCase())
+    )
+  );
+  const getTodaysWinningData = (startIndex, endIndex) => {
     const today = moment().format("YYYY-MM-DD"); // Get today's date in YYYY-MM-DD format
 
     const todaysData = winningData.filter((record) => {
       const recordDate = moment(record.date).format("YYYY-MM-DD"); // Extract record date
-      return recordDate === today; // Only return records that match today's date
+      return recordDate === today; // Return records that match today's date
     });
 
     return todaysData.slice(startIndex - 1, endIndex); // Apply pagination
   };
+
+
+  const filteredWinningData = winningData.filter((item) =>
+    Object.values(item).some((value) =>
+      value && value.toString().toLowerCase().includes(search.toLowerCase())
+    )
+  );
 
   const depositTransactionColumns = [
     {
@@ -450,14 +435,14 @@ const UserDetails = () => {
       render: (amount) => {
         const style = {
           display: "inline-block",
-          width: "80px", // Fixed width
-          height: "30px", // Fixed height
-          lineHeight: "30px", // Align text vertically
-          textAlign: "center", // Center text horizontally
+          width: "80px",
+          height: "30px",
+          lineHeight: "30px",
+          textAlign: "center",
           borderRadius: "4px",
-          backgroundColor: "#d9f7be", // Light blue background
-          color: "#000", // Black text color
-          fontWeight: "bold", // Optional: Bold text
+          backgroundColor: "#e6fffb", // Light cyan for better contrast
+          color: "#000",
+          fontWeight: "bold",
         };
         return <div style={style}>+ {amount}</div>;
       },
@@ -478,32 +463,25 @@ const UserDetails = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let style = {
-          padding: "4px 8px",
-          borderRadius: "4px",
-          color: "#fff",
-          textTransform: "capitalize",
+        const colorMap = {
+          success: "green",
+          pending: "orange",
+          failed: "red",
         };
-
-        switch (status.toLowerCase()) {
-          case "success":
-            style = { ...style, backgroundColor: "#52c41a" }; // green
-            break;
-          case "pending":
-            style = { ...style, backgroundColor: "#faad14" }; // yellow/orange
-            break;
-          case "failed":
-            style = { ...style, backgroundColor: "#f5222d" }; // red
-            break;
-          default:
-            style = { ...style, backgroundColor: "#8c8c8c" }; // gray for any other status
-        }
-
-        return <span style={style}>{status}</span>;
+        return <Tag color={colorMap[status.toLowerCase()] || "gray"}>{status}</Tag>;
       },
     },
   ];
-
+  const filteredData = data.filter((item) =>
+    Object.values(item).some((value) =>
+      value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
+    )
+  );
+  const historyFilteredData = transactionHistoryDataAll.filter((item) =>
+    Object.values(item).some((value) =>
+      value && value.toString().toLowerCase().includes(search.toLowerCase())
+    )
+  );
   const winningHistoryColumns = [
     {
       title: "#",
@@ -563,6 +541,16 @@ const UserDetails = () => {
       key: "date",
     },
   ];
+  const filteredDepositTransactions = depositTransactions.filter((item) =>
+    Object.values(item).some((value) =>
+      value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null Check
+    )
+  );
+  const filteredWithdrawData = withdrawData.filter((item) =>
+    Object.values(item).some((value) =>
+      value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
+    )
+  );
 
   // Define the columns for the withdrawal transactions table.
   const withdrawColumns = [
@@ -689,6 +677,9 @@ const UserDetails = () => {
     },
   ];
 
+
+
+
   const walletHistoryData = [
     {
       id: 1,
@@ -705,15 +696,20 @@ const UserDetails = () => {
       txRequestNo: "67a716c812b20",
     },
   ];
-  const filteredData =
-    activeTab === "winning"
-      ? walletHistoryData.filter(
-          (item) => item.transactionType === "Money Added"
-        )
+  const getFilteredData = () => {
+    return activeTab === "winning"
+      ? walletHistoryData.filter((item) => item.transactionType === "Money Added")
       : walletHistoryData;
+  };
+
+  const filteredWalletHistoryData = getFilteredData(); // Call function to get data
 
   const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, filteredData.length);
+  const endIndex = Math.min(currentPage * pageSize, filteredWalletHistoryData.length);
+
+
+  // 🗓️ Filter function for today's winning history
+
 
   const transactionHistoryColumnsAll = [
     {
@@ -758,9 +754,8 @@ const UserDetails = () => {
           borderRadius: "4px",
           color: record.type === "deposit" ? "#389e0d" : "#ad6800", // Dark green for deposit, dark orange for withdraw
           fontWeight: "bold",
-          border: `2px solid ${
-            record.type === "deposit" ? "#b7eb8f" : "#ffa940"
-          }`, // Light green for deposit, light orange for withdraw
+          border: `2px solid ${record.type === "deposit" ? "#b7eb8f" : "#ffa940"
+            }`, // Light green for deposit, light orange for withdraw
           backgroundColor: record.type === "deposit" ? "#f6ffed" : "#fffbe6", // Light green/yellow bg
           display: "inline-block",
           minWidth: "120px",
@@ -784,7 +779,7 @@ const UserDetails = () => {
           <ArrowLeftOutlined
             style={{ fontSize: "20px", cursor: "pointer", marginRight: "10px" }}
             onClick={() => window.history.back()}
-            // Go back to the previous page
+          // Go back to the previous page
           />
         </Col>
         <Col>
@@ -817,49 +812,24 @@ const UserDetails = () => {
                       />
                     </Text>
                   </Col>
-                  <Col style={{ padding: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
-      {/* Active Button */}
-      <Row align="middle" style={{ marginBottom: "10px" }}>
-        <Text strong style={{ marginRight: "10px", fontSize: "16px" }}>Active:</Text>
-        <Button
-          onClick={() => handleStatusUpdate(true)}
-          style={{
-            backgroundColor: userData.status ? "#28a745" : "#dc3545",
-            color: "white",
-            fontWeight: "bold",
-            border: "none",
-            padding: "5px 15px",
-            borderRadius: "5px",
-            cursor: "pointer",
-            minWidth: "70px",
-            textAlign: "center",
-          }}
-        >
-          {userData.status ? "Yes" : "No"}
-        </Button>
-      </Row>
-
-      {/* Banned Button */}
-      <Row align="middle">
-        <Text strong style={{ marginRight: "10px", fontSize: "16px" }}>Banned:</Text>
-        <Button
-          onClick={() => handleStatusUpdate(false)}
-          style={{
-            backgroundColor: !userData.status ? "#28a745" : "#dc3545",
-            color: "white",
-            fontWeight: "bold",
-            border: "none",
-            padding: "5px 15px",
-            borderRadius: "5px",
-            cursor: "pointer",
-            minWidth: "70px",
-            textAlign: "center",
-          }}
-        >
-          {!userData.status ? "Yes" : "No"}
-        </Button>
-      </Row>
-    </Col>
+                  <Col>
+                    <Text>
+                      Active:{" "}
+                      <Badge
+                        status={userData.status ? "true" : "false"}
+                        text={userData.status ? "Yes" : "No"}
+                      />
+                    </Text>
+                    <br />
+                    <Text>
+                      Banned:{" "}
+                      <Badge
+                        // Assuming banned is the opposite of active
+                        status={!userData.status ? "false" : "true"}
+                        text={!userData.status ? "Yes" : "No"}
+                      />
+                    </Text>
+                  </Col>
                 </Row>
                 <div style={{ marginTop: "20px" }}>
                   <Text>Available Balance: </Text>
@@ -952,7 +922,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.bank_name &&
-                        userData.bank_details.bank_name !== "Null"
+                          userData.bank_details.bank_name !== "Null"
                           ? userData.bank_details.bank_name
                           : "N/A"}
                       </Text>
@@ -969,7 +939,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.account_number &&
-                        userData.bank_details.account_number !== "Null"
+                          userData.bank_details.account_number !== "Null"
                           ? userData.bank_details.account_number
                           : "N/A"}
                       </Text>
@@ -980,7 +950,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.ifsc_code &&
-                        userData.bank_details.ifsc_code !== "Null"
+                          userData.bank_details.ifsc_code !== "Null"
                           ? userData.bank_details.ifsc_code
                           : "N/A"}
                       </Text>
@@ -1017,11 +987,36 @@ const UserDetails = () => {
         <Col span={24}>
           <Card>
             <Title level={5}>Add Fund Request List</Title>
+
+            {/* Search & Entries Selection */}
+            <div className="flex justify-between mb-4">
+              <input
+                type="text"
+                className="border px-3 py-2 rounded w-1/3"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <Select
+                defaultValue={10}
+                onChange={(value) => setEntries(value)}
+                style={{ width: 120 }}
+              >
+
+                <Option value={10}>10</Option>
+                <Option value={20}>20</Option>
+                <Option value={30}>30</Option>
+                <Option value={40}>40</Option>
+                <Option value={50}>50</Option>
+              </Select>
+            </div>
+
+            {/* Table */}
             <Table
               columns={depositTransactionColumns}
-              dataSource={depositTransactions}
-              rowKey="_id" // Use the unique transaction ID as the key
-              pagination={{ pageSize: 10 }}
+              dataSource={filteredDepositTransactions}
+              rowKey="_id"
+              pagination={{ pageSize: entries }}
               scroll={{ x: 1000 }}
             />
           </Card>
@@ -1032,25 +1027,39 @@ const UserDetails = () => {
         <Card style={{ marginBottom: "20px" }}>
           <Row justify="space-between" align="middle">
             <Title level={5}>Withdraw Fund Request List</Title>
-            <div>
-              Show{" "}
-              <Select
-                defaultValue="10"
-                style={{ width: 80 }}
-                onChange={handleEntriesChange}
-              >
-                <Option value="10">10</Option>
-                <Option value="25">25</Option>
-                <Option value="50">50</Option>
-              </Select>{" "}
-              entries
+            <div className="flex justify-between mb-4">
+              <div>
+                Show{" "}
+                <Select
+                  value={entries.toString()} // Ensure it's a string
+                  style={{ width: 80 }}
+                  onChange={(value) => setEntries(parseInt(value))}
+                >
+                  <Option value="10">10</Option>
+                  <Option value="25">25</Option>
+                  <Option value="50">50</Option>
+                </Select>{" "}
+                entries
+              </div>
+
+
             </div>
           </Row>
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-3 py-2 rounded w-1/3 mb-4"
+          />
+
+          {/* 🔍 Search Box */}
+
+          {/* 📝 Table with filtered data */}
           <Table
             columns={withdrawColumns}
-            dataSource={withdrawData}
+            dataSource={filteredWithdrawData} // ✅ Uses filtered data
             rowKey="_id"
-            pagination={{ pageSize: 10 }}
+            pagination={{ pageSize: entries }}
             scroll={{ x: 1000 }}
           />
         </Card>
@@ -1063,9 +1072,9 @@ const UserDetails = () => {
             <div>
               Show{" "}
               <Select
-                defaultValue="10"
+                value={entries.toString()}
                 style={{ width: 80 }}
-                onChange={handleEntriesChange}
+                onChange={(value) => setEntries(parseInt(value))}
               >
                 <Option value="10">10</Option>
                 <Option value="25">25</Option>
@@ -1074,13 +1083,25 @@ const UserDetails = () => {
               entries
             </div>
           </Row>
+
+          {/* 🔍 Search Box */}
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-3 py-2 rounded w-1/3 mb-4"
+
+
+          />
+
+          {/* 📝 Table with filtered data */}
           <Table
             columns={allbidHistoryColumns}
-            dataSource={data}
-            pagination={{ pageSize: 10 }}
+            dataSource={filteredData}
+            pagination={{ pageSize: entries }}
             loading={loading}
+            rowKey="_id"
             scroll={{ x: 1000 }}
-
           />
         </Card>
 
@@ -1089,8 +1110,9 @@ const UserDetails = () => {
           {/* Wallet Transaction History with Tabs */}
           <Card style={{ marginBottom: "20px" }}>
             <Tabs defaultActiveKey="all">
+              {/* All Winning History */}
               <TabPane tab="All" key="all">
-                <Row justify="space-between" align="middle">
+                <Row justify="space-between" align="middle" style={{ marginBottom: 10 }}>
                   <Title level={5}>Winning History</Title>
                   <div>
                     Show{" "}
@@ -1099,56 +1121,102 @@ const UserDetails = () => {
                       style={{ width: 80 }}
                       onChange={handleEntriesChange}
                     >
-                      <Option value="10">10</Option>
-                      <Option value="25">25</Option>
-                      <Option value="50">50</Option>
+                      <Option value={5}>5</Option>
+                      <Option value={10}>10</Option>
+                      <Option value={20}>20</Option>
+                      <Option value={50}>50</Option>
                     </Select>{" "}
                     entries
                   </div>
                 </Row>
+                {/* Search Input */}
+                <Input
+                  placeholder="Search..."
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ marginBottom: "10px", width: "250px" }}
+                />
+                {/* Table */}
                 <Table
                   columns={winningHistoryColumns}
-                  dataSource={winningData}
-                  pagination={{ pageSize: 5 }}
+                  dataSource={filteredData.slice(startIndex - 1, endIndex)}
+                  pagination={{
+                    pageSize: entries,
+                    current: currentPage,
+                    onChange: (page) => setCurrentPage(page),
+                  }}
                   loading={loading}
                   scroll={{ x: 1000 }}
-
                 />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex} to ${endIndex} of ${winningData.length} entries`}
+                  {`Showing ${startIndex} to ${endIndex} of ${filteredData.length} entries`}
                 </div>
               </TabPane>
+
+              {/* Today's Winning History */}
               <TabPane tab="Winning History" key="winning">
                 <Row justify="space-between" align="middle">
-                  <Title level={5}>Winning History</Title>
+                  <Title level={5}>Today's Winning History</Title>
                 </Row>
                 <Table
                   columns={winningHistoryColumns}
-                  dataSource={getTodaysWinningData()} // Fetch today's filtered winning history
+                  dataSource={getTodaysWinningData().slice(startIndex - 1, endIndex)}
                   pagination={{
-                    pageSize: 10,
-                    
+                    pageSize: entries,
+                    current: currentPage,
+                    onChange: (page) => setCurrentPage(page),
                   }}
-                  scroll={{ x: 1000 }}
                 />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex} to ${endIndex} of ${
-                    getTodaysWinningData().length
-                  } entries`}
+                  {`Showing ${startIndex} to ${endIndex} of ${getTodaysWinningData().length} entries`}
                 </div>
               </TabPane>
             </Tabs>
           </Card>
           {/* Wallet Transaction History */}
           <Card>
-            <Title level={5}>Wallet Transaction History</Title>
+            <Row justify="space-between" align="middle" style={{ marginBottom: "10px" }}>
+              <Title level={5}>Wallet Transaction History</Title>
+              <div>
+                Show{" "}
+                <Select
+                  value={entries.toString()}
+                  style={{ width: 80 }}
+                  onChange={(value) => setEntries(parseInt(value))}
+                >
+                  <Option value="10">10</Option>
+                  <Option value="25">25</Option>
+                  <Option value="50">50</Option>
+                </Select>{" "}
+                entries
+              </div>
+            </Row>
+
+            {/* 🔍 Search Box */}
+            <Input
+              placeholder="Search Transactions..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ marginBottom: "10px", width: "30%" }}
+            />
+
+            {/* 📝 Transaction Table */}
             <Table
               columns={transactionHistoryColumnsAll}
-              dataSource={transactionHistoryDataAll}
-              pagination={{ pageSize: 10 }}
+              dataSource={historyFilteredData}
+              pagination={{
+                pageSize: entries,
+                current: currentPage,
+                onChange: (page) => setCurrentPage(page),
+              }}
               loading={loading}
+              rowKey="_id"
               scroll={{ x: 1000 }}
             />
+
+            {/* 📊 Showing Entries Count */}
+            <div style={{ marginTop: "10px", textAlign: "right" }}>
+              {`Showing ${startIndex} to ${endIndex} of ${filteredData.length} entries`}
+            </div>
           </Card>
         </div>
       </div>

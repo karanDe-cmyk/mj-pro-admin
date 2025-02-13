@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Switch, message, Spin } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Table, Button, Switch, message, Spin, Input, Select } from "antd";
+import { EditOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
-import {  } from "../../utils/config";
 import EditGameModal from "./EditGameModal";
+
+const { Option } = Select;
 
 const GameName = () => {
   const [games, setGames] = useState([]);
+  const [filteredGames, setFilteredGames] = useState([]); // Filtered Data
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
+  const [searchTerm, setSearchTerm] = useState(""); // Search state
+  const [filterStatus, setFilterStatus] = useState("all"); // Filter state
+  const [pageSize, setPageSize] = useState(5); // Entries state
 
   // Fetch game list
   const fetchGameList = async () => {
@@ -18,6 +23,7 @@ const GameName = () => {
       const response = await instance.get(`/api/starline/getGameList`);
       if (response.data.success) {
         setGames(response.data.data);
+        setFilteredGames(response.data.data); // Initialize filtered list
       } else {
         throw new Error("Failed to fetch game list");
       }
@@ -26,6 +32,41 @@ const GameName = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchGameList();
+  }, []);
+
+  // Search Handler
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    filterGames(value, filterStatus);
+  };
+
+  // Filter Handler
+  const handleFilterChange = (value) => {
+    setFilterStatus(value);
+    filterGames(searchTerm, value);
+  };
+
+  // Function to filter games based on search and status
+  const filterGames = (search, status) => {
+    let updatedGames = games;
+
+    if (search) {
+      updatedGames = updatedGames.filter((game) =>
+        game.game_name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (status !== "all") {
+      updatedGames = updatedGames.filter((game) =>
+        status === "active" ? game.is_active : !game.is_active
+      );
+    }
+
+    setFilteredGames(updatedGames);
   };
 
   // Toggle game status
@@ -37,11 +78,11 @@ const GameName = () => {
       });
 
       if (response.data.success) {
-        setGames((prevGames) =>
-          prevGames.map((game) =>
-            game._id === gameId ? { ...game, is_active: !currentStatus } : game
-          )
+        const updatedGames = games.map((game) =>
+          game._id === gameId ? { ...game, is_active: !currentStatus } : game
         );
+        setGames(updatedGames);
+        filterGames(searchTerm, filterStatus); // Reapply filter after update
         message.success("Game status updated.");
       }
     } catch (error) {
@@ -51,72 +92,40 @@ const GameName = () => {
     }
   };
 
-  // Toggle day status inside Edit Modal
-  const toggleDayStatus = async (dayIndex, gameId) => {
-    setLoadingAction(`toggle-day-${dayIndex}`);
-
-    try {
-      const updatedDays = [...editingGame.week_selection];
-      updatedDays[dayIndex].is_open = !updatedDays[dayIndex].is_open;
-
-      await instance.patch(`/api/starline/updateGameById/${gameId}`, {
-        week_selection: updatedDays,
-      });
-
-      setEditingGame((prev) => ({
-        ...prev,
-        week_selection: updatedDays,
-      }));
-
-      message.success("Day status updated successfully!");
-    } catch (error) {
-      message.error("Failed to update day status.");
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  // Handle Game Update
-  const handleUpdateGame = async () => {
-    setLoadingAction("update");
-
-    try {
-      const response = await instance.patch(
-        `/api/starline/updateGameById/${editingGame._id}`,
-        {
-          game_name: editingGame.game_name,
-          close_time: editingGame.close_time,
-          week_selection: editingGame.week_selection,
-        }
-      );
-
-      if (response.data.success) {
-        setGames((prevGames) =>
-          prevGames.map((game) => (game._id === editingGame._id ? response.data.data : game))
-        );
-
-        message.success("Game updated successfully!");
-        setEditingGame(null);
-      } else {
-        message.error("Failed to update the game.");
-      }
-    } catch (error) {
-      message.error("An error occurred while updating the game.");
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  useEffect(() => {
-    fetchGameList();
-  }, []);
-
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-md rounded-md">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Game Schedule</h2>
 
-      <AddGame onGameAdded={(newGame) => setGames((prevGames) => [...prevGames, newGame])} />
+      {/* Add Game Component */}
+      <AddGame onGameAdded={(newGame) => setGames((prev) => [...prev, newGame])} />
 
+      {/* Search, Filter & Entries Options */}
+      <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 mb-4">
+        {/* Search Input */}
+        <Input
+          placeholder="Search Game Name..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="flex-1"
+        />
+
+        {/* Filter Dropdown */}
+        <Select value={filterStatus} onChange={handleFilterChange} className="w-40">
+          <Option value="all">All Games</Option>
+          <Option value="active">Active Games</Option>
+          <Option value="inactive">Inactive Games</Option>
+        </Select>
+
+        {/* Entries Dropdown */}
+        <Select value={pageSize} onChange={(value) => setPageSize(value)} className="w-24">
+          <Option value={5}>5</Option>
+          <Option value={10}>10</Option>
+          <Option value={20}>20</Option>
+          <Option value={50}>50</Option>
+        </Select>
+      </div>
+
+      {/* Game Table */}
       {loading ? (
         <div className="flex justify-center mt-6">
           <Spin size="large" />
@@ -124,12 +133,7 @@ const GameName = () => {
       ) : (
         <Table
           columns={[
-            {
-              title: "#",
-              dataIndex: "index",
-              key: "index",
-              render: (_, __, index) => index + 1,
-            },
+            { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
             { title: "Game Name", dataIndex: "game_name", key: "game_name" },
             { title: "Close Time", dataIndex: "close_time", key: "close_time" },
             {
@@ -160,20 +164,22 @@ const GameName = () => {
               ),
             },
           ]}
-          dataSource={games.map((game, index) => ({ ...game, key: index }))}
-          pagination={{ pageSize: 5 }}
+          dataSource={filteredGames.map((game, index) => ({ ...game, key: index }))}
+          pagination={{ pageSize }}
           className="mt-6"
         />
       )}
 
+      {/* Edit Game Modal */}
       {editingGame && (
         <EditGameModal
           editingGame={editingGame}
           setEditingGame={setEditingGame}
-          handleUpdateGame={handleUpdateGame}
+          handleUpdateGame={() => {
+            fetchGameList(); // Refresh game list after update
+            setEditingGame(null);
+          }}
           closeEditPopup={() => setEditingGame(null)}
-          toggleDayStatus={toggleDayStatus}
-          loadingAction={loadingAction}
         />
       )}
     </div>

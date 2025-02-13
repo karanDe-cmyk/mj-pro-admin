@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../utils/axiosInstance"; // Import your Axios instance
-import {  } from "../../utils/config";
+import { } from "../../utils/config";
 
 const RemoveMoney = () => {
   const [users, setUsers] = useState([]);
@@ -75,8 +75,8 @@ const RemoveMoney = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white-100">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md mt-20">
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Deduct Balance In User Wallet</h2>
           <form onSubmit={handleSubmit}>
@@ -130,8 +130,13 @@ const RemoveMoney = () => {
           </form>
         </div>
       </div>
-      <footer className="absolute bottom-2 text-gray-500 text-sm">2025 ©Matka.</footer>
+
+      {/* Footer Positioned at the Bottom */}
+      <footer className="mt-auto py-4 text-center text-gray-500 text-sm w-full">
+        2025 © Matka.
+      </footer>
     </div>
+
   );
 };
 

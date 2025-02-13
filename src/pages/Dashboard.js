@@ -20,6 +20,7 @@ import {
   FundOutlined,
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
+import dayjs from "dayjs";
 
 import moment from "moment";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -52,23 +53,23 @@ const Dashboard = () => {
     totalWinAmount: 0,
     totalProfitAmount: 0,
   });
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(dayjs().format("DD-MM-YYYY"));
   const [selectedGame2, setSelectedGame2] = useState("");
   const [loadingButton, setLoadingButton] = useState(false);
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [loadingButton3, setLoadingButton3] = useState(false);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  
   const navigate = useNavigate();
   // Handler for DatePicker changes.
   // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
-  const handleDateChange2 = (date, dateString) => {
+ 
+  const handleDateChange2 = (date) => {
     if (date) {
-      // Convert dateString from "YYYY-MM-DD" (default) to "DD-MM-YYYY"
-      const parts = dateString.split("-");
-      const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      setSelectedDate(formattedDate);
+      const formattedDate = dayjs(date).format("DD-MM-YYYY"); // ✅ Convert to "YYYY-MM-DD"
+      setSelectedDate(formattedDate); // ✅ Store formatted date
     } else {
-      setSelectedDate("");
+      setSelectedDate(""); // ✅ Reset if no date is selected
     }
   };
 
@@ -671,14 +672,14 @@ const Dashboard = () => {
                 <Title level={3} style={{ marginTop: 10, fontWeight: "bold" }}>
                   Admin
                 </Title>
-                <div style={{padding: '5px'}}>
+                <div style={{ padding: '5px' }}>
 
-                  <Text onClick={() => navigate("/admin/user-management/unapproved")} style={{  marginBottom: '5px', fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+                  <Text onClick={() => navigate("/admin/user-management/unapproved")} style={{ marginBottom: '5px', fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
                     Unapproved Users:{" "}
                     {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
                   </Text>
                   <br />
-                  <Text onClick={() => navigate("/admin/user-management/approved")} style={{ fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+                  <Text onClick={() => navigate("/admin/user-management/unapproved")} style={{ fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
                     Approved Users:{" "}
                     {approvedUsers.approvedUsers ?? "Failed to fetch"}
                   </Text>
@@ -689,13 +690,15 @@ const Dashboard = () => {
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>Market Bid Details</Title>
               <Row gutter={16}>
-                <Col span={24}>
-                  <DatePicker
-                    style={{ width: "100%" }}
-                    placeholder="Select Date"
-                    onChange={handleDateChange2}
-                  />
-                </Col>
+              <Col span={24}>
+      <DatePicker
+        style={{ width: "100%" }}
+        placeholder="Select Date"
+        value={dayjs(selectedDate, "DD-MM-YYYY")} // ✅ Convert back to dayjs for display
+        onChange={handleDateChange2}
+        format="DD-MM-YYYY" // ✅ Ensures date is shown correctly
+      />
+    </Col>
                 <Col span={24} style={{ marginTop: 10 }}>
                   <Select
                     placeholder="Select Game Name"
@@ -935,15 +938,14 @@ const Dashboard = () => {
                 };
 
                 return (
-                  <Col xs={24} sm={6} key={ank}>
+
+
+                  <Col xs={24} sm={12} md={8} lg={6} key={ank}>
                     <Card style={{ textAlign: "center", borderColor: color }}>
                       <Text style={{ fontWeight: "bold", fontSize: "18px" }}>
                         Total Bids {digitData.totalUsers}
                       </Text>
-                      <Title
-                        level={3}
-                        style={{ fontWeight: "bold", fontSize: "32px" }}
-                      >
+                      <Title level={3} style={{ fontWeight: "bold", fontSize: "32px" }}>
                         {digitData.totalAmount}
                       </Title>
                       <Button
@@ -955,10 +957,12 @@ const Dashboard = () => {
                           fontSize: "16px",
                         }}
                       >
-                        Ank {ank}
+                        Ank {digitData.ank}
                       </Button>
                     </Card>
                   </Col>
+
+
                 );
               })}
             </Row>

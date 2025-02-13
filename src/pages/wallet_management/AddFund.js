@@ -74,63 +74,68 @@ const handleSubmit = async (e) => {
   }
 };
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Add Balance In User Wallet</h2>
-          <form onSubmit={handleSubmit}>
-            {/* User List Dropdown */}
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-2">User List</label>
-              <select
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-                value={selectedUser}
-                onChange={handleUserChange}
-              >
-                {users.map((user) => (
-                  <option key={user.userId} value={user.email}>
-                    {user.userName} - {user.email}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Wallet Balance Display */}
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-2">Current Wallet Balance</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-md bg-gray-200"
-                value={`₹ ${walletBalance}`}
-                readOnly
-              />
-            </div>
-
-            {/* Amount Input */}
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-2">Amount</label>
-              <input
-                type="number"
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-                placeholder="Enter Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Submit"}
-            </button>
-          </form>
+    <div className="min-h-fit flex flex-col items-center justify-center bg-white-100 ">
+  <div className="max-w-md bg-white rounded-lg shadow-md w-full mt-20">
+    <div className="p-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Add Balance In User Wallet</h2>
+      <form onSubmit={handleSubmit}>
+        {/* User List Dropdown */}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">User List</label>
+          <select
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+            value={selectedUser}
+            onChange={handleUserChange}
+          >
+            {users.map((user) => (
+              <option key={user.userId} value={user.email}>
+                {user.userName} - {user.email}
+              </option>
+            ))}
+          </select>
         </div>
-      </div>
-      <footer className="absolute bottom-2 text-gray-500 text-sm">2025 ©Matka.</footer>
+
+        {/* Wallet Balance Display */}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">Current Wallet Balance</label>
+          <input
+            type="text"
+            className="w-full px-4 py-2 border rounded-md bg-gray-200"
+            value={`₹ ${walletBalance}`}
+            readOnly
+          />
+        </div>
+
+        {/* Amount Input */}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">Amount</label>
+          <input
+            type="number"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+            placeholder="Enter Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+          disabled={loading}
+        >
+          {loading ? "Processing..." : "Submit"}
+        </button>
+      </form>
     </div>
+  </div>
+
+  {/* Footer Positioned at the Bottom */}
+  <footer className="mt-auto py-4 text-center text-gray-500 text-sm w-full">
+    2025 © Matka.
+  </footer>
+</div>
+
   );
 };
 

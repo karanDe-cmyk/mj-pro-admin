@@ -15,11 +15,25 @@ import {
   Spin,
   Select,
 } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, PlusOutlined,SearchOutlined } from "@ant-design/icons";
 import moment from "moment";
 import axios from "../utils/axiosInstance";
 
 const { Option } = Select;
+
+const gameTypeOptions = [
+  "Select All",
+  "Single Ank",
+  "Single Ank Bulk",
+  "Single Panna",
+  "Single Panna Bulk",
+  "Double Panna",
+  "Double Panna Bulk",
+  "Triple Panna",
+  "Panna Family",
+  "SP Motor",
+  "DP Motor",
+];
 
 const GameManagement = () => {
   const [form] = Form.useForm();
@@ -28,7 +42,15 @@ const GameManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // Search term
+  const [pageSize, setPageSize] = useState(5); // Default page size
+
   const [firstLoad, setFirstLoad] = useState(true); // New state to track initial loading
+  const [selectedGameTypes, setSelectedGameTypes] = useState([]);
+
+  const filteredGames = games.filter((game) =>
+    game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     fetchGames();
@@ -39,7 +61,43 @@ const GameManagement = () => {
       setLoading(true);
       const response = await axios.get(`/api/marketManagement/getMarketGames`);
       if (response.data) {
-        setGames(response.data || []);
+        let gamesData = response.data || [];
+
+        // Get current time in minutes since midnight
+        const currentTime = new Date();
+        const nowInMinutes =
+          currentTime.getHours() * 60 + currentTime.getMinutes();
+
+        // Function to convert time string (e.g., "09:58 AM") to minutes since midnight
+        const timeToMinutes = (timeStr) => {
+          const [time, modifier] = timeStr.split(" ");
+          let [hours, minutes] = time.split(":").map(Number);
+
+          if (modifier === "PM" && hours !== 12) hours += 12;
+          if (modifier === "AM" && hours === 12) hours = 0;
+
+          return hours * 60 + minutes;
+        };
+
+        // Sorting Logic
+        gamesData.sort((a, b) => {
+          const timeA = timeToMinutes(a.openTime);
+          const timeB = timeToMinutes(b.openTime);
+
+          const isUpcomingA = timeA >= nowInMinutes;
+          const isUpcomingB = timeB >= nowInMinutes;
+
+          // 1. Show active markets first
+          if (a.isActive !== b.isActive) return b.isActive - a.isActive;
+
+          // 2. Within each group, show upcoming times first
+          if (isUpcomingA !== isUpcomingB) return isUpcomingB - isUpcomingA;
+
+          // 3. Sort by `openTime` within each section
+          return timeA - timeB;
+        });
+
+        setGames(gamesData);
       } else {
         message.error("Failed to fetch market games.");
       }
@@ -48,7 +106,27 @@ const GameManagement = () => {
       message.error("Failed to fetch games.");
     } finally {
       setLoading(false);
-      setFirstLoad(false); // Stops showing the loader after the first request
+      setFirstLoad(false);
+    }
+  };
+
+
+   // Handle Selection Change
+   const handleGameTypeChange = (selectedValues) => {
+    if (selectedValues.includes("Select All")) {
+      // If "Select All" is clicked, select all game types except "Select All"
+      const allTypes = gameTypeOptions.slice(1); // Exclude "Select All"
+      setSelectedGameTypes(allTypes);
+      form.setFieldsValue({ gameType: allTypes });
+    } else {
+      // Normal selection behavior
+      setSelectedGameTypes(selectedValues);
+      form.setFieldsValue({ gameType: selectedValues });
+
+      // If "Select All" was removed, make sure it's not included
+      if (selectedValues.length === 0) {
+        form.setFieldsValue({ gameType: [] });
+      }
     }
   };
 
@@ -57,6 +135,7 @@ const GameManagement = () => {
       const newGame = {
         marketName: values.marketName,
         gameName: values.gameName,
+        gameType: values.gameType,
         openTime: values.openTime.format("hh:mm A"),
         closeTime: values.closeTime.format("hh:mm A"),
         isActive: values.marketOnOff || false,
@@ -91,14 +170,15 @@ const GameManagement = () => {
 
       const updatedGame = {
         gameName: values.gameName,
+        gameType: values.gameType,
         openTime: values.openTime ? values.openTime.format("hh:mm A") : null, // Save main game open time
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null, // Save main game close time
         weekends: values.weekends
           ? values.weekends.map((day) => ({
-            ...day,
-            openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
-            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-          }))
+              ...day,
+              openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
+              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+            }))
           : [], // Handle empty weekends array
       };
 
@@ -253,50 +333,136 @@ const GameManagement = () => {
             <Row gutter={[16, 16]}>
               {/* Market Name */}
               <Col xs={24} sm={12} md={8}>
-                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                <label
+                  style={{
+                    fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
+                  }}
+                >
                   Market Name
                 </label>
-                <Form.Item name="marketName" rules={[{ required: true, message: "Select Market name" }]}>
-                  <Select placeholder="Select Market Name" style={{ width: "100%" }}>
-                    <Select.Option value="">--Select Market Name--</Select.Option>
-                    <Select.Option value="Main Market">Main Market</Select.Option>
+                <Form.Item
+                  name="marketName"
+                  rules={[{ required: true, message: "Select Market name" }]}
+                >
+                  <Select
+                    placeholder="Select Market Name"
+                    style={{ width: "100%" }}
+                  >
+                    <Select.Option value="">
+                      --Select Market Name--
+                    </Select.Option>
+                    <Select.Option value="Main Market">
+                      Main Market
+                    </Select.Option>
                   </Select>
                 </Form.Item>
               </Col>
 
               {/* Game Name */}
               <Col xs={24} sm={12} md={8}>
-                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                <label
+                  style={{
+                    fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
+                  }}
+                >
                   Game Name
                 </label>
-                <Form.Item name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
-                  <Input placeholder="Enter Game Name" style={{ width: "100%" }} />
+                <Form.Item
+                  name="gameName"
+                  rules={[{ required: true, message: "Enter game name" }]}
+                >
+                  <Input
+                    placeholder="Enter Game Name"
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
               </Col>
 
               {/* Market Open Time */}
               <Col xs={24} sm={12} md={8}>
-                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                <label
+                  style={{
+                    fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
+                  }}
+                >
                   Market Open Time
                 </label>
-                <Form.Item name="openTime" rules={[{ required: true, message: "Select open time" }]}>
-                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                <Form.Item
+                  name="openTime"
+                  rules={[{ required: true, message: "Select open time" }]}
+                >
+                  <TimePicker
+                    format="hh:mm A"
+                    use12Hours
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
               </Col>
 
               {/* Market Close Time */}
               <Col xs={24} sm={12} md={8}>
-                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                <label
+                  style={{
+                    fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
+                  }}
+                >
                   Market Close Time
                 </label>
-                <Form.Item name="closeTime" rules={[{ required: true, message: "Select close time" }]}>
-                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                <Form.Item
+                  name="closeTime"
+                  rules={[{ required: true, message: "Select close time" }]}
+                >
+                  <TimePicker
+                    format="hh:mm A"
+                    use12Hours
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
               </Col>
 
+              <Col xs={24} sm={12} md={8}>
+      <Form.Item 
+        name="gameType" 
+        label="Game Type" 
+        rules={[{ 
+          required: true, 
+          type: "array", 
+          message: "Select at least one game type" 
+        }]}
+      >
+        <Select
+          mode="multiple"
+          placeholder="Select Game Types"
+          style={{ width: "100%" }}
+          value={selectedGameTypes}
+          onChange={handleGameTypeChange}
+        >
+          {gameTypeOptions.map((type) => (
+            <Option key={type} value={type}>
+              {type}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+    </Col>
+
               {/* Market On/Off */}
               <Col xs={24} sm={12} md={8}>
-                <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>
+                <label
+                  style={{
+                    fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
+                  }}
+                >
                   Market On/Off
                 </label>
                 <Form.Item name="marketOnOff" valuePropName="checked">
@@ -307,7 +473,12 @@ const GameManagement = () => {
               {/* Add Game Button */}
               <Col xs={24} style={{ textAlign: "center" }}>
                 <Form.Item>
-                  <Button type="primary" htmlType="submit" icon={<PlusOutlined />} style={{ fontWeight: "600" }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    icon={<PlusOutlined />}
+                    style={{ fontWeight: "600" }}
+                  >
                     Add Game
                   </Button>
                 </Form.Item>
@@ -316,46 +487,86 @@ const GameManagement = () => {
           </Form>
         </Card>
 
-
         {/* TABLE SECTION */}
         <Card
-  style={{
-    borderRadius: "8px",
-   
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Adds a subtle shadow
-    overflowX: "auto", // Ensures horizontal scrolling on small screens
-  }}
->
-  <h3
-    style={{
-      fontSize: "20px",
-      fontWeight: "600",
-      marginBottom: "15px",
-      textAlign: "center", // Centers title on smaller screens
-    }}
-  >
-    Game List
-  </h3>
+      style={{
+        borderRadius: "8px",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Adds a subtle shadow
+        overflowX: "auto", // Ensures horizontal scrolling on small screens
+      }}
+    >
+      <h3
+        style={{
+          fontSize: "20px",
+          fontWeight: "600",
+          marginBottom: "15px",
+          textAlign: "center", // Centers title on smaller screens
+        }}
+      >
+        Game List
+      </h3>
 
-  {firstLoad ? (
-    <div style={{ textAlign: "center", padding: "10px" }}>
-      <Spin size="large" />
-    </div>
-  ) : games.length === 0 ? (
-    <Empty description="No Games Available" style={{ padding: "10px" }} />
-  ) : (
-    <Table
-      columns={columns}
-      dataSource={games}
-      loading={loading}
-      pagination={{ pageSize: 5 }}
-      bordered
-      scroll={{ x: "max-content" }} // Allows table to adjust dynamically
-      style={{ whiteSpace: "nowrap" }} // Prevents text wrapping issues
-    />
-  )}
-</Card>
+      {/* Search & Show Entries */}
+      <Row
+        gutter={[16, 16]}
+        style={{
+          marginBottom: "15px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 15px",
+        }}
+      >
+        {/* Show Entries Dropdown */}
+        <Col xs={12} sm={6}>
+          <label style={{ fontWeight: "500" }}>Show Entries:</label>
+          <Select
+            value={pageSize}
+            onChange={(value) => setPageSize(value)}
+            style={{ width: "100%", marginTop: "5px" }}
+          >
+            <Select.Option value={5}>5</Select.Option>
+            <Select.Option value={10}>10</Select.Option>
+            <Select.Option value={20}>20</Select.Option>
+            <Select.Option value={50}>50</Select.Option>
+          </Select>
+        </Col>
 
+        {/* Search Box */}
+        <Col xs={12} sm={6}>
+          <label style={{ fontWeight: "500" }}>Search:</label>
+          <Input
+            placeholder="Search Games..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ marginTop: "5px" }}
+            prefix={<SearchOutlined />}
+          />
+        </Col>
+      </Row>
+
+      {/* Table Section */}
+      {firstLoad ? (
+        <div style={{ textAlign: "center", padding: "10px" }}>
+          <Spin size="large" />
+        </div>
+      ) : filteredGames.length === 0 ? (
+        <Empty
+          description="No Games Available"
+          style={{ padding: "10px" }}
+        />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={filteredGames}
+          loading={loading}
+          pagination={{ pageSize: pageSize }}
+          bordered
+          scroll={{ x: "max-content" }} // Allows table to adjust dynamically
+          style={{ whiteSpace: "nowrap" }} // Prevents text wrapping issues
+        />
+      )}
+    </Card>
       </Card>
 
       {/* Edit Modal */}

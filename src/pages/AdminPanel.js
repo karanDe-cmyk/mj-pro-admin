@@ -11,7 +11,7 @@ const { Sider, Content } = Layout;
 const AdminPanel = () => {
     const dispatch = useDispatch();
     const [collapsed, setCollapsed] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 650);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 1080);
     const [showSidebar, setShowSidebar] = useState(!isMobile); // ✅ Controls sidebar visibility
 
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ const AdminPanel = () => {
 
     useEffect(() => {
         const handleResize = () => {
-            const isSmallScreen = window.innerWidth <= 600;
+            const isSmallScreen = window.innerWidth <= 1080;
             setIsMobile(isSmallScreen);
             setShowSidebar(!isSmallScreen);
         };

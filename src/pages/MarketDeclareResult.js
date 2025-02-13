@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typography, Col, Row, Card, Divider } from "antd";
+import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typography, Col, Row, Card, Divider,Pagination  } from "antd";
 import instance from "../utils/axiosInstance";
 import moment from "moment";
+import dayjs from "dayjs";
 
 const { Title } = Typography;
 
@@ -13,7 +14,7 @@ const MarketDeclareResult = () => {
   const [allGames, setAllGames] = useState([]);
   const [selectedMarketGame, setSelectedMarketGame] = useState(null);
   const [selectedGameName, setSelectedGameName] = useState(null);
-  const [digitValue, setDigitValue] = useState("");
+  // const [digitValue, setDigitValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingDeclareResult, setLoadingDeclareResult] = useState(false);
   const [isWinnerModalVisible, setIsWinnerModalVisible] = useState(false);
@@ -23,9 +24,50 @@ const MarketDeclareResult = () => {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editingWinner, setEditingWinner] = useState(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState(dayjs()); // Default to today
+ 
+  const [refresh, setRefresh] = useState(false);
+const [ date,setDate] = useState(dayjs());
 
-  const pannaOptions = ["000", ...Array.from({ length: 900 }, (_, i) => (100 + i).toString())];
+const pannaOptions = {
+  0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
+  1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
+  2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
+  3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
+  4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
+  5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
+  6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
+  7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
+  8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
+  9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
+};
 
+
+const [selectedPanna, setSelectedPanna] = useState(null);
+const [digitValue, setDigitValue] = useState(null);
+
+// Flatten all Panna numbers from categories 0-9
+const allPannaNumbers = Object.values(pannaOptions).flat();
+
+// Handle Panna Selection & Calculate Digit Sum
+const handlePannaChange = (value) => {
+  if (!value) return;
+
+  // Calculate sum of digits
+  const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+
+  // Get last digit of the sum
+  const lastDigit = sum % 10;
+
+  // Update state and form values
+  setSelectedPanna(value);
+  setDigitValue(lastDigit);
+  form.setFieldsValue({ digit: lastDigit });
+};
+
+  const { Search } = Input;
   // ---------------------------
   // FETCH MARKET & GAME LIST
   // ---------------------------
@@ -52,6 +94,11 @@ const MarketDeclareResult = () => {
     }
   };
 
+
+  useEffect(() => {
+    fetchMarketGameList();
+  }, []);
+  
   // ---------------------------
   // EDIT MODAL FOR BIDS
   // ---------------------------
@@ -65,94 +112,161 @@ const MarketDeclareResult = () => {
     setIsEditModalVisible(true);
   };
 
-  // ---------------------------
-  // FETCH DECLARED RESULTS (MERGED)
-  // ---------------------------
-  const fetchDeclaredResults = async () => {
 
+
+  // ---------------------------
+  // FETCH Market GAME NAME 
+  // ----------------------- ----
+  const fetchDeclaredResults = async (date) => {
     try {
       setLoading(true);
-      const response = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
-      if (response?.data?.results) {
-        const results = response.data.results;
-        // Group results by gameName and date (formatted as DD-MM-YYYY)
-        const groupedResults = {};
-        results.forEach((item) => {
-          const groupKey = `${item.gameName}_${moment(item.date).format("DD-MM-YYYY")}`;
-          if (!groupedResults[groupKey]) {
-            groupedResults[groupKey] = {
+      const formattedDate = date.format("YYYY-MM-DD"); // API needs YYYY-MM-DD
+
+      // Fetch game names under "Main Market"
+      const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
+      const mainMarketGames = gameResponse.data
+        .filter((game) => game.marketName === "Main Market")
+        .map((game) => game.gameName);
+
+      // Fetch declared results for selected date
+      const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
+      const results = resultResponse?.data?.results || [];
+
+      // Map results by game name & date
+      const resultMap = {};
+      results.forEach((item) => {
+        if (item.marketName === "Main Market" && item.date === formattedDate) {
+          const key = `${item.gameName}_${moment(item.date, "YYYY-MM-DD").format("DD-MM-YYYY")}`;
+          if (!resultMap[key]) {
+            resultMap[key] = {
               gameName: item.gameName,
-              date: item.date,
-              open: null,  // will hold an object: { value, id }
-              close: null, // will hold an object: { value, id }
+              date: moment(item.date, "YYYY-MM-DD").format("DD-MM-YYYY"),
+              open: null,
+              close: null,
             };
           }
           if (item.gameType === "open") {
-            groupedResults[groupKey].open = {
-              value: `${item.panna}-${item.digit}`,
-              id: item._id, // Use the actual declared result id
-            };
-          }
-          if (item.gameType === "close") {
-            groupedResults[groupKey].close = {
+            resultMap[key].open = {
               value: `${item.panna}-${item.digit}`,
               id: item._id,
             };
           }
-        });
-        setGameResults(Object.values(groupedResults));
-      } else {
-        setGameResults([]);
-      }
+          if (item.gameType === "close") {
+            resultMap[key].close = {
+              value: `${item.panna}-${item.digit}`,
+              id: item._id,
+            };
+          }
+        }
+      });
+
+      // Merge market game names with results
+      const mergedResults = mainMarketGames.flatMap((gameName, index) => {
+    const resultKey = Object.keys(resultMap).find((key) => key.startsWith(gameName));
+    const resultData = resultKey ? resultMap[resultKey] : null;
+
+    return {
+        sNo: index + 1, // Ensures continuous numbering
+        gameName,
+        date: resultData ? resultData.date : moment(date).format("DD-MM-YYYY"),
+        open: resultData ? resultData.open : null,
+        close: resultData ? resultData.close : null,
+    };
+});
+
+// Ensure sNo is unique and continuous
+const formattedResults = mergedResults.map((item, index) => ({
+    ...item,
+    sNo: index + 1, // This ensures numbering remains unique across the dataset
+}));
+
+      setGameResults(mergedResults);
+      setFilteredResults(mergedResults);
     } catch (error) {
       console.error("Error fetching declared results:", error);
-      message.error("Failed to fetch declared results. Please try again.");
+      message.error("Failed to fetch declared results.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMarketGameList();
-    fetchDeclaredResults();
-  }, []);
 
-  // ---------------------------
+  useEffect(() => {
+    setWinners([]); // ✅ Reset winners to avoid popup issues
+    fetchDeclaredResults(selectedDate);
+}, [selectedDate, refresh]);
+
+
+  // Handle search  
+  // Handle search
+  // Handle search
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    const filtered = gameResults.filter((item) =>
+      item.gameName.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredResults(filtered);
+  };
+
+  // Handle Date Change
+  const handleDateChange = (date) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+
+  const onChangeDate = (date) => {
+    setDate(date);
+    handleDateChange(date.format("DD-MM-YYYY")); // Send formatted date to parent component
+  };
+
+  // -----
+  // -----
+  // 
+  // -----------------
   // FETCH WINNERS BASED ON FORM
   // ---------------------------
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
     if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
-      message.error("Please select all required fields to show winners.");
-      return;
+        message.error("Please select all required fields to show winners.");
+        return;
     }
     try {
-      setLoading(true);
-      const response = await instance.post(`/api/showwinners/getWinningBids`, {
-        marketName: values.marketGame,
-        gameName: values.gameName,
-        date: values.resultDate
-          ? values.resultDate.format("DD-MM-YYYY")
-          : moment().format("DD-MM-YYYY"),
-        gameType: values.gameType,
-        digit: values.digit,
-        panna: values.panna,
-      });
-      if (response?.data?.winners && Array.isArray(response.data.winners)) {
-        setWinners(response.data.winners);
-      } else {
-        setWinners([]);
-      }
-      setIsWinnerModalVisible(true);
+        setLoading(true);
+        const response = await instance.post(`/api/showwinners/getWinningBids`, {
+            marketName: values.marketGame,
+            gameName: values.gameName,
+            date: values.resultDate
+                ? values.resultDate.format("DD-MM-YYYY")
+                : moment().format("DD-MM-YYYY"),
+            gameType: values.gameType,
+            digit: values.digit,
+            panna: values.panna,
+        });
+
+        if (response?.data?.winners && Array.isArray(response.data.winners) && response.data.winners.length > 0) {
+            setWinners(response.data.winners);
+            setIsWinnerModalVisible(true); // ✅ Open modal only if winners exist
+        } else {
+            setWinners([]); // ✅ Ensure winners array is reset
+            message.warning("No winners found.");
+        }
     } catch (error) {
-      console.error("Error fetching winners:", error);
-      message.error("Failed to fetch winner data.");
-      setWinners([]);
-      setIsWinnerModalVisible(true);
+        console.error("Error fetching winners:", error);
+        message.error("Failed to fetch winner data.");
+        setWinners([]);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
+
+
+  useEffect(() => {
+    fetchWinners();
+}, [refresh]);
 
   // ---------------------------
   // DECLARE WINNER
@@ -160,51 +274,77 @@ const MarketDeclareResult = () => {
   const declareWinner = async () => {
     const values = form.getFieldsValue();
     try {
-      setLoadingDeclareResult(true);
-      const response = await instance.post(
-        `/api/mainmarketdeclareResult/declareResult`,
-        {
-          marketName: values.marketGame,
-          gameName: values.gameName,
-          date: values.resultDate
-            ? values.resultDate.format("DD-MM-YYYY")
-            : moment().format("DD-MM-YYYY"),
-          gameType: values.gameType,
-          digit: values.digit,
-          panna: values.panna,
-          winners: winners.length > 0 ? winners : [],
+        setLoadingDeclareResult(true);
+        const response = await instance.post(
+            `/api/mainmarketdeclareResult/declareResult`,
+            {
+                marketName: values.marketGame,
+                gameName: values.gameName,
+                date: values.resultDate
+                    ? values.resultDate.format("DD-MM-YYYY")
+                    : moment().format("DD-MM-YYYY"),
+                gameType: values.gameType,
+                digit: values.digit,
+                panna: values.panna,
+                winners: winners.length > 0 ? winners : [], // Send winners only if available
+            }
+        );
+
+        if (response.data.success === false) {
+            alert(response.data.message);
+        } else {
+            message.success("Result declared successfully!");
+
+            // ✅ Reset winners before closing the modal
+            setWinners([]);
+
+            // ✅ Ensure modal is forcefully closed
+            setIsWinnerModalVisible(false);
+
+            await fetchDeclaredResults();
+            setRefresh((prev) => !prev);
         }
-      );
-      // console.log(response);
-      if (response.data.success === false) {
-        alert(response.data.message);
-      } else {
-        message.success("Result declared successfully!");
-        setIsWinnerModalVisible(false);
-        fetchDeclaredResults();
-      }
     } catch (error) {
-      message.error(
-        (error.response && error.response.data && error.response.data.message) ||
-        "Failed to declare winner."
-      );
+        message.error(
+            (error.response && error.response.data && error.response.data.message) ||
+            "Failed to declare winner."
+        );
     } finally {
-      setLoadingDeclareResult(false);
+        setLoadingDeclareResult(false);
     }
-  };
+};
+
+
+
+
 
   // ---------------------------
   // DELETE DECLARED RESULT BY ID
   // ---------------------------
   const handleDeleteDeclaredResult = async (declaredId) => {
-    try {
-      await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
-      message.success("Declared result deleted successfully!");
-      fetchDeclaredResults();
-    } catch (error) {
-      message.error("Failed to delete declared result.");
+    if (!declaredId) {
+        message.error("Invalid data. Please refresh and try again.");
+        return;
     }
-  };
+
+    try {
+        await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
+        message.success("Declared result deleted successfully!");
+
+        // ✅ Remove deleted result from UI instantly
+        setGameResults((prevResults) =>
+            prevResults.filter((result) => result.open?.id !== declaredId && result.close?.id !== declaredId)
+        );
+
+        // ✅ Force a UI update to refresh results
+        setRefresh((prev) => !prev);
+
+    } catch (error) {
+        message.error("Failed to delete declared result.");
+    }
+};
+
+
 
   const handleMarketChange = (selectedMarket) => {
     const filteredGames = allGames
@@ -215,30 +355,48 @@ const MarketDeclareResult = () => {
     form.setFieldsValue({ gameName: undefined });
   };
 
-  const handlePannaChange = (value) => {
-    const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
-    setDigitValue(sum % 10);
-    form.setFieldsValue({ digit: sum % 10 });
-  };
+  // const handlePannaChange = (value) => {
+  //   const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+  //   setDigitValue(sum % 10);
+  //   form.setFieldsValue({ digit: sum % 10 });
+  // };
 
   // ---------------------------
   // DELETE BID (For Winner List)
   // ---------------------------
   const handleDelete = async (record) => {
-    try {
-      setIsDeleting(true);
-      await instance.delete(`/api/bid/deleteBid/${record._id}`, {
-        data: { bidId: record.bidId },
-      });
-      message.success("Bid deleted successfully!");
-      setWinners((prev) => prev.filter((winner) => winner._id !== record._id));
-    } catch (error) {
-      console.error("Error deleting bid:", error);
-      message.error("Failed to delete bid.");
-    } finally {
-      setIsDeleting(false);
+    if (!record || !record._id) {
+        message.error("Invalid bid data. Please refresh and try again.");
+        return;
     }
-  };
+
+    try {
+        setIsDeleting(true);
+        await instance.delete(`/api/bid/deleteBid/${record._id}`, {
+            data: { bidId: record.bidId },
+        });
+        message.success("Bid deleted successfully!");
+
+        const updatedWinners = winners.filter((winner) => winner._id !== record._id);
+        setWinners(updatedWinners);
+
+        // ✅ Close modal if no winners left
+        if (updatedWinners.length === 0) {
+            setIsWinnerModalVisible(false);
+        }
+
+        setRefresh((prev) => !prev);
+    } catch (error) {
+        console.error("Error deleting bid:", error);
+        message.error("Failed to delete bid.");
+    } finally {
+        setIsDeleting(false);
+    }
+};
+
+
+
+
 
   // ---------------------------
   // UPDATE BID (For Winner List)
@@ -280,16 +438,12 @@ const MarketDeclareResult = () => {
     { title: "Winning Amount", dataIndex: "winningPoints", key: "winningPoints" },
   ];
 
+
+
   // ---------------------------
   // DECLARED RESULTS TABLE COLUMNS (MERGED)
-  // ---------------------------
   const gameResultColumns = [
-    {
-      title: "S. No",
-      dataIndex: "sNo",
-      key: "sNo",
-      render: (_, __, index) => index + 1,
-    },
+    { title: "#", dataIndex: "sNo", key: "sNo" },
     { title: "Game Name", dataIndex: "gameName", key: "gameName" },
     {
       title: "Open",
@@ -302,7 +456,8 @@ const MarketDeclareResult = () => {
               type="danger"
               size="small"
               onClick={() => handleDeleteDeclaredResult(record.open.id)}
-              style={{ backgroundColor: 'red', borderColor: 'red', color: 'white', marginLeft: '8px' }}
+            
+              style={{ backgroundColor: "red", borderColor: "red", color: "white", marginLeft: "8px" }}
             >
               Delete
             </Button>
@@ -322,11 +477,10 @@ const MarketDeclareResult = () => {
               type="primary"
               size="small"
               onClick={() => handleDeleteDeclaredResult(record.close.id)}
-              style={{ backgroundColor: 'red', borderColor: 'red', color: 'white', marginLeft: '8px' }}
+              style={{ backgroundColor: "red", borderColor: "red", color: "white", marginLeft: "8px" }}
             >
               Delete
             </Button>
-
           </div>
         ) : (
           "━━"
@@ -336,7 +490,7 @@ const MarketDeclareResult = () => {
       title: "Date",
       dataIndex: "date",
       key: "date",
-      render: (date) => moment(date).format("DD-MM-YYYY"),
+      render: (date) => date || moment().format("DD-MM-YYYY"),
     },
   ];
 
@@ -351,11 +505,23 @@ const MarketDeclareResult = () => {
 
           {/* Date Picker Section */}
           <div style={{ marginBottom: "12px" }}>
-            <Title level={5} style={{ marginBottom: "4px" }}>Select Date</Title>
-            <Form.Item name="resultDate" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-              <DatePicker format="DD-MM-YYYY" style={{ width: "150px" }} />
-            </Form.Item>
-          </div>
+  <Title level={5} style={{ marginBottom: "4px" }}>Select Date</Title>
+  <Form.Item 
+    name="resultDate" 
+    rules={[{ required: true }]} 
+    style={{ marginBottom: "8px" }}
+    initialValue={moment()} // ✅ Set default date
+  >
+    <DatePicker 
+      format="DD-MM-YYYY" 
+      style={{ width: "150px" }}
+      allowClear={false} // Prevent clearing the default date
+      defaultPickerValue={dayjs()} // Ensures the calendar opens on the correct month and year
+      placeholder="Select Date" // ✅ Display today's date in the box
+    />
+  </Form.Item>
+</div>
+
 
           <Divider style={{ margin: "10px 0" }} />
 
@@ -401,33 +567,29 @@ const MarketDeclareResult = () => {
 
               {/* Game Type */}
               <Col xs={24} sm={12}>
-                <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                  <Select placeholder="Select Type" style={{ width: "100%" }}>
-                    <Select.Option value="open">Open</Select.Option>
-                    <Select.Option value="close">Close</Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
+        <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+          <Select 
+            onChange={handlePannaChange} 
+            placeholder="Select Panna" 
+            showSearch 
+            filterOption={(input, option) => option.children.includes(input)}
+            style={{ width: "100%" }}
+          >
+            {allPannaNumbers.map((panna) => (
+              <Select.Option key={panna} value={panna}>
+                {panna}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+      </Col>
 
-              {/* Panna */}
-              <Col xs={24} sm={12}>
-                <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                  <Select onChange={handlePannaChange} placeholder="Select Panna" style={{ width: "100%" }}>
-                    {pannaOptions.map((panna) => (
-                      <Select.Option key={panna} value={panna}>
-                        {panna}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              {/* Digit (Read-only) */}
-              <Col xs={24} sm={12}>
-                <Form.Item name="digit" label="Digit" style={{ marginBottom: "8px" }}>
-                  <Input value={digitValue} readOnly />
-                </Form.Item>
-              </Col>
+      {/* Digit Output */}
+      <Col xs={24} sm={12}>
+        <Form.Item name="digit" label="Digit">
+          <Input value={digitValue} readOnly />
+        </Form.Item>
+      </Col>
             </Row>
           </div>
 
@@ -529,18 +691,42 @@ const MarketDeclareResult = () => {
           </Form.Item>
         </Form>
       </Modal>
-      <div style={{maxWidth:"92%"}} className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
-        <h2 className="text-lg font-bold mb-4">Game Result History</h2>
-        <Table  scroll={{ x: 1000 }}
-          columns={gameResultColumns}
-          dataSource={gameResults}
-         
-          pagination={false}
-          rowKey={(record) =>
-            `${record.gameName}_${moment(record.date).format("DD-MM-YYYY")}`
-          }
+      <div style={{ maxWidth: "92%" }} className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
+      <h2 className="text-lg font-bold mb-4">Game Result History</h2>
+
+      {/* Search Box & Date Picker */}
+      <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Ant Design Date Picker */}
+       <DatePicker
+      value={selectedDate}
+      onChange={handleDateChange}
+      format="DD-MM-YYYY"
+      style={{ width: 160 }}
+      allowClear={false} // Prevent clearing the default date
+      defaultPickerValue={dayjs()} // Ensures the calendar opens on the correct month and year
+      placeholder="Select Date"
+    />
+
+        {/* Search Box */}
+        <Search
+          placeholder="Search by Game Name"
+          allowClear
+          onSearch={handleSearch}
+          style={{ width: 300 }}
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
+
+      <Table 
+  columns={gameResultColumns} 
+  dataSource={[...filteredResults]} // ✅ Merged Data
+  pagination={{ pageSize: 5 }} 
+  scroll={{ x: 1000 }} 
+/>
+
+
+    </div>
     </div>
   );
 };
