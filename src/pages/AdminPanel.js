@@ -99,6 +99,19 @@ const AdminPanel = () => {
             ],
         },
         {
+            label: "Game & Number",
+            icon: <i className="fa fa-dice" aria-hidden="true"></i>,
+            children: [
+                { label: "Single Digit", path: "/admin/game-number/single-digit" },
+                { label: "Jodi Digit", path: "/admin/game-number/jodi-digit" },
+                { label: "Single Pana", path: "/admin/game-number/single-pana" },
+                { label: "Double Pana", path: "/admin/game-number/double-pana" },
+                { label: "Triple Pana", path: "/admin/game-number/triple-pana" },
+                { label: "Half Sangam", path: "/admin/game-number/half-sangam" },
+                { label: "Full Sangam", path: "/admin/game-number/full-sangam" },
+            ],
+        },
+        {
             key: "settings",
             label: "Settings",
             icon: <i className="fa fa-cog" />,
