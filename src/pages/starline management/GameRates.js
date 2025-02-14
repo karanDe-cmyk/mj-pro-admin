@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import instance from '../../utils/axiosInstance'; // Import your custom axios instance
-import {  } from "../../utils/config"; // Use your API ID if needed
+import { } from "../../utils/config"; // Use your API ID if needed
 
 const GameRates = () => {
   const [singleDigit, setSingleDigit] = useState('');
   const [singlePana, setSinglePana] = useState('');
   const [doublePana, setDoublePana] = useState('');
   const [triplePana, setTriplePana] = useState('');
-  const [loading, setLoading] = useState(true); // To handle loading state for fetching
-  const [updating, setUpdating] = useState(false); // To handle loading state for updating
+  const [loading, setLoading] = useState(true); // For fetching data
+  const [updating, setUpdating] = useState(false); // For updating data
 
   // Fetch game rates when the component mounts
   useEffect(() => {
@@ -20,10 +20,10 @@ const GameRates = () => {
         setSinglePana(singlePana);
         setDoublePana(doublePana);
         setTriplePana(triplePana);
-        setLoading(false); // Data has been fetched, stop loading
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching game rates:', error);
-        setLoading(false); // Stop loading in case of an error
+        setLoading(false);
       }
     };
 
@@ -39,13 +39,11 @@ const GameRates = () => {
       triplePana,
     };
 
-    setUpdating(true); // Start updating, show loading spinner
-
+    setUpdating(true);
     try {
       const response = await instance.patch(`/api/starline/rates`, updatedRates);
       if (response.data) {
         alert('Game rates updated successfully!');
-        // After successful update, you can re-fetch the data or update the state
         const { singleDigit, singlePana, doublePana, triplePana } = response.data;
         setSingleDigit(singleDigit);
         setSinglePana(singlePana);
@@ -56,11 +54,11 @@ const GameRates = () => {
       console.error('Error updating game rates:', error);
       alert('Failed to update game rates');
     } finally {
-      setUpdating(false); // Stop updating, hide loading spinner
+      setUpdating(false);
     }
   };
 
-  // Display loading state until data is fetched
+  // Display a loading indicator until data is fetched
   if (loading) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
@@ -70,59 +68,91 @@ const GameRates = () => {
     );
   }
 
+  // Helper function to compute and display the formula (1 rupees = value/10)
+  const computeDivision = (value) => {
+    if (value === '' || isNaN(value)) return 'N/A';
+    const result = Number(value) / 10;
+    return `1 rupees = ${result}`;
+  };
+
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {/* Box container */}
+      {/* Container */}
       <div className="bg-white p-6 shadow-md rounded-lg">
         {/* Title */}
         <h2 className="text-2xl font-bold mb-4 text-left">Add Game Rate</h2>
 
-        {/* Form Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Row 1 Inputs */}
-          <div className="w-full">
-            <label className="font-semibold block mb-1">Single Digit</label>
-            <input 
-              type="number" 
-              className="border px-3 py-2 rounded w-full" 
-              value={singleDigit}
-              onChange={(e) => setSingleDigit(e.target.value)}
-            />
+        {/* Each input row */}
+        <div className="space-y-4">
+          {/* Single Digit Row */}
+          <div className="flex items-center space-x-2">
+            <div className="flex flex-col w-40">
+              <label className="font-bold text-gray-900 text-sm mb-1">Single Digit</label>
+              <input 
+                type="number" 
+                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
+                value={singleDigit}
+                onChange={(e) => setSingleDigit(e.target.value)}
+              />
+            </div>
+            <div className="w-28 text-right">
+              <span className="font-bold text-gray-900 text-sm">{computeDivision(singleDigit)}</span>
+            </div>
           </div>
-          <div className="w-full">
-            <label className="font-semibold block mb-1">Single Pana</label>
-            <input 
-              type="number" 
-              className="border px-3 py-2 rounded w-full" 
-              value={singlePana}
-              onChange={(e) => setSinglePana(e.target.value)}
-            />
+
+          {/* Single Pana Row */}
+          <div className="flex items-center space-x-2">
+            <div className="flex flex-col w-40">
+              <label className="font-bold text-gray-900 text-sm mb-1">Single Pana</label>
+              <input 
+                type="number" 
+                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
+                value={singlePana}
+                onChange={(e) => setSinglePana(e.target.value)}
+              />
+            </div>
+            <div className="w-28 text-right">
+              <span className="font-bold text-gray-900 text-sm">{computeDivision(singlePana)}</span>
+            </div>
           </div>
-          {/* Row 2 Inputs */}
-          <div className="w-full">
-            <label className="font-semibold block mb-1">Double Pana</label>
-            <input 
-              type="number" 
-              className="border px-3 py-2 rounded w-full" 
-              value={doublePana}
-              onChange={(e) => setDoublePana(e.target.value)}
-            />
+
+          {/* Double Pana Row */}
+          <div className="flex items-center space-x-2">
+            <div className="flex flex-col w-40">
+              <label className="font-bold text-gray-900 text-sm mb-1">Double Pana</label>
+              <input 
+                type="number" 
+                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
+                value={doublePana}
+                onChange={(e) => setDoublePana(e.target.value)}
+              />
+            </div>
+            <div className="w-28 text-right">
+              <span className="font-bold text-gray-900 text-sm">{computeDivision(doublePana)}</span>
+            </div>
           </div>
-          <div className="w-full">
-            <label className="font-semibold block mb-1">Triple Pana</label>
-            <input 
-              type="number" 
-              className="border px-3 py-2 rounded w-full" 
-              value={triplePana}
-              onChange={(e) => setTriplePana(e.target.value)}
-            />
+
+          {/* Triple Pana Row */}
+          <div className="flex items-center space-x-2">
+            <div className="flex flex-col w-40">
+              <label className="font-bold text-gray-900 text-sm mb-1">Triple Pana</label>
+              <input 
+                type="number" 
+                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
+                value={triplePana}
+                onChange={(e) => setTriplePana(e.target.value)}
+              />
+            </div>
+            <div className="w-28 text-right">
+              <span className="font-bold text-gray-900 text-sm">{computeDivision(triplePana)}</span>
+            </div>
           </div>
         </div>
 
         {/* Update Button */}
         <button
           onClick={handleUpdate}
-          disabled={updating} // Disable the button while updating
+          disabled={updating}
           className="mt-6 bg-blue-500 text-white px-4 py-2 rounded w-full sm:w-auto flex justify-center items-center"
         >
           {updating ? (

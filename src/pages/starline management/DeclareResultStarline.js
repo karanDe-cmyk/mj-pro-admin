@@ -3,6 +3,7 @@ import axiosInstance from "../../utils/axiosInstance"; // Import the axios insta
 import { } from "../../utils/config"; // Use your API ID if needed
 
 const DeclareResult = () => {
+  // States for Declare Result section
   const [date, setDate] = useState("");
   const [selectedGame, setSelectedGame] = useState("");
   const [panna, setPanna] = useState(""); // Panna field
@@ -13,12 +14,20 @@ const DeclareResult = () => {
   const [loading, setLoading] = useState(false); // Loading for fetching winner list
   const [deletingBid, setDeletingBid] = useState(null); // Loading for deleting bid
   const [declaring, setDeclaring] = useState(false); // Loading for declaring result
+
+  // States for Game Result History section
   const [gameResultHistory, setGameResultHistory] = useState([]); // Game result history
   const [loadingGameResult, setLoadingGameResult] = useState(false); // Loading state for fetching game result history
   const [searchGameResult, setSearchGameResult] = useState(""); // Search state
   const [entriesPerPage, setEntriesPerPage] = useState(10); // Entries per page
   const [currentPage, setCurrentPage] = useState(1); // Current page
-  
+
+  // New state: game result date (for filtering game result history)
+  const [gameResultDate, setGameResultDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().substr(0, 10); // Format: YYYY-MM-DD for the datepicker
+  });
+
   // Fetch game list
   useEffect(() => {
     const fetchGameList = async () => {
@@ -41,38 +50,21 @@ const DeclareResult = () => {
     fetchGameList();
   }, []);
 
-  // Fetch game result history
+  // Define fetchGameResultHistory so it can be reused
+  const fetchGameResultHistory = async () => {
+    setLoadingGameResult(true);
+    try {
+      const response = await axiosInstance.get(`/api/starline/game-result-history`);
+      setGameResultHistory(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching game result history:", error);
+    } finally {
+      setLoadingGameResult(false);
+    }
+  };
+
+  // Fetch game result history on component mount
   useEffect(() => {
-    const fetchGameResultHistory = async () => {
-      setLoadingGameResult(true);
-      try {
-        const response = await axiosInstance.get(`/api/starline/game-result-history`);
-        setGameResultHistory(response.data.data || []);
-      } catch (error) {
-        console.error("Error fetching game result history:", error);
-      } finally {
-        setLoadingGameResult(false);
-      }
-    };
-
-    fetchGameResultHistory();
-  }, []);
-
-
-  // Fetch game result history
-  useEffect(() => {
-    const fetchGameResultHistory = async () => {
-      setLoadingGameResult(true);
-      try {
-        const response = await axiosInstance.get(`/api/starline/game-result-history`);
-        setGameResultHistory(response.data.data || []);
-      } catch (error) {
-        console.error("Error fetching game result history:", error);
-      } finally {
-        setLoadingGameResult(false);
-      }
-    };
-
     fetchGameResultHistory();
   }, []);
 
@@ -91,14 +83,16 @@ const DeclareResult = () => {
     setPanna(selectedPanna);
 
     if (selectedPanna.length === 3) {
-      const sum = selectedPanna.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+      const sum = selectedPanna
+        .split("")
+        .reduce((acc, num) => acc + parseInt(num, 10), 0);
       setDigit(sum % 10); // Get last digit
     } else {
       setDigit(""); // Reset digit if panna is invalid
     }
   };
 
-  // Fetch bid history
+  // Fetch bid history (Show Winners button)
   const handleDeclareResult = async () => {
     setLoading(true);
     try {
@@ -112,7 +106,7 @@ const DeclareResult = () => {
     }
   };
 
-  // Declare result
+  // Declare result and then refresh game result history immediately
   const handleSubmitResult = async () => {
     if (!date || !selectedGame || !panna || !digit) {
       alert("Please fill all fields before declaring the result.");
@@ -131,18 +125,17 @@ const DeclareResult = () => {
 
       if (response.data.success) {
         alert("Result declared successfully");
+        // Refresh game result history immediately without refresh
+        fetchGameResultHistory();
       } else {
-        // Check if the message indicates that the result is already declared
         if (response.data.message.includes("already declared")) {
-          alert(response.data.message); // Show the exact error message
+          alert(response.data.message);
         } else {
           alert("Failed to declare result");
         }
       }
     } catch (error) {
       console.error("Error declaring result:", error);
-
-      // Handle API error responses
       if (error.response && error.response.data && error.response.data.message) {
         alert(error.response.data.message);
       } else {
@@ -153,14 +146,12 @@ const DeclareResult = () => {
     }
   };
 
-
   const handleDeleteBid = async (bidId) => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
 
     setDeletingBid(bidId);
     try {
       const response = await axiosInstance.delete(`/api/starlinebid/deletebid/${bidId}`);
-
       if (response.data.status === "success") {
         setBidHistoryData((prevBids) => prevBids.filter((bid) => bid.bidId !== bidId));
         alert("Bid deleted successfully!");
@@ -174,17 +165,24 @@ const DeclareResult = () => {
       setDeletingBid(null);
     }
   };
+
+  // Filter game result history by the selected gameResultDate and search text
+  const formattedGameResultDate = formatDate(gameResultDate); // "DD-MM-YYYY"
   const filteredGameResults = gameResultHistory.filter((result) =>
-    result.market.toLowerCase().includes(searchGameResult.toLowerCase()) ||
-    (result.panna && result.panna.toLowerCase().includes(searchGameResult.toLowerCase())) ||
-    result.digit.toString().includes(searchGameResult) ||
-    result.date.includes(searchGameResult)
+    result.date === formattedGameResultDate &&
+    (
+      result.market.toLowerCase().includes(searchGameResult.toLowerCase()) ||
+      (result.panna && result.panna.toLowerCase().includes(searchGameResult.toLowerCase())) ||
+      result.digit.toString().includes(searchGameResult) ||
+      result.date.includes(searchGameResult)
+    )
   );
 
   const paginatedResults = filteredGameResults.slice(
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage
   );
+
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-4 text-center">Declare Result</h2>
@@ -192,30 +190,52 @@ const DeclareResult = () => {
       <div className="bg-white p-4 shadow-md rounded-lg flex flex-wrap gap-4 items-center justify-between">
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Result Date</label>
-          <input type="date" className="border px-3 py-2 rounded w-full sm:w-auto" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input
+            type="date"
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </div>
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Game Name</label>
-          <select className="border px-3 py-2 rounded w-full sm:w-auto" value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}>
+          <select
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            value={selectedGame}
+            onChange={(e) => setSelectedGame(e.target.value)}
+          >
             <option value="">- Please Select Game -</option>
             {gameOptions.map((game, index) => (
-              <option key={index} value={game}>{game}</option>
+              <option key={index} value={game}>
+                {game}
+              </option>
             ))}
           </select>
         </div>
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Panna</label>
-          <select className="border px-3 py-2 rounded w-full sm:w-auto" value={panna} onChange={handlePannaChange}>
+          <select
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            value={panna}
+            onChange={handlePannaChange}
+          >
             <option value="">- Select Panna -</option>
             <option value="000">000</option>
             {Array.from({ length: 900 }, (_, i) => i + 100).map((num) => (
-              <option key={num} value={num}>{num}</option>
+              <option key={num} value={num}>
+                {num}
+              </option>
             ))}
           </select>
         </div>
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Digit</label>
-          <input type="text" className="border px-3 py-2 rounded w-full sm:w-auto bg-gray-100" value={digit} readOnly />
+          <input
+            type="text"
+            className="border px-3 py-2 rounded w-full sm:w-auto bg-gray-100"
+            value={digit}
+            readOnly
+          />
         </div>
       </div>
 
@@ -251,8 +271,7 @@ const DeclareResult = () => {
           />
         </div>
         <div className="overflow-x-auto">
-
-          <table scroll={{ x: 1000 }} className="min-w-full bg-white border">
+          <table className="min-w-full bg-white border">
             <thead>
               <tr className="bg-gray-200">
                 <th className="py-2 px-4 border">Sr No</th>
@@ -285,8 +304,9 @@ const DeclareResult = () => {
                     <td className="py-2 px-4 border">
                       <button
                         onClick={() => handleDeleteBid(bid.bidId)}
-                        className={`bg-red-500 text-white px-3 py-1 rounded ${deletingBid === bid.bidId ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
+                        className={`bg-red-500 text-white px-3 py-1 rounded ${
+                          deletingBid === bid.bidId ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                         disabled={deletingBid === bid.bidId}
                       >
                         {deletingBid === bid.bidId ? "Deleting..." : "Delete"}
@@ -299,10 +319,25 @@ const DeclareResult = () => {
           </table>
         </div>
       </div>
+      
       {/* Game Result History Section */}
-      <div className="mt-6 overflow-x-auto bg-white p-4 shadow-md rounded-lg">
+      <div className="mt-6">
         <h3 className="text-lg font-semibold mb-3">Game Result History</h3>
-
+        
+        {/* Datepicker for Game Result History */}
+        <div className="mb-4">
+          <label className="font-semibold block mb-2">Select Game Result Date</label>
+          <input
+            type="date"
+            className="border px-3 py-2 rounded"
+            value={gameResultDate}
+            onChange={(e) => {
+              setGameResultDate(e.target.value);
+              setCurrentPage(1); // Reset pagination when date changes
+            }}
+          />
+        </div>
+        
         {/* Search and Entries Filter */}
         <div className="flex justify-between mb-4">
           <div>
@@ -312,7 +347,7 @@ const DeclareResult = () => {
               value={entriesPerPage}
               onChange={(e) => {
                 setEntriesPerPage(Number(e.target.value));
-                setCurrentPage(1); // Reset to first page when changing entries
+                setCurrentPage(1);
               }}
             >
               <option value="10">10</option>
@@ -330,7 +365,7 @@ const DeclareResult = () => {
           />
         </div>
 
-        {/* Table */}
+        {/* Game Result History Table */}
         {loadingGameResult ? (
           <p className="text-center">Loading game results...</p>
         ) : (
@@ -354,7 +389,9 @@ const DeclareResult = () => {
                 ) : (
                   paginatedResults.map((result, index) => (
                     <tr key={index} className="border-b">
-                      <td className="py-2 px-4 border">{(currentPage - 1) * entriesPerPage + index + 1}</td>
+                      <td className="py-2 px-4 border">
+                        {(currentPage - 1) * entriesPerPage + index + 1}
+                      </td>
                       <td className="py-2 px-4 border">{result.market}</td>
                       <td className="py-2 px-4 border">{result.panna || "N/A"}</td>
                       <td className="py-2 px-4 border">{result.digit}</td>
@@ -376,11 +413,18 @@ const DeclareResult = () => {
                 >
                   Previous
                 </button>
-                <span>Page {currentPage} of {Math.ceil(filteredGameResults.length / entriesPerPage)}</span>
+                <span>
+                  Page {currentPage} of{" "}
+                  {Math.ceil(filteredGameResults.length / entriesPerPage)}
+                </span>
                 <button
                   className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
                   disabled={currentPage === Math.ceil(filteredGameResults.length / entriesPerPage)}
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredGameResults.length / entriesPerPage)))}
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(prev + 1, Math.ceil(filteredGameResults.length / entriesPerPage))
+                    )
+                  }
                 >
                   Next
                 </button>
@@ -390,7 +434,6 @@ const DeclareResult = () => {
         )}
       </div>
     </div>
-
   );
 };
 

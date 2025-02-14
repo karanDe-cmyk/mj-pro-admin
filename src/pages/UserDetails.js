@@ -23,6 +23,7 @@ import {
 import { useParams } from "react-router-dom";
 import instance from "../utils/axiosInstance";
 import moment from "moment";
+import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
 const { Search } = Input;
 
@@ -45,6 +46,7 @@ const UserDetails = () => {
   const [winningData, setWinningData] = useState([]);
   const [entries, setEntries] = useState(5);
   const { userId } = useParams();
+
 
   // console.log("userId....", userId);
 
@@ -96,23 +98,57 @@ const UserDetails = () => {
     fetchData();
   }, [userData]); // include userData as a dependency
 
-  const fetchWithdrawTransactions = async (userId) => {
+  // **Fetch Withdraw Transactions (Only Pending & Today’s)**
+  const fetchWithdrawTransactions = async () => {
     try {
-      const response = await instance.get(
-        `/api/withdraw/transactions/${userId}`
-      );
-      return response.data;
+      const response = await instance.get(`/api/withdraw/transactions/${userId}`);
+      if (response.data.status) {
+        const today = moment().format("YYYY-MM-DD");
+
+        // Filter to show only today's pending transactions
+        const filteredData = response.data.transactions.filter(
+          (txn) => txn.status.toLowerCase() === "pending" && moment(txn.date).format("YYYY-MM-DD") === today
+        );
+
+        setWithdrawData(filteredData);
+      } else {
+        message.error("Failed to fetch withdrawal transactions");
+      }
     } catch (error) {
       console.error("Error fetching withdrawal transactions:", error);
-      throw error;
+      message.error("Error fetching withdrawal transactions");
     }
   };
 
+  useEffect(() => {
+    if (userId) {
+      fetchWithdrawTransactions();
+    }
+  }, [userId]);
+  // **Update Withdrawal Status (Accept/Reject)**
+  const updateWithdrawStatus = async (id, status) => {
+    try {
+      await instance.patch(`/api/users/withdrawals/status/${id}`, {
+        status: status,
+        
+      });
+
+      // Remove the transaction from UI immediately
+      setWithdrawData((prevData) => prevData.filter((txn) => txn._id !== id));
+
+      message.success(`Withdrawal request ${status.toLowerCase()} successfully!`);
+    } catch (error) {
+      console.error("Error updating withdrawal status:", error);
+      message.error(`Failed to ${status.toLowerCase()} withdrawal request.`);
+    }
+  };
+
+
   // Load withdrawal transactions once userData is available.
   const loadWithdrawTransactions = async () => {
-    if (!userData || !userData.userId) return;
+    if (!userData || !userId) return;
     try {
-      const data = await fetchWithdrawTransactions(userData.userId);
+      const data = await fetchWithdrawTransactions(userId);
       if (data.status) {
         setWithdrawData(data.transactions);
       } else {
@@ -276,7 +312,7 @@ const UserDetails = () => {
   };
 
   useEffect(() => {
-    if (!userData?.userId) return; // Ensure userId is available
+    if (!userId) return; // Ensure userId is available
     fetchTransactionsAll();
   }, [userData]);
 
@@ -286,8 +322,8 @@ const UserDetails = () => {
 
       // Fetch deposit and withdraw transactions simultaneously
       const [depositRes, withdrawRes] = await Promise.all([
-        instance.get(`/api/deposit/transactions/${userData.userId}`),
-        instance.get(`/api/withdraw/transactions/${userData.userId}`),
+        instance.get(`/api/deposit/transactions/${userId}`),
+        instance.get(`/api/withdraw/transactions/${userId}`),
       ]);
 
       if (depositRes.data.status && withdrawRes.data.status) {
@@ -566,21 +602,16 @@ const UserDetails = () => {
       render: (amount) => {
         const style = {
           display: "inline-block",
-          minWidth: "80px", // Ensures uniform size
+          minWidth: "80px",
           textAlign: "center",
           padding: "6px 10px",
           borderRadius: "4px",
-          backgroundColor: "#ff4d4f", // Red background for withdrawals
+          backgroundColor: "#ff4d4f",
           color: "#fff",
           fontWeight: "bold",
         };
         return <span style={style}>- {amount}</span>;
       },
-    },
-    {
-      title: "Payment Method",
-      key: "paymentMethod",
-      render: () => "", // Intentionally blank
     },
     {
       title: "Date",
@@ -598,30 +629,16 @@ const UserDetails = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let style = {
+        const style = {
           display: "inline-block",
-          minWidth: "80px", // Ensures uniform size
+          minWidth: "80px",
           textAlign: "center",
           padding: "6px 10px",
           borderRadius: "4px",
           color: "#fff",
           textTransform: "capitalize",
+          backgroundColor: "#faad14", // Orange for pending
         };
-
-        // Customize background color based on status value
-        switch (status.toLowerCase()) {
-          case "completed":
-            style.backgroundColor = "#52c41a"; // Green for completed
-            break;
-          case "pending":
-            style.backgroundColor = "#faad14"; // Orange for pending
-            break;
-          case "failed":
-            style.backgroundColor = "#f5222d"; // Red for failed
-            break;
-          default:
-            style.backgroundColor = "#8c8c8c"; // Gray for other statuses
-        }
 
         return <span style={style}>{status}</span>;
       },
@@ -629,8 +646,41 @@ const UserDetails = () => {
     {
       title: "Action",
       key: "action",
-      render: () => <strong>No Action</strong>, // Made bold
-    },
+      render: (_, record) => (
+        <Row gutter={[12, 12]} justify="center">
+          {/* Accept Button */}
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            style={{
+              backgroundColor: "#4CAF50", // Green
+              borderColor: "#4CAF50",
+              color: "#fff",
+              fontWeight: "bold",
+              marginRight: "10px", // Added margin between buttons
+            }}
+            onClick={() => updateWithdrawStatus(record._id, "approved")}
+          >
+            Accept
+          </Button>
+    
+          {/* Reject Button */}
+          <Button
+            type="primary"
+            icon={<CloseCircleOutlined />}
+            style={{
+              backgroundColor: "#FF4D4F", // Red
+              borderColor: "#FF4D4F",
+              color: "#fff",
+              fontWeight: "bold",
+            }}
+            onClick={() => updateWithdrawStatus(record._id, "rejected")}
+          >
+            Reject
+          </Button>
+        </Row>
+      ),
+    }
   ];
 
   const allbidHistoryColumns = [
@@ -1056,12 +1106,12 @@ const UserDetails = () => {
 
           {/* 📝 Table with filtered data */}
           <Table
-            columns={withdrawColumns}
-            dataSource={filteredWithdrawData} // ✅ Uses filtered data
-            rowKey="_id"
-            pagination={{ pageSize: entries }}
-            scroll={{ x: 1000 }}
-          />
+        columns={withdrawColumns}
+        dataSource={withdrawData}
+        rowKey="_id"
+        pagination={{ pageSize: 10 }}
+        scroll={{ x: 1000 }}
+      />
         </Card>
 
         {/* Bid History */}

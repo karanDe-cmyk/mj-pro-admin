@@ -68,6 +68,30 @@ const AdminPanel = () => {
             ],
         },
         {
+            label: "Starline Management",
+            icon: <i className="fa fa-star" aria-hidden="true"></i>,
+            children: [
+                { label: "Game Name", path: "/admin/starline-management/game-name" },
+                { label: "Bid History", path: "/admin/starline-management/bid-history" },
+                { label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
+                { label: "Game Rates", path: "/admin/starline-management/game-rates" },
+            ],
+        },
+        { key: "auto-deposit-history", label: "Auto Deposit History", path: "/admin/auto-deposit-history", icon: <i className="fa fa-history" /> },
+        {
+            key: "wallet-management",
+            label: "Wallet Management",
+            icon: <i className="fa fa-wallet" />,
+            children: [
+                { key: "all-deposit-history", label: "All Deposit History", path: "/admin/wallet-management/all-deposit-history" },
+                { key: "withdraw-request", label: "Withdraw Request", path: "/admin/wallet-management/withdraw-request" },
+                { key: "add-fund", label: "Add Fund (User Wallet)", path: "/admin/wallet-management/add-fund" },
+                { key: "remove-money", label: "Remove Money", path: "/admin/wallet-management/remove-money" },
+                
+
+            ],
+        },
+        {
             key: "game-management",
             label: "Game Management",
             icon: <i className="fa fa-gamepad" />,
@@ -78,26 +102,8 @@ const AdminPanel = () => {
                 { key: "bid-history", label: "Users Bid History", path: "/admin/game-management/bit-history" },
             ],
         },
-        {
-            key: "wallet-management",
-            label: "Wallet Management",
-            icon: <i className="fa fa-wallet" />,
-            children: [
-                { key: "withdraw-request", label: "Withdraw Request", path: "/admin/wallet-management/withdraw-request" },
-                { key: "add-fund", label: "Add Fund (User Wallet)", path: "/admin/wallet-management/add-fund" },
-                { key: "remove-money", label: "Remove Money", path: "/admin/wallet-management/remove-money" },
-            ],
-        },
-        {
-            label: "Starline Management",
-            icon: <i className="fa fa-star" aria-hidden="true"></i>,
-            children: [
-                { label: "Game Name", path: "/admin/starline-management/game-name" },
-                { label: "Bid History", path: "/admin/starline-management/bid-history" },
-                { label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
-                { label: "Game Rates", path: "/admin/starline-management/game-rates" },
-            ],
-        },
+
+
         {
             label: "Game & Number",
             icon: <i className="fa fa-dice" aria-hidden="true"></i>,
@@ -129,10 +135,9 @@ const AdminPanel = () => {
 
             ],
         },
-        { key: "all-bid-history", label: "All Bid History", path: "/admin/all-bid-history", icon: <i className="fa fa-history" /> },
-        { key: "auto-deposit-history", label: "Auto Deposit History", path: "/admin/auto-deposit-history", icon: <i className="fa fa-history" /> },
-        { key: "slider-management", label: "Slider Management", path: "/admin/slider-management", icon: <i className="fa fa-sliders" />},
         { key: "notice-management", label: "Notice Management", path: "/admin/notice-management", icon: <i className="fa fa-bell" /> },
+        { key: "all-bid-history", label: "All Bid History", path: "/admin/all-bid-history", icon: <i className="fa fa-history" /> },
+        { key: "slider-management", label: "Slider Management", path: "/admin/slider-management", icon: <i className="fa fa-sliders" /> },
     ];
 
     const renderMenu = (items) =>

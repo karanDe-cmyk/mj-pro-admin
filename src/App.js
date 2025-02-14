@@ -50,6 +50,7 @@ import WelcomeSettings from "./pages/setting/WelcomeSettings"; // Import the com
 import UserDetails from './pages/UserDetails';
 import QrCode from './pages/setting/QrCode';
 import SliderManagement from './pages/setting/SliderManagement';
+import WalletAllDepositeHistory from './pages/wallet_management/WalletAllDepositeHistory';
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -91,7 +92,7 @@ const App = () => {
               <Route path="full-sangam" element={<FullSangam />} />
             </Route>
             <Route path="wallet-management">
-              <Route path="all-fund-request" element={<AllFundRequest />} />
+            <Route path="all-deposit-history" element={<WalletAllDepositeHistory/>} />
               <Route path="fund-request" element={<FundRequest />} />
               <Route path="offline-payment-records" element={<OfflinePaymentRecords />} />
               <Route path="withdraw-request" element={<WithDrawRequest />} />
