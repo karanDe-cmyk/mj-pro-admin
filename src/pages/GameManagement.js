@@ -15,7 +15,7 @@ import {
   Spin,
   Select,
 } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined,SearchOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import moment from "moment";
 import axios from "../utils/axiosInstance";
 
@@ -129,8 +129,8 @@ const GameManagement = () => {
   };
 
 
-   // Handle Selection Change
-   const handleGameTypeChange = (selectedValues) => {
+  // Handle Selection Change
+  const handleGameTypeChange = (selectedValues) => {
     if (selectedValues.includes("Select All")) {
       // If "Select All" is clicked, select all game types except "Select All"
       const allTypes = gameTypeOptions.slice(1); // Exclude "Select All"
@@ -193,10 +193,10 @@ const GameManagement = () => {
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null, // Save main game close time
         weekends: values.weekends
           ? values.weekends.map((day) => ({
-              ...day,
-              openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
-              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-            }))
+            ...day,
+            openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
+            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+          }))
           : [], // Handle empty weekends array
       };
 
@@ -337,160 +337,189 @@ const GameManagement = () => {
               fontSize: "20px",
               fontWeight: "600",
               marginBottom: "15px",
-              textAlign: "center", // Centers heading on small screens
+              textAlign: "center",
             }}
           >
             Add Game
           </h3>
 
           <Form form={form} layout="vertical" onFinish={handleAddGame}>
-      <Row gutter={[16, 16]}>
+            <Row gutter={[16, 16]} wrap={false} style={{ overflowX: "auto" }}>
+              {/* Market Name */}
+              <Col xs={24} sm={12} md={8} lg={4}>
+                <Form.Item
+                  label="Market Name"
+                  name="marketName"
+                  rules={[{ required: true, message: "Select Market name" }]}
+                >
+                  <Select placeholder="Select Market Name">
+                    <Option value="">--Select Market Name--</Option>
+                    <Option value="Main Market">Main Market</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-        {/* Market Name */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Form.Item label="Market Name" name="marketName" rules={[{ required: true, message: "Select Market name" }]}>
-            <Select placeholder="Select Market Name">
-              <Option value="">--Select Market Name--</Option>
-              <Option value="Main Market">Main Market</Option>
-            </Select>
-          </Form.Item>
-        </Col>
+              {/* Game Name */}
+              <Col xs={24} sm={12} md={8} lg={4}>
+                <Form.Item
+                  label="Game Name"
+                  name="gameName"
+                  rules={[{ required: true, message: "Enter game name" }]}
+                >
+                  <Input placeholder="Enter Game Name" />
+                </Form.Item>
+              </Col>
 
-        {/* Game Name */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Form.Item label="Game Name" name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
-            <Input placeholder="Enter Game Name" />
-          </Form.Item>
-        </Col>
+              {/* Market Open Time */}
+              <Col xs={24} sm={12} md={8} lg={4}>
+                <Form.Item
+                  label="Market Open Time"
+                  name="openTime"
+                  rules={[{ required: true, message: "Select open time" }]}
+                >
+                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
 
-        {/* Market Open Time */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Form.Item label="Market Open Time" name="openTime" rules={[{ required: true, message: "Select open time" }]}>
-            <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
-          </Form.Item>
-        </Col>
+              {/* Market Close Time */}
+              <Col xs={24} sm={12} md={8} lg={4}>
+                <Form.Item
+                  label="Market Close Time"
+                  name="closeTime"
+                  rules={[{ required: true, message: "Select close time" }]}
+                >
+                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                </Form.Item>
+              </Col>
 
-        {/* Market Close Time */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Form.Item label="Market Close Time" name="closeTime" rules={[{ required: true, message: "Select close time" }]}>
-            <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
-          </Form.Item>
-        </Col>
+              {/* Game Type Selection */}
+              <Col xs={24} sm={12} md={8} lg={4}>
+                <Form.Item
+                  label="Game Type"
+                  name="gameType"
+                  rules={[{ required: true, message: "Select at least one game type" }]}
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="Select Game Types"
+                    value={selectedGameTypes}
+                    onChange={handleGameTypeChange}
+                  >
+                    {gameTypeOptions.map((type) => (
+                      <Option key={type} value={type}>
+                        {type}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
 
-        {/* Game Type Selection */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Form.Item label="Game Type" name="gameType" rules={[{ required: true, message: "Select at least one game type" }]}>
-            <Select mode="multiple" placeholder="Select Game Types" value={selectedGameTypes} onChange={handleGameTypeChange}>
-              {gameTypeOptions.map((type) => (
-                <Option key={type} value={type}>
-                  {type}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
+              {/* Market On/Off Switch */}
+              <Col xs={24} sm={12} md={8} lg={4}>
+                <Form.Item label="Market On/Off" name="marketOnOff" valuePropName="checked">
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
 
-        {/* Market On/Off Switch */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Form.Item label="Market On/Off" name="marketOnOff" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      {/* Submit Button at Bottom */}
-      <Row justify="center">
-        <Col>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" icon={<PlusOutlined />} style={{ fontWeight: "600", marginTop: "20px" }}>
-              Add Market
-            </Button>
-          </Form.Item>
-        </Col>
-      </Row>
-    </Form>
+            {/* Submit Button at Bottom Left */}
+            <Row justify="start">
+              <Col>
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    icon={<PlusOutlined />}
+                    style={{ fontWeight: "600", marginTop: "20px" }}
+                  >
+                    Add Market
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
         </Card>
 
         {/* TABLE SECTION */}
         <Card
-      style={{
-        borderRadius: "8px",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Adds a subtle shadow
-        overflowX: "auto", // Ensures horizontal scrolling on small screens
-      }}
-    >
-      <h3
-        style={{
-          fontSize: "20px",
-          fontWeight: "600",
-          marginBottom: "15px",
-          textAlign: "center", // Centers title on smaller screens
-        }}
-      >
-        Game List
-      </h3>
-
-      {/* Search & Show Entries */}
-      <Row
-        gutter={[16, 16]}
-        style={{
-          marginBottom: "15px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 15px",
-        }}
-      >
-        {/* Show Entries Dropdown */}
-        <Col xs={12} sm={6}>
-          <label style={{ fontWeight: "500" }}>Show Entries:</label>
-          <Select
-            value={pageSize}
-            onChange={(value) => setPageSize(value)}
-            style={{ width: "100%", marginTop: "5px" }}
+          style={{
+            borderRadius: "8px",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Adds a subtle shadow
+            overflowX: "auto", // Ensures horizontal scrolling on small screens
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "20px",
+              fontWeight: "600",
+              marginBottom: "15px",
+              textAlign: "center", // Centers title on smaller screens
+            }}
           >
-            <Select.Option value={5}>5</Select.Option>
-            <Select.Option value={10}>10</Select.Option>
-            <Select.Option value={20}>20</Select.Option>
-            <Select.Option value={50}>50</Select.Option>
-          </Select>
-        </Col>
+            Game List
+          </h3>
 
-        {/* Search Box */}
-        <Col xs={12} sm={6}>
-          <label style={{ fontWeight: "500" }}>Search:</label>
-          <Input
-            placeholder="Search Games..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ marginTop: "5px" }}
-            prefix={<SearchOutlined />}
-          />
-        </Col>
-      </Row>
+          {/* Search & Show Entries */}
+          <Row
+            gutter={[16, 16]}
+            style={{
+              marginBottom: "15px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 15px",
+            }}
+          >
+            {/* Show Entries Dropdown */}
+            <Col xs={12} sm={6}>
+              <label style={{ fontWeight: "500" }}>Show Entries:</label>
+              <Select
+                value={pageSize}
+                onChange={(value) => setPageSize(value)}
+                style={{ width: "100%", marginTop: "5px" }}
+              >
+                <Select.Option value={5}>5</Select.Option>
+                <Select.Option value={10}>10</Select.Option>
+                <Select.Option value={20}>20</Select.Option>
+                <Select.Option value={50}>50</Select.Option>
+              </Select>
+            </Col>
 
-      {/* Table Section */}
-      {firstLoad ? (
-        <div style={{ textAlign: "center", padding: "10px" }}>
-          <Spin size="large" />
-        </div>
-      ) : filteredGames.length === 0 ? (
-        <Empty
-          description="No Games Available"
-          style={{ padding: "10px" }}
-        />
-      ) : (
-        <Table
-          columns={columns}
-          dataSource={filteredGames}
-          loading={loading}
-          pagination={{ pageSize: pageSize }}
-          bordered
-          scroll={{ x: "max-content" }} // Allows table to adjust dynamically
-          style={{ whiteSpace: "nowrap" }} // Prevents text wrapping issues
-        />
-      )}
-    </Card>
+            {/* Search Box */}
+            <Col xs={12} sm={6}>
+              <label style={{ fontWeight: "500" }}>Search:</label>
+              <Input
+                placeholder="Search Games..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ marginTop: "5px" }}
+                prefix={<SearchOutlined />}
+              />
+            </Col>
+          </Row>
+
+          {/* Table Section */}
+          {firstLoad ? (
+            <div style={{ textAlign: "center", padding: "10px" }}>
+              <Spin size="large" />
+            </div>
+          ) : filteredGames.length === 0 ? (
+            <Empty
+              description="No Games Available"
+              style={{ padding: "10px" }}
+            />
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={filteredGames}
+              loading={loading}
+              pagination={{ pageSize: pageSize }}
+              bordered
+              scroll={{ x: "max-content" }} // Allows table to adjust dynamically
+              style={{ whiteSpace: "nowrap" }} // Prevents text wrapping issues
+            />
+          )}
+        </Card>
       </Card>
 
       {/* Edit Modal */}
