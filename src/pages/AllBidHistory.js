@@ -11,11 +11,15 @@ const AllBidHistory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [selectedDate, setSelectedDate] = useState("");
+  // Default selectedDate to current date in YYYY-MM-DD format
+  const [selectedDate, setSelectedDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
   const [selectedMarket, setSelectedMarket] = useState("");
   const [gameNameList, setGameNameList] = useState([]);
   const [selectedGameName, setSelectedGameName] = useState("");
 
+  // Fetch game names whenever selectedMarket changes
   useEffect(() => {
     if (selectedMarket) {
       fetchGameNames();
@@ -25,7 +29,6 @@ const AllBidHistory = () => {
   const fetchGameNames = async () => {
     setGameNameList([]);
     setSelectedGameName("");
-
     if (!selectedMarket) return;
     try {
       let response;
@@ -44,6 +47,7 @@ const AllBidHistory = () => {
     }
   };
 
+  // Fetch bid history; this function is also called when the selected date changes.
   const fetchBidHistory = async () => {
     setLoading(true);
     setError("");
@@ -66,14 +70,15 @@ const AllBidHistory = () => {
         queryParams = queryParams.replace(/[?&]$/, "");
 
         response = await axiosInstance.get(queryParams);
-        filteredData = response.data?.filter((item) => {
-          const itemDate = new Date(item.createdAt).toISOString().split("T")[0];
-          return (
-            (!selectedDate || itemDate === selectedDate) &&
-            (!selectedMarket || item.market === selectedMarket) &&
-            (!selectedGameName || item.gamename === selectedGameName)
-          );
-        }) || [];
+        filteredData =
+          response.data?.filter((item) => {
+            const itemDate = new Date(item.createdAt).toISOString().split("T")[0];
+            return (
+              (!selectedDate || itemDate === selectedDate) &&
+              (!selectedMarket || item.market === selectedMarket) &&
+              (!selectedGameName || item.gamename === selectedGameName)
+            );
+          }) || [];
       }
       setBidHistoryData(filteredData);
     } catch (err) {
@@ -82,6 +87,14 @@ const AllBidHistory = () => {
       setLoading(false);
     }
   };
+
+  // Automatically fetch bid history whenever the selected date changes.
+  useEffect(() => {
+    if (selectedDate) {
+      fetchBidHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
 
   const handleDeleteBid = async (bidId, market, bidObject) => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
@@ -119,24 +132,45 @@ const AllBidHistory = () => {
 
       {/* Filters Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 justify-center">
-        <input type="date" className="border px-3 py-2 rounded w-full" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+        <input
+          type="date"
+          className="border px-3 py-2 rounded w-full"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
 
-        <select className="border px-3 py-2 rounded w-full" value={selectedMarket} onChange={(e) => setSelectedMarket(e.target.value)}>
+        <select
+          className="border px-3 py-2 rounded w-full"
+          value={selectedMarket}
+          onChange={(e) => setSelectedMarket(e.target.value)}
+        >
           <option value="">Select Market</option>
           <option value="Main Market">Main Market</option>
           <option value="Starline">Starline</option>
         </select>
 
-        <select className="border px-3 py-2 rounded w-full" value={selectedGameName} onChange={(e) => setSelectedGameName(e.target.value)} disabled={!selectedMarket}>
-          <option value="">Select {selectedMarket === "Main Market" ? "Market" : "Game Name"}</option>
+        <select
+          className="border px-3 py-2 rounded w-full"
+          value={selectedGameName}
+          onChange={(e) => setSelectedGameName(e.target.value)}
+          disabled={!selectedMarket}
+        >
+          <option value="">
+            Select {selectedMarket === "Main Market" ? "Market" : "Game Name"}
+          </option>
           {gameNameList.map((game, index) => (
-            <option key={index} value={game}>{game}</option>
+            <option key={index} value={game}>
+              {game}
+            </option>
           ))}
         </select>
 
         {/* Button Centered */}
         <div className="col-span-1 md:col-span-3 flex justify-center">
-          <button className="bg-blue-600 text-white text-sm px-4 py-2 rounded" onClick={fetchBidHistory}>
+          <button
+            className="bg-blue-600 text-white text-sm px-4 py-2 rounded"
+            onClick={fetchBidHistory}
+          >
             Submit
           </button>
         </div>
@@ -151,13 +185,16 @@ const AllBidHistory = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <select className="border px-3 py-2 rounded" value={entries} onChange={(e) => setEntries(parseInt(e.target.value))}>
+        <select
+          className="border px-3 py-2 rounded"
+          value={entries}
+          onChange={(e) => setEntries(parseInt(e.target.value))}
+        >
           <option value={5}>5 Entries</option>
           <option value={10}>10 Entries</option>
           <option value={20}>20 Entries</option>
         </select>
       </div>
-
 
       {/* Table Section */}
       <div className="overflow-x-auto">
@@ -181,14 +218,18 @@ const AllBidHistory = () => {
                   <td className="border px-4 py-2">{index + 1}</td>
                   <td className="border px-4 py-2">{bid.userName}</td>
                   <td className="border px-4 py-2">{bid.market}</td>
-                  <td className="border px-4 py-2">{bid.gamename || bid.gameName}</td>
+                  <td className="border px-4 py-2">
+                    {bid.gamename || bid.gameName}
+                  </td>
                   <td className="border px-4 py-2">{bid.points}</td>
                   <td className="border px-4 py-2">{bid.digit}</td>
                   <td className="border px-4 py-2">{bid.time}</td>
                   <td className="border px-4 py-2">
                     <button
                       className="bg-red-600 text-white px-3 py-1 rounded"
-                      onClick={() => handleDeleteBid(bid.bidId, bid.market, bid)}
+                      onClick={() =>
+                        handleDeleteBid(bid.bidId, bid.market, bid)
+                      }
                     >
                       Delete
                     </button>

@@ -161,45 +161,47 @@ const AdminPanel = () => {
         <Layout style={{ minHeight: "100vh" }}>
             {/* ✅ Sidebar - Only Show When `showSidebar` is True */}
             {showSidebar && (
-                <Sider
-                    id="sidebar"
-                    collapsible
-                    collapsed={collapsed}
-                    onCollapse={setCollapsed}
-                    theme="dark"
-                    style={{
-                        height: "100vh",
-                        overflowY: "auto",
-                        position: "fixed",
-                        left: 0,
-                        zIndex: 1000, // Keep it above other content
-                        width: collapsed ? 80 : 200,
-                        transition: "width 0.3s",
-                        scrollbarWidth: "none", // Hide scrollbar in Firefox
-                        msOverflowStyle: "none"
-                    }}
-                    className="custom-scrollbar"
-                >
-
-                    <div className="p-4 text-white text-center text-lg font-bold">Admin Panel</div>
-                    <Menu theme="dark" mode="inline">
-                        {renderMenu(menuItems)}
-                    </Menu>
-                </Sider>
+              <Sider
+              id="sidebar"
+              collapsible
+              collapsed={collapsed}
+              onCollapse={setCollapsed}
+              theme="dark"
+              width={270} // ✅ Set the default expanded width
+              collapsedWidth={100} // ✅ Set the collapsed width
+              style={{
+                  height: "100vh",
+                  overflowY: "auto",
+                  position: "fixed",
+                  left: 0,
+                  zIndex: 1000, // Keep it above other content
+                  transition: "width 0.3s",
+                  scrollbarWidth: "none", // Hide scrollbar in Firefox
+                  msOverflowStyle: "none",
+                  backgroundColor: "#001529", // Ensure sidebar has a visible background
+              }}
+              className="custom-scrollbar"
+          >
+              <div className="p-4 text-white text-center text-lg font-bold">
+                  Admin Panel
+              </div>
+              <Menu theme="dark" mode="inline">
+                  {renderMenu(menuItems)}
+              </Menu>
+          </Sider>
             )}
 
-            <Layout
-                style={{
-                    marginLeft: showSidebar && !isMobile ? (collapsed ? "80px" : "200px") : "0px",
-                    transition: "margin-left 0.3s",
-                }}
-            >
-                {/* ✅ Pass toggleSidebar function to Header */}
-                <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} handleLogout={handleLogout} />
-                <Content style={{ padding: "16px", background: "#fff", overflowY: "auto", minHeight: "100vh" }}>
-                    <Outlet />
-                </Content>
-            </Layout>
+<Layout
+    style={{
+        marginLeft: showSidebar ? (collapsed ? "100px" : "270px") : "0px", // ✅ Adjust content margin dynamically
+        transition: "margin-left 0.3s",
+    }}
+>
+    <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} handleLogout={handleLogout} />
+    <Content style={{ padding: "16px", background: "#fff", overflowY: "auto", minHeight: "100vh" }}>
+        <Outlet />
+    </Content>
+</Layout>
         </Layout>
     );
 };

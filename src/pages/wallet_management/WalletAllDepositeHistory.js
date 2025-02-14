@@ -49,7 +49,7 @@ const WalletAllDepositeHistory = () => {
                                 type="primary"
                                 block
                                 onClick={() => handleAccept(record.key)}
-                                style={{ backgroundColor: "blue", color: "white", fontWeight: "bold", marginBottom: '4px' }}
+                                style={{ backgroundColor: "#3452E1", color: "white",  marginBottom: '4px' }}
                             >
                                 Accept
                             </Button>
@@ -57,7 +57,7 @@ const WalletAllDepositeHistory = () => {
                                 block
                                 danger
                                 onClick={() => handleCancel(record.key)}
-                                style={{ fontWeight: "bold" }}
+                               
                             >
                                 Cancel
                             </Button>
@@ -72,7 +72,7 @@ const WalletAllDepositeHistory = () => {
                             style={{
                                 backgroundColor: color,
                                 color: "white",
-                                fontWeight: "bold",
+                               
                                 cursor: "not-allowed",
                             }}
                         >

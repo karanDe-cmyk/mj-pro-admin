@@ -518,97 +518,121 @@ const handlePannaChange = (value) => {
 
           {/* Market & Game Selection */}
           <div>
-            <Title level={5} style={{ marginBottom: "4px" }}>Market & Game Selection</Title>
-            <Row gutter={12}>
-              {/* Market Name */}
-              <Col xs={24} sm={12}>
-                <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                  <Select
+    <Title level={5} style={{ marginBottom: "4px" }}>Market & Game Selection</Title>
+    <Row gutter={12} style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between" }}>
+        {/* Market Name */}
+        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+            <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                <Select
                     onChange={handleMarketChange}
                     placeholder="Select Market"
                     loading={loading}
                     style={{ width: "100%" }}
-                  >
+                >
                     {marketGameList.map((market, index) => (
-                      <Select.Option key={index} value={market}>
-                        {market}
-                      </Select.Option>
+                        <Select.Option key={index} value={market}>
+                            {market}
+                        </Select.Option>
                     ))}
-                  </Select>
-                </Form.Item>
-              </Col>
+                </Select>
+            </Form.Item>
+        </Col>
 
-              {/* Game Name */}
-              <Col xs={24} sm={12}>
-                <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                  <Select
+        {/* Game Name */}
+        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+            <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                <Select
                     onChange={(value) => setSelectedGameName(value)}
                     placeholder="Select Game"
                     disabled={!gameOptions.length}
                     style={{ width: "100%" }}
-                  >
+                >
                     {gameOptions.map((game, index) => (
-                      <Select.Option key={index} value={game}>
-                        {game}
-                      </Select.Option>
+                        <Select.Option key={index} value={game}>
+                            {game}
+                        </Select.Option>
                     ))}
-                  </Select>
-                </Form.Item>
-              </Col>
+                </Select>
+            </Form.Item>
+        </Col>
 
-               {/* Game Type */}
-               <Col xs={24} sm={12}>
-                <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                  <Select placeholder="Select Type" style={{ width: "100%" }}>
+        {/* Game Type */}
+        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+            <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                <Select placeholder="Select Type" style={{ width: "100%" }}>
                     <Select.Option value="open">Open</Select.Option>
                     <Select.Option value="close">Close</Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
+                </Select>
+            </Form.Item>
+        </Col>
 
-              {/* Game Type */}
-              <Col xs={24} sm={12}>
-        <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-          <Select 
-            onChange={handlePannaChange} 
-            placeholder="Select Panna" 
-            showSearch 
-            filterOption={(input, option) => option.children.includes(input)}
-            style={{ width: "100%" }}
-          >
-            {allPannaNumbers.map((panna) => (
-              <Select.Option key={panna} value={panna}>
-                {panna}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </Col>
+        {/* Panna */}
+        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+            <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                <Select
+                    onChange={handlePannaChange}
+                    placeholder="Select Panna"
+                    showSearch
+                    filterOption={(input, option) => option.children.includes(input)}
+                    style={{ width: "100%" }}
+                >
+                    {allPannaNumbers.map((panna) => (
+                        <Select.Option key={panna} value={panna}>
+                            {panna}
+                        </Select.Option>
+                    ))}
+                </Select>
+            </Form.Item>
+        </Col>
 
-      {/* Digit Output */}
-      <Col xs={24} sm={12}>
-        <Form.Item name="digit" label="Digit">
-          <Input value={digitValue} readOnly />
-        </Form.Item>
-      </Col>
-            </Row>
-          </div>
+        {/* Digit Output */}
+        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+            <Form.Item name="digit" label="Digit">
+                <Input value={digitValue} readOnly />
+            </Form.Item>
+        </Col>
+    </Row>
+</div>
+
 
           <Divider style={{ margin: "10px 0" }} />
 
           {/* Buttons Section */}
-          <Row gutter={12} justify="center">
-  <Col style={{ margin: "10px" }}>
-    <Button type="primary" onClick={fetchWinners}>
+          <Row gutter={12} justify="center" style={{ width: "100%" }}>
+  <Col span={12} style={{ padding: "10px" }}>
+    <Button 
+      type="primary" 
+      onClick={fetchWinners}
+      style={{
+        width: "100%",  // Ensures button takes full width of its column
+        backgroundColor: "#EEA529", // Custom background color
+        borderColor: "#EEA529", // Ensures border matches background
+        height: "50px", // Adjust height for better appearance
+        fontSize: "16px", // Improve readability
+      }}
+    >
       Show Winners
     </Button>
   </Col>
-  <Col style={{ margin: "10px" }}>
-    <Button type="primary" loading={loadingDeclareResult} onClick={declareWinner}>
+
+  <Col span={12} style={{ padding: "10px" }}>
+    <Button 
+      type="primary" 
+      loading={loadingDeclareResult} 
+      onClick={declareWinner}
+      style={{
+        width: "100%", 
+        backgroundColor: "#556EE6", 
+        borderColor: "#556EE6",
+        height: "50px",
+        fontSize: "16px",
+      }}
+    >
       Declare Result
     </Button>
   </Col>
 </Row>
+
 
         </Form>
       </Card>

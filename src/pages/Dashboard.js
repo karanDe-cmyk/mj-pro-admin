@@ -623,8 +623,8 @@ const Dashboard = () => {
         const isLoss = result < 0;
 
         // Set background color
-        const bgColor = isProfit ? "blue" : isLoss ? "tomato" : "inherit";
-        const textColor = isLoss ? "white" : "black";
+        const bgColor = isProfit ? "#1778FF" : isLoss ? "tomato" : "#1778FF";
+        const textColor = isLoss ? "white" : "white";
 
         return (
           <div
