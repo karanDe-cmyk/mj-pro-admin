@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Form, Input, Select, Button, Table, message, Spin, Modal, Row, Col } from "antd";
+import { Form, Input, Select, Button, Table, message, Modal, Row, Col } from "antd";
 import axios from "../utils/axiosInstance";
-
+import dayjs from "dayjs"; // For date formatting
 
 const UserBidHistory = () => {
   const [form] = Form.useForm();
@@ -15,63 +15,56 @@ const UserBidHistory = () => {
   const [editingBid, setEditingBid] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState({});
+  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD")); // Default to today's date
   const printRef = useRef();
-  // ✅ Fetch Markets & Games on Component Mount
-  useEffect(() => {
-    fetchMarketAndGames();
-  }, []);
 
-  const fetchMarketAndGames = async () => {
+  // Fetch data for the selected date
+  useEffect(() => {
+    fetchMarketAndGames(selectedDate);
+  }, [selectedDate]);
+
+  const fetchMarketAndGames = async (date, market = "", game = "") => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/bid/getAllBid`);
+      const response = await axios.get(`/api/bid/getAllBid?date=${date}`);
       if (response.data) {
-        // ✅ Extract unique market names and game names from API response
+        // Filter bids for the selected date
+        let filteredData = response.data.filter((item) => item.time.startsWith(date));
+
+        // Filter by Market Name & Game Name if provided
+        if (market) filteredData = filteredData.filter((item) => item.market === market);
+        if (game) filteredData = filteredData.filter((item) => item.gameName === game);
+
+        setBidHistory(filteredData);
+
+        // Extract unique market names and game names from the response
         const uniqueMarkets = [...new Set(response.data.map((item) => item.market))];
         const uniqueGames = [...new Set(response.data.map((item) => item.gameName))];
 
         setMarkets(uniqueMarkets);
         setGames(uniqueGames);
-        setBidHistory(response.data); // ✅ Store all bid data
       }
     } catch (error) {
-      console.error("Error fetching markets and games:", error);
-      message.error("Failed to fetch market & game names.");
+      console.error("Error fetching bid history:", error);
+      message.error("Failed to fetch bid history.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Handle Form Submission (Filter Bids)
-  const onFinish = async (values) => {
-    try {
-      setFilterLoading(true);
-
-      const requestBody = {
-        date: values.date,
-        market: values.marketName,
-        gameName: values.gameName,
-      };
-
-      // ✅ Fetch filtered bid history
-      const response = await axios.post(`/api/bid/filterBids`, requestBody);
-
-      if (response.data.success) {
-        setBidHistory(response.data.bids);
-        message.success("Filtered data fetched successfully!");
-      } else {
-        setBidHistory([]);
-        message.warning("No data found!");
-      }
-    } catch (error) {
-      console.error("Error filtering bids:", error);
-      message.error("Failed to fetch bid history.");
-    } finally {
-      setFilterLoading(false);
+  // Handle form value changes to update selectedDate state
+  const onFormValuesChange = (changedValues) => {
+    if (changedValues.date) {
+      setSelectedDate(changedValues.date);
     }
   };
 
-  // ✅ Open Edit Modal
+  // Handle form submission (filter bids)
+  const onFinish = (values) => {
+    fetchMarketAndGames(selectedDate, values.marketName, values.gameName);
+  };
+
+  // Open Edit Modal
   const handleEdit = (record) => {
     setEditingBid(record);
     editForm.setFieldsValue({
@@ -81,15 +74,15 @@ const UserBidHistory = () => {
     setEditModalOpen(true);
   };
 
-  // ✅ Submit Updated Bid
+  // Submit Updated Bid
   const handleEditSubmit = async () => {
     try {
       setEditLoading(true);
       const values = await editForm.validateFields();
 
       const requestBody = {
-        bidId: editingBid.bidId, // ✅ Unique identifier for the bid
-        id: editingBid._id, // ✅ The document ID from MongoDB
+        bidId: editingBid.bidId, // Unique identifier for the bid
+        id: editingBid._id,       // MongoDB document ID
         newPoints: values.newPoints,
         newbidvalue: values.newbidvalue,
       };
@@ -99,7 +92,7 @@ const UserBidHistory = () => {
       if (response.data.success) {
         message.success("Bid updated successfully!");
         setEditModalOpen(false);
-        fetchMarketAndGames(); // Refresh Data
+        fetchMarketAndGames(selectedDate); // Refresh Data
       }
     } catch (error) {
       console.error("Error updating bid:", error);
@@ -109,18 +102,16 @@ const UserBidHistory = () => {
     }
   };
 
-  // ✅ Handle Bid Deletion
+  // Handle Bid Deletion
   const handleDelete = async (bidId, id) => {
     try {
       setDeleteLoading((prev) => ({ ...prev, [bidId]: true }));
 
-      const requestBody = { bidId, id };
-
-      const response = await axios.delete(`/api/bid/deleteBid/${id}`, { data: requestBody });
+      const response = await axios.delete(`/api/bid/deleteBid/${id}`, { data: { bidId, id } });
 
       if (response.data.success) {
         message.success("Bid deleted successfully!");
-        fetchMarketAndGames();
+        fetchMarketAndGames(selectedDate);
       }
     } catch (error) {
       console.error("Error deleting bid:", error);
@@ -130,17 +121,23 @@ const UserBidHistory = () => {
     }
   };
 
-  // ✅ Table Columns
+  // Table Columns (without an extra date column)
   const columns = [
     { title: "#", dataIndex: "key", key: "key", render: (_, __, index) => index + 1 },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
+    { title: "Market Name", dataIndex: "market", key: "market" },
     { title: "Game Name", dataIndex: "gameName", key: "gameName" },
     { title: "Game Type", dataIndex: "gameType", key: "gameType" },
     { title: "Open", dataIndex: "open", key: "open", render: (value) => (value ? "Yes" : "No") },
     { title: "Close", dataIndex: "close", key: "close", render: (value) => (value ? "Yes" : "No") },
     { title: "Points", dataIndex: "points", key: "points" },
     { title: "Bid Number", dataIndex: "digit", key: "digit" },
-    { title: "Bid Time", dataIndex: "time", key: "time" },
+    {
+      title: "Bid Time",
+      dataIndex: "time",
+      key: "bidTime",
+      render: (time) => dayjs(time).format("HH:mm:ss"),
+    },
     {
       title: "Action",
       key: "action",
@@ -156,87 +153,97 @@ const UserBidHistory = () => {
       ),
     },
   ];
-  const handlePrint = () => {
-    window.print();
-  };
 
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "auto" }}>
-      <div style={{ background: "#fff", padding: "20px", borderRadius: "8px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}>
-        <div className=" flex justify-between">
+      <div
+        style={{
+          background: "#fff",
+          padding: "20px",
+          borderRadius: "8px",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          marginBottom: "20px",
+        }}
+      >
+        <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
+          Bid History Report
+        </h1>
 
-          <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>Bid History Report</h1>
-          <span onClick={handlePrint} style={{ cursor: 'pointer' }}> Print</span>
-
-        </div>
-      
-
-        <Form form={form} onFinish={onFinish} layout="vertical">
+        <Form
+          form={form}
+          onFinish={onFinish}
+          layout="vertical"
+          initialValues={{ date: selectedDate }}
+          onValuesChange={onFormValuesChange}
+        >
           <Row gutter={[16, 16]} align="middle">
-            {/* 📅 Date Picker */}
+            {/* Date Picker with current date showing by default */}
             <Col xs={24} sm={12} md={8} lg={6} xl={6}>
-              <Form.Item
-                name="date"
-                label="Select Date"
-                rules={[{ required: true, message: "Please select a date" }]}
-              >
+              <Form.Item name="date" label="Select Date">
                 <Input type="date" />
               </Form.Item>
             </Col>
 
-            {/* 🏬 Market Name */}
+            {/* Market Name */}
             <Col xs={24} sm={12} md={8} lg={6} xl={6}>
-              <Form.Item
-                name="marketName"
-                label="Market Name"
-                rules={[{ required: true, message: "Please select a market" }]}
-              >
-                <Select placeholder="Select Market" loading={loading}>
+              <Form.Item name="marketName" label="Market Name">
+                <Select placeholder="Select Market" allowClear>
                   {markets.map((market, index) => (
-                    <Select.Option key={index} value={market}>{market}</Select.Option>
+                    <Select.Option key={index} value={market}>
+                      {market}
+                    </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
 
-            {/* 🎮 Game Name */}
+            {/* Game Name */}
             <Col xs={24} sm={12} md={8} lg={6} xl={6}>
-              <Form.Item
-                name="gameName"
-                label="Game Name"
-                rules={[{ required: true, message: "Please select a game" }]}
-              >
-                <Select placeholder="Select Game" loading={loading}>
+              <Form.Item name="gameName" label="Game Name">
+                <Select placeholder="Select Game" allowClear>
                   {games.map((game, index) => (
-                    <Select.Option key={index} value={game}>{game}</Select.Option>
+                    <Select.Option key={index} value={game}>
+                      {game}
+                    </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
 
-            {/* 🔎 Submit Button */}
+            {/* Submit Button */}
             <Col xs={24} sm={12} md={8} lg={6} xl={6} style={{ textAlign: "right" }}>
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={filterLoading}>
+                <Button type="primary" htmlType="submit">
                   Submit
                 </Button>
               </Form.Item>
             </Col>
           </Row>
         </Form>
-
       </div>
 
-      {/* ✅ BID HISTORY TABLE */}
-      <Table columns={columns} dataSource={bidHistory} pagination={{ pageSize: 5 }} loading={filterLoading} scroll={{ x: 1000 }} />
+      {/* Bid History Table */}
+      <Table
+        columns={columns}
+        dataSource={bidHistory}
+        pagination={{ pageSize: 5 }}
+        loading={filterLoading || loading}
+        scroll={{ x: 1000 }}
+      />
 
-      {/* ✅ Edit Modal */}
-      <Modal title="Edit Bid" open={editModalOpen} onCancel={() => setEditModalOpen(false)} onOk={handleEditSubmit} confirmLoading={editLoading}>
+      {/* Edit Modal */}
+      <Modal
+        title="Edit Bid"
+        open={editModalOpen}
+        onCancel={() => setEditModalOpen(false)}
+        onOk={handleEditSubmit}
+        confirmLoading={editLoading}
+      >
         <Form form={editForm} layout="vertical">
-          <Form.Item label="New Points" name="newPoints" rules={[{ required: true }]}>
+          <Form.Item label="New Points" name="newPoints" rules={[{ required: true, message: "Please enter new points" }]}>
             <Input type="number" />
           </Form.Item>
-          <Form.Item label="New Bid Value" name="newbidvalue" rules={[{ required: true }]}>
+          <Form.Item label="New Bid Value" name="newbidvalue" rules={[{ required: true, message: "Please enter new bid value" }]}>
             <Input />
           </Form.Item>
         </Form>
