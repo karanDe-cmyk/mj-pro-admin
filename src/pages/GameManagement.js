@@ -21,7 +21,8 @@ import axios from "../utils/axiosInstance";
 
 const { Option } = Select;
 
-const gameTypeOptions =[
+const gameTypeOptions = [
+  "Select All",
   "Triple Pana",
   "Panel Group",
   "SP DP TP",
@@ -50,8 +51,7 @@ const gameTypeOptions =[
   "DP Motor",
   "Odd Even",
   "Two Digits Panel"
-]
-
+];
 
 const GameManagement = () => {
   const [form] = Form.useForm();
