@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
+import '../styles/styles.css'
+
 import {
+
   Card,
   Typography,
   Avatar,
@@ -59,11 +62,9 @@ const Dashboard = () => {
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [loadingButton3, setLoadingButton3] = useState(false);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
-  
   const navigate = useNavigate();
   // Handler for DatePicker changes.
   // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
- 
   const handleDateChange2 = (date) => {
     if (date) {
       const formattedDate = dayjs(date).format("DD-MM-YYYY"); // ✅ Convert to "YYYY-MM-DD"
@@ -620,9 +621,11 @@ const Dashboard = () => {
       render: (result) => {
         const isProfit = result > 0;
         const isLoss = result < 0;
-        // Set background color based on profit or loss.
-        const bgColor = isProfit ? "cyan" : isLoss ? "tomato" : "inherit";
+
+        // Set background color
+        const bgColor = isProfit ? "blue" : isLoss ? "tomato" : "inherit";
         const textColor = isLoss ? "white" : "black";
+
         return (
           <div
             style={{
@@ -641,11 +644,12 @@ const Dashboard = () => {
           </div>
         );
       },
-    },
+    }
+
   ];
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 5 }}>
       {loading ? (
         <div style={{ textAlign: "center", marginTop: 50 }}>
           <Spin size="small" />
@@ -653,7 +657,7 @@ const Dashboard = () => {
       ) : (
         <Row gutter={[16, 16]}>
           {/* Left Side */}
-          <Col xs={24} md={8}>
+          <Col xs={24} md={6}>
             <Card style={{ borderRadius: 8, padding: 16 }}>
               <Title level={2} style={{ fontWeight: "bold" }}>
                 Welcome Back!
@@ -689,7 +693,7 @@ const Dashboard = () => {
 
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>Market Bid Details</Title>
-              <Row gutter={16}>
+              <Row gutter={16} >
               <Col span={24}>
       <DatePicker
         style={{ width: "100%" }}
@@ -715,9 +719,9 @@ const Dashboard = () => {
                 <Col span={24} style={{ marginTop: 10 }}>
                   <Button
                     type="primary"
-                    block
                     onClick={handleSubmit}
                     loading={loadingButton}
+                    style={{ backgroundColor: "#42db6d", borderColor: "#90ee90", color: "white", fontWeight: "bold" }}
                   >
                     Submit
                   </Button>
@@ -727,46 +731,68 @@ const Dashboard = () => {
 
             {/* Dashboard Cards */}
             <Card style={{ marginTop: 20 }}>
-              <Row gutter={16}>
+              <Row >
                 <Col span={24}>
                   <Card>
-                    <Row justify="space-between" align="middle">
-                      <Statistic
-                        title="Total Bid Amount"
-                        value={dashboardData2.totalBidAmount || 0}
-                        prefix="Rs"
-                      />
-                      <Button type="primary">View</Button>
+                    <Row justify="space-between" align="middle" style={{ display: "flex" }}>
+                      <Col style={{ flex: 1 }}>
+                        <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
+                      </Col>
+                      <Col>
+                        <span style={{ marginRight: "10px", fontWeight: "bold" }}>
+                          Rs {dashboardData2.totalBidAmount || 0}
+                        </span>
+                      </Col>
+                      <Col>
+                        <Button type="primary">View</Button>
+                      </Col>
                     </Row>
                   </Card>
+
                 </Col>
-                <Col span={24} style={{ marginTop: 10 }}>
+                <Col span={24}>
                   <Card>
-                    <Row justify="space-between" align="middle">
-                      <Statistic
-                        title="Total Win Amount"
-                        value={dashboardData2.totalWinAmount || 0}
-                        prefix="Rs"
-                      />
-                      <Button type="primary">View</Button>
+                    <Row justify="space-between" align="middle" style={{ display: "flex" }}>
+                      <Col style={{ flex: 1 }}>
+                        <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
+                      </Col>
+                      <Col>
+                        <span style={{ marginRight: "10px", fontWeight: "bold" }}>
+                          Rs {dashboardData2.totalWinAmount || 0}
+                        </span>
+                      </Col>
+                      <Col>
+                        <Button type="primary">View</Button>
+                      </Col>
                     </Row>
                   </Card>
+
                 </Col>
-                <Col span={24} style={{ marginTop: 10 }}>
-                  <Card style={{ backgroundColor: "#f6ffed" }}>
-                    <Statistic
-                      title="Total Profit Amount"
-                      value={dashboardData2.totalProfitAmount || 0}
-                      prefix="Rs"
-                    />
+                <Col span={24}>
+                  <Card style={{ backgroundColor: '#42db6d', color: '#ffff' }}>
+                    <Row justify="space-between" align="middle" style={{ display: "flex" }}>
+                      <Col style={{ flex: 1 }}>
+                        <span style={{ fontWeight: "bold" }}>Total Profit Amount</span>
+                      </Col>
+                      <Col>
+                        <span style={{ marginRight: "10px", fontWeight: "bold" }}>
+                          Rs {dashboardData2.totalProfitAmount || 0}
+                        </span>
+                      </Col>
+
+                    </Row>
                   </Card>
+
                 </Col>
+
+
+
               </Row>
             </Card>
           </Col>
 
           {/* Right Side */}
-          <Col xs={24} md={16}>
+          <Col xs={24} md={18}>
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12}>
 
@@ -889,7 +915,7 @@ const Dashboard = () => {
                 {new Date().toISOString().split("T")[0]}
               </Title>
               <Row gutter={16} align="middle">
-                <Col span={9}>
+                <Col span={10}>
                   <Select
                     placeholder="Select Game Name"
                     style={{ width: "100%" }}
@@ -902,7 +928,7 @@ const Dashboard = () => {
                     ))}
                   </Select>
                 </Col>
-                <Col span={9}>
+                <Col span={10}>
                   <Select
                     placeholder="Select Session"
                     style={{ width: "100%" }}
@@ -912,10 +938,11 @@ const Dashboard = () => {
                     <Option value="close">Close</Option>
                   </Select>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                   <Button
+                    className="min-w-full"
                     type="primary"
-                    block
+
                     onClick={handleGetClick}
                     loading={loadingButton2}
                   >
@@ -926,70 +953,52 @@ const Dashboard = () => {
             </Card>
 
             {/* Dashboard Row */}
-            <Row gutter={[16, 16]} style={{ marginTop: 20 }}>
+            <div className="card-container">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
-                // Calculate a unique hue for each card
-                const hue = 36 * ank; // 360 / 10 * ank
-                const color = `hsl(${hue}, 70%, 50%)`;
-                // Extract summary data for the digit or use default values
-                const digitData = dashboardData[ank] || {
-                  totalUsers: 0,
-                  totalAmount: 0,
-                };
+                const hue = 36 * ank; // Generate unique color for each card
+                const color = `hsl(${hue}, 60%, 50%)`;
+
+                const digitData = dashboardData[ank] || { totalUsers: 0, totalAmount: 0 };
 
                 return (
+                  <div className="card" key={ank} style={{ borderColor: color }}>
+                    <p className="card-text mt-2">Total Bids {digitData.totalUsers}</p>
 
+                    <h3 className="card-title">{digitData.totalAmount}</h3>
+                    <span className="font-bold mb-2">Total Bid Amount</span>
 
-                  <Col xs={24} sm={12} md={8} lg={6} key={ank}>
-                    <Card style={{ textAlign: "center", borderColor: color }}>
-                      <Text style={{ fontWeight: "bold", fontSize: "18px" }}>
-                        Total Bids {digitData.totalUsers}
-                      </Text>
-                      <Title level={3} style={{ fontWeight: "bold", fontSize: "32px" }}>
-                        {digitData.totalAmount}
-                      </Title>
-                      <Button
-                        block
-                        style={{
-                          backgroundColor: color,
-                          color: "white",
-                          fontWeight: "bold",
-                          fontSize: "16px",
-                        }}
-                      >
-                        Ank {digitData.ank}
-                      </Button>
-                    </Card>
-                  </Col>
-
-
+                    <button className="card-btn" style={{ backgroundColor: color }}>
+                      Ank {ank}
+                    </button>
+                  </div>
                 );
               })}
-            </Row>
+            </div>
 
             {/* Profit / Loss Summary Table */}
+            <Card style={{ marginTop: 20, width: "100%" }}>
+              <Title level={5}>
+                Profit/Loss Report On Date{" "}
+                {new Date().toISOString().split("T")[0]}
+              </Title>
+              {loadingButton3 ? (
+                <Spin />
+              ) : error ? (
+                <p>{error}</p>
+              ) : (
+                <Table
+                  columns={profitLossColumns}
+                  dataSource={profitLossData}
+                  pagination={false}
+                  rowKey="key"
+                  scroll={{ x: 800 }} // Adjust this value if needed for your layout
+                />
+              )}
+            </Card>
           </Col>
         </Row>
       )}
-      <Card style={{ marginTop: 20, width: "100%" }}>
-        <Title level={5}>
-          Profit/Loss Report On Date{" "}
-          {new Date().toISOString().split("T")[0]}
-        </Title>
-        {loadingButton3 ? (
-          <Spin />
-        ) : error ? (
-          <p>{error}</p>
-        ) : (
-          <Table
-            columns={profitLossColumns}
-            dataSource={profitLossData}
-            pagination={false}
-            rowKey="key"
-            scroll={{ x: 800 }} // Adjust this value if needed for your layout
-          />
-        )}
-      </Card>
+
 
       <Card style={{ marginTop: 20, width: "100%" }}>
         <Title level={5}>Fund Request Auto Deposit History</Title>

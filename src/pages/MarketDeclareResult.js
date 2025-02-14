@@ -118,20 +118,22 @@ const handlePannaChange = (value) => {
   // FETCH Market GAME NAME 
   // ----------------------- ----
   const fetchDeclaredResults = async (date) => {
+    if (!date) return; // ✅ Prevent running on empty/null date
+  
     try {
       setLoading(true);
       const formattedDate = date.format("YYYY-MM-DD"); // API needs YYYY-MM-DD
-
+  
       // Fetch game names under "Main Market"
       const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
       const mainMarketGames = gameResponse.data
         .filter((game) => game.marketName === "Main Market")
         .map((game) => game.gameName);
-
+  
       // Fetch declared results for selected date
       const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
       const results = resultResponse?.data?.results || [];
-
+  
       // Map results by game name & date
       const resultMap = {};
       results.forEach((item) => {
@@ -159,29 +161,30 @@ const handlePannaChange = (value) => {
           }
         }
       });
-
+  
       // Merge market game names with results
       const mergedResults = mainMarketGames.flatMap((gameName, index) => {
-    const resultKey = Object.keys(resultMap).find((key) => key.startsWith(gameName));
-    const resultData = resultKey ? resultMap[resultKey] : null;
-
-    return {
-        sNo: index + 1, // Ensures continuous numbering
-        gameName,
-        date: resultData ? resultData.date : moment(date).format("DD-MM-YYYY"),
-        open: resultData ? resultData.open : null,
-        close: resultData ? resultData.close : null,
-    };
-});
-
-// Ensure sNo is unique and continuous
-const formattedResults = mergedResults.map((item, index) => ({
-    ...item,
-    sNo: index + 1, // This ensures numbering remains unique across the dataset
-}));
-
-      setGameResults(mergedResults);
-      setFilteredResults(mergedResults);
+        const resultKey = Object.keys(resultMap).find((key) => key.startsWith(gameName));
+        const resultData = resultKey ? resultMap[resultKey] : null;
+  
+        return {
+          sNo: index + 1, // Ensures continuous numbering
+          gameName,
+          date: resultData ? resultData.date : moment(date).format("DD-MM-YYYY"),
+          open: resultData ? resultData.open : null,
+          close: resultData ? resultData.close : null,
+        };
+      });
+  
+      // ✅ Ensure unique `sNo`
+      const formattedResults = mergedResults.map((item, index) => ({
+        ...item,
+        sNo: index + 1,
+      }));
+  
+      // ✅ Update State Correctly
+      setGameResults(formattedResults);
+      setFilteredResults(formattedResults);
     } catch (error) {
       console.error("Error fetching declared results:", error);
       message.error("Failed to fetch declared results.");
@@ -189,13 +192,15 @@ const formattedResults = mergedResults.map((item, index) => ({
       setLoading(false);
     }
   };
-
-
+  
+  // ✅ Run the function correctly inside `useEffect`
   useEffect(() => {
-    setWinners([]); // ✅ Reset winners to avoid popup issues
-    fetchDeclaredResults(selectedDate);
-}, [selectedDate, refresh]);
-
+    if (selectedDate) {
+      setWinners([]); // ✅ Reset winners before fetching new results
+      fetchDeclaredResults(selectedDate);
+    }
+  }, [selectedDate, refresh]); // ✅ Runs when `selectedDate` or `refresh` changes
+  
 
   // Handle search  
   // Handle search
@@ -230,43 +235,36 @@ const formattedResults = mergedResults.map((item, index) => ({
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
     if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
-        message.error("Please select all required fields to show winners.");
-        return;
+      message.error("Please select all required fields to show winners.");
+      return;
     }
     try {
-        setLoading(true);
-        const response = await instance.post(`/api/showwinners/getWinningBids`, {
-            marketName: values.marketGame,
-            gameName: values.gameName,
-            date: values.resultDate
-                ? values.resultDate.format("DD-MM-YYYY")
-                : moment().format("DD-MM-YYYY"),
-            gameType: values.gameType,
-            digit: values.digit,
-            panna: values.panna,
-        });
-
-        if (response?.data?.winners && Array.isArray(response.data.winners) && response.data.winners.length > 0) {
-            setWinners(response.data.winners);
-            setIsWinnerModalVisible(true); // ✅ Open modal only if winners exist
-        } else {
-            setWinners([]); // ✅ Ensure winners array is reset
-            message.warning("No winners found.");
-        }
-    } catch (error) {
-        console.error("Error fetching winners:", error);
-        message.error("Failed to fetch winner data.");
+      setLoading(true);
+      const response = await instance.post(`/api/showwinners/getWinningBids`, {
+        marketName: values.marketGame,
+        gameName: values.gameName,
+        date: values.resultDate
+          ? values.resultDate.format("DD-MM-YYYY")
+          : moment().format("DD-MM-YYYY"),
+        gameType: values.gameType,
+        digit: values.digit,
+        panna: values.panna,
+      });
+      if (response?.data?.winners && Array.isArray(response.data.winners)) {
+        setWinners(response.data.winners);
+      } else {
         setWinners([]);
+      }
+      setIsWinnerModalVisible(true);
+    } catch (error) {
+      console.error("Error fetching winners:", error);
+      message.error("Failed to fetch winner data.");
+      setWinners([]);
+      setIsWinnerModalVisible(true);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
-
-
-
-  useEffect(() => {
-    fetchWinners();
-}, [refresh]);
+  };
 
   // ---------------------------
   // DECLARE WINNER
@@ -274,47 +272,41 @@ const formattedResults = mergedResults.map((item, index) => ({
   const declareWinner = async () => {
     const values = form.getFieldsValue();
     try {
-        setLoadingDeclareResult(true);
-        const response = await instance.post(
-            `/api/mainmarketdeclareResult/declareResult`,
-            {
-                marketName: values.marketGame,
-                gameName: values.gameName,
-                date: values.resultDate
-                    ? values.resultDate.format("DD-MM-YYYY")
-                    : moment().format("DD-MM-YYYY"),
-                gameType: values.gameType,
-                digit: values.digit,
-                panna: values.panna,
-                winners: winners.length > 0 ? winners : [], // Send winners only if available
-            }
-        );
-
-        if (response.data.success === false) {
-            alert(response.data.message);
-        } else {
-            message.success("Result declared successfully!");
-
-            // ✅ Reset winners before closing the modal
-            setWinners([]);
-
-            // ✅ Ensure modal is forcefully closed
-            setIsWinnerModalVisible(false);
-
-            await fetchDeclaredResults();
-            setRefresh((prev) => !prev);
+      setLoadingDeclareResult(true);
+      
+      const response = await instance.post(
+        `/api/mainmarketdeclareResult/declareResult`,
+        {
+          marketName: values.marketGame,
+          gameName: values.gameName,
+          date: values.resultDate
+            ? values.resultDate.format("DD-MM-YYYY")
+            : moment().format("DD-MM-YYYY"),
+          gameType: values.gameType,
+          digit: values.digit,
+          panna: values.panna,
+          winners: winners.length > 0 ? winners : [],
         }
+      );
+  
+      if (response.data.success === false) {
+        alert(response.data.message);
+      } else {
+        message.success("Result declared successfully!");
+        setIsWinnerModalVisible(false);
+        
+        // ✅ Immediately refresh declared results **without waiting for a date change**
+        fetchDeclaredResults(values.resultDate || moment());
+      }
     } catch (error) {
-        message.error(
-            (error.response && error.response.data && error.response.data.message) ||
-            "Failed to declare winner."
-        );
+      message.error(
+        (error.response?.data?.message) || "Failed to declare winner."
+      );
     } finally {
-        setLoadingDeclareResult(false);
+      setLoadingDeclareResult(false);
     }
-};
-
-
+  };
+  
 
 
 
@@ -443,57 +435,56 @@ const formattedResults = mergedResults.map((item, index) => ({
   // ---------------------------
   // DECLARED RESULTS TABLE COLUMNS (MERGED)
   const gameResultColumns = [
-    { title: "#", dataIndex: "sNo", key: "sNo" },
-    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
+    { title: "#", dataIndex: "sNo", key: "sNo", width: 50 },
+    { title: "Game Name", dataIndex: "gameName", key: "gameName", width: 200 },
+  
+    // Open Pana Column
     {
-      title: "Open",
+      title: "Open Pana",
       key: "open",
-      render: (_, record) =>
-        record.open ? (
-          <div>
-            <span>{record.open.value}</span>{" "}
-            <Button
-              type="danger"
-              size="small"
-              onClick={() => handleDeleteDeclaredResult(record.open.id)}
-            
-              style={{ backgroundColor: "red", borderColor: "red", color: "white", marginLeft: "8px" }}
-            >
-              Delete
-            </Button>
-          </div>
-        ) : (
-          "━━"
-        ),
+      render: (_, record) => (record.open ? <span>{record.open.value}</span> : "━━"),
     },
+  
+    // Action Column for Open Pana
     {
-      title: "Close",
+      title: "Action",
+      key: "openAction",
+      render: (_, record) => (
+        <Button
+          type="link"
+          danger
+          onClick={() => handleDeleteDeclaredResult(record.open?.id || record.key)}
+          style={{ fontWeight: "bold", color: "#1677ff" }} // Blue link style
+        >
+          Delete Result
+        </Button>
+      ),
+    },
+  
+    // Close Pana Column
+    {
+      title: "Close Pana",
       key: "close",
-      render: (_, record) =>
-        record.close ? (
-          <div>
-            <span>{record.close.value}</span>{" "}
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => handleDeleteDeclaredResult(record.close.id)}
-              style={{ backgroundColor: "red", borderColor: "red", color: "white", marginLeft: "8px" }}
-            >
-              Delete
-            </Button>
-          </div>
-        ) : (
-          "━━"
-        ),
+      render: (_, record) => (record.close ? <span>{record.close.value}</span> : "━━"),
     },
+  
+    // Action Column for Close Pana
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date) => date || moment().format("DD-MM-YYYY"),
+      title: "Action",
+      key: "closeAction",
+      render: (_, record) => (
+        <Button
+          type="link"
+          danger
+          onClick={() => handleDeleteDeclaredResult(record.close?.id || record.key)}
+          style={{ fontWeight: "bold", color: "#1677ff" }} // Blue link style
+        >
+          Delete Result
+        </Button>
+      ),
     },
   ];
-
+  
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <Card scroll={{ x: 1000 }}
@@ -561,6 +552,16 @@ const formattedResults = mergedResults.map((item, index) => ({
                         {game}
                       </Select.Option>
                     ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+               {/* Game Type */}
+               <Col xs={24} sm={12}>
+                <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select placeholder="Select Type" style={{ width: "100%" }}>
+                    <Select.Option value="open">Open</Select.Option>
+                    <Select.Option value="close">Close</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -717,13 +718,17 @@ const formattedResults = mergedResults.map((item, index) => ({
           onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
-
-      <Table 
-  columns={gameResultColumns} 
+        
+      <Table
+  columns={gameResultColumns}
   dataSource={[...filteredResults]} // ✅ Merged Data
-  pagination={{ pageSize: 5 }} 
   scroll={{ x: 1000 }} 
+  pagination={false} // ✅ Removes pagination for a cleaner look
+  rowClassName={(record, index) => (index % 2 === 0 ? "light-blue-row" : "white-row")} // ✅ Alternating row colors
+  bordered // ✅ Adds table borders for a cleaner design
+  style={{ border: "1px solid #ddd", borderRadius: "8px", marginTop: "10px" }} // ✅ Better spacing and design
 />
+
 
 
     </div>

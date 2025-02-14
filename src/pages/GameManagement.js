@@ -21,19 +21,37 @@ import axios from "../utils/axiosInstance";
 
 const { Option } = Select;
 
-const gameTypeOptions = [
-  "Select All",
-  "Single Ank",
-  "Single Ank Bulk",
-  "Single Panna",
-  "Single Panna Bulk",
-  "Double Panna",
-  "Double Panna Bulk",
-  "Triple Panna",
-  "Panna Family",
+const gameTypeOptions =[
+  "Triple Pana",
+  "Panel Group",
+  "SP DP TP",
+  "Choice Panna SP DP",
   "SP Motor",
   "DP Motor",
-];
+  "Odd Even",
+  "Two Digits Panel",
+  "Group Jodi",
+  "Digit Based Jodi",
+  "Red Bracket",
+  "Half Sangam A",
+  "Half Sangam B",
+  "Full Sangam",
+  "Single Digits",
+  "Single Digits Bulk",
+  "Jodi",
+  "Jodi Bulk",
+  "Single Pana",
+  "Single Pana Bulk",
+  "Double Pana",
+  "Double Pana Bulk",
+  "Triple Pana",
+  "Panel Group",
+  "SP Motor",
+  "DP Motor",
+  "Odd Even",
+  "Two Digits Panel"
+]
+
 
 const GameManagement = () => {
   const [form] = Form.useForm();
@@ -325,166 +343,72 @@ const GameManagement = () => {
             Add Game
           </h3>
 
-          <Form
-            form={form}
-            layout="vertical" // Changed to vertical for better stacking on mobile
-            onFinish={handleAddGame}
-          >
-            <Row gutter={[16, 16]}>
-              {/* Market Name */}
-              <Col xs={24} sm={12} md={8}>
-                <label
-                  style={{
-                    fontWeight: "500",
-                    marginBottom: "5px",
-                    display: "block",
-                  }}
-                >
-                  Market Name
-                </label>
-                <Form.Item
-                  name="marketName"
-                  rules={[{ required: true, message: "Select Market name" }]}
-                >
-                  <Select
-                    placeholder="Select Market Name"
-                    style={{ width: "100%" }}
-                  >
-                    <Select.Option value="">
-                      --Select Market Name--
-                    </Select.Option>
-                    <Select.Option value="Main Market">
-                      Main Market
-                    </Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
+          <Form form={form} layout="vertical" onFinish={handleAddGame}>
+      <Row gutter={[16, 16]}>
 
-              {/* Game Name */}
-              <Col xs={24} sm={12} md={8}>
-                <label
-                  style={{
-                    fontWeight: "500",
-                    marginBottom: "5px",
-                    display: "block",
-                  }}
-                >
-                  Game Name
-                </label>
-                <Form.Item
-                  name="gameName"
-                  rules={[{ required: true, message: "Enter game name" }]}
-                >
-                  <Input
-                    placeholder="Enter Game Name"
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
+        {/* Market Name */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Form.Item label="Market Name" name="marketName" rules={[{ required: true, message: "Select Market name" }]}>
+            <Select placeholder="Select Market Name">
+              <Option value="">--Select Market Name--</Option>
+              <Option value="Main Market">Main Market</Option>
+            </Select>
+          </Form.Item>
+        </Col>
 
-              {/* Market Open Time */}
-              <Col xs={24} sm={12} md={8}>
-                <label
-                  style={{
-                    fontWeight: "500",
-                    marginBottom: "5px",
-                    display: "block",
-                  }}
-                >
-                  Market Open Time
-                </label>
-                <Form.Item
-                  name="openTime"
-                  rules={[{ required: true, message: "Select open time" }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    use12Hours
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
+        {/* Game Name */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Form.Item label="Game Name" name="gameName" rules={[{ required: true, message: "Enter game name" }]}>
+            <Input placeholder="Enter Game Name" />
+          </Form.Item>
+        </Col>
 
-              {/* Market Close Time */}
-              <Col xs={24} sm={12} md={8}>
-                <label
-                  style={{
-                    fontWeight: "500",
-                    marginBottom: "5px",
-                    display: "block",
-                  }}
-                >
-                  Market Close Time
-                </label>
-                <Form.Item
-                  name="closeTime"
-                  rules={[{ required: true, message: "Select close time" }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    use12Hours
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
+        {/* Market Open Time */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Form.Item label="Market Open Time" name="openTime" rules={[{ required: true, message: "Select open time" }]}>
+            <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+          </Form.Item>
+        </Col>
 
-              <Col xs={24} sm={12} md={8}>
-      <Form.Item 
-        name="gameType" 
-        label="Game Type" 
-        rules={[{ 
-          required: true, 
-          type: "array", 
-          message: "Select at least one game type" 
-        }]}
-      >
-        <Select
-          mode="multiple"
-          placeholder="Select Game Types"
-          style={{ width: "100%" }}
-          value={selectedGameTypes}
-          onChange={handleGameTypeChange}
-        >
-          {gameTypeOptions.map((type) => (
-            <Option key={type} value={type}>
-              {type}
-            </Option>
-          ))}
-        </Select>
-      </Form.Item>
-    </Col>
+        {/* Market Close Time */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Form.Item label="Market Close Time" name="closeTime" rules={[{ required: true, message: "Select close time" }]}>
+            <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+          </Form.Item>
+        </Col>
 
-              {/* Market On/Off */}
-              <Col xs={24} sm={12} md={8}>
-                <label
-                  style={{
-                    fontWeight: "500",
-                    marginBottom: "5px",
-                    display: "block",
-                  }}
-                >
-                  Market On/Off
-                </label>
-                <Form.Item name="marketOnOff" valuePropName="checked">
-                  <Switch />
-                </Form.Item>
-              </Col>
+        {/* Game Type Selection */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Form.Item label="Game Type" name="gameType" rules={[{ required: true, message: "Select at least one game type" }]}>
+            <Select mode="multiple" placeholder="Select Game Types" value={selectedGameTypes} onChange={handleGameTypeChange}>
+              {gameTypeOptions.map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
 
-              {/* Add Game Button */}
-              <Col xs={24} style={{ textAlign: "center" }}>
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    icon={<PlusOutlined />}
-                    style={{ fontWeight: "600" }}
-                  >
-                    Add Game
-                  </Button>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
+        {/* Market On/Off Switch */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Form.Item label="Market On/Off" name="marketOnOff" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      {/* Submit Button at Bottom */}
+      <Row justify="center">
+        <Col>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" icon={<PlusOutlined />} style={{ fontWeight: "600", marginTop: "20px" }}>
+              Add Market
+            </Button>
+          </Form.Item>
+        </Col>
+      </Row>
+    </Form>
         </Card>
 
         {/* TABLE SECTION */}

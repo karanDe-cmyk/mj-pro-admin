@@ -11,3 +11,19 @@
     width: 180px;
     text-align: center;
   }
+
+  .even-row {
+    background-color: #F8F9FA !important; /* Light gray */
+  }
+  
+  .odd-row {
+    background-color: white !important;
+  }
+
+  .light-blue-row {
+    background-color: #F8F9FA !important; /* Light Blue */
+  }
+  
+  .white-row {
+    background-color: white !important;
+  }
