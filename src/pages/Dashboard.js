@@ -623,8 +623,8 @@ const Dashboard = () => {
         const isLoss = result < 0;
 
         // Set background color
-        const bgColor = isProfit ? "#1778FF" : isLoss ? "tomato" : "#1778FF";
-        const textColor = isLoss ? "white" : "white";
+        const bgColor = isProfit ? "#7f56c7" : isLoss ? "#ed583e" : "inherit";
+        const textColor = isLoss ? "white" : "black";
 
         return (
           <div
@@ -736,7 +736,7 @@ const Dashboard = () => {
                   <Card>
                     <Row justify="space-between" align="middle" style={{ display: "flex" }}>
                       <Col style={{ flex: 1 }}>
-                        <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
+                        <span style={{ fontWeight: "bold",}}>Total Bid Amount</span>
                       </Col>
                       <Col>
                         <span style={{ marginRight: "10px", fontWeight: "bold" }}>
@@ -965,7 +965,7 @@ const Dashboard = () => {
                     <p className="card-text mt-2">Total Bids {digitData.totalUsers}</p>
 
                     <h3 className="card-title">{digitData.totalAmount}</h3>
-                    <span className="font-bold mb-2">Total Bid Amount</span>
+                    <span className="font-bold  ">Total Bid Amount</span>
 
                     <button className="card-btn" style={{ backgroundColor: color }}>
                       Ank {ank}
