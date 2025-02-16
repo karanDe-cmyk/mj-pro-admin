@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/matka-backend:v2.5
+          image: saurav547/matka-backend:v2.6
           ports:
             - containerPort: 5001
           resources:
