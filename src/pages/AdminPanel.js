@@ -77,6 +77,8 @@ const AdminPanel = () => {
                 { label: "Game Rates", path: "/admin/starline-management/game-rates" },
             ],
         },
+        { key: "winning-prediction", label: "Winning Prediction", path: "/admin/winning-prediction", icon: <i className="fa fa-circle" /> },
+
         { key: "auto-deposit-history", label: "Auto Deposit History", path: "/admin/auto-deposit-history", icon: <i className="fa fa-history" /> },
         {
             key: "wallet-management",
@@ -167,7 +169,7 @@ const AdminPanel = () => {
               collapsed={collapsed}
               onCollapse={setCollapsed}
               theme="dark"
-              width={270} // ✅ Set the default expanded width
+              width={240} // ✅ Set the default expanded width
               collapsedWidth={100} // ✅ Set the collapsed width
               style={{
                   height: "100vh",
@@ -193,12 +195,12 @@ const AdminPanel = () => {
 
 <Layout
     style={{
-        marginLeft: showSidebar ? (collapsed ? "100px" : "270px") : "0px", // ✅ Adjust content margin dynamically
+        marginLeft: showSidebar ? (collapsed ? "100px" : "240px") : "0px", // ✅ Adjust content margin dynamically
         transition: "margin-left 0.3s",
     }}
 >
     <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} handleLogout={handleLogout} />
-    <Content style={{ padding: "16px", background: "#fff", overflowY: "auto", minHeight: "100vh" }}>
+    <Content style={{ padding: "16px", background: "#f3edf7", overflowY: "auto", minHeight: "100vh" }}>
         <Outlet />
     </Content>
 </Layout>

@@ -318,59 +318,103 @@ const UserDetails = () => {
 
   const fetchTransactionsAll = async () => {
     try {
-      setLoading(true);
+        setLoading(true);
+        // console.log("Fetching transactions...");
 
-      // Fetch deposit and withdraw transactions simultaneously
-      const [depositRes, withdrawRes] = await Promise.all([
-        instance.get(`/api/deposit/transactions/${userId}`),
-        instance.get(`/api/withdraw/transactions/${userId}`),
-      ]);
+        // console.log("User ID:", userId);
+        // console.log("User Data ID:", userData.userId);
 
-      if (depositRes.data.status && withdrawRes.data.status) {
-        formatTransactionData(
-          depositRes.data.transactions,
-          withdrawRes.data.transactions
-        );
-      } else {
-        message.error("Failed to fetch transactions.");
-      }
+        // Fetch deposit and withdraw transactions simultaneously
+        const [depositRes, withdrawRes] = await Promise.allSettled([
+            instance.get(`/api/deposit/transactions/${userData.userId}`),
+            instance.get(`/api/withdraw/transactions/${userId}`)
+        ]);
+
+        // console.log("Deposit API Response:", depositRes);
+        // console.log("Withdraw API Response:", withdrawRes);
+
+        let depositTransactions = [];
+        let withdrawTransactions = [];
+
+        // ✅ Handle deposit API response
+        if (
+            depositRes.status === "fulfilled" &&
+            depositRes.value.status === 200 &&
+            depositRes.value.data.status &&
+            Array.isArray(depositRes.value.data.transactions)
+        ) {
+            // console.log("Deposit Transactions:", depositRes.value.data.transactions);
+            depositTransactions = depositRes.value.data.transactions;
+        } else {
+            console.warn("No deposit transactions found or API failed.");
+        }
+
+        // ✅ Handle withdraw API response
+        if (
+            withdrawRes.status === "fulfilled" &&
+            withdrawRes.value.status === 200 &&
+            withdrawRes.value.data.status &&
+            Array.isArray(withdrawRes.value.data.transactions)
+        ) {
+            // console.log("Withdraw Transactions:", withdrawRes.value.data.transactions);
+            withdrawTransactions = withdrawRes.value.data.transactions;
+        } else {
+            console.warn("No withdrawal transactions found or API failed.");
+        }
+
+        // ✅ Ensure the transactions are displayed even if one API has no data
+        formatTransactionData(depositTransactions, withdrawTransactions);
+
+        if (depositTransactions.length === 0 && withdrawTransactions.length === 0) {
+            message.info("No transactions found for this user.");
+        } else {
+            message.success("Transactions fetched successfully.");
+        }
+
     } catch (error) {
-      console.error("Error fetching transactions:", error);
-      message.error("Error fetching wallet transaction history.");
+        console.error("Error fetching transactions:", error);
+        message.error("Error fetching wallet transaction history.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
+  
   const formatTransactionData = (depositTransactions, withdrawTransactions) => {
-    const formattedDeposits = depositTransactions.map((txn, index) => ({
-      key: `deposit-${index}`,
-      sNo: index + 1,
-      requestNumber: txn.requestNumber,
-      amount: txn.amount,
-      transactionType: "Money Added",
-      date: moment(txn.date).format("YYYY-MM-DD hh:mm:ss A"),
-      type: "deposit",
-    }));
+    // console.log("Formatting deposit transactions...", depositTransactions);
+    // console.log("Formatting withdraw transactions...", withdrawTransactions);
+
+  const formattedDeposits = depositTransactions.map((txn, index) => ({
+    key: `deposit-${index}`,
+    sNo: index + 1,
+    requestNumber: txn.requestNumber || txn.transaction_id || "N/A", // Handle missing requestNumber
+    amount: txn.amount,
+    transactionType: "Money Added",
+    date: moment(txn.date).format("YYYY-MM-DD hh:mm:ss A"),
+    type: "deposit",
+  }));
 
     const formattedWithdrawals = withdrawTransactions.map((txn, index) => ({
       key: `withdraw-${index}`,
       sNo: index + 1 + formattedDeposits.length,
-      requestNumber: txn.requestNumber,
+      requestNumber: txn.transaction_id || "N/A", // Use transaction_id if requestNumber is missing
       amount: txn.amount,
       transactionType: "Withdraw Request",
-      date: moment(txn.date).format("YYYY-MM-DD hh:mm:ss A"),
+      date: moment(txn.time, "YYYY-MM-DD hh:mm:ss A").format(
+        "YYYY-MM-DD hh:mm:ss A"
+      ), // Ensure formatting matches
       type: "withdraw",
     }));
 
-    // Merge both transactions and sort by latest date first
-    const allTransactions = [
-      ...formattedDeposits,
-      ...formattedWithdrawals,
-    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+   // ✅ Merge both transactions and **sort by latest date**
+   const allTransactions = [...formattedDeposits, ...formattedWithdrawals].sort(
+    (a, b) => new Date(b.date) - new Date(a.date)
+  );
 
-    setTransactionHistoryDataAll(allTransactions);
-  };
+  // console.log("Final Transactions Data:", allTransactions);
+
+  setTransactionHistoryDataAll(allTransactions);
+};
 
   const formatData = (responseData) => {
     const allBids = [
@@ -513,11 +557,21 @@ const UserDetails = () => {
       value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
     )
   );
-  const historyFilteredData = transactionHistoryDataAll.filter((item) =>
-    Object.values(item).some((value) =>
-      value && value.toString().toLowerCase().includes(search.toLowerCase())
-    )
-  );
+
+
+ // ✅ Filter transaction data
+ const historyFilteredData = transactionHistoryDataAll.filter((item) =>
+  Object.values(item).some((value) => {
+    if (value !== null && value !== undefined) {
+      return value.toString().toLowerCase().includes(search.toLowerCase());
+    }
+    return false; // Skip null/undefined values
+  })
+);
+
+
+
+
   const winningHistoryColumns = [
     {
       title: "#",
@@ -577,11 +631,15 @@ const UserDetails = () => {
       key: "date",
     },
   ];
-  const filteredDepositTransactions = depositTransactions.filter((item) =>
-    Object.values(item).some((value) =>
-      value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null Check
+  const filteredDepositTransactions = depositTransactions
+  ? depositTransactions.filter((item) =>
+      Object.values(item || {}).some((value) => 
+        value !== null && value !== undefined && 
+        value.toString().toLowerCase().includes((search || "").toLowerCase()) // ✅ Safe search handling
+      )
     )
-  );
+  : []; // ✅ If `depositTransactions` is undefined, return an empty array
+
   const filteredWithdrawData = withdrawData.filter((item) =>
     Object.values(item).some((value) =>
       value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
@@ -728,23 +786,8 @@ const UserDetails = () => {
   ];
 
 
-
-
   const walletHistoryData = [
-    {
-      id: 1,
-      amount: "500",
-      transactionType: "Money Added",
-      date: "2025-02-07 09:55",
-      txRequestNo: "67a63402e983f",
-    },
-    {
-      id: 2,
-      amount: "500",
-      transactionType: "Money Added",
-      date: "2025-02-08 02:03",
-      txRequestNo: "67a716c812b20",
-    },
+  
   ];
   const getFilteredData = () => {
     return activeTab === "winning"
@@ -757,39 +800,37 @@ const UserDetails = () => {
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, filteredWalletHistoryData.length);
 
-
-  // 🗓️ Filter function for today's winning history
-
-
   const transactionHistoryColumnsAll = [
     {
       title: "#",
-      dataIndex: "sNo",
       key: "sNo",
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1, // ✅ Fix pagination issue
     },
     {
       title: "Request No",
       dataIndex: "requestNumber",
       key: "requestNumber",
+      render: (requestNumber) => requestNumber || "N/A", // ✅ Handle missing request numbers
     },
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => {
+        const isDeposit = record.type === "deposit";
         const style = {
           padding: "4px 8px",
           borderRadius: "4px",
-          color: record.type === "deposit" ? "#000" : "#fff",
+          color: isDeposit ? "#000" : "#fff",
           display: "inline-block",
           minWidth: "80px",
           fontWeight: "bold",
           textAlign: "center",
-          backgroundColor: record.type === "deposit" ? "#d9f7be" : "#ff4d4f", // Green for deposit, red for withdraw
+          backgroundColor: isDeposit ? "#d9f7be" : "#ff4d4f", // Green for deposit, red for withdraw
         };
         return (
           <span style={style}>
-            {record.type === "withdraw" ? `- ${amount}` : `+ ${amount}`}
+            {record.type === "withdraw" ? `- ${amount || 0}` : `+ ${amount || 0}`}
           </span>
         );
       },
@@ -799,27 +840,30 @@ const UserDetails = () => {
       dataIndex: "transactionType",
       key: "transactionType",
       render: (text, record) => {
+        const isDeposit = record.type === "deposit";
         const style = {
           padding: "6px 12px",
           borderRadius: "4px",
-          color: record.type === "deposit" ? "#389e0d" : "#ad6800", // Dark green for deposit, dark orange for withdraw
+          color: isDeposit ? "#389e0d" : "#ad6800", // Dark green for deposit, dark orange for withdraw
           fontWeight: "bold",
-          border: `2px solid ${record.type === "deposit" ? "#b7eb8f" : "#ffa940"
-            }`, // Light green for deposit, light orange for withdraw
-          backgroundColor: record.type === "deposit" ? "#f6ffed" : "#fffbe6", // Light green/yellow bg
+          border: `2px solid ${isDeposit ? "#b7eb8f" : "#ffa940"}`, // Light green for deposit, light orange for withdraw
+          backgroundColor: isDeposit ? "#f6ffed" : "#fffbe6", // Light green/yellow bg
           display: "inline-block",
           minWidth: "120px",
           textAlign: "center",
         };
-        return <span style={style}>{text}</span>;
+        return <span style={style}>{text || "Unknown"}</span>;
       },
     },
     {
       title: "Date",
       dataIndex: "date",
       key: "date",
+      render: (date) => date ? new Date(date).toLocaleString() : "N/A", // ✅ Format date properly
     },
   ];
+  
+  
 
   return (
     <div style={{ padding: "20px" }}>
@@ -1155,9 +1199,9 @@ const UserDetails = () => {
           />
         </Card>
 
-        {/* Wallet Transaction History */}
+      
         <div style={{ padding: "20px" }}>
-          {/* Wallet Transaction History with Tabs */}
+    
           <Card style={{ marginBottom: "20px" }}>
             <Tabs defaultActiveKey="all">
               {/* All Winning History */}
@@ -1248,24 +1292,22 @@ const UserDetails = () => {
               onChange={(e) => setSearch(e.target.value)}
               style={{ marginBottom: "10px", width: "30%" }}
             />
-
             {/* 📝 Transaction Table */}
             <Table
-              columns={transactionHistoryColumnsAll}
-              dataSource={historyFilteredData}
-              pagination={{
-                pageSize: entries,
-                current: currentPage,
-                onChange: (page) => setCurrentPage(page),
-              }}
-              loading={loading}
-              rowKey="_id"
-              scroll={{ x: 1000 }}
-            />
+  columns={transactionHistoryColumnsAll}
+  dataSource={historyFilteredData}
+  pagination={{
+    pageSize: entries,
+    current: currentPage,
+    onChange: (page) => setCurrentPage(page),
+  }}
+  loading={loading}
+  rowKey="key"
+  scroll={{ x: 1000 }}
+/>;
 
             {/* 📊 Showing Entries Count */}
             <div style={{ marginTop: "10px", textAlign: "right" }}>
-              {`Showing ${startIndex} to ${endIndex} of ${filteredData.length} entries`}
             </div>
           </Card>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
 import { Table, Input, Button, Switch, Pagination, Spin, Select } from "antd";
-import { SearchOutlined, WhatsAppOutlined } from "@ant-design/icons";
+import { PhoneOutlined, SearchOutlined, WhatsAppOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
@@ -61,6 +61,12 @@ const UnapprovedUsers = () => {
     navigate(`/admin/user-management/user-details/${userId}`);
   };
 
+  const handleUserNumber = (userMobileNumber) => {
+    if (userMobileNumber) {
+      // Use window.location.href to trigger a phone call
+      window.location.href = `tel:+91${userMobileNumber}`;
+    }
+  };
   // ✅ WhatsApp Click
   const handleWhatsAppClick = (userWhatsappNumber) => {
     if (userWhatsappNumber) {
@@ -101,6 +107,25 @@ const UnapprovedUsers = () => {
   const columns = [
     { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
+    {
+      title: "Member Mobile No",
+      dataIndex: "phone",
+      key: "phone",
+      render: (text) => (
+        <span>
+          {text}
+          {text && (
+            <>
+              &nbsp;
+              <PhoneOutlined
+                style={{ color: "green", cursor: "pointer" }}
+                onClick={() => handleUserNumber(text)}
+              />
+            </>
+          )}
+        </span>
+      ),
+    },
     {
       title: "Member Whatsapp No",
       dataIndex: "userWhatsappNumber",

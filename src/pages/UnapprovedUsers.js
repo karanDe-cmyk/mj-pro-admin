@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
 import { Table, Input, Button, Switch, Pagination, Spin, Select } from "antd";
-import { SearchOutlined, WhatsAppOutlined } from "@ant-design/icons";
+import { SearchOutlined, WhatsAppOutlined ,PhoneOutlined  } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
@@ -48,8 +48,7 @@ const UnapprovedUsers = () => {
         users.filter(
           (user) =>
             user.userName.toLowerCase().includes(lowercasedSearch) ||
-            user.phone.includes(lowercasedSearch) ||
-            (user.userWhatsappNumber && user.userWhatsappNumber.includes(lowercasedSearch))
+            user.phone.includes(lowercasedSearch)
         )
       );
     }
@@ -88,6 +87,13 @@ const UnapprovedUsers = () => {
     navigate(`/admin/user-management/user-details/${userId}`);
   };
 
+  //mobile number
+  const handleUserNumber = (userMobileNumber) => {
+    if (userMobileNumber) {
+      // Use window.location.href to trigger a phone call
+      window.location.href = `tel:+91${userMobileNumber}`;
+    }
+  };
   // ✅ Open WhatsApp Chat
   const handleWhatsAppClick = (userWhatsappNumber) => {
     if (userWhatsappNumber) {
@@ -106,9 +112,28 @@ const UnapprovedUsers = () => {
     { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => (currentPage - 1) * pageSize + index + 1 },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
     {
+      title: "Member Mobile No",
+      dataIndex: "phone",
+      key: "phone",
+      render: (text) => (
+        <span>
+          {text}
+          {text && (
+            <>
+              &nbsp;
+              <PhoneOutlined
+                style={{ color: "green", cursor: "pointer" }}
+                onClick={() => handleUserNumber(text)}
+              />
+            </>
+          )}
+        </span>
+      ),
+    },
+    {
       title: "Member Whatsapp No",
-      dataIndex: "userWhatsappNumber",
-      key: "userWhatsappNumber",
+      dataIndex: "phone",
+      key: "phone",
       render: (text) => (
         <span>
           {text}

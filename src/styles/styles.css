@@ -1,8 +1,10 @@
 .card-container {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* Always 5 cards in a row */
-  gap: 16px;
-  padding: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  /* Always 5 cards in a row */
+  gap: 10px;
+  margin-top: 15px;
+  /* padding: 16px; */
   width: 100%;
 
 }
@@ -12,21 +14,23 @@
   text-align: center;
   /* padding: 16px; */
   border: 1px solid;
-  border-radius: 10px;
+  border-radius: 5px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: #ffff;
+
 }
 
 /* Text and Button Styling */
 .card-text {
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: 600;
+  font-size: 15px;
   /* margin-top: 5px; */
   color: #4299db;
 }
 
 .card-title {
-  font-weight: bold;
-  font-size: 32px;
+  /* font-weight: bold; */
+  font-size: 25px;
   /* margin-top: 5px; */
 
 }
@@ -34,12 +38,14 @@
 .card-btn {
   width: 100%;
   color: white;
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
   border: none;
-  padding: 8px;
+  padding: 5px;
   cursor: pointer;
   margin-top: 4px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
 }
 
 /* Responsive Adjustments */
@@ -55,8 +61,137 @@
   }
 }
 
+/* //welcome home panel */
+/* Admin Dashboard Card */
+.welcome-card {
+background-color: #95a8ed;
+/* color: #4299db; */
+padding: 15px;
+}
+
+.admin-dashboard-card {
+  /* border-radius: 8px; */
+  /* padding: 16px; */
+  background-color: #ffff;
+}
+
+/* Title */
+.admin-dashboard-title {
+  color: rgb(40, 46, 231) !important ;
+
+  /* font-weight: bold; */
+}
+
+/* Subtitle */
+.admin-dashboard-subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgb(40, 46, 231);
+}
+
+/* Avatar Section */
+.admin-dashboard-avatar-section {
+  padding: 20px;
+  display: flex;
+  text-align: center;
+  /* margin-top: 20px; */
+  justify-content: space-evenly;
+
+}
+.avtr-admin{
+
+  /* border-radius: 50%; */
+}
+/* Avatar */
+.admin-dashboard-avatar {
+  margin-top: -40px;
+  border: 2px solid #ffff;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+}
+
+/* Admin Name */
+.admin-dashboard-name {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* User Stats */
+.admin-dashboard-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+
+/* User Stats Text */
+.admin-dashboard-stats-text {
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: block;
+  /* Places each item on a new line */
+  margin-bottom: 5px;
+}
+
+/* / total bid amount css */
+/* Card Styling */
+.dashboard-card {
+  /* border-style: dashed; */
+  border-radius: 8px;
+
+  margin-top: 20px;
+}
+
+.dashboard-card-inner {
+  padding: 6px;
+  border: 1px;
+  /* border-radius: 8px; */
+  border-style: dashed;
+  border-color: rgb(74, 71, 71);
+  margin-bottom: 2px;
+}
+
+.dashboard-card-row {
+  display: flex;
+  /* border-radius: 8px;
+  border-color: rgb(74, 71, 71); */
+
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-card-col {
+  /* flex: 1; */
+  font-weight: 600;
+}
+
+.dashboard-card-value {
+  /* border-radius: 8px; */
+
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Profit Card Styling */
+.profit-card {
+  border: 1px;
+  /* border-radius: 8px; */
+  /* border-color: rgb(74, 71, 71); */
+
+  /* padding: 5px; */
+  margin-bottom: 40px;
+  background-color: #349163;
+  color: white;
+
+}
+
+
+
+
 /* Force desktop layout when "Desktop Site" is enabled */
-@media (min-width: 1024px), (orientation: landscape) {
+@media (min-width: 1024px),
+(orientation: landscape) {
   .card-container {
     grid-template-columns: repeat(5, 1fr) !important;
   }

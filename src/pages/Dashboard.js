@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import '../styles/styles.css'
+import "../styles/styles.css";
 
 import {
-
   Card,
   Typography,
   Avatar,
@@ -56,12 +55,17 @@ const Dashboard = () => {
     totalWinAmount: 0,
     totalProfitAmount: 0,
   });
-  const [selectedDate, setSelectedDate] = useState(dayjs().format("DD-MM-YYYY"));
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("DD-MM-YYYY")
+  );
   const [selectedGame2, setSelectedGame2] = useState("");
   const [loadingButton, setLoadingButton] = useState(false);
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [loadingButton3, setLoadingButton3] = useState(false);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [betRates, setBetRates] = useState([]);
+  const [selectedGameType, setSelectedGameType] = useState(""); // ✅ Store selected game type
+  const today = dayjs().format("YYYY-MM-DD");
   const navigate = useNavigate();
   // Handler for DatePicker changes.
   // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
@@ -204,11 +208,11 @@ const Dashboard = () => {
 
   const handleGetClick = async () => {
     // Validate selections
-    if (!selectedGame || !selectedSession) {
-      message.error("Please select both a game name and a session");
+    if (!selectedGame || !selectedSession || !selectedGameType) {
+      message.error("Please select a game name, session, and game type");
       return;
     }
-
+  
     // Determine the open/close flags based on selection
     let openFlag = false;
     let closeFlag = false;
@@ -219,16 +223,18 @@ const Dashboard = () => {
       openFlag = false;
       closeFlag = true;
     }
-
+  
     const body = {
       gameName: selectedGame,
       open: openFlag,
       close: closeFlag,
+      gameType: selectedGameType, // ✅ Now sending the selected game type
     };
-
+  
     try {
       setLoadingButton2(true);
       const response = await instance.post(`/api/bid/todayDigitSummary`, body);
+  
       // Assuming response.data.data contains the summary for digits 0–9
       if (response.data && response.data.data) {
         setDashboardData(response.data.data);
@@ -242,6 +248,7 @@ const Dashboard = () => {
       setLoadingButton2(false);
     }
   };
+  
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -271,6 +278,32 @@ const Dashboard = () => {
     };
 
     fetchGames();
+  }, []);
+
+  useEffect(() => {
+    const fetchBetRates = async () => {
+      try {
+        setLoading(true);
+        const response = await instance.get("api/rates/getBetRates");
+
+        if (response.data && typeof response.data === "object") {
+          // Remove unwanted keys
+          const { _id, createdAt, updatedAt, __v, ...filteredData } =
+            response.data;
+
+          // Save the keys (game types) in state
+          setBetRates(Object.keys(filteredData));
+        } else {
+          console.error("Invalid response format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching bet rates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBetRates();
   }, []);
 
   const mainMarketGames = mainMarketGamesList.filter(
@@ -421,14 +454,19 @@ const Dashboard = () => {
     fetchProfitLossData();
   }, []); // Empty dependency array means this runs once on mount
 
-
-  // Fetch withdrawal requests from the backend
+  // ✅ Fetch Only Today's Pending Withdrawals
   useEffect(() => {
     const fetchWithdrawals = async () => {
       setLoading(true);
       try {
         const response = await instance.get("/api/users/todaywithdrawals");
-        setWithdrawalHistory(response.data);
+
+        // ✅ Filter Only "Pending" Withdrawals
+        const pendingWithdrawals = response.data.filter(
+          (withdrawal) => withdrawal.status === "pending"
+        );
+
+        setWithdrawalHistory(pendingWithdrawals);
       } catch (err) {
         console.error("Error fetching withdrawal requests:", err);
         setError("Failed to fetch withdrawal requests.");
@@ -440,47 +478,24 @@ const Dashboard = () => {
     fetchWithdrawals();
   }, []);
 
-  const handleApprove = async (id) => {
-
-    try {
-      await instance.patch(`/api/users/withdrawals/status/${id}`, {
-        status: "approved",
-      });
-      message.success("Withdrawal request approved.");
-      setWithdrawalHistory((prev) =>
-        prev.map((req) =>
-          req._id === id ? { ...req, status: "approved" } : req
-        )
-      );
-    } catch (error) {
-      console.error("Error approving withdrawal request:", error);
-      message.error("Error approving withdrawal request.");
-    }
-
-  };
-
-  // Reject a withdrawal request
-  const handleReject = async (id) => {
-
-    try {
-      await instance.patch(`/api/users/withdrawals/status/${id}`, {
-        status: "rejected",
-      });
-      message.success("Withdrawal request rejected.");
-      setWithdrawalHistory((prev) =>
-        prev.map((req) =>
-          req._id === id ? { ...req, status: "rejected" } : req
-        )
-      );
-    } catch (error) {
-      console.error("Error rejecting withdrawal request:", error);
-      message.error("Error rejecting withdrawal request.");
-    }
-
-  };
+    // ✅ Handle Approve/Reject Withdrawal (PATCH API)
+    const handleStatusChange = async (id, status) => {
+      try {
+        await instance.patch(`api/users/withdrawals/status/${id}`, { status });
+  
+        // ✅ Remove Processed Withdrawal from Table
+        setWithdrawalHistory(withdrawalHistory.filter((item) => item._id !== id));
+  
+        message.success(`Withdrawal ${status} successfully!`);
+      } catch (error) {
+        console.error(`Error updating withdrawal status to ${status}:`, error);
+        message.error(`Failed to ${status} withdrawal.`);
+      }
+    };
 
   // Define table columns
-  const withdrawalColumns = [
+   // ✅ Define Table Columns
+   const withdrawalColumns = [
     {
       title: "#",
       key: "index",
@@ -505,7 +520,8 @@ const Dashboard = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => status.charAt(0).toUpperCase() + status.slice(1),
+      render: (status) =>
+        status.charAt(0).toUpperCase() + status.slice(1),
     },
     {
       title: "Time",
@@ -516,35 +532,35 @@ const Dashboard = () => {
       title: "Action",
       key: "action",
       render: (text, record) => {
-        // If already approved or rejected, show "Action Taken"
+        // ✅ If Already Processed, Show "Action Taken"
         if (record.status === "approved" || record.status === "rejected") {
           return <span style={{ fontWeight: "bold" }}>Action Taken</span>;
         }
         return (
           <>
             <button
-              onClick={() => handleApprove(record._id)}
+              onClick={() => handleStatusChange(record._id, "approved")}
               style={{
                 marginRight: "8px",
-                backgroundColor: "blue",
+                backgroundColor: "#1677FF",
                 color: "white",
                 border: "none",
                 padding: "6px 12px",
                 borderRadius: "4px",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Accept
             </button>
             <button
-              onClick={() => handleReject(record._id)}
+              onClick={() => handleStatusChange(record._id, "rejected")}
               style={{
-                backgroundColor: "red",
+                backgroundColor: "#F14646",
                 color: "white",
                 border: "none",
                 padding: "6px 12px",
                 borderRadius: "4px",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Reject
@@ -552,8 +568,7 @@ const Dashboard = () => {
           </>
         );
       },
-    }
-
+    },
   ];
 
   const fundRequestColumns = [
@@ -639,13 +654,12 @@ const Dashboard = () => {
             {isProfit
               ? `Profit: ${result}`
               : isLoss
-                ? `Loss: ${Math.abs(result)}`
-                : "No Profit/Loss"}
+              ? `Loss: ${Math.abs(result)}`
+              : "No Profit/Loss"}
           </div>
         );
       },
-    }
-
+    },
   ];
 
   return (
@@ -657,52 +671,60 @@ const Dashboard = () => {
       ) : (
         <Row gutter={[16, 16]}>
           {/* Left Side */}
-          <Col xs={24} md={6}>
-            <Card style={{ borderRadius: 8, padding: 16 }}>
-              <Title level={2} style={{ fontWeight: "bold" }}>
-                Welcome Back!
-              </Title>
-              <Text
-                type="secondary"
-                style={{ fontSize: 18, fontWeight: "bold" }}
-              >
-                Admin Dashboard
-              </Text>
-              <div style={{ textAlign: "center", marginTop: 20 }}>
-                <Avatar
-                  size={80}
-                  src="https://img.icons8.com/?size=256w&id=110479&format=png"
-                />
-                <Title level={3} style={{ marginTop: 10, fontWeight: "bold" }}>
-                  Admin
+          <Col xs={24} md={8}>
+            <div className="admin-dashboard-card">
+              <div className="welcome-card">
+                <Title level={3} className="admin-dashboard-title">
+                  Welcome Back !
                 </Title>
-                <div style={{ padding: '5px' }}>
+                <p className="admin-dashboard-subtitle">Admin Dashboard</p>
+              </div>
 
-                  <Text onClick={() => navigate("/admin/user-management/unapproved")} style={{ marginBottom: '5px', fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+              <div className="admin-dashboard-avatar-section">
+                <div className="avtr-admin">
+                  <Avatar
+                    className="admin-dashboard-avatar"
+                    src="https://img.icons8.com/?size=256w&id=110479&format=png"
+                  />
+                  <Title level={3} className="admin-dashboard-name">
+                    Admin
+                  </Title>
+                </div>
+
+                <div className="admin-dashboard-stats">
+                  <Text
+                    className="admin-dashboard-stats-text"
+                    onClick={() =>
+                      navigate("/admin/user-management/unapproved")
+                    }
+                  >
                     Unapproved Users:{" "}
                     {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
                   </Text>
-                  <br />
-                  <Text onClick={() => navigate("/admin/user-management/unapproved")} style={{ fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+                </div>
+                <div className="admin-dashboard-stats">
+                  <Text
+                    className="admin-dashboard-stats-text"
+                    onClick={() => navigate("/admin/user-management/approved")}
+                  >
                     Approved Users:{" "}
                     {approvedUsers.approvedUsers ?? "Failed to fetch"}
                   </Text>
                 </div>
               </div>
-            </Card>
-
+            </div>
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>Market Bid Details</Title>
-              <Row gutter={16} >
-              <Col span={24}>
-      <DatePicker
-        style={{ width: "100%" }}
-        placeholder="Select Date"
-        value={dayjs(selectedDate, "DD-MM-YYYY")} // ✅ Convert back to dayjs for display
-        onChange={handleDateChange2}
-        format="DD-MM-YYYY" // ✅ Ensures date is shown correctly
-      />
-    </Col>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    placeholder="Select Date"
+                    value={dayjs(selectedDate, "DD-MM-YYYY")} // ✅ Convert back to dayjs for display
+                    onChange={handleDateChange2}
+                    format="DD-MM-YYYY" // ✅ Ensures date is shown correctly
+                  />
+                </Col>
                 <Col span={24} style={{ marginTop: 10 }}>
                   <Select
                     placeholder="Select Game Name"
@@ -716,30 +738,38 @@ const Dashboard = () => {
                     ))}
                   </Select>
                 </Col>
-                <Col span={24} style={{ marginTop: 10 }}>
+                <Col
+                  span={24}
+                  style={{
+                    marginTop: 10,
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <Button
                     type="primary"
                     onClick={handleSubmit}
                     loading={loadingButton}
-                    style={{ backgroundColor: "#42db6d", borderColor: "#90ee90", color: "white", fontWeight: "bold" }}
+                    style={{
+                      backgroundColor: "#349163",
+                      // borderColor: "#90ee90",
+                      color: "white",
+                      fontWeight: "bold",
+                    }}
                   >
                     Submit
                   </Button>
                 </Col>
               </Row>
-            </Card>
 
-            {/* Dashboard Cards */}
-            <Card style={{ marginTop: 20 }}>
-              <Row >
-                <Col span={24}>
-                  <Card>
-                    <Row justify="space-between" align="middle" style={{ display: "flex" }}>
-                      <Col style={{ flex: 1 }}>
-                        <span style={{ fontWeight: "bold",}}>Total Bid Amount</span>
-                      </Col>
+              <Row>
+                {/* Total Bid Amount */}
+                <Col style={{ marginTop: "55px" }} span={24}>
+                  <div className="dashboard-card-inner">
+                    <Row className="dashboard-card-row">
+                      <Col className="dashboard-card-col">Total Bid Amount</Col>
                       <Col>
-                        <span style={{ marginRight: "10px", fontWeight: "bold" }}>
+                        <span className="dashboard-card-value">
                           Rs {dashboardData2.totalBidAmount || 0}
                         </span>
                       </Col>
@@ -747,17 +777,16 @@ const Dashboard = () => {
                         <Button type="primary">View</Button>
                       </Col>
                     </Row>
-                  </Card>
-
+                  </div>
                 </Col>
+
+                {/* Total Win Amount */}
                 <Col span={24}>
-                  <Card>
-                    <Row justify="space-between" align="middle" style={{ display: "flex" }}>
-                      <Col style={{ flex: 1 }}>
-                        <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
-                      </Col>
+                  <div className="dashboard-card-inner">
+                    <Row className="dashboard-card-row">
+                      <Col className="dashboard-card-col">Total Win Amount</Col>
                       <Col>
-                        <span style={{ marginRight: "10px", fontWeight: "bold" }}>
+                        <span className="dashboard-card-value">
                           Rs {dashboardData2.totalWinAmount || 0}
                         </span>
                       </Col>
@@ -765,43 +794,46 @@ const Dashboard = () => {
                         <Button type="primary">View</Button>
                       </Col>
                     </Row>
-                  </Card>
-
+                  </div>
                 </Col>
+
+                {/* Total Profit Amount */}
                 <Col span={24}>
-                  <Card style={{ backgroundColor: '#42db6d', color: '#ffff' }}>
-                    <Row justify="space-between" align="middle" style={{ display: "flex" }}>
-                      <Col style={{ flex: 1 }}>
-                        <span style={{ fontWeight: "bold" }}>Total Profit Amount</span>
+                  <div className="dashboard-card-inner profit-card">
+                    <Row className="dashboard-card-row">
+                      <Col className="dashboard-card-col">
+                        Total Profit Amount
                       </Col>
                       <Col>
-                        <span style={{ marginRight: "10px", fontWeight: "bold" }}>
+                        <span className="dashboard-card-value">
                           Rs {dashboardData2.totalProfitAmount || 0}
                         </span>
                       </Col>
-
                     </Row>
-                  </Card>
-
+                  </div>
                 </Col>
-
-
-
               </Row>
             </Card>
           </Col>
 
           {/* Right Side */}
-          <Col xs={24} md={18}>
+          <Col xs={24} md={16}>
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12}>
-
-                <Card>
-                  <div onClick={() => navigate("/admin/user-management/approved")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/user-management/approved")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     {/* Title & Value */}
-                    <div >
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Users</span>
-                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Users</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {totalUsers.totalUsers ?? "Failed to fetch"}
                       </div>
                     </div>
@@ -817,19 +849,28 @@ const Dashboard = () => {
                         alignItems: "center",
                       }}
                     >
-                      <UserOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                      <UserOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
                     </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
-
-                <Card>
-                  <div onClick={() => navigate("/admin/game-management/game-name")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/game-management/game-name")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     {/* Title & Value */}
-                    <div >
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Games</span>
-                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Games</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {totalGames.totalGameCount ?? "Failed to fetch"}
                       </div>
                     </div>
@@ -845,19 +886,30 @@ const Dashboard = () => {
                         alignItems: "center",
                       }}
                     >
-                      <AppstoreOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                      <AppstoreOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
                     </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
-
-                <Card>
-                  <div onClick={() => navigate("/admin/all-bid-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     {/* Title & Value */}
                     <div>
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Main Market Bid Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                      <span style={{ fontWeight: "bold" }}>
+                        Main Market Bid Amount
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {mainMarketData.totalAmount ?? "Failed to fetch"}
                       </div>
                     </div>
@@ -873,19 +925,30 @@ const Dashboard = () => {
                         alignItems: "center",
                       }}
                     >
-                      <DollarOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                      <DollarOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
                     </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
-
-                <Card>
-                  <div onClick={() => navigate("/admin/all-bid-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     {/* Title & Value */}
                     <div>
-                      <span style={{ fontWeight: "bold", fontSize: "20px" }}>Starline Bid Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "28px" }}>
+                      <span style={{ fontWeight: "bold" }}>
+                        Starline Bid Amount
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {starlineData.totalAmount ?? "Failed to fetch"}
                       </div>
                     </div>
@@ -901,13 +964,14 @@ const Dashboard = () => {
                         alignItems: "center",
                       }}
                     >
-                      <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
                     </div>
                   </div>
                 </Card>
               </Col>
             </Row>
-
 
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>
@@ -915,7 +979,7 @@ const Dashboard = () => {
                 {new Date().toISOString().split("T")[0]}
               </Title>
               <Row gutter={16} align="middle">
-                <Col span={10}>
+                <Col span={6}>
                   <Select
                     placeholder="Select Game Name"
                     style={{ width: "100%" }}
@@ -928,7 +992,7 @@ const Dashboard = () => {
                     ))}
                   </Select>
                 </Col>
-                <Col span={10}>
+                <Col span={6}>
                   <Select
                     placeholder="Select Session"
                     style={{ width: "100%" }}
@@ -938,11 +1002,24 @@ const Dashboard = () => {
                     <Option value="close">Close</Option>
                   </Select>
                 </Col>
+                <Col span={6}>
+                <Select
+  placeholder="Game Type"
+  style={{ width: "100%" }}
+  onChange={(value) => setSelectedGameType(value)} // ✅ Store the selected game type
+>
+  {betRates.map((gameType, index) => (
+    <Option key={index} value={gameType}>
+      {gameType} {/* Show game type names dynamically */}
+    </Option>
+  ))}
+</Select>
+
+                </Col>
                 <Col span={4}>
                   <Button
                     className="min-w-full"
                     type="primary"
-
                     onClick={handleGetClick}
                     loading={loadingButton2}
                   >
@@ -958,16 +1035,28 @@ const Dashboard = () => {
                 const hue = 36 * ank; // Generate unique color for each card
                 const color = `hsl(${hue}, 60%, 50%)`;
 
-                const digitData = dashboardData[ank] || { totalUsers: 0, totalAmount: 0 };
+                const digitData = dashboardData[ank] || {
+                  totalUsers: 0,
+                  totalAmount: 0,
+                };
 
                 return (
-                  <div className="card" key={ank} style={{ borderColor: color }}>
-                    <p className="card-text mt-2">Total Bids {digitData.totalUsers}</p>
+                  <div
+                    className="card"
+                    key={ank}
+                    style={{ borderColor: color }}
+                  >
+                    <p className="card-text mt-2">
+                      Total Bids {digitData.totalUsers}
+                    </p>
 
-                    <h3 className="card-title">{digitData.totalAmount}</h3>
+                    <h4 className="card-title">{digitData.totalAmount}</h4>
                     <span className="font-bold  ">Total Bid Amount</span>
 
-                    <button className="card-btn" style={{ backgroundColor: color }}>
+                    <button
+                      className="card-btn"
+                      style={{ backgroundColor: color }}
+                    >
                       Ank {ank}
                     </button>
                   </div>
@@ -999,7 +1088,6 @@ const Dashboard = () => {
         </Row>
       )}
 
-
       <Card style={{ marginTop: 20, width: "100%" }}>
         <Title level={5}>Fund Request Auto Deposit History</Title>
         {loading ? (
@@ -1018,24 +1106,22 @@ const Dashboard = () => {
       </Card>
 
       <Card style={{ marginTop: 20, width: "100%" }}>
-        <Title level={5}>
-          Withdraw Request History{" "}
-          {new Date().toISOString().split("T")[0]}
-        </Title>
-        {loading ? (
-          <Spin />
-        ) : error ? (
-          <p>{error}</p>
-        ) : (
-          <Table
-            columns={withdrawalColumns}
-            dataSource={withdrawalHistory}
-            rowKey="_id"
-            scroll={{ x: true }}
-          />
-        )}
-      </Card>
+      <Title level={5}>Withdraw Request History {today}</Title>
 
+      {loading ? (
+        <Spin />
+      ) : error ? (
+        <p>{error}</p>
+      ) : (
+        <Table
+          columns={withdrawalColumns}
+          dataSource={withdrawalHistory}
+          rowKey="_id"
+          scroll={{ x: true }}
+          pagination={{ pageSize: 10 }} // ✅ Pagination: 10 records per page
+        />
+      )}
+    </Card>
     </div>
   );
 };
