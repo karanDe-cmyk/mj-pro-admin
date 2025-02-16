@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../../utils/axiosInstance"; // Axios instance
+import axiosInstance from "../../utils/axiosInstance";
 import { Card, Table, Input, Button, Select, Image, Drawer, Upload, message, Form } from "antd";
 import { DeleteOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
 
@@ -23,8 +23,7 @@ const QrCode = () => {
         key: item._id,
         id: item._id,
         image: item.qrCodeImage,
-        upiId: item.upiId,
-        status: "Active",
+        status: item.status, // use status from backend
       }));
       setQrCodes(formattedData);
     } catch (error) {
@@ -38,10 +37,11 @@ const QrCode = () => {
     fetchQrCodes();
   }, []);
 
+  // 🔹 Search Handler
   const handleSearch = (value) => {
     setSearchText(value);
     const filtered = qrCodes.filter((item) =>
-      item.upiId.toLowerCase().includes(value.toLowerCase())
+      item.status.toLowerCase().includes(value.toLowerCase())
     );
     setQrCodes(filtered);
   };
@@ -70,7 +70,22 @@ const QrCode = () => {
     }
   };
 
-  // 🔹 Upload QR Code Image and UPI ID to API
+  // 🔹 Update Status Inline from Table
+  const handleStatusChange = async (record, newStatus) => {
+    try {
+      setLoading(true);
+      // Call update API with only status field; no file update.
+      await axiosInstance.put(`/api/settings/qrcode/update/${record.id}`, { status: newStatus });
+      message.success("Status updated successfully");
+      fetchQrCodes();
+    } catch (error) {
+      message.error("Failed to update status");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Upload QR Code Image and Status to API (for adding new QR Code)
   const handleFormSubmit = async (values) => {
     if (!values.qrImage || values.qrImage.length === 0) {
       message.error("Please upload an image");
@@ -79,13 +94,13 @@ const QrCode = () => {
 
     const formData = new FormData();
     formData.append("qrImage", values.qrImage[0].originFileObj);
-    formData.append("upiId", values.upiId);
+    // Instead of UPI ID, we now send status
+    formData.append("status", values.status);
 
     try {
       await axiosInstance.post("/api/settings/qrcode", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       message.success("QR Code Added Successfully");
       fetchQrCodes(); // Refresh list after adding
       closeDrawer();
@@ -94,6 +109,7 @@ const QrCode = () => {
     }
   };
 
+  // 🔹 Table Columns: Remove UPI ID column, add Status dropdown column
   const columns = [
     { title: "#", dataIndex: "id", key: "id", width: 50, render: (_, __, index) => index + 1 },
     {
@@ -104,8 +120,21 @@ const QrCode = () => {
         <Image src={imgSrc} width={150} height={100} style={{ borderRadius: 10 }} />
       ),
     },
-    { title: "UPI ID", dataIndex: "upiId", key: "upiId" },
-    { title: "Status", dataIndex: "status", key: "status" },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (text, record) => (
+        <Select
+          value={record.status}
+          onChange={(value) => handleStatusChange(record, value)}
+          style={{ width: 120 }}
+        >
+          <Option value="Active">Active</Option>
+          <Option value="Inactive">Inactive</Option>
+        </Select>
+      ),
+    },
     {
       title: "Delete",
       key: "delete",
@@ -123,30 +152,28 @@ const QrCode = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">QR Code</h2>
         <Button
-  type="primary"
-  icon={<PlusOutlined />}
-  onClick={showDrawer}
-  style={{ backgroundColor: "#556EE6", borderColor: "#556EE6" }}
->
-  Add QR Code Image
-</Button>
-
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={showDrawer}
+          style={{ backgroundColor: "#556EE6", borderColor: "#556EE6" }}
+        >
+          Add QR Code Image
+        </Button>
       </div>
 
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
           <span className="mr-2">Show</span>
           <Select value={pageSize} onChange={handlePageSizeChange} className="w-20">
-          <Option value={5}>5</Option>
+            <Option value={5}>5</Option>
             <Option value={10}>10</Option>
             <Option value={20}>20</Option>
             <Option value={50}>50</Option>
           </Select>
           <span className="ml-2">entries</span>
         </div>
-
         <Search
-          placeholder="Search by UPI ID"
+          placeholder="Search by status"
           onChange={(e) => handleSearch(e.target.value)}
           value={searchText}
           className="w-64"
@@ -159,7 +186,7 @@ const QrCode = () => {
         pagination={{ pageSize }}
         loading={loading}
         bordered
-        scroll={{ x: 1000 }}
+        scroll={{ x: 1000 }}
       />
 
       {/* Drawer for Adding QR Code */}
@@ -170,7 +197,7 @@ const QrCode = () => {
             label="QR Code Image (Allow Only .jpeg, .jpg, .png)"
             rules={[{ required: true, message: "Please upload an image!" }]}
             valuePropName="fileList"
-            getValueFromEvent={(e) => e && e.fileList ? e.fileList : []}
+            getValueFromEvent={(e) => (e && e.fileList ? e.fileList : [])}
           >
             <Upload beforeUpload={() => false} listType="picture">
               <Button icon={<UploadOutlined />}>Upload Image</Button>
@@ -178,11 +205,14 @@ const QrCode = () => {
           </Form.Item>
 
           <Form.Item
-            name="upiId"
-            label="Enter UPI ID"
-            rules={[{ required: true, message: "Please enter UPI ID!" }]}
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: "Please select status!" }]}
           >
-            <Input placeholder="user@upi" />
+            <Select placeholder="Select status">
+              <Option value="Active">Active</Option>
+              <Option value="Inactive">Inactive</Option>
+            </Select>
           </Form.Item>
 
           <Button type="primary" htmlType="submit" block>

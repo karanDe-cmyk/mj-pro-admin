@@ -189,7 +189,7 @@ const AdminPanel = () => {
         },
 
         {
-          label: "slider-management",
+          label: "Slider-Management",
           path: "/admin/settings/slider-management",
           icon: <i className="fa fa-sliders" />,
         },
