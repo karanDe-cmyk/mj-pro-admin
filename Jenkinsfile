@@ -41,22 +41,6 @@ pipeline {
             }
         }
 
-        stage("SonarQube: Code Analysis"){
-            steps{
-                script{
-                    sonarqube_analysis("Sonar","matka-frontend","matka-frontend")
-                }
-            }
-        }
-
-        stage("SonarQube: Code Quality Gates"){
-            steps{
-                script{
-                    sonarqube_code_quality()
-                }
-            }
-        }
-
         stage("Docker: Build Image") {
             steps {
                 script {
