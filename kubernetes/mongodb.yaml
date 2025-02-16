@@ -16,13 +16,6 @@ spec:
       containers:
         - name: mongodb
           image: mongo:latest
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
@@ -38,6 +31,13 @@ spec:
               value: matka-app
           ports:
             - containerPort: 27017
+          resources:   # ✅ Add CPU requests & limits
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: mongo-storage
               mountPath: /data/db
@@ -45,19 +45,3 @@ spec:
         - name: mongo-storage
           persistentVolumeClaim:
             claimName: mongo-pvc
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mongo-service
-  namespace: matka
-spec:
-  type: LoadBalancer   # Agar external access chahiye
-  selector:
-    app: mongodb
-  ports:
-    - port: 27017
-      targetPort: 27017
-      nodePort: 30001  # Custom NodePort, optional
-      protocol: TCP
