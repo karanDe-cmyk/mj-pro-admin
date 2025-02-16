@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Assuming axiosInstance is set up
-import {  } from "../../utils/config"; // Ensure  is correctly imported
 
 const UPISettings = () => {
   const [upiData, setUpiData] = useState({
@@ -10,6 +9,7 @@ const UPISettings = () => {
     upiPaytmId: "",
     upiPhonePeId: "",
     upiGooglePayId: "",
+    status: "Active", // Default status
   });
 
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ const UPISettings = () => {
         setLoading(true);
         const response = await axiosInstance.get(`/api/settings/upipayment`);
         const data = response.data[0]; // Extract the first object from the array response
-
+  
         if (data) {
           setUpiData({
             id: data._id, // Store ID for update
@@ -31,6 +31,7 @@ const UPISettings = () => {
             upiPaytmId: data.upi_paytm_id || "",
             upiPhonePeId: data.upi_phonepay_id || "",
             upiGooglePayId: data.upi_googlepay_id || "",
+            status: data.status || "Active", // Set status from data, default to "Active"
           });
         }
 
@@ -50,12 +51,14 @@ const UPISettings = () => {
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUpiData({ ...upiData, [name]: value });
+    setUpiData((prev) => ({ ...prev, [name]: value }));
   };
+  
 
   // Handle form submission (Update API)
   const handleUpdate = async () => {
-    const { upiName, upiPaymentId } = upiData;
+    // console.log("Updating with:", upiData);
+    const { upiName, upiPaymentId} = upiData;
 
     // Trim values to avoid spaces
     if (!upiName.trim() || !upiPaymentId.trim()) {
@@ -71,6 +74,7 @@ const UPISettings = () => {
         upi_paytm_id: upiData.upiPaytmId,
         upi_phonepay_id: upiData.upiPhonePeId,
         upi_googlepay_id: upiData.upiGooglePayId,
+        status: upiData.status,
       });
       alert("UPI Details Updated Successfully!");
       setLoading(false);
@@ -82,7 +86,7 @@ const UPISettings = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10 relative">
+    <div className="relative">
       {/* Fullscreen loading overlay */}
       {(loading || fetchingData) && (
         <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
@@ -93,6 +97,7 @@ const UPISettings = () => {
       <h2 className="text-xl font-bold text-blue-600 mb-4">UPI Payment ID</h2>
 
       <div className="grid grid-cols-2 gap-4">
+        {/* Row 1 */}
         <div>
           <label className="block text-sm font-semibold">UPI Name</label>
           <input
@@ -101,10 +106,9 @@ const UPISettings = () => {
             value={upiData.upiName}
             onChange={handleChange}
             className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading} // Disable input when loading
+            disabled={loading}
           />
         </div>
-
         <div>
           <label className="block text-sm font-semibold">UPI Payment ID</label>
           <input
@@ -113,10 +117,11 @@ const UPISettings = () => {
             value={upiData.upiPaymentId}
             onChange={handleChange}
             className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading} // Disable input when loading
+            disabled={loading}
           />
         </div>
 
+        {/* Row 2 */}
         <div>
           <label className="block text-sm font-semibold">UPI Paytm ID</label>
           <input
@@ -125,10 +130,9 @@ const UPISettings = () => {
             value={upiData.upiPaytmId}
             onChange={handleChange}
             className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading} // Disable input when loading
+            disabled={loading}
           />
         </div>
-
         <div>
           <label className="block text-sm font-semibold">UPI PhonePe ID</label>
           <input
@@ -137,10 +141,11 @@ const UPISettings = () => {
             value={upiData.upiPhonePeId}
             onChange={handleChange}
             className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading} // Disable input when loading
+            disabled={loading}
           />
         </div>
 
+        {/* Row 3 */}
         <div>
           <label className="block text-sm font-semibold">UPI Google Pay ID</label>
           <input
@@ -149,18 +154,34 @@ const UPISettings = () => {
             value={upiData.upiGooglePayId}
             onChange={handleChange}
             className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading} // Disable input when loading
+            disabled={loading}
           />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold">Status</label>
+          <select
+  name="status"
+  value={upiData.status}
+  onChange={handleChange}
+  className="w-full border border-gray-300 p-2 rounded-md bg-white"
+  disabled={loading} // Should be false when not loading
+>
+  <option value="Active">Active</option>
+  <option value="Inactive">Inactive</option>
+</select>
         </div>
       </div>
 
-      <button
-        onClick={handleUpdate}
-        className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
-        disabled={loading} // Disable button when loading
-      >
-        {loading ? "Updating..." : "Update"}
-      </button>
+      {/* Update Button: small and bottom left with extra top margin */}
+      <div className="mt-8">
+        <button
+          onClick={handleUpdate}
+          className="w-32 bg-[#556EE6] text-white px-4 py-2 rounded-md hover:bg-[#4455aa] ml-4"
+          disabled={loading}
+        >
+          {loading ? "Updating..." : "Update"}
+        </button>
+      </div>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../features/auth/authSlice";
 import instance from "../utils/axiosInstance";
-import { apiUrl } from "../utils/config";
+
 import "antd/dist/reset.css";
 
 const { Title, Text } = Typography;
@@ -29,7 +29,7 @@ const Login = () => {
       // console.log("API URL:", `${apiUrl}/api/auth/adminLogin`);
       // console.log("Sending:", values);
 
-      const response = await instance.post(`${apiUrl}/api/auth/adminLogin`, values);
+      const response = await instance.post(`/api/auth/adminLogin`, values);
 
       if (response && response.data) {
         // console.log("API Response after login:", response.data);

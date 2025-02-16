@@ -39,6 +39,7 @@ import NoticeManagement from './pages/NoticeManagement';
 import ProtectedRoute from './utils/ProtectedRoute';
 import MarketDeclareResult from './pages/MarketDeclareResult';
 import MainSetting from './pages/setting/MainSetting';
+import GeneralSetting from './pages/setting/GeneralSetting';
 import BankDetails from './pages/setting/BankDetails';
 import AppLinks from './pages/setting/AppLinks';
 import UPISettings from "./pages/setting/UPISettings"; // Import the component
@@ -112,22 +113,14 @@ const App = () => {
 
             {/* Settings Section */}
             <Route path="settings">
-              <Route path="main" element={<MainSetting />} />   {/* General Settings */}
-              <Route path="bank-details" element={<BankDetails />} />   {/* Bank Details */}
-              <Route path="app-links" element={<AppLinks />} />   {/* App Links Management */}
-              <Route path="upi-payment" element={<UPISettings />} />
-              <Route path="home-title" element={<HomeTitleSettings />} />
-              <Route path="other-settings" element={<OtherSettings />} />
-              <Route path="how-to-play" element={<HowToPlay />} />
-              <Route path="refer-earn" element={<ReferEarn />} />
-              <Route path="welcome-settings" element={<WelcomeSettings />} />
-              <Route path="qr-code" element={<QrCode />} />
+            <Route path="main" element={<MainSetting />} />
+            <Route path="slider-management" element={<SliderManagement/>} />
 
 
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
-            <Route path="slider-management" element={<SliderManagement/>} />
+           
 
             
           </Route>

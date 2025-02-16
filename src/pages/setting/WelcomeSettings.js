@@ -67,50 +67,51 @@ const WelcomeSettings = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
-      <h2 className="text-xl font-bold text-blue-600 mb-4">Welcome Settings</h2>
-
-      {/* Show loading message while data is being fetched */}
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : (
-        <>
-          {/* Title Input Field */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold">Enter Title</label>
-            <input
-              type="text"
-              name="title"
-              value={title}
-              onChange={handleTitleChange}
-              placeholder="Enter welcome title"
-              className="w-full border border-gray-300 p-2 rounded-md"
-            />
-          </div>
-
-          {/* Description Input Field */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold">Enter Description</label>
-            <input
-              type="text"
-              name="description"
-              value={description}
-              onChange={handleDescriptionChange}
-              placeholder="Enter welcome description"
-              className="w-full border border-gray-300 p-2 rounded-md"
-            />
-          </div>
-
-          {/* Update Button */}
+    <div>
+    <h2 className="text-xl font-bold text-blue-600 mb-4">Welcome Settings</h2>
+  
+    {loading ? (
+      <div className="text-center">Loading...</div>
+    ) : (
+      <>
+        {/* Row 1: Title with bigger height */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold">Enter Title</label>
+          <textarea
+            name="title"
+            value={title}
+            onChange={handleTitleChange}
+            placeholder="Enter welcome title"
+            className="w-full border border-gray-300 p-2 rounded-md h-40"
+          />
+        </div>
+  
+        {/* Row 2: Description */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold">Enter Description</label>
+          <input
+            type="text"
+            name="description"
+            value={description}
+            onChange={handleDescriptionChange}
+            placeholder="Enter welcome description"
+            className="w-full border border-gray-300 p-2 rounded-md"
+          />
+        </div>
+  
+        {/* Update Button: small, bottom left with margin-top */}
+        <div className="mt-8">
           <button
             onClick={handleUpdate}
-            className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+            className="w-32 bg-[#556EE6] text-white px-4 py-2 rounded-md hover:bg-[#4455aa]"
           >
-            Update
+            {loading ? "Updating..." : "Update"}
           </button>
-        </>
-      )}
-    </div>
+        </div>
+      </>
+    )}
+  </div>
+  
   );
 };
 

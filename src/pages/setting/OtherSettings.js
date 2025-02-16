@@ -81,75 +81,86 @@ const OtherSettings = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
-      <h2 className="text-xl font-bold text-blue-600 mb-4">Other Settings</h2>
-
-      {/* Show loading message while fetching or updating */}
-      {loading ? (
-        <div className="text-center">
-          <div className="spinner"></div> {/* Loading spinner */}
-          <p>Loading...</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Market Open Time Input */}
-            <div>
-              <label className="block text-sm font-semibold">Market Open Time</label>
-              <div className="flex items-center">
-                <input
-                  type="time"
-                  name="marketOpenTime"
-                  value={moment(settings.marketOpenTime + " " + settings.amPm, "hh:mm A").format("HH:mm")}
-                  onChange={handleTimeChange}
-                  className="w-full border border-gray-300 p-2 rounded-md"
-                  disabled={loading} // Disable input when loading
-                />
-                <select
-                  name="amPm"
-                  value={settings.amPm}
-                  onChange={handleChange}
-                  className="ml-2 border border-gray-300 p-2 rounded-md bg-white"
-                  disabled={loading} // Disable select when loading
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Alert Message Input */}
-            <div>
-              <label className="block text-sm font-semibold">Alert Message</label>
+    <div className="relative">
+    {/* Fullscreen loading overlay */}
+    {loading && (
+      <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    )}
+  
+    <h2 className="text-xl font-bold text-blue-600 mb-4">Other Settings</h2>
+  
+    {loading ? (
+      <div className="text-center">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    ) : (
+      <>
+        {/* One row with two columns */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Market Open Time Input */}
+          <div>
+            <label className="block text-sm font-semibold">Market Open Time</label>
+            <div className="flex items-center">
               <input
-                type="text"
-                name="alertMessage"
-                value={settings.alertMessage}
-                onChange={handleChange}
+                type="time"
+                name="marketOpenTime"
+                value={moment(settings.marketOpenTime + " " + settings.amPm, "hh:mm A").format("HH:mm")}
+                onChange={handleTimeChange}
                 className="w-full border border-gray-300 p-2 rounded-md"
-                disabled={loading} // Disable input when loading
+                disabled={loading}
               />
+              <select
+                name="amPm"
+                value={settings.amPm}
+                onChange={handleChange}
+                className="ml-2 border border-gray-300 p-2 rounded-md bg-white"
+                disabled={loading}
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
             </div>
           </div>
-
-          {/* Update Button */}
+  
+          {/* Alert Message Input */}
+          <div>
+            <label className="block text-sm font-semibold">Alert Message</label>
+            <input
+              type="text"
+              name="alertMessage"
+              value={settings.alertMessage}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2 rounded-md"
+              disabled={loading}
+            />
+          </div>
+        </div>
+  
+        {/* Update Button: small, left-aligned with extra top margin */}
+        <div className="mt-8">
           <button
             onClick={handleUpdate}
-            className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
-            disabled={loading} // Disable button when loading
+            className="w-32 bg-[#556EE6] text-white px-4 py-2 rounded-md hover:bg-[#4455aa]"
+            disabled={loading}
           >
             {loading ? (
               <div className="flex justify-center items-center">
-                <div className="spinner"></div> {/* Spinner during updating */}
+                <div className="spinner"></div>
                 Updating...
               </div>
             ) : (
               "Update"
             )}
           </button>
-        </>
-      )}
-    </div>
+        </div>
+      </>
+    )}
+  </div>
+  
+  
   );
 };
 

@@ -7,7 +7,7 @@ const { Search } = Input;
 const { Option } = Select;
 
 const QrCode = () => {
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [searchText, setSearchText] = useState("");
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [qrCodes, setQrCodes] = useState([]);
@@ -119,18 +119,25 @@ const QrCode = () => {
   ];
 
   return (
-    <Card className="max-w-6xl mx-auto p-6 shadow-md bg-white">
+    <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">QR Code</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={showDrawer}>
-          Add QR Code Image
-        </Button>
+        <Button
+  type="primary"
+  icon={<PlusOutlined />}
+  onClick={showDrawer}
+  style={{ backgroundColor: "#556EE6", borderColor: "#556EE6" }}
+>
+  Add QR Code Image
+</Button>
+
       </div>
 
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
           <span className="mr-2">Show</span>
           <Select value={pageSize} onChange={handlePageSizeChange} className="w-20">
+          <Option value={5}>5</Option>
             <Option value={10}>10</Option>
             <Option value={20}>20</Option>
             <Option value={50}>50</Option>
@@ -183,7 +190,7 @@ const QrCode = () => {
           </Button>
         </Form>
       </Drawer>
-    </Card>
+    </div>
   );
 };
 

@@ -70,17 +70,20 @@ const AppLinks = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10 relative">
-      {/* Fullscreen loading overlay */}
-      {loading || fetchingData ? (
-        <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
-          <div className="text-white text-xl">Loading...</div>
-        </div>
-      ) : null}
-
-      <h2 className="text-xl font-bold text-blue-600 mb-4">App Links Management</h2>
-
-      <div className="mb-4">
+    <div className="relative">
+    {/* Fullscreen loading overlay */}
+    {(loading || fetchingData) && (
+      <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    )}
+  
+    <h2 className="text-xl font-bold text-blue-600 mb-4">Add App Link
+    </h2>
+  
+    <div className="grid grid-cols-2 gap-4 mb-4">
+      {/* Column 1: App Link */}
+      <div className="flex flex-col">
         <label className="block text-sm font-semibold">App Link</label>
         <input
           type="text"
@@ -91,27 +94,33 @@ const AppLinks = () => {
           disabled={loading}
         />
       </div>
-
-      <div className="mb-4">
+  
+      {/* Column 2: Share Message */}
+      <div className="flex flex-col">
         <label className="block text-sm font-semibold">Share Message</label>
-        <input
-          type="text"
+        <textarea
           name="shareMessage"
           value={appLinks.shareMessage}
           onChange={handleChange}
-          className="w-full border border-gray-300 p-2 rounded-md"
+          className="w-full border border-gray-300 p-2 rounded-md h-32"
           disabled={loading}
-        />
+        ></textarea>
       </div>
-
+    </div>
+  
+    {/* Save button aligned at bottom start with margin-top */}
+    <div className="mt-4">
       <button
         onClick={handleSave}
-        className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+        className="w-32 bg-[#556EE6] text-white px-4 py-2 rounded-md hover:bg-[#4455aa]"
         disabled={loading}
       >
-        {loading ? "Saving..." : "Save Links"}
+        {loading ? "Saving..." : "Update"}
       </button>
     </div>
+  </div>
+  
+
   );
 };
 

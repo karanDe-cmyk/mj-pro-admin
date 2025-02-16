@@ -137,7 +137,7 @@ const SliderManagement = () => {
   ];
 
   return (
-    <Card className="max-w-6xl mx-auto p-6 shadow-md bg-white">
+    <div >
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Slider Management</h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={showDrawer}>
@@ -195,7 +195,7 @@ const SliderManagement = () => {
           </Button>
         </Form>
       </Drawer>
-    </Card>
+    </div>
   );
 };
 

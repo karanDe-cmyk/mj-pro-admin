@@ -71,62 +71,70 @@ const BankDetails = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg mt-10 relative">
-      {/* Fullscreen loading overlay */}
-      {loading || fetchingData ? (
-        <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
-          <div className="text-white text-xl">Loading...</div>
-        </div>
-      ) : null}
-
-      <h2 className="text-xl font-bold text-blue-600 mb-4">Add Bank Details</h2>
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold">Account Holder Name</label>
-          <input
-            type="text"
-            name="account_holder_name" // Make sure name matches the state property
-            value={bankDetails.account_holder_name}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-semibold">Account Number</label>
-          <input
-            type="text"
-            name="account_number" // Correct name to match state property
-            value={bankDetails.account_number}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-semibold">IFSC Code</label>
-          <input
-            type="text"
-            name="ifsc_code" // Correct name to match state property
-            value={bankDetails.ifsc_code}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded-md"
-            disabled={loading}
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
-          disabled={loading}
-        >
-          {loading ? "Updating..." : "Update"}
-        </button>
-      </form>
+    <div className="relative">
+  {/* Fullscreen loading overlay */}
+  {(loading || fetchingData) && (
+    <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
+      <div className="text-white text-xl">Loading...</div>
     </div>
+  )}
+
+  <h2 className="text-xl font-bold text-blue-600 mb-4">Add Bank Details</h2>
+
+  <form onSubmit={handleSubmit}>
+    <div className="grid grid-cols-3 gap-4">
+      {/* Column 1: Account Holder Name and Update Button */}
+      <div className="flex flex-col">
+        <label className="block text-sm font-semibold">Account Holder Name</label>
+        <input
+          type="text"
+          name="account_holder_name"
+          value={bankDetails.account_holder_name}
+          onChange={handleChange}
+          className="w-full border border-gray-300 p-2 rounded-md"
+          disabled={loading}
+        />
+        {/* Increased margin and reduced width on the button */}
+        <button
+  type="submit"
+  className="mt-8 w-32 bg-[#556EE6] text-white py-2 rounded-md hover:bg-blue-600"
+  disabled={loading}
+>
+  {loading ? "Updating..." : "Update"}
+</button>
+
+      </div>
+
+      {/* Column 2: Account Number */}
+      <div className="flex flex-col">
+        <label className="block text-sm font-semibold">Account Number</label>
+        <input
+          type="text"
+          name="account_number"
+          value={bankDetails.account_number}
+          onChange={handleChange}
+          className="w-full border border-gray-300 p-2 rounded-md"
+          disabled={loading}
+        />
+      </div>
+
+      {/* Column 3: IFSC Code */}
+      <div className="flex flex-col">
+        <label className="block text-sm font-semibold">IFSC Code</label>
+        <input
+          type="text"
+          name="ifsc_code"
+          value={bankDetails.ifsc_code}
+          onChange={handleChange}
+          className="w-full border border-gray-300 p-2 rounded-md"
+          disabled={loading}
+        />
+      </div>
+    </div>
+  </form>
+</div>
+
+  
   );
 };
 

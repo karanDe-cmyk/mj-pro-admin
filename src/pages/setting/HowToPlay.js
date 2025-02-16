@@ -73,61 +73,50 @@ const HowToPlay = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
-      <h2 className="text-xl font-bold text-blue-600 mb-4">How To Play</h2>
-
-      {/* Show loading indicator while fetching */}
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : (
-        <>
-          {/* Description Input */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold">Short Description</label>
-            <textarea
-              name="description"
-              value={description}
-              onChange={handleDescriptionChange}
-              placeholder="Enter a short description..."
-              className="w-full border border-gray-300 p-2 rounded-md h-20"
-            ></textarea>
-          </div>
-
-          {/* Video Link Input */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold">Video Link</label>
-            <input
-              type="text"
-              name="videoLink"
-              value={videoLink}
-              onChange={handleVideoLinkChange}
-              placeholder="Enter YouTube or Video Link"
-              className="w-full border border-gray-300 p-2 rounded-md"
-            />
-          </div>
-
-          {/* How To Play Content Input Field */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold">How To Play Content</label>
-            <textarea
-              name="howToPlayContent"
-              value={howToPlayContent}
-              onChange={handleContentChange}
-              placeholder="Enter detailed How To Play instructions..."
-              className="w-full border border-gray-300 p-2 rounded-md h-32"
-            ></textarea>
-          </div>
-
-          {/* Update Button */}
-          <button
-            onClick={handleUpdate}
-            className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
-          >
-            Update
-          </button>
-        </>
-      )}
-    </div>
+    <div>
+    <h2 className="text-xl font-bold text-blue-600 mb-4">How To Play</h2>
+  
+    {loading ? (
+      <div className="text-center">Loading...</div>
+    ) : (
+      <>
+        {/* How To Play Content */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold">How To Play Content</label>
+          <textarea
+            name="howToPlayContent"
+            value={howToPlayContent}
+            onChange={handleContentChange}
+            placeholder="Enter detailed How To Play instructions..."
+            className="w-full border border-gray-300 p-2 rounded-md h-40"
+          />
+        </div>
+  
+        {/* Video Link */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold">Video Link</label>
+          <input
+            type="text"
+            name="videoLink"
+            value={videoLink}
+            onChange={handleVideoLinkChange}
+            placeholder="Enter YouTube or Video Link"
+            className="w-full border border-gray-300 p-2 rounded-md"
+          />
+        </div>
+  
+        {/* Update Button */}
+        <button
+          onClick={handleUpdate}
+          className="w-32 bg-[#556EE6] text-white px-4 py-2 rounded-md hover:bg-[#4455aa]"
+        >
+          {loading ? "Updating..." : "Update"}
+        </button>
+      </>
+    )}
+  </div>
+    
+  
   );
 };
 
