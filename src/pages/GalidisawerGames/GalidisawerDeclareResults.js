@@ -260,7 +260,7 @@ const GalidisawerDeclareResults = () => {
       title: 'Result Date',
       dataIndex: 'date',
       key: 'date',
-      render: (text) => text ? moment(text).format('MM/DD/YYYY') : ''
+      render: (text) => text ? moment(text).format('DD/MM/YYYY') : ''
     },
     {
       title: 'Open Pana',
