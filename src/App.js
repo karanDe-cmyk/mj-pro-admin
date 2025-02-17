@@ -52,6 +52,11 @@ import UserDetails from './pages/UserDetails';
 import QrCode from './pages/setting/QrCode';
 import SliderManagement from './pages/setting/SliderManagement';
 import WalletAllDepositeHistory from './pages/wallet_management/WalletAllDepositeHistory';
+import GalidisawerGameName  from './pages/GalidisawerGames/GameName';
+import GalidisawerBidHistory from './pages/GalidisawerGames/GalidisawerBidHistory';
+import GalidisawerGameRates from './pages/GalidisawerGames/GalidisawerGameRates'
+import GalidisawerDeclareResults from "./pages/GalidisawerGames/GalidisawerDeclareResults"
+
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -115,8 +120,13 @@ const App = () => {
             <Route path="settings">
             <Route path="main" element={<MainSetting />} />
             <Route path="slider-management" element={<SliderManagement/>} />
-
-
+            </Route>
+            <Route path="galidisawer-games">
+              <Route path="game-list" element={<GalidisawerGameName/>} />
+              <Route path="bid-history" element={<GalidisawerBidHistory/>} />
+              <Route path="game-rates" element={<GalidisawerGameRates />} />
+              <Route path="declare-result" element={<GalidisawerDeclareResults />} />
+           
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />

@@ -196,6 +196,19 @@ const AdminPanel = () => {
       ],
     },
     {
+      key: "galidisawar-games",
+      label: "Galidisawar Games",
+      icon: <i className="fa fa-dice" />,
+      children: [
+          { label: "Game Name", path: "/admin/galidisawer-games/game-list" },
+          { label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
+          { label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
+          { label: "Game Rates ", path: "/admin/galidisawer-games/game-rates" },
+        
+
+      ],
+    },
+    {
       key: "notice-management",
       label: "Notice Management",
       path: "/admin/notice-management",

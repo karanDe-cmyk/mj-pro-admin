@@ -22,7 +22,6 @@ import axios from "../utils/axiosInstance";
 const { Option } = Select;
 
 const gameTypeOptions = [
-  "Select All",
   "Triple Pana",
   "Panel Group",
   "SP DP TP",
@@ -45,12 +44,6 @@ const gameTypeOptions = [
   "Single Pana Bulk",
   "Double Pana",
   "Double Pana Bulk",
-  "Triple Pana",
-  "Panel Group",
-  "SP Motor",
-  "DP Motor",
-  "Odd Even",
-  "Two Digits Panel"
 ];
 
 const GameManagement = () => {
@@ -129,22 +122,29 @@ const GameManagement = () => {
   };
 
 
-  // Handle Selection Change
+  // Create a sorted copy of the array (ascending order)
+const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
+  a.localeCompare(b)
+);
+
+  const allTypes = sortedGameTypeOptionsAsc;
+
+
   const handleGameTypeChange = (selectedValues) => {
-    if (selectedValues.includes("Select All")) {
-      // If "Select All" is clicked, select all game types except "Select All"
-      const allTypes = gameTypeOptions.slice(1); // Exclude "Select All"
+    // If user selects "Select All" OR manually selects all game types:
+    if (
+      selectedValues.includes("Select All") ||
+      selectedValues.length === allTypes.length
+    ) {
       setSelectedGameTypes(allTypes);
       form.setFieldsValue({ gameType: allTypes });
     } else {
-      // Normal selection behavior
-      setSelectedGameTypes(selectedValues);
-      form.setFieldsValue({ gameType: selectedValues });
-
-      // If "Select All" was removed, make sure it's not included
-      if (selectedValues.length === 0) {
-        form.setFieldsValue({ gameType: [] });
-      }
+      // Remove "Select All" if it accidentally appears in the array
+      const filteredValues = selectedValues.filter(
+        (val) => val !== "Select All"
+      );
+      setSelectedGameTypes(filteredValues);
+      form.setFieldsValue({ gameType: filteredValues });
     }
   };
 
@@ -277,9 +277,10 @@ const GameManagement = () => {
   const handleEdit = (record) => {
     setEditingGame(record);
     setIsModalOpen(true);
-
+  
     editForm.setFieldsValue({
       gameName: record.gameName,
+      gameType: record.gameType || [], // <-- Added to pre-populate gameType
       openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null, // Set default Open Time for main game
       closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null, // Set default Close Time for main game
       weekends: record.weekends.map((day) => ({
@@ -290,7 +291,7 @@ const GameManagement = () => {
       })),
     });
   };
-
+  
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
@@ -394,25 +395,30 @@ const GameManagement = () => {
 
               {/* Game Type Selection */}
               <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Game Type"
-                  name="gameType"
-                  rules={[{ required: true, message: "Select at least one game type" }]}
-                >
-                  <Select
-                    mode="multiple"
-                    placeholder="Select Game Types"
-                    value={selectedGameTypes}
-                    onChange={handleGameTypeChange}
-                  >
-                    {gameTypeOptions.map((type) => (
-                      <Option key={type} value={type}>
-                        {type}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
+      <Form.Item
+        label="Game Type"
+        name="gameType"
+        rules={[{ required: true, message: "Select at least one game type" }]}
+      >
+        <Select
+          mode="multiple"
+          placeholder="Select Game Types"
+          value={selectedGameTypes}
+          onChange={handleGameTypeChange}
+          style={{ width: "100%" }}
+        >
+          {/* "Select All" Option */}
+          <Option key="Select All" value="Select All">
+            Select All
+          </Option>
+          {sortedGameTypeOptionsAsc.map((type) => (
+            <Option key={type} value={type}>
+              {type}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+    </Col>
 
               {/* Market On/Off Switch */}
               <Col xs={24} sm={12} md={8} lg={4}>
@@ -524,81 +530,98 @@ const GameManagement = () => {
 
       {/* Edit Modal */}
       <Modal
-        title="Edit Game"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onOk={handleUpdate}
-        width={700}
-      >
-        <Form form={editForm} layout="vertical">
-          {/* Game Name Field */}
-          <Form.Item
-            label="Game Name"
-            name="gameName"
-            rules={[{ required: true, message: "Enter game name" }]}
-          >
-            <Input />
-          </Form.Item>
+  title="Edit Game"
+  open={isModalOpen}
+  onCancel={() => setIsModalOpen(false)}
+  onOk={handleUpdate}
+  width={700}
+>
+  <Form form={editForm} layout="vertical">
+    {/* Game Name Field */}
+    <Form.Item
+      label="Game Name"
+      name="gameName"
+      rules={[{ required: true, message: "Enter game name" }]}
+    >
+      <Input />
+    </Form.Item>
 
-          {/* Open Time & Close Time for Main Game */}
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
+    {/* Game Type Field */}
+    <Form.Item
+      label="Game Type"
+      name="gameType"
+      rules={[{ required: true, message: "Select at least one game type" }]}
+    >
+      <Select mode="multiple" placeholder="Select Game Types">
+        {/* "Select All" Option */}
+        <Option key="Select All" value="Select All">
+          Select All
+        </Option>
+        {/* Render the rest of your game types */}
+        {gameTypeOptions.slice(1).map((type) => (
+          <Option key={type} value={type}>
+            {type}
+          </Option>
+        ))}
+      </Select>
+    </Form.Item>
+
+    {/* Open Time & Close Time for Main Game */}
+    <Row gutter={[16, 16]}>
+      <Col span={12}>
+        <Form.Item
+          label="Open Time"
+          name="openTime"
+          rules={[{ required: true, message: "Enter open time" }]}
+        >
+          <TimePicker format="hh:mm A" use12Hours />
+        </Form.Item>
+      </Col>
+      <Col span={12}>
+        <Form.Item
+          label="Close Time"
+          name="closeTime"
+          rules={[{ required: true, message: "Enter close time" }]}
+        >
+          <TimePicker format="hh:mm A" use12Hours />
+        </Form.Item>
+      </Col>
+    </Row>
+
+    {/* Weekend Open & Close Time */}
+    <Row gutter={[16, 16]}>
+      {editingGame &&
+        editingGame.weekends.map((day, index) => (
+          <Col span={12} key={day.day}>
+            <Card size="small" title={day.day} style={{ textAlign: "center" }}>
               <Form.Item
+                name={["weekends", index, "openTime"]}
                 label="Open Time"
-                name="openTime"
-                rules={[{ required: true, message: "Enter open time" }]}
+                rules={[{ required: true }]}
               >
                 <TimePicker format="hh:mm A" use12Hours />
               </Form.Item>
-            </Col>
-            <Col span={12}>
               <Form.Item
+                name={["weekends", index, "closeTime"]}
                 label="Close Time"
-                name="closeTime"
-                rules={[{ required: true, message: "Enter close time" }]}
+                rules={[{ required: true }]}
               >
                 <TimePicker format="hh:mm A" use12Hours />
               </Form.Item>
-            </Col>
-          </Row>
+              <Form.Item
+                name={["weekends", index, "is_open"]}
+                label="Is Active"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
+        ))}
+    </Row>
+  </Form>
+</Modal>
 
-          {/* Weekend Open & Close Time */}
-          <Row gutter={[16, 16]}>
-            {editingGame &&
-              editingGame.weekends.map((day, index) => (
-                <Col span={12} key={day.day}>
-                  <Card
-                    size="small"
-                    title={day.day}
-                    style={{ textAlign: "center" }}
-                  >
-                    <Form.Item
-                      name={["weekends", index, "openTime"]}
-                      label="Open Time"
-                      rules={[{ required: true }]}
-                    >
-                      <TimePicker format="hh:mm A" use12Hours />
-                    </Form.Item>
-                    <Form.Item
-                      name={["weekends", index, "closeTime"]}
-                      label="Close Time"
-                      rules={[{ required: true }]}
-                    >
-                      <TimePicker format="hh:mm A" use12Hours />
-                    </Form.Item>
-                    <Form.Item
-                      name={["weekends", index, "is_open"]}
-                      label="Is Active"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                  </Card>
-                </Col>
-              ))}
-          </Row>
-        </Form>
-      </Modal>
     </div>
   );
 };

@@ -380,41 +380,40 @@ const UserDetails = () => {
 };
 
   
-  const formatTransactionData = (depositTransactions, withdrawTransactions) => {
-    // console.log("Formatting deposit transactions...", depositTransactions);
-    // console.log("Formatting withdraw transactions...", withdrawTransactions);
-
+const formatTransactionData = (depositTransactions, withdrawTransactions) => {
+  // Format deposit transactions
   const formattedDeposits = depositTransactions.map((txn, index) => ({
     key: `deposit-${index}`,
     sNo: index + 1,
-    requestNumber: txn.requestNumber || txn.transaction_id || "N/A", // Handle missing requestNumber
+    requestNumber: txn.requestNumber || txn.transaction_id || "N/A", // Handle missing request numbers
     amount: txn.amount,
     transactionType: "Money Added",
     date: moment(txn.date).format("YYYY-MM-DD hh:mm:ss A"),
     type: "deposit",
   }));
 
-    const formattedWithdrawals = withdrawTransactions.map((txn, index) => ({
-      key: `withdraw-${index}`,
-      sNo: index + 1 + formattedDeposits.length,
-      requestNumber: txn.transaction_id || "N/A", // Use transaction_id if requestNumber is missing
-      amount: txn.amount,
-      transactionType: "Withdraw Request",
-      date: moment(txn.time, "YYYY-MM-DD hh:mm:ss A").format(
-        "YYYY-MM-DD hh:mm:ss A"
-      ), // Ensure formatting matches
-      type: "withdraw",
-    }));
+  // Format withdraw transactions
+  const formattedWithdrawals = withdrawTransactions.map((txn, index) => ({
+    key: `withdraw-${index}`,
+    sNo: index + 1 + formattedDeposits.length,
+    // Use txn.requestNumber if it exists, otherwise txn.transaction_id, or "N/A" if neither exists.
+    requestNumber: txn.requestNumber || txn.transaction_id || "N/A",
+    amount: txn.amount,
+    transactionType: "Withdraw Request",
+    // For withdrawals, check if txn.time exists (from withdraw model); otherwise, use txn.date (from WithdrawalTransaction model)
+    date: moment(txn.time || txn.date).format("YYYY-MM-DD hh:mm:ss A"),
+    type: "withdraw",
+  }));
 
-   // ✅ Merge both transactions and **sort by latest date**
-   const allTransactions = [...formattedDeposits, ...formattedWithdrawals].sort(
+  // Merge both transactions and sort them by date (latest first)
+  const allTransactions = [...formattedDeposits, ...formattedWithdrawals].sort(
     (a, b) => new Date(b.date) - new Date(a.date)
   );
 
-  // console.log("Final Transactions Data:", allTransactions);
-
+  // Update state with the merged data
   setTransactionHistoryDataAll(allTransactions);
 };
+
 
   const formatData = (responseData) => {
     const allBids = [
