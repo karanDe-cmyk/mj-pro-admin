@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Row, Col, Form, Card, Typography, message } from "antd";
 import axiosInstance from "../../utils/axiosInstance";
-import dayjs from "dayjs";
 
 const { Title } = Typography;
 
 const GameRates = () => {
+  // State for both rate and value fields.
   const [singleDigit, setSingleDigit] = useState("");
+  const [singleDigitValue, setSingleDigitValue] = useState("");
   const [jodiDigit, setJodiDigit] = useState("");
-  const [rateId, setRateId] = useState(""); // State to hold the rate document's ID
+  const [jodiDigitValue, setJodiDigitValue] = useState("");
+  const [rateId, setRateId] = useState(""); // to store the document's ID
   const [loading, setLoading] = useState(false);
 
-  // Function to fetch bet rates from GET API
+  // Function to fetch bet rates from GET API.
   const fetchBetRates = async () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/api/GaliDisawarRate/getBetRates");
-      // Assuming response.data is an object with _id, singleDigit, and jodiDigit fields
-      const { _id, singleDigit, jodiDigit } = response.data;
+      // Assuming response.data includes _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue
+      const { _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue } = response.data;
       setRateId(_id);
       setSingleDigit(singleDigit);
+      setSingleDigitValue(singleDigitValue);
       setJodiDigit(jodiDigit);
+      setJodiDigitValue(jodiDigitValue);
     } catch (error) {
       console.error("Error fetching bet rates:", error);
       message.error("Error fetching bet rates");
@@ -33,15 +37,16 @@ const GameRates = () => {
     fetchBetRates();
   }, []);
 
-  // Handler for updating bet rates via the update API
+  // Handler for updating bet rates via the update API.
   const handleSubmit = async () => {
     try {
       const payload = {
         singleDigit,
+        singleDigitValue,
         jodiDigit,
+        jodiDigitValue,
       };
       const response = await axiosInstance.put(`/api/GaliDisawarRate/updateBetRates/${rateId}`, payload);
-      
       if (response.data.message === "Bet rates updated successfully!") {
         message.success("Rates updated successfully");
         alert("Rates updated successfully");
@@ -55,7 +60,6 @@ const GameRates = () => {
       message.error("Error updating rates");
     }
   };
-  
 
   return (
     <div
@@ -97,21 +101,43 @@ const GameRates = () => {
           <Card bordered={false} style={{ padding: "20px" }}>
             <Form layout="vertical">
               <Row gutter={[16, 16]}>
+                {/* Single Digit Row: Two Columns */}
                 <Col xs={24} sm={12}>
-                  <Form.Item label="Single Digit">
+                  <Form.Item label="Single Digit (Rate)">
                     <Input
                       value={singleDigit}
                       onChange={(e) => setSingleDigit(e.target.value)}
-                      placeholder="Enter Single Digit"
+                      placeholder="Enter Single Digit Rate"
                     />
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>
-                  <Form.Item label="Jodi Digit">
+                  <Form.Item label="Single Digit (Value)">
+                    <Input
+                      addonBefore="₹"
+                      value={singleDigitValue}
+                      onChange={(e) => setSingleDigitValue(e.target.value)}
+                      placeholder="Enter Single Digit Value"
+                    />
+                  </Form.Item>
+                </Col>
+                {/* Jodi Digit Row: Two Columns */}
+                <Col xs={24} sm={12}>
+                  <Form.Item label="Jodi Digit (Rate)">
                     <Input
                       value={jodiDigit}
                       onChange={(e) => setJodiDigit(e.target.value)}
-                      placeholder="Enter Jodi Digit"
+                      placeholder="Enter Jodi Digit Rate"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item label="Jodi Digit (Value)">
+                    <Input
+                      addonBefore="₹"
+                      value={jodiDigitValue}
+                      onChange={(e) => setJodiDigitValue(e.target.value)}
+                      placeholder="Enter Jodi Digit Value"
                     />
                   </Form.Item>
                 </Col>

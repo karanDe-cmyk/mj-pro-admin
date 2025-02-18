@@ -14,13 +14,14 @@ import {
 } from 'antd';
 import moment from 'moment';
 import axiosInstance from "../../utils/axiosInstance";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 
 const GalidisawerDeclareResults = () => {
   const [filters, setFilters] = useState({
     // Set the current date by default in moment format (DD-MM-YYYY)
-    date: moment(),
+    date: dayjs(),
     game: '',
     pana: '',
     leftDigit: '',

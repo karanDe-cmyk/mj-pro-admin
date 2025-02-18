@@ -27,7 +27,8 @@ const MarketDeclareResult = () => {
   const [filteredResults, setFilteredResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(dayjs()); // Default to today
- 
+  const [gameResultDate, setGameResultDate] = useState(moment().format("DD-MM-YYYY"));
+
   const [refresh, setRefresh] = useState(false);
 const [ date,setDate] = useState(dayjs());
 
@@ -274,38 +275,42 @@ const handlePannaChange = (value) => {
     try {
       setLoadingDeclareResult(true);
       
+      // Determine the declared date from the form
+      const declaredDate = values.resultDate
+        ? values.resultDate.format("DD-MM-YYYY")
+        : moment().format("DD-MM-YYYY");
+      
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
           marketName: values.marketGame,
           gameName: values.gameName,
-          date: values.resultDate
-            ? values.resultDate.format("DD-MM-YYYY")
-            : moment().format("DD-MM-YYYY"),
+          date: declaredDate,
           gameType: values.gameType,
           digit: values.digit,
           panna: values.panna,
           winners: winners.length > 0 ? winners : [],
         }
       );
-  
+      
       if (response.data.success === false) {
         alert(response.data.message);
       } else {
         message.success("Result declared successfully!");
+        alert("Result declared successfully!");
         setIsWinnerModalVisible(false);
         
-        // ✅ Immediately refresh declared results **without waiting for a date change**
-        fetchDeclaredResults(values.resultDate || moment());
+        // Refresh declared results using the current filter (gameResultDate) from the UI,
+        // ensuring that only results for that date are shown.
+        fetchDeclaredResults(gameResultDate);
       }
     } catch (error) {
-      message.error(
-        (error.response?.data?.message) || "Failed to declare winner."
-      );
+      alert((error.response?.data?.message) || "Failed to declare winner.");
     } finally {
       setLoadingDeclareResult(false);
     }
   };
+  
   
 
 
@@ -647,6 +652,7 @@ const handlePannaChange = (value) => {
         {winners.length > 0 ? (
           <Table
             columns={[
+              { title: "User Name", dataIndex: "userName" },
               { title: "Game Name", dataIndex: "gameName" },
               { title: "Game Type", dataIndex: "gameType" },
               { title: "Date", dataIndex: "time" },

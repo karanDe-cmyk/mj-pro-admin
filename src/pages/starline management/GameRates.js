@@ -1,54 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import instance from '../../utils/axiosInstance'; // Import your custom axios instance
-import { } from "../../utils/config"; // Use your API ID if needed
+import instance from '../../utils/axiosInstance';
+import { Spin, message } from 'antd';
+
+// Define the fields to be managed, each with a label, a rate key, and a value key.
+const fields = [
+  { label: "Single Digit", rateKey: "singleDigit", valueKey: "singleDigitValue" },
+  { label: "Double Pana", rateKey: "doublePana", valueKey: "doublePanaValue" },
+  { label: "Single Pana", rateKey: "singlePana", valueKey: "singlePanaValue" },
+  { label: "Triple Pana", rateKey: "triplePana", valueKey: "triplePanaValue" },
+];
 
 const GameRates = () => {
-  const [singleDigit, setSingleDigit] = useState('');
-  const [singlePana, setSinglePana] = useState('');
-  const [doublePana, setDoublePana] = useState('');
-  const [triplePana, setTriplePana] = useState('');
-  const [loading, setLoading] = useState(true); // For fetching data
-  const [updating, setUpdating] = useState(false); // For updating data
+  const [rates, setRates] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
-  // Fetch game rates when the component mounts
-  useEffect(() => {
-    const fetchGameRates = async () => {
-      try {
-        const response = await instance.get(`/api/starline/rates`);
-        const { singleDigit, singlePana, doublePana, triplePana } = response.data;
-        setSingleDigit(singleDigit);
-        setSinglePana(singlePana);
-        setDoublePana(doublePana);
-        setTriplePana(triplePana);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching game rates:', error);
-        setLoading(false);
+  // Function to fetch game rates.
+  const fetchGameRates = async () => {
+    try {
+      setLoading(true);
+      const response = await instance.get(`/api/starline/rates`);
+      if (response.data) {
+        // Remove unwanted fields.
+        const { _id, __v, createdAt, updatedAt, ...filteredData } = response.data;
+        setRates(filteredData);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching game rates:', error);
+      alert('Failed to fetch game rates!');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch game rates when the component mounts.
+  useEffect(() => {
     fetchGameRates();
   }, []);
 
-  // Handle updating the game rates
-  const handleUpdate = async () => {
-    const updatedRates = {
-      singleDigit,
-      singlePana,
-      doublePana,
-      triplePana,
-    };
+  // Handle input changes for both rate and value fields.
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setRates({ ...rates, [name]: value });
+  };
 
+  // Handle updating the game rates.
+  const handleUpdate = async () => {
+    const updatedRates = { ...rates };
     setUpdating(true);
     try {
       const response = await instance.patch(`/api/starline/rates`, updatedRates);
       if (response.data) {
-        alert('Game rates updated successfully!');
-        const { singleDigit, singlePana, doublePana, triplePana } = response.data;
-        setSingleDigit(singleDigit);
-        setSinglePana(singlePana);
-        setDoublePana(doublePana);
-        setTriplePana(triplePana);
+        message.success('Game rates updated successfully!');
+        alert(`Rates Updated Successfully!`)
+
+        // Automatically re-fetch updated rates.
+        await fetchGameRates();
+
       }
     } catch (error) {
       console.error('Error updating game rates:', error);
@@ -58,7 +66,6 @@ const GameRates = () => {
     }
   };
 
-  // Display a loading indicator until data is fetched
   if (loading) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
@@ -68,87 +75,45 @@ const GameRates = () => {
     );
   }
 
-  // Helper function to compute and display the formula (1 rupees = value/10)
-  const computeDivision = (value) => {
-    if (value === '' || isNaN(value)) return 'N/A';
-    const result = Number(value) / 10;
-    return `1 rupees = ${result}`;
-  };
-
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {/* Container */}
       <div className="bg-white p-6 shadow-md rounded-lg">
-        {/* Title */}
-        <h2 className="text-2xl font-bold mb-4 text-left">Add Game Rate</h2>
-
-        {/* Each input row */}
+        <h2 className="text-2xl font-bold mb-4 text-left">Update Game Rates</h2>
         <div className="space-y-4">
-          {/* Single Digit Row */}
-          <div className="flex items-center space-x-2">
-            <div className="flex flex-col w-40">
-              <label className="font-bold text-gray-900 text-sm mb-1">Single Digit</label>
-              <input 
-                type="number" 
-                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
-                value={singleDigit}
-                onChange={(e) => setSingleDigit(e.target.value)}
-              />
+          {fields.map((field) => (
+            <div key={field.rateKey} className="grid grid-cols-2 gap-4 items-center">
+              {/* Rate Input Column */}
+              <div className="flex flex-col">
+                <label className="font-bold text-gray-900 text-sm mb-1">
+                  {field.label} (Rate)
+                </label>
+                <input
+                  type="number"
+                  name={field.rateKey}
+                  value={rates[field.rateKey] || ""}
+                  onChange={handleInputChange}
+                  className="border border-gray-300 rounded-md p-2 text-sm"
+                />
+              </div>
+              {/* Value Input Column with Rupee Symbol */}
+              <div className="flex flex-col">
+                <label className="font-bold text-gray-900 text-sm mb-1">
+                  {field.label} (Value)
+                </label>
+                <div className="flex items-center border border-gray-300 rounded-md">
+                  <span className="px-2 text-lg">₹</span>
+                  <input
+                    type="number"
+                    name={field.valueKey}
+                    value={rates[field.valueKey] || ""}
+                    onChange={handleInputChange}
+                    className="p-2 text-sm flex-1 outline-none"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="w-28 text-right">
-              <span className="font-bold text-gray-900 text-sm">{computeDivision(singleDigit)}</span>
-            </div>
-          </div>
-
-          {/* Single Pana Row */}
-          <div className="flex items-center space-x-2">
-            <div className="flex flex-col w-40">
-              <label className="font-bold text-gray-900 text-sm mb-1">Single Pana</label>
-              <input 
-                type="number" 
-                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
-                value={singlePana}
-                onChange={(e) => setSinglePana(e.target.value)}
-              />
-            </div>
-            <div className="w-28 text-right">
-              <span className="font-bold text-gray-900 text-sm">{computeDivision(singlePana)}</span>
-            </div>
-          </div>
-
-          {/* Double Pana Row */}
-          <div className="flex items-center space-x-2">
-            <div className="flex flex-col w-40">
-              <label className="font-bold text-gray-900 text-sm mb-1">Double Pana</label>
-              <input 
-                type="number" 
-                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
-                value={doublePana}
-                onChange={(e) => setDoublePana(e.target.value)}
-              />
-            </div>
-            <div className="w-28 text-right">
-              <span className="font-bold text-gray-900 text-sm">{computeDivision(doublePana)}</span>
-            </div>
-          </div>
-
-          {/* Triple Pana Row */}
-          <div className="flex items-center space-x-2">
-            <div className="flex flex-col w-40">
-              <label className="font-bold text-gray-900 text-sm mb-1">Triple Pana</label>
-              <input 
-                type="number" 
-                className="w-full border border-gray-300 rounded-md p-2 text-sm" 
-                value={triplePana}
-                onChange={(e) => setTriplePana(e.target.value)}
-              />
-            </div>
-            <div className="w-28 text-right">
-              <span className="font-bold text-gray-900 text-sm">{computeDivision(triplePana)}</span>
-            </div>
-          </div>
+          ))}
         </div>
-
         {/* Update Button */}
         <button
           onClick={handleUpdate}
@@ -158,10 +123,10 @@ const GameRates = () => {
           {updating ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-t-4 border-white mr-2"></div>
-              <span>Updating...</span>
+              Updating...
             </>
           ) : (
-            <span>Update</span>
+            "Update"
           )}
         </button>
       </div>

@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from "react";
-import axios from "../utils/axiosInstance"; // Import Axios instance
-import { Spin } from "antd"; // Import Ant Design Spinner
+import axios from "../utils/axiosInstance";
+import { Spin, message } from "antd";
+
+// Define the fields you want to manage, pairing each rate with its corresponding value.
+const fields = [
+  { label: "Triple Pana", rateKey: "triplePana", valueKey: "triplePanaValue" },
+  { label: "Panel Group", rateKey: "panelGroup", valueKey: "panelGroupValue" },
+  { label: "SP DP TP", rateKey: "spDpTp", valueKey: "spDpTpValue" },
+  { label: "Choice Panna SP DP", rateKey: "choicePannaSpDp", valueKey: "choicePannaSpDpValue" },
+  { label: "SP Motor", rateKey: "spMotor", valueKey: "spMotorValue" },
+  { label: "DP Motor", rateKey: "dpMotor", valueKey: "dpMotorValue" },
+  { label: "Odd Even", rateKey: "oddEven", valueKey: "oddEvenValue" },
+  { label: "Two Digits Panel", rateKey: "twoDigitsPanel", valueKey: "twoDigitsPanelValue" },
+  { label: "Group Jodi", rateKey: "groupJodi", valueKey: "groupJodiValue" },
+  { label: "Digit Based Jodi", rateKey: "digitBasedJodi", valueKey: "digitBasedJodiValue" },
+  { label: "Red Bracket", rateKey: "redBracket", valueKey: "redBracketValue" },
+  { label: "Half Sangam A", rateKey: "halfSangamA", valueKey: "halfSangamAValue" },
+  { label: "Half Sangam B", rateKey: "halfSangamB", valueKey: "halfSangamBValue" },
+  { label: "Full Sangam", rateKey: "fullSangam", valueKey: "fullSangamValue" },
+  { label: "Single Digits", rateKey: "singleDigits", valueKey: "singleDigitsValue" },
+  { label: "Single Digits Bulk", rateKey: "singleDigitsBulk", valueKey: "singleDigitsBulkValue" },
+  { label: "Jodi", rateKey: "jodi", valueKey: "jodiValue" },
+  { label: "Jodi Bulk", rateKey: "jodiBulk", valueKey: "jodiBulkValue" },
+  { label: "Single Pana", rateKey: "singlePana", valueKey: "singlePanaValue" },
+  { label: "Single Pana Bulk", rateKey: "singlePanaBulk", valueKey: "singlePanaBulkValue" },
+  { label: "Double Pana", rateKey: "doublePana", valueKey: "doublePanaValue" },
+  { label: "Double Pana Bulk", rateKey: "doublePanaBulk", valueKey: "doublePanaBulkValue" },
+];
 
 const GameRate = () => {
   const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  // ✅ Fetch Bet Rates on Component Mount
+  // Fetch Bet Rates on component mount.
   useEffect(() => {
     fetchBetRates();
   }, []);
@@ -16,9 +42,8 @@ const GameRate = () => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/rates/getBetRates`);
-
       if (response.data) {
-        // ✅ Remove unwanted fields (_id, createdAt, updatedAt, __v)
+        // Remove unwanted fields from the response.
         const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
         setRates(filteredData);
       }
@@ -30,28 +55,26 @@ const GameRate = () => {
     }
   };
 
+  // Update the state when an input value changes.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setRates({ ...rates, [name]: value });
   };
 
+  // Call the update API and refresh data.
   const handleUpdate = async () => {
     try {
       setUpdating(true);
       await axios.put(`/api/rates/updateBetRates`, rates);
       fetchBetRates(); // Refresh data after update
+      message.success("Rates updated successfully!");
+      alert("Rates updated successfully!");
     } catch (error) {
       console.error("Error updating bet rates:", error);
       alert("Failed to update rates!");
     } finally {
       setUpdating(false);
     }
-  };
-
-  // Helper function to compute the formula value
-  const computeDivision = (value) => {
-    if (value === "" || isNaN(value)) return "N/A";
-    return Number(value) / 10;
   };
 
   return (
@@ -63,49 +86,44 @@ const GameRate = () => {
             <Spin size="large" />
           </div>
         ) : (
-          // Using grid layout to display two columns: inputs and computed boxes
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Column 1: Input Fields */}
-            <div className="space-y-4">
-              {Object.keys(rates).map((key) => (
-                <div key={key} className="flex items-center space-x-2">
-                  <div className="flex flex-col w-40">
-                    <label className="font-bold text-gray-900 text-sm mb-1">
-                      {key.replace(/([A-Z])/g, " $1").trim()}
-                    </label>
+          <div className="space-y-4">
+            {fields.map((field) => (
+              <div key={field.rateKey} className="grid grid-cols-2 gap-4 items-center">
+                {/* Column for Rate Input */}
+                <div className="flex flex-col">
+                  <label className="font-bold text-gray-900 text-sm mb-1">
+                    {field.label} (Rate)
+                  </label>
+                  <input
+                    type="number"
+                    name={field.rateKey}
+                    value={rates[field.rateKey] || ""}
+                    onChange={handleInputChange}
+                    className="border border-gray-300 rounded-md p-2 text-sm"
+                  />
+                </div>
+                {/* Column for Value Input with rupee symbol */}
+                <div className="flex flex-col">
+                  <label className="font-bold text-gray-900 text-sm mb-1">
+                    {field.label} (Value)
+                  </label>
+                  <div className="flex items-center border border-gray-300 rounded-md">
+                    <span className="px-2 text-lg">₹</span>
                     <input
                       type="number"
-                      name={key}
-                      value={rates[key]}
+                      name={field.valueKey}
+                      value={rates[field.valueKey] || ""}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                      className="p-2 text-sm flex-1 outline-none"
                     />
                   </div>
                 </div>
-              ))}
-            </div>
-            {/* Column 2: Computed Division Boxes */}
-            <div className="space-y-4">
-              {/* Heading for second column */}
-              <h2 className="text-xl font-bold text-center text-gray-900 mb-2">Values</h2>
-              {Object.keys(rates).map((key) => (
-                <div
-                  key={key}
-                  className="border border-gray-300 rounded-md p-2 text-center"
-                >
-                  <div className="font-bold text-sm mb-1">
-                    {key.replace(/([A-Z])/g, " $1").trim()}
-                  </div>
-                  <div className="text-sm font-bold">
-                    1 rupees = {computeDivision(rates[key])}
-                  </div>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* ✅ Update Button with Spinner */}
+        {/* Update Button */}
         <button
           onClick={handleUpdate}
           disabled={updating}

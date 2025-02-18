@@ -51,11 +51,33 @@ const UserDetails = () => {
   // console.log("userId....", userId);
 
   const [userData, setUserData] = useState(null);
+  const [status, setStatus] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [transactionHistoryDataAll, setTransactionHistoryDataAll] = useState(
     []
   );
+
+
+
+
+// Update the status using a separate state variable.
+const updateStatus = async (newStatus) => {
+  try {
+    const response = await instance.post(`/api/auth/userStatusUpdate/${userId}`, {
+      type: "status",
+      value: newStatus,
+    });
+    if (response.data && response.data.user) {
+      // Update only the status state
+      setStatus(response.data.user.status);
+    }
+  } catch (error) {
+    console.error("Error updating status:", error);
+  }
+};
+
 
   const fetchTransactions = async (userId) => {
     try {
@@ -168,6 +190,8 @@ const UserDetails = () => {
       try {
         const response = await instance.get(`/api/app/users/${userId}`);
         setUserData(response.data);
+        setStatus(response.data.status);
+
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -905,24 +929,49 @@ const formatTransactionData = (depositTransactions, withdrawTransactions) => {
                       />
                     </Text>
                   </Col>
-                  <Col>
-                    <Text>
-                      Active:{" "}
-                      <Badge
-                        status={userData.status ? "true" : "false"}
-                        text={userData.status ? "Yes" : "No"}
-                      />
-                    </Text>
-                    <br />
-                    <Text>
-                      Banned:{" "}
-                      <Badge
-                        // Assuming banned is the opposite of active
-                        status={!userData.status ? "false" : "true"}
-                        text={!userData.status ? "Yes" : "No"}
-                      />
-                    </Text>
-                  </Col>
+                  <div>
+      {/* Active */}
+      <div style={{ marginBottom: "8px" }}>
+        <span style={{ marginRight: "8px", fontWeight: "bold" }}>Active:</span>
+        <button
+          style={{
+            backgroundColor: status ? "#28a745" : "#dc3545",
+            color: "#fff",
+            border: "none",
+            borderRadius: "20px",
+            padding: "6px 12px",
+            cursor: "pointer",
+            fontWeight: "bold",
+            fontSize: "0.8rem",
+            minWidth: "80px",
+          }}
+          onClick={() => updateStatus(!status)}
+        >
+          {status ? "Yes" : "No"}
+        </button>
+      </div>
+
+      {/* Banned */}
+      <div>
+        <span style={{ marginRight: "8px", fontWeight: "bold" }}>Banned:</span>
+        <button
+          style={{
+            backgroundColor: !status ? "#28a745" : "#dc3545",
+            color: "#fff",
+            border: "none",
+            borderRadius: "20px",
+            padding: "6px 12px",
+            cursor: "pointer",
+            fontWeight: "bold",
+            fontSize: "0.8rem",
+            minWidth: "80px",
+          }}
+          onClick={() => updateStatus(!status)}
+        >
+          {!status ? "Yes" : "No"}
+        </button>
+      </div>
+    </div>
                 </Row>
                 <div style={{ marginTop: "20px" }}>
                   <Text>Available Balance: </Text>
