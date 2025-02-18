@@ -205,6 +205,7 @@ const AllBidHistory = () => {
               <th className="py-3 px-4 border">Member Name</th>
               <th className="py-3 px-4 border">Market</th>
               <th className="py-3 px-4 border">Game Name</th>
+              <th className="py-3 px-4 border">Game Type</th>
               <th className="py-3 px-4 border">Betting Amount</th>
               <th className="py-3 px-4 border">Digit/Pana</th>
               <th className="py-3 px-4 border">Betting Time</th>
@@ -221,6 +222,8 @@ const AllBidHistory = () => {
                   <td className="border px-4 py-2">
                     {bid.gamename || bid.gameName}
                   </td>
+                  <td className="border px-4 py-2">{bid.gameType}</td>
+
                   <td className="border px-4 py-2">{bid.points}</td>
                   <td className="border px-4 py-2">{bid.digit}</td>
                   <td className="border px-4 py-2">{bid.time}</td>

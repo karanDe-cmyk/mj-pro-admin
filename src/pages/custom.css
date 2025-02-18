@@ -1,0 +1,83 @@
+/* 1) Remove any default Ant Design border in inline mode */
+.ant-menu-inline .ant-menu-submenu-title::after,
+.ant-menu-inline .ant-menu-item::after {
+  border-right: none !important;
+}
+
+/* 2) Uniform dark background for the entire menu */
+.ant-menu-dark {
+  background-color: #1F2640 !important; /* same as your Sider background */
+}
+
+/* 3) Submenu titles: same dark background, soft text color, bold text, no border radius, full width */
+.ant-menu-dark .ant-menu-submenu-title {
+  background-color: #1F2640 !important;
+  color: #ccc !important; /* softer text color for inactive items */
+  margin: 0 !important;
+  border-left: none !important; /* no left border */
+  font-weight: 500 !important;  /* make text bold */
+  border-radius: 0 !important;  /* remove border radius */
+  width: 100% !important;       /* use full width */
+}
+
+/* 4) Menu items: same dark background, soft text color, bold text */
+.ant-menu-dark .ant-menu-item {
+  background-color: #1F2640 !important;
+  color: #ccc !important;
+  margin: 0 !important;
+  border-left: none !important;
+  font-weight: 500 !important;
+}
+
+/* 5) Hover state: no color block, just white text */
+.ant-menu-dark .ant-menu-item:hover,
+.ant-menu-dark .ant-menu-submenu-title:hover {
+  background-color: #1F2640 !important; /* stays uniform */
+  color: #fff !important;              /* text becomes white */
+}
+
+/* 6) Active (selected) item: keep same background, white text */
+.ant-menu-dark .ant-menu-item-selected,
+.ant-menu-dark .ant-menu-submenu-selected {
+  background-color: #1F2640 !important;
+  color: #fff !important;
+}
+
+/* 7) Ensure icons in selected items also become white */
+.ant-menu-dark .ant-menu-item-selected i,
+.ant-menu-dark .ant-menu-submenu-selected i {
+  color: #fff !important;
+}
+
+/* 8) Submenu arrow icons (when open or hovered) should also be white */
+.ant-menu-dark .ant-menu-submenu-open .ant-menu-submenu-arrow,
+.ant-menu-dark .ant-menu-submenu-title:hover .ant-menu-submenu-arrow {
+  color: #fff !important;
+}
+
+/* 9) Force submenu popups to full width, remove border radius, and keep uniform background */
+.ant-menu-dark .ant-menu-sub {
+  background-color: #1F2640 !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+.custom-scrollbar::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* Hide scrollbar for IE, Edge, and Firefox */
+  .custom-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+    padding-bottom: 20px; /* Existing bottom padding */
+  }
+  
+  /* Add extra scroll space at the bottom using a pseudo-element */
+  .custom-scrollbar::after {
+    content: "";
+    display: block;
+    height: 50px; /* Adjust height as needed */
+  }
+  

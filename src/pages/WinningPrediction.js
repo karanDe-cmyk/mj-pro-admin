@@ -392,6 +392,7 @@ const WinningPrediction = ({ initialData }) => {
     { title: "Bet Digit", dataIndex: "digit", key: "digit" },
     { title: "Bet Amount", dataIndex: "points", key: "points" },
     { title: "Game Name", dataIndex: "gameName", key: "gameName" },
+    { title: "Game Tyoe", dataIndex: "gameType", key: "gameType" },
     {
       title: "Winning Amount",
       dataIndex: "winningPoints",

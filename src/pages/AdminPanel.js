@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { Layout, Menu } from "antd";
 import Header from "../components/Header";
+import "./custom.css"; // Import the custom CSS
 
 const { Sider, Content } = Layout;
 
@@ -12,7 +13,10 @@ const AdminPanel = () => {
   const dispatch = useDispatch();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1080);
-  const [showSidebar, setShowSidebar] = useState(!isMobile); // ✅ Controls sidebar visibility
+  const [showSidebar, setShowSidebar] = useState(!isMobile);
+  
+  // State for controlling open submenus
+  const [openKeys, setOpenKeys] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,12 +31,10 @@ const AdminPanel = () => {
     };
 
     window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ✅ Hide sidebar when clicking outside
+  // Hide sidebar when clicking outside on mobile
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isMobile && showSidebar) {
@@ -44,9 +46,7 @@ const AdminPanel = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMobile, showSidebar]);
 
   const handleLogout = () => {
@@ -56,6 +56,7 @@ const AdminPanel = () => {
     navigate("/");
   };
 
+  // Define menu items with unique keys
   const menuItems = [
     {
       key: "dashboard",
@@ -81,19 +82,19 @@ const AdminPanel = () => {
       ],
     },
     {
+      key: "market-result-top",
+      label: "Declare Result",
+      path: "/admin/game-management/declare-market-result",
+      icon: <i className="fa fa-bullhorn" />,
+    },
+    {
       label: "Starline Management",
       icon: <i className="fa fa-star" aria-hidden="true"></i>,
       children: [
-        { label: "Game Name", path: "/admin/starline-management/game-name" },
-        {
-          label: "Bid History",
-          path: "/admin/starline-management/bid-history",
-        },
-        {
-          label: "Declare Result",
-          path: "/admin/starline-management/declare-result-starline",
-        },
-        { label: "Game Rates", path: "/admin/starline-management/game-rates" },
+        { key: "starline-game-name", label: "Game Name", path: "/admin/starline-management/game-name" },
+        { key: "starline-bid-history", label: "Bid History", path: "/admin/starline-management/bid-history" },
+        { key: "starline-declare-result", label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
+        { key: "starline-game-rates", label: "Game Rates", path: "/admin/starline-management/game-rates" },
       ],
     },
     {
@@ -102,7 +103,6 @@ const AdminPanel = () => {
       path: "/admin/winning-prediction",
       icon: <i className="fa fa-circle" />,
     },
-
     {
       key: "auto-deposit-history",
       label: "Auto Deposit History",
@@ -148,8 +148,9 @@ const AdminPanel = () => {
         },
         {
           key: "market-result",
-          label: "Market Declare Result",
+          label: "Declare Result",
           path: "/admin/game-management/declare-market-result",
+          icon: <i className="fa fa-bullhorn" />,
         },
         {
           key: "game-rates",
@@ -163,18 +164,17 @@ const AdminPanel = () => {
         },
       ],
     },
-
     {
       label: "Game & Number",
       icon: <i className="fa fa-dice" aria-hidden="true"></i>,
       children: [
-        { label: "Single Digit", path: "/admin/game-number/single-digit" },
-        { label: "Jodi Digit", path: "/admin/game-number/jodi-digit" },
-        { label: "Single Pana", path: "/admin/game-number/single-pana" },
-        { label: "Double Pana", path: "/admin/game-number/double-pana" },
-        { label: "Triple Pana", path: "/admin/game-number/triple-pana" },
-        { label: "Half Sangam", path: "/admin/game-number/half-sangam" },
-        { label: "Full Sangam", path: "/admin/game-number/full-sangam" },
+        { key: "single-digit", label: "Single Digit", path: "/admin/game-number/single-digit" },
+        { key: "jodi-digit", label: "Jodi Digit", path: "/admin/game-number/jodi-digit" },
+        { key: "single-pana", label: "Single Pana", path: "/admin/game-number/single-pana" },
+        { key: "double-pana", label: "Double Pana", path: "/admin/game-number/double-pana" },
+        { key: "triple-pana", label: "Triple Pana", path: "/admin/game-number/triple-pana" },
+        { key: "half-sangam", label: "Half Sangam", path: "/admin/game-number/half-sangam" },
+        { key: "full-sangam", label: "Full Sangam", path: "/admin/game-number/full-sangam" },
       ],
     },
     {
@@ -183,12 +183,13 @@ const AdminPanel = () => {
       icon: <i className="fa fa-cog" />,
       children: [
         {
+          key: "main-setting",
           label: "Main Setting",
           path: "/admin/settings/main",
           icon: <i className="fa fa-cog" />,
         },
-
         {
+          key: "slider-management",
           label: "Slider-Management",
           path: "/admin/settings/slider-management",
           icon: <i className="fa fa-sliders" />,
@@ -200,12 +201,10 @@ const AdminPanel = () => {
       label: "Galidisawar Games",
       icon: <i className="fa fa-dice" />,
       children: [
-          { label: "Game Name", path: "/admin/galidisawer-games/game-list" },
-          { label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
-          { label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
-          { label: "Game Rates ", path: "/admin/galidisawer-games/game-rates" },
-        
-
+        { key: "galidi-game-name", label: "Game Name", path: "/admin/galidisawer-games/game-list" },
+        { key: "galidi-bid-history", label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
+        { key: "galidi-declare-results", label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
+        { key: "galidi-game-rates", label: "Game Rates", path: "/admin/galidisawer-games/game-rates" },
       ],
     },
     {
@@ -222,12 +221,57 @@ const AdminPanel = () => {
     },
   ];
 
+  // Helper: determine the selected keys based on the location
+  const getSelectedKeys = () => {
+    const { pathname } = location;
+    const selected = [];
+    // Loop over all items to find a matching path
+    menuItems.forEach((item) => {
+      if (item.children) {
+        item.children.forEach((child) => {
+          if (child.path === pathname) {
+            selected.push(child.key);
+          }
+        });
+      } else {
+        if (item.path === pathname) {
+          selected.push(item.key);
+        }
+      }
+    });
+    return selected;
+  };
+
+  // Update the selected keys whenever location changes
+  const selectedKeys = getSelectedKeys();
+
+  // Special effect: force open submenus based on the current route
+  useEffect(() => {
+    if (location.pathname === "/admin/game-management/declare-market-result") {
+      // Add "game-management" to openKeys if it's not already open
+      setOpenKeys((prevKeys) =>
+        prevKeys.includes("game-management")
+          ? prevKeys
+          : [...prevKeys, "game-management"]
+      );
+    }
+    if (location.pathname.startsWith("/admin/settings")) {
+      setOpenKeys((prevKeys) =>
+        prevKeys.includes("settings")
+          ? prevKeys
+          : [...prevKeys, "settings"]
+      );
+    }
+    // Optionally, you can update openKeys based on location for other routes as needed.
+  }, [location.pathname]);
+
+  // Render menu items recursively
   const renderMenu = (items) =>
     items.map((item) =>
       item.children ? (
         <Menu.SubMenu key={item.key} icon={item.icon} title={item.label}>
           {item.children.map((sub) => (
-            <Menu.Item key={sub.key}>
+            <Menu.Item key={sub.key} icon={sub.icon ? sub.icon : null}>
               <NavLink to={sub.path}>{sub.label}</NavLink>
             </Menu.Item>
           ))}
@@ -241,7 +285,6 @@ const AdminPanel = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      {/* ✅ Sidebar - Only Show When `showSidebar` is True */}
       {showSidebar && (
         <Sider
           id="sidebar"
@@ -249,25 +292,32 @@ const AdminPanel = () => {
           collapsed={collapsed}
           onCollapse={setCollapsed}
           theme="dark"
-          width={240} // ✅ Set the default expanded width
-          collapsedWidth={100} // ✅ Set the collapsed width
+          width={240}
+          collapsedWidth={80}
           style={{
             height: "100vh",
             overflowY: "auto",
             position: "fixed",
             left: 0,
-            zIndex: 1000, // Keep it above other content
+            zIndex: 1000,
             transition: "width 0.3s",
-            scrollbarWidth: "none", // Hide scrollbar in Firefox
-            msOverflowStyle: "none",
-            backgroundColor: "#001529", // Ensure sidebar has a visible background
+            backgroundColor: "#1F2640",
           }}
           className="custom-scrollbar"
         >
-          <div className="p-4 text-white text-center text-lg font-bold">
-            Admin Panel
+          <div className="p-4 text-center text-lg font-bold">
+            <NavLink to="/admin/dashboard" style={{ color: "#556EE6" }}>
+              Admin Panel
+            </NavLink>
           </div>
-          <Menu theme="dark" mode="inline">
+
+          <Menu 
+            theme="dark" 
+            mode="inline" 
+            selectedKeys={selectedKeys} 
+            openKeys={openKeys}           // Use controlled openKeys
+            onOpenChange={(keys) => setOpenKeys(keys)}  // Allow manual control
+          >
             {renderMenu(menuItems)}
           </Menu>
         </Sider>
@@ -275,14 +325,11 @@ const AdminPanel = () => {
 
       <Layout
         style={{
-          marginLeft: showSidebar ? (collapsed ? "100px" : "240px") : "0px", // ✅ Adjust content margin dynamically
+          marginLeft: showSidebar ? (collapsed ? "100px" : "240px") : "0px",
           transition: "margin-left 0.3s",
         }}
       >
-        <Header
-          onToggleSidebar={() => setShowSidebar((prev) => !prev)}
-          handleLogout={handleLogout}
-        />
+        <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} handleLogout={handleLogout} />
         <Content
           style={{
             padding: "16px",

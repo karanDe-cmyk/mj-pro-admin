@@ -648,6 +648,7 @@ const handlePannaChange = (value) => {
           <Table
             columns={[
               { title: "Game Name", dataIndex: "gameName" },
+              { title: "Game Type", dataIndex: "gameType" },
               { title: "Date", dataIndex: "time" },
               { title: "Digit/Pana", dataIndex: "digit" },
               {

@@ -48,11 +48,10 @@ const GameRate = () => {
     }
   };
 
-  // Helper function to compute the formula: 1 rupees = (value/10)
+  // Helper function to compute the formula value
   const computeDivision = (value) => {
     if (value === "" || isNaN(value)) return "N/A";
-    const result = Number(value) / 10;
-    return `1 rupees = ${result}`;
+    return Number(value) / 10;
   };
 
   return (
@@ -64,29 +63,45 @@ const GameRate = () => {
             <Spin size="large" />
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* ✅ Dynamically Generate Input Fields */}
-            {Object.keys(rates).map((key) => (
-              <div key={key} className="flex items-center space-x-2">
-                <div className="flex flex-col w-40">
-                  <label className="font-bold text-gray-900 text-sm mb-1">
+          // Using grid layout to display two columns: inputs and computed boxes
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Column 1: Input Fields */}
+            <div className="space-y-4">
+              {Object.keys(rates).map((key) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <div className="flex flex-col w-40">
+                    <label className="font-bold text-gray-900 text-sm mb-1">
+                      {key.replace(/([A-Z])/g, " $1").trim()}
+                    </label>
+                    <input
+                      type="number"
+                      name={key}
+                      value={rates[key]}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Column 2: Computed Division Boxes */}
+            <div className="space-y-4">
+              {/* Heading for second column */}
+              <h2 className="text-xl font-bold text-center text-gray-900 mb-2">Values</h2>
+              {Object.keys(rates).map((key) => (
+                <div
+                  key={key}
+                  className="border border-gray-300 rounded-md p-2 text-center"
+                >
+                  <div className="font-bold text-sm mb-1">
                     {key.replace(/([A-Z])/g, " $1").trim()}
-                  </label>
-                  <input
-                    type="number"
-                    name={key}
-                    value={rates[key]}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                  />
+                  </div>
+                  <div className="text-sm font-bold">
+                    1 rupees = {computeDivision(rates[key])}
+                  </div>
                 </div>
-                <div className="w-28 text-right">
-                  <span className="font-bold text-gray-900 text-sm">
-                    {computeDivision(rates[key])}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 

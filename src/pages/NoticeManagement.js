@@ -1,12 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import instance from "../utils/axiosInstance";
 
 const NoticeManagement = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
   });
-
+  const [noticeId, setNoticeId] = useState(null);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Fetch notice data on component mount
+  useEffect(() => {
+    const fetchNoticeData = async () => {
+      try {
+        setLoading(true);
+        const response = await instance.get("/api/settings/noticeManagement/");
+        if (response.data && response.data.length > 0) {
+          // Extract only title, description and _id from the first object in the array
+          const { _id, title, description } = response.data[0];
+          setNoticeId(_id);
+          setFormData({ title, description });
+        }
+      } catch (error) {
+        console.error("Error fetching notice data:", error);
+        setMessage("Error fetching notice data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNoticeData();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -16,12 +41,33 @@ const NoticeManagement = () => {
     }));
   };
 
-  const handleUpdate = () => {
-    // Simulate an API call to save notice data
-    if (formData.title && formData.description) {
-      setMessage("Notice updated successfully!");
-    } else {
+  const handleUpdate = async () => {
+    if (!formData.title || !formData.description) {
       setMessage("Please fill out both fields.");
+      return;
+    }
+    try {
+      setLoading(true);
+      if (!noticeId) {
+        setMessage("Notice ID not found");
+        return;
+      }
+      // Call the PUT API with the notice ID dynamically added to the URL
+      const response = await instance.put(
+        `/api/settings/noticeManagement/${noticeId}`,
+        formData
+      );
+      setMessage("Notice updated successfully!");
+      // Optionally, update the state with the response data
+      if (response.data) {
+        const { title, description } = response.data;
+        setFormData({ title, description });
+      }
+    } catch (error) {
+      console.error("Error updating notice:", error);
+      setMessage("Error updating notice");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,9 +105,10 @@ const NoticeManagement = () => {
         </div>
         <button
           onClick={handleUpdate}
+          disabled={loading}
           className="bg-blue-500 text-white mt-4 px-4 py-2 rounded shadow hover:bg-blue-600"
         >
-          Update
+          {loading ? "Updating..." : "Update"}
         </button>
       </div>
 
