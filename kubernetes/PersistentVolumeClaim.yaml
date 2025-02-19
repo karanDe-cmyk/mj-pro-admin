@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: mongo-pvc
   namespace: matka  # ✅ PVC me namespace hona chahiye
+  labels:
+    argocd.argoproj.io/managed-by: ignore  # ArgoCD will ignore this PVC
 spec:
   accessModes:
     - ReadWriteOnce
