@@ -36,7 +36,7 @@ metadata:
   name: frontend-service
   namespace: matka
 spec:
-  type: NodePort 
+  type: LoadBalancer    
   selector:
     app: frontend
   ports:
