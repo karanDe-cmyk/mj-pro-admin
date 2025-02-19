@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../utils/axiosInstance"; // Import your Axios instance
-import { } from "../../utils/config";
 
 const RemoveMoney = () => {
   const [users, setUsers] = useState([]);

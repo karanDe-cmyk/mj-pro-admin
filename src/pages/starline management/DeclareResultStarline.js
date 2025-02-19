@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance"; // Import the axios instance
-import { } from "../../utils/config"; // Use your API ID if needed
 
 const DeclareResult = () => {
   // States for Declare Result section

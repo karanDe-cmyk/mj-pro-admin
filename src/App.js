@@ -20,7 +20,6 @@ import DoublePana from './pages/game_and_number/DoublePana';
 import TriplePana from './pages/game_and_number/TriplePana';
 import HalfSangam from './pages/game_and_number/HalfSangam';
 import FullSangam from './pages/game_and_number/FullSangam';
-import AllFundRequest from './pages/wallet_management/AllFundRequest';
 import FundRequest from './pages/wallet_management/FundRequest';
 import OfflinePaymentRecords from './pages/wallet_management/OfflinePaymentRecords';
 import WithDrawRequest from './pages/wallet_management/WithDrawRequest';
@@ -51,7 +50,7 @@ import WelcomeSettings from "./pages/setting/WelcomeSettings"; // Import the com
 import UserDetails from './pages/UserDetails';
 import QrCode from './pages/setting/QrCode';
 import SliderManagement from './pages/setting/SliderManagement';
-import WalletAllDepositeHistory from './pages/wallet_management/WalletAllDepositeHistory';
+import WalletAllDepositeHistory from './pages/wallet_management/AllDepositHistory';
 import GalidisawerGameName  from './pages/GalidisawerGames/GameName';
 import GalidisawerBidHistory from './pages/GalidisawerGames/GalidisawerBidHistory';
 import GalidisawerGameRates from './pages/GalidisawerGames/GalidisawerGameRates'
