@@ -12,7 +12,7 @@ const UnapprovedUsers = () => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(5); // Default entries per page
+  const [pageSize, setPageSize] = useState(20); // Default entries per page
   const [currentPage, setCurrentPage] = useState(1); // Default page number
   const navigate = useNavigate();
 
