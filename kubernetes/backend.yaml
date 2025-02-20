@@ -35,7 +35,7 @@ metadata:
   name: backend-service
   namespace: matka
 spec:
-  type: NodePort
+  type: LoadBalancer   
   selector:
     app: backend
   ports:
