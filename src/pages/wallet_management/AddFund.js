@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../../utils/axiosInstance"; // Importing Axios instance
+import axiosInstance from "../../utils/axiosInstance";
+import { Select } from "antd";
+const { Option } = Select;
 
 const AddFund = () => {
   const [users, setUsers] = useState([]);
@@ -28,113 +30,125 @@ const AddFund = () => {
     fetchUsers();
   }, []);
 
+  // Prepare options for the Select component
+  const options = users.map((user) => ({
+    value: user.email,
+    label: `${user.userName} - ${user.email}`,
+  }));
+
   // Handle user selection change
-  const handleUserChange = (e) => {
-    const selectedEmail = e.target.value;
-    setSelectedUser(selectedEmail);
+  const handleUserChange = (value) => {
+    setSelectedUser(value);
 
     // Find the selected user and update wallet balance
-    const user = users.find((u) => u.email === selectedEmail);
+    const user = users.find((u) => u.email === value);
     if (user) {
       setWalletBalance(user.walletBalance || 0);
     }
   };
 
   // Handle form submit (Adding Balance)
-  // Handle form submit (Adding Balance)
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!amount || amount <= 0) {
-    alert("Please enter a valid amount!");
-    return;
-  }
+    if (!amount || amount <= 0) {
+      alert("Please enter a valid amount!");
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const response = await axiosInstance.post(`/api/deposit/Addfunds`, {
-      email: selectedUser,
-      amount: parseFloat(amount),
-    });
+    try {
+      const response = await axiosInstance.post(`/api/deposit/Addfunds`, {
+        email: selectedUser,
+        amount: parseFloat(amount),
+      });
 
-    const result = response.data; // Extract response data
-    alert("Balance added successfully!");
+      const result = response.data; // Extract response data
+      alert("Balance added successfully!");
 
-    // Update wallet balance by adding the added amount
-    setWalletBalance((prevBalance) => prevBalance + result.requestAmount);
+      // Update wallet balance by adding the added amount
+      setWalletBalance((prevBalance) => prevBalance + result.requestAmount);
 
-    setAmount(""); // Reset amount input
-  } catch (error) {
-    console.error("Error adding balance:", error);
-    alert("Failed to add balance. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+      setAmount(""); // Reset amount input
+    } catch (error) {
+      console.error("Error adding balance:", error);
+      alert("Failed to add balance. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-fit flex flex-col items-center justify-center bg-white-100 ">
-  <div className="max-w-md bg-white rounded-lg shadow-md w-full mt-20">
-    <div className="p-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Add Balance In User Wallet</h2>
-      <form onSubmit={handleSubmit}>
-        {/* User List Dropdown */}
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-medium mb-2">User List</label>
-          <select
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-            value={selectedUser}
-            onChange={handleUserChange}
-          >
-            {users.map((user) => (
-              <option key={user.userId} value={user.email}>
-                {user.userName} - {user.email}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="min-h-fit flex flex-col items-center justify-center bg-white-100">
+      <div className="max-w-md bg-white rounded-lg shadow-md w-full mt-20">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            Add Balance In User Wallet
+          </h2>
+          <form onSubmit={handleSubmit}>
+            {/* User List Dropdown using Ant Design Select with search */}
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                User List
+              </label>
+              <Select
+                showSearch
+                placeholder="Select a user"
+                value={selectedUser}
+                onChange={handleUserChange}
+                options={options}
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
+                className="w-full"
+              />
+            </div>
 
-        {/* Wallet Balance Display */}
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-medium mb-2">Current Wallet Balance</label>
-          <input
-            type="text"
-            className="w-full px-4 py-2 border rounded-md bg-gray-200"
-            value={`₹ ${walletBalance}`}
-            readOnly
-          />
-        </div>
+            {/* Wallet Balance Display */}
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Current Wallet Balance
+              </label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border rounded-md bg-gray-200"
+                value={`₹ ${walletBalance}`}
+                readOnly
+              />
+            </div>
 
-        {/* Amount Input */}
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-medium mb-2">Amount</label>
-          <input
-            type="number"
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-            placeholder="Enter Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
+            {/* Amount Input */}
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Amount
+              </label>
+              <input
+                type="number"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                placeholder="Enter Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
-          disabled={loading}
-        >
-          {loading ? "Processing..." : "Submit"}
-        </button>
-      </form>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Submit"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Footer Positioned at the Bottom */}
+      <footer className="mt-auto py-4 text-center text-gray-500 text-sm w-full">
+        2025 © Matka.
+      </footer>
     </div>
-  </div>
-
-  {/* Footer Positioned at the Bottom */}
-  <footer className="mt-auto py-4 text-center text-gray-500 text-sm w-full">
-    2025 © Matka.
-  </footer>
-</div>
-
   );
 };
 

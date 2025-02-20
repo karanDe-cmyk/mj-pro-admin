@@ -405,7 +405,7 @@ const updateStatus = async (newStatus) => {
       setLoading(true);
       // Fetch deposit, withdraw, and manual deposit transactions simultaneously
       const [depositRes, withdrawRes, manualDepositRes] = await Promise.allSettled([
-        instance.get(`/api/deposit/transactions/${userData.userId}`),
+        instance.get(`/api/deposit/transactions/${userId}`),
         instance.get(`/api/withdraw/transactions/${userId}`),
         instance.get(`/api/manualDeposit/user/${userId}`),
       ]);

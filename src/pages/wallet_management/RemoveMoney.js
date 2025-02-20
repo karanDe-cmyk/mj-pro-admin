@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../utils/axiosInstance"; // Import your Axios instance
+import { Select } from "antd";
+const { Option } = Select;
 
 const RemoveMoney = () => {
   const [users, setUsers] = useState([]);
@@ -14,7 +16,6 @@ const RemoveMoney = () => {
       try {
         const response = await axios.get(`/api/app/userslist`);
         const data = response.data;
-
         if (Array.isArray(data) && data.length > 0) {
           setUsers(data);
           setSelectedUser(data[0].email);
@@ -28,13 +29,16 @@ const RemoveMoney = () => {
     fetchUsers();
   }, []);
 
-  // Handle user selection change
-  const handleUserChange = (e) => {
-    const selectedEmail = e.target.value;
-    setSelectedUser(selectedEmail);
+  // Prepare options for Ant Design's Select component
+  const options = users.map((user) => ({
+    value: user.email,
+    label: `${user.userName} - ${user.email}`,
+  }));
 
-    // Find the selected user and update wallet balance
-    const user = users.find((u) => u.email === selectedEmail);
+  // Handle user selection change
+  const handleUserChange = (value) => {
+    setSelectedUser(value);
+    const user = users.find((u) => u.email === value);
     if (user) {
       setWalletBalance(user.walletBalance || 0);
     }
@@ -49,7 +53,7 @@ const RemoveMoney = () => {
       return;
     }
 
-    if (amount > walletBalance) {
+    if (parseFloat(amount) > walletBalance) {
       alert("Insufficient balance!");
       return;
     }
@@ -62,14 +66,19 @@ const RemoveMoney = () => {
         amount: parseFloat(amount),
       });
 
-      setLoading(false);
-      alert(`Balance deducted successfully! New Balance: ₹${response.data.walletBalance}`);
+      alert(
+        `Balance deducted successfully! New Balance: ₹${response.data.walletBalance}`
+      );
       setWalletBalance(response.data.walletBalance);
       setAmount(""); // Reset input field
     } catch (error) {
-      setLoading(false);
       console.error("Error deducting balance:", error);
-      alert(error.response?.data?.message || "Failed to deduct balance. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Failed to deduct balance. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,27 +86,33 @@ const RemoveMoney = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white-100">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md mt-20">
         <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Deduct Balance In User Wallet</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            Deduct Balance In User Wallet
+          </h2>
           <form onSubmit={handleSubmit}>
-            {/* User List Dropdown */}
+            {/* User List Dropdown using Ant Design Select with search */}
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-2">User List</label>
-              <select
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                User List
+              </label>
+              <Select
+                showSearch
+                placeholder="Select a user"
                 value={selectedUser}
                 onChange={handleUserChange}
-              >
-                {users.map((user) => (
-                  <option key={user.userId} value={user.email}>
-                    {user.userName} - {user.email}
-                  </option>
-                ))}
-              </select>
+                options={options}
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
+                className="w-full"
+              />
             </div>
 
             {/* Wallet Balance Display */}
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-2">Current Wallet Balance</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Current Wallet Balance
+              </label>
               <input
                 type="text"
                 className="w-full px-4 py-2 border rounded-md bg-gray-200"
@@ -108,7 +123,9 @@ const RemoveMoney = () => {
 
             {/* Amount Input */}
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-2">Amount</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Amount
+              </label>
               <input
                 type="number"
                 className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
@@ -135,7 +152,6 @@ const RemoveMoney = () => {
         2025 © Matka.
       </footer>
     </div>
-
   );
 };
 
