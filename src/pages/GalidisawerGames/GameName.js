@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Modal, Form, TimePicker, Row, Col, Card, Typography, message } from 'antd';
+import { Table, Button, Input, Modal, Form, TimePicker, Row, Col, Card, Typography, message, Switch } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import axiosInstance from "../../utils/axiosInstance";
@@ -15,7 +15,6 @@ const GameName = () => {
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
 
-  // Fetch market data from GET API
   const fetchMarkets = async () => {
     try {
       setLoading(true);
@@ -40,17 +39,22 @@ const GameName = () => {
       const values = await form.validateFields();
       const payload = {
         game_name: values.name,
-        open_time: values.time.format('hh:mm:ssA'),
-        is_active: true
+        open_time: values.time.format("hh:mm:ssA"),
+        is_active: true,
       };
-      await axiosInstance.post('/api/GaliDisawar/AddMarket', payload);
+      await axiosInstance.post("/api/GaliDisawar/AddMarket", payload);
       message.success("Market added successfully");
       form.resetFields();
       setIsModalOpen(false);
       fetchMarkets();
     } catch (error) {
       console.error("Error adding market", error);
-      message.error("Failed to add market");
+      const errMsg =
+        error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
+          : "Failed to add market";
+      alert(errMsg);
+      message.error(errMsg);
     }
   };
 
@@ -60,8 +64,8 @@ const GameName = () => {
       const values = await form.validateFields();
       const payload = {
         game_name: values.name,
-        open_time: values.time.format('hh:mm:ssA'),
-        is_active: true  // Sending is_active true by default
+        open_time: values.time.format("hh:mm:ssA"),
+        is_active: true, // Sending is_active true by default for edit
       };
       await axiosInstance.put(`/api/GaliDisawar/updateMarket/${editingMarket._id}`, payload);
       message.success("Market updated successfully");
@@ -71,7 +75,34 @@ const GameName = () => {
       fetchMarkets();
     } catch (error) {
       console.error("Error updating market", error);
-      message.error("Failed to update market");
+      const errMsg =
+        error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
+          : "Failed to update market";
+      alert(errMsg);
+      message.error(errMsg);
+    }
+  };
+
+  // Handler for updating is_active using the toggle switch
+  const handleToggleStatus = async (record, checked) => {
+    try {
+      const payload = {
+        game_name: record.game_name,
+        open_time: record.open_time,
+        is_active: checked,
+      };
+      await axiosInstance.put(`/api/GaliDisawar/updateMarket/${record._id}`, payload);
+      message.success("Market status updated");
+      fetchMarkets();
+    } catch (error) {
+      console.error("Error updating market status", error);
+      const errMsg =
+        error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
+          : "Failed to update market status";
+      alert(errMsg);
+      message.error(errMsg);
     }
   };
 
@@ -97,7 +128,7 @@ const GameName = () => {
     setIsModalOpen(true);
   };
 
-  // Table columns definition
+  // Table columns definition with added "Status" column.
   const columns = [
     {
       title: '#',
@@ -109,12 +140,25 @@ const GameName = () => {
       dataIndex: 'game_name',
       key: 'game_name',
       sorter: (a, b) => a.game_name.localeCompare(b.game_name),
+      render: (text) => text.toUpperCase(),
     },
     {
       title: 'Open Time',
       dataIndex: 'open_time',
       key: 'open_time',
       sorter: (a, b) => a.open_time.localeCompare(b.open_time),
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => (
+        <Switch
+          checked={record.is_active}
+          onChange={(checked) => handleToggleStatus(record, checked)}
+          checkedChildren="Running"
+          unCheckedChildren="Closed"
+        />
+      ),
     },
     {
       title: 'Action',

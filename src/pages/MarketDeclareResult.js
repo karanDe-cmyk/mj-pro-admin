@@ -276,16 +276,19 @@ const handlePannaChange = (value) => {
       setLoadingDeclareResult(true);
       
       // Determine the declared date from the form
-      const declaredDate = values.resultDate
+      const declaredDateStr = values.resultDate
         ? values.resultDate.format("DD-MM-YYYY")
         : moment().format("DD-MM-YYYY");
-      
+        
+      // Convert to a moment object for later use in fetchDeclaredResults and updating DatePicker state
+      const declaredDateMoment = moment(declaredDateStr, "DD-MM-YYYY");
+  
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
           marketName: values.marketGame,
           gameName: values.gameName,
-          date: declaredDate,
+          date: declaredDateStr,
           gameType: values.gameType,
           digit: values.digit,
           panna: values.panna,
@@ -299,10 +302,37 @@ const handlePannaChange = (value) => {
         message.success("Result declared successfully!");
         alert("Result declared successfully!");
         setIsWinnerModalVisible(false);
-        
-        // Refresh declared results using the current filter (gameResultDate) from the UI,
-        // ensuring that only results for that date are shown.
-        fetchDeclaredResults(gameResultDate);
+  
+        // Create a new result object based on the form values
+        const newResult = {
+          sNo: gameResults.length + 1, // Recalculate numbering later if needed
+          gameName: values.gameName,
+          date: declaredDateStr,
+          open:
+            values.gameType === "open"
+              ? { value: `${values.panna}-${values.digit}`, id: response.data.resultId || new Date().getTime() }
+              : null,
+          close:
+            values.gameType === "close"
+              ? { value: `${values.panna}-${values.digit}`, id: response.data.resultId || new Date().getTime() }
+              : null,
+        };
+  
+        // Optimistically update local state so the table shows the new result immediately.
+        setGameResults((prevResults) => {
+          const updatedResults = [...prevResults, newResult];
+          return updatedResults.map((item, index) => ({ ...item, sNo: index + 1 }));
+        });
+        setFilteredResults((prevResults) => {
+          const updatedResults = [...prevResults, newResult];
+          return updatedResults.map((item, index) => ({ ...item, sNo: index + 1 }));
+        });
+  
+        // Update the DatePicker state to reflect the declared date
+        setSelectedDate(declaredDateMoment);
+  
+        // Refresh from the backend using the declared date
+        fetchDeclaredResults(declaredDateMoment);
       }
     } catch (error) {
       alert((error.response?.data?.message) || "Failed to declare winner.");
@@ -310,6 +340,9 @@ const handlePannaChange = (value) => {
       setLoadingDeclareResult(false);
     }
   };
+  
+  
+  
   
   
 
