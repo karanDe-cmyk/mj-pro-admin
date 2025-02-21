@@ -11,11 +11,8 @@ const { Sider, Content } = Layout;
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
-  const [collapsed, setCollapsed] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1080);
-  const [showSidebar, setShowSidebar] = useState(!isMobile);
-  
-  // State for controlling open submenus
   const [openKeys, setOpenKeys] = useState([]);
 
   const navigate = useNavigate();
@@ -27,6 +24,7 @@ const AdminPanel = () => {
     const handleResize = () => {
       const isSmallScreen = window.innerWidth <= 1080;
       setIsMobile(isSmallScreen);
+      // On desktop show sidebar; on mobile, you may default to hidden.
       setShowSidebar(!isSmallScreen);
     };
 
@@ -34,12 +32,18 @@ const AdminPanel = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Hide sidebar when clicking outside on mobile
+  // Hide sidebar when clicking outside on mobile (ignore clicks on the hamburger button)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isMobile && showSidebar) {
         const sidebar = document.getElementById("sidebar");
-        if (sidebar && !sidebar.contains(event.target)) {
+        const hamburger = document.querySelector(".hamburger-button");
+        // If the click target is not inside the sidebar or the hamburger button, hide the sidebar.
+        if (
+          sidebar &&
+          !sidebar.contains(event.target) &&
+          !(hamburger && hamburger.contains(event.target))
+        ) {
           setShowSidebar(false);
         }
       }
@@ -221,11 +225,10 @@ const AdminPanel = () => {
     },
   ];
 
-  // Helper: determine the selected keys based on the location
+  // Determine selected keys based on the location
   const getSelectedKeys = () => {
     const { pathname } = location;
     const selected = [];
-    // Loop over all items to find a matching path
     menuItems.forEach((item) => {
       if (item.children) {
         item.children.forEach((child) => {
@@ -242,13 +245,10 @@ const AdminPanel = () => {
     return selected;
   };
 
-  // Update the selected keys whenever location changes
   const selectedKeys = getSelectedKeys();
 
-  // Special effect: force open submenus based on the current route
   useEffect(() => {
     if (location.pathname === "/admin/game-management/declare-market-result") {
-      // Add "game-management" to openKeys if it's not already open
       setOpenKeys((prevKeys) =>
         prevKeys.includes("game-management")
           ? prevKeys
@@ -262,10 +262,8 @@ const AdminPanel = () => {
           : [...prevKeys, "settings"]
       );
     }
-    // Optionally, you can update openKeys based on location for other routes as needed.
   }, [location.pathname]);
 
-  // Render menu items recursively
   const renderMenu = (items) =>
     items.map((item) =>
       item.children ? (
@@ -283,24 +281,26 @@ const AdminPanel = () => {
       )
     );
 
+  // Toggle sidebar visibility when hamburger is clicked
+  const handleToggleSidebar = () => {
+    setShowSidebar((prev) => !prev);
+  };
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       {showSidebar && (
         <Sider
           id="sidebar"
-          collapsible
-          collapsed={collapsed}
-          onCollapse={setCollapsed}
           theme="dark"
           width={240}
-          collapsedWidth={80}
+          collapsedWidth={0}
           style={{
             height: "100vh",
             overflowY: "auto",
             position: "fixed",
             left: 0,
             zIndex: 1000,
-            transition: "width 0.3s",
+            transition: "all 0.3s",
             backgroundColor: "#1F2640",
           }}
           className="custom-scrollbar"
@@ -310,13 +310,12 @@ const AdminPanel = () => {
               Admin Panel
             </NavLink>
           </div>
-
           <Menu 
             theme="dark" 
             mode="inline" 
             selectedKeys={selectedKeys} 
-            openKeys={openKeys}           // Use controlled openKeys
-            onOpenChange={(keys) => setOpenKeys(keys)}  // Allow manual control
+            openKeys={openKeys}
+            onOpenChange={(keys) => setOpenKeys(keys)}
           >
             {renderMenu(menuItems)}
           </Menu>
@@ -325,11 +324,13 @@ const AdminPanel = () => {
 
       <Layout
         style={{
-          marginLeft: showSidebar ? (collapsed ? "100px" : "240px") : "0px",
+          marginLeft: showSidebar ? "240px" : "0px",
           transition: "margin-left 0.3s",
         }}
       >
-        <Header onToggleSidebar={() => setShowSidebar((prev) => !prev)} handleLogout={handleLogout} />
+        {/* Make sure your Header component's hamburger button has the className "hamburger-button"
+            and calls the onToggleSidebar prop. */}
+        <Header onToggleSidebar={handleToggleSidebar} handleLogout={handleLogout} />
         <Content
           style={{
             padding: "16px",

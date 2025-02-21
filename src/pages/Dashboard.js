@@ -285,14 +285,21 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const response = await instance.get("api/rates/getBetRates");
-
+  
         if (response.data && typeof response.data === "object") {
-          // Remove unwanted keys
-          const { _id, createdAt, updatedAt, __v, ...filteredData } =
-            response.data;
-
-          // Save the keys (game types) in state
-          setBetRates(Object.keys(filteredData));
+          // Destructure the data to remove unwanted keys
+          const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
+  
+          // Filter out the keys ending with 'Value'
+          const cleanedData = Object.keys(filteredData)
+            .filter(key => !key.includes('Value')) // Exclude 'Value' keys
+            .reduce((acc, key) => {
+              acc[key] = filteredData[key];
+              return acc;
+            }, {});
+  
+          // Save the cleaned keys (game types) in state
+          setBetRates(Object.keys(cleanedData));
         } else {
           console.error("Invalid response format:", response.data);
         }
@@ -302,9 +309,10 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
+  
     fetchBetRates();
   }, []);
+  
 
   const mainMarketGames = mainMarketGamesList.filter(
     (game) => game.marketName === "Main Market"

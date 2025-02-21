@@ -11,10 +11,18 @@ const Header = ({ username = "Admin", onToggleSidebar, handleLogout }) => {
 
     const menu = (
         <Menu>
-            <Menu.Item key="settings" onClick={() => navigate("/admin/settings/main")} icon={<SettingOutlined />}>
+            <Menu.Item
+                key="settings"
+                onClick={() => navigate("/admin/settings/main")}
+                icon={<SettingOutlined />}
+            >
                 Settings
             </Menu.Item>
-            <Menu.Item key="logout" onClick={handleLogout} icon={<LogoutOutlined />}>
+            <Menu.Item
+                key="logout"
+                onClick={handleLogout}
+                icon={<LogoutOutlined />}
+            >
                 Logout
             </Menu.Item>
         </Menu>
@@ -22,16 +30,23 @@ const Header = ({ username = "Admin", onToggleSidebar, handleLogout }) => {
 
     return (
         <AntHeader className="bg-white shadow-md flex justify-between items-center p-4 sticky top-0 z-50 w-full">
-            {/* ✅ Sidebar Toggle Button */}
+            {/* Sidebar Toggle Button */}
             <Button
                 type="text"
                 icon={<MenuFoldOutlined />}
-                onClick={onToggleSidebar} // ✅ Toggle sidebar visibility
-                className="text-gray-700 text-xl"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleSidebar();
+                }}
+                className="text-gray-700 text-xl hamburger-button"
             />
-
             {/* Username with Dropdown */}
-            <Dropdown overlay={menu} trigger={["click"]} open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <Dropdown
+                overlay={menu}
+                trigger={["click"]}
+                open={dropdownOpen}
+                onOpenChange={setDropdownOpen}
+            >
                 <div className="cursor-pointer flex items-center">
                     <UserOutlined className="text-2xl text-gray-700 mr-2" />
                     <span className="font-medium text-gray-700">{username}</span>

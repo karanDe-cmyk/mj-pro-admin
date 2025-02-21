@@ -20,9 +20,10 @@ const { Option } = Select;
 
 const GalidisawerDeclareResults = () => {
   const [filters, setFilters] = useState({
-    // Set the current date by default in moment format (DD-MM-YYYY)
+    // Set the current date by default in dayjs format (DD-MM-YYYY)
     date: dayjs(),
-    game: '',
+    game: '', // now holds game _id
+    open_time: '', // will be set based on selected game or chosen manually
     pana: '',
     leftDigit: '',
     rightDigit: ''
@@ -31,7 +32,7 @@ const GalidisawerDeclareResults = () => {
   // Main "Declare Results" table data
   const [data, setData] = useState([]);
 
-  // Show Winners table data (with your requested fields)
+  // Show Winners table data
   const [winnersData, setWinnersData] = useState([]);
 
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
@@ -40,7 +41,7 @@ const GalidisawerDeclareResults = () => {
   // Game options fetched from API
   const [gameOptions, setGameOptions] = useState([]);
 
-  // Pana options remains same
+  // Pana options remains the same
   const pannaOptions = Array.from({ length: 100 }, (_, i) =>
     i.toString().padStart(2, '0')
   );
@@ -50,14 +51,31 @@ const GalidisawerDeclareResults = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [editForm] = Form.useForm();
 
-
+  // When a game is selected, update the open time dropdown options accordingly.
+  const getOpenTimeOptions = () => {
+    if (filters.game) {
+      // Filter gameOptions to the one matching the selected game _id
+      const selectedGame = gameOptions.find(option => option._id === filters.game);
+      if (selectedGame) {
+        return [moment(selectedGame.open_time, "hh:mm:ssA").format("hh:mm A")];
+      }
+      return [];
+    } else {
+      // When no game is selected, return all unique open times from gameOptions.
+      return Array.from(
+        new Set(
+          gameOptions.map(option =>
+            moment(option.open_time, "hh:mm:ssA").format("hh:mm A")
+          )
+        )
+      );
+    }
+  };
 
   // Fetch declare results from API
   const fetchDeclareResults = async () => {
     try {
       const response = await axiosInstance.get('/api/GaliDisawarDeclareResult/getResult');
-      // console.log("Fetch declare results response:", response.data);
-      // Assuming the response data is { results: [ ... ] }
       setData(response.data.results);
     } catch (error) {
       console.error("Error fetching declare results:", error);
@@ -68,12 +86,11 @@ const GalidisawerDeclareResults = () => {
     fetchDeclareResults();
   }, []);
 
-   // Delete handler: calls DELETE API and refreshes data.
-   const handleDeleteDeclareResult = async (record) => {
+  // Delete handler: calls DELETE API and refreshes data.
+  const handleDeleteDeclareResult = async (record) => {
     if (window.confirm("Are you sure you want to delete this declare result?")) {
       try {
-        const response = await axiosInstance.delete(`/api/GaliDisawarDeclareResult/delete/${record._id}`);
-        // console.log("Delete response:", response.data);
+        await axiosInstance.delete(`/api/GaliDisawarDeclareResult/delete/${record._id}`);
         alert("Declare result deleted successfully. The winning amount has been deducted from the user's wallet.");
         fetchDeclareResults();
       } catch (error) {
@@ -82,8 +99,6 @@ const GalidisawerDeclareResults = () => {
       }
     }
   };
-
-
 
   // Fetch game options from API when component mounts
   useEffect(() => {
@@ -99,12 +114,17 @@ const GalidisawerDeclareResults = () => {
 
   // Handle filter changes
   const handleFilterChange = (value, key) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    // When game selection changes, clear any previously selected open_time.
+    if(key === 'game'){
+      setFilters(prev => ({ ...prev, [key]: value, open_time: '' }));
+    } else {
+      setFilters(prev => ({ ...prev, [key]: value }));
+    }
   };
 
   const handlePannaChange = (value) => {
     // Automatically split the Panna value into Left and Right Digits
-    setFilters((prev) => ({
+    setFilters(prev => ({
       ...prev,
       pana: value,
       leftDigit: value[0] || '',
@@ -114,22 +134,24 @@ const GalidisawerDeclareResults = () => {
 
   // Show Winners API call
   const handleShowWinnersClick = async () => {
-    // console.log('Show Winners button clicked');
     try {
-      // Prepare request body using filters (ensure date is formatted as "DD-MM-YYYY")
+      // If a game is selected, build the game value string from the selected game option.
+      const selectedGame = gameOptions.find(option => option._id === filters.game);
+      const gameValue = selectedGame
+        ? `${selectedGame.game_name} ${moment(selectedGame.open_time, "hh:mm:ssA").format("hh:mm A")}`
+        : '';
       const reqBody = {
         date: filters.date.format("DD-MM-YYYY"),
-        game: filters.game,
+        game: gameValue,
+        open_time: filters.open_time,
         pana: filters.pana,
         leftDigit: filters.leftDigit,
         rightDigit: filters.rightDigit
       };
-      // console.log("Sending reqBody:", reqBody);
       const response = await axiosInstance.post(
         "/api/GaliDisawarWinners/showwinners",
         reqBody
       );
-      // console.log("API Response:", response.data);
       setWinnersData(response.data.winners);
     } catch (error) {
       console.error("Error calling show winners API:", error);
@@ -138,25 +160,24 @@ const GalidisawerDeclareResults = () => {
 
   // Declare Result button handler
   const handleDeclareResultClick = async () => {
-    // console.log('Declare Result button clicked');
     try {
-      // Build the request body. MarketName is static.
+      const selectedGame = gameOptions.find(option => option._id === filters.game);
+      const gameValue = selectedGame
+        ? `${selectedGame.game_name} ${moment(selectedGame.open_time, "hh:mm:ssA").format("hh:mm A")}`
+        : '';
       const reqBody = {
         marketName: "Gali Disawar",
-        date: filters.date.format("DD-MM-YYYY"),  // e.g., "17-02-2025"
-        game: filters.game,                       // from the input box
-        pana: filters.pana,                       // from the input box
-        leftDigit: filters.leftDigit,             // auto-populated based on pana
-        rightDigit: filters.rightDigit            // auto-populated based on pana
+        date: filters.date.format("DD-MM-YYYY"),
+        game: gameValue,
+        open_time: filters.open_time,
+        pana: filters.pana,
+        leftDigit: filters.leftDigit,
+        rightDigit: filters.rightDigit
       };
-      // console.log("Sending declare reqBody:", reqBody);
-      
-      // Call the API.
-      const response = await axiosInstance.post(
+      await axiosInstance.post(
         "/api/GaliDisawarDeclareResult/declare",
         reqBody
       );
-      // console.log("Declare API response:", response.data);
       alert("Result Declared successfully!");
       setTimeout(() => {
         fetchDeclareResults();
@@ -173,13 +194,10 @@ const GalidisawerDeclareResults = () => {
       }
     }
   };
-  
 
   // Edit handler: Open modal and set editing record.
   const handleEdit = (record) => {
-    // console.log("Edit clicked for:", record);
     setEditingRecord(record);
-    // Compute bid number based on priority: pana, then leftDigit, then rightDigit.
     const computedBidNum =
       record.pana && record.pana !== "false"
         ? record.pana
@@ -188,26 +206,18 @@ const GalidisawerDeclareResults = () => {
         : record.rightDigit && record.rightDigit !== "false"
         ? record.rightDigit
         : "";
-    // Pre-fill the form with current values.
     editForm.setFieldsValue({
       bidPoints: record.bidPoints,
       bidNumber: computedBidNum
     });
     setIsEditModalVisible(true);
   };
-  
-  
 
-  // Delete handler: Confirm and then call delete API.
+  // Delete bid handler.
   const handleDelete = async (record) => {
-    // console.log("Delete clicked for:", record);
     if (window.confirm("Are you sure you want to delete this bid?")) {
       try {
-        const response = await axiosInstance.delete(
-          `/api/GaliDisawarWinners/deletewinner/${record._id}`
-        );
-        // console.log("Delete response:", response.data);
-        // Refresh winners data
+        await axiosInstance.delete(`/api/GaliDisawarWinners/deletewinner/${record._id}`);
         handleShowWinnersClick();
       } catch (error) {
         console.error("Error deleting bid:", error);
@@ -218,10 +228,7 @@ const GalidisawerDeclareResults = () => {
   // Handle edit modal form submission.
   const handleEditFinish = async (values) => {
     try {
-      // Build update payload. We allow updating bid points and the specific bid number field.
       let updatePayload = { points: Number(values.bidPoints) };
-      // Use editingRecord.bidType to determine which digit field to update.
-      // It should be one of: "pana", "leftDigit", or "rightDigit".
       if (editingRecord.bidType === "pana") {
         updatePayload.pana = values.bidNumber;
       } else if (editingRecord.bidType === "leftDigit") {
@@ -229,23 +236,19 @@ const GalidisawerDeclareResults = () => {
       } else if (editingRecord.bidType === "rightDigit") {
         updatePayload.rightdigit = values.bidNumber;
       }
-      // console.log("Update payload:", updatePayload);
-      const response = await axiosInstance.put(
+      await axiosInstance.put(
         `/api/GaliDisawarWinners/updatewinner/${editingRecord._id}`,
         updatePayload
       );
-      // console.log("Update response:", response.data);
       setIsEditModalVisible(false);
       setEditingRecord(null);
-      // Refresh winners data
       handleShowWinnersClick();
     } catch (error) {
       console.error("Error updating bid:", error);
     }
   };
-  
 
-  // Define table columns.
+  // Table columns for Declare Results
   const columns = [
     {
       title: '#',
@@ -283,12 +286,7 @@ const GalidisawerDeclareResults = () => {
     }
   ];
 
-  // Updated columns for the Winners table:
-  // - Removed the Profile column.
-  // - Removed separate columns for Pana, Left Digit, and Right Digit.
-  // - The Bid Number column now shows a value from Pana, Left Digit, or Right Digit (in that order)
-  //   if the value is truthy (and not "false").
-  // - Added an Action column with Edit and Delete buttons.
+  // Table columns for Winners
   const winnersColumns = [
     {
       title: 'User Name',
@@ -324,7 +322,6 @@ const GalidisawerDeclareResults = () => {
       title: 'Bid Number',
       key: 'bidNumber',
       render: (_, record) => {
-        // Priority: pana, then leftDigit, then rightDigit, if truthy and not "false".
         let bidNum = "";
         if (record.pana && record.pana !== "false") {
           bidNum = record.pana;
@@ -347,20 +344,19 @@ const GalidisawerDeclareResults = () => {
       key: 'action',
       render: (_, record) => (
         <span>
-  <Button
-    style={{ backgroundColor: '#1890ff', color: 'white', marginRight: '8px' }}
-    onClick={() => handleEdit(record)}
-  >
-    Edit
-  </Button>
-  <Button
-    style={{ backgroundColor: '#ff4d4f', color: 'white' }}
-    onClick={() => handleDelete(record)}
-  >
-    Delete
-  </Button>
-</span>
-
+          <Button
+            style={{ backgroundColor: '#1890ff', color: 'white', marginRight: '8px' }}
+            onClick={() => handleEdit(record)}
+          >
+            Edit
+          </Button>
+          <Button
+            style={{ backgroundColor: '#ff4d4f', color: 'white' }}
+            onClick={() => handleDelete(record)}
+          >
+            Delete
+          </Button>
+        </span>
       )
     }
   ];
@@ -407,17 +403,36 @@ const GalidisawerDeclareResults = () => {
                   style={{ width: '100%' }}
                 >
                   {gameOptions.map((option) => {
-                    // Format open_time to show only hh:mm AM/PM using moment
                     const formattedTime = moment(option.open_time, "hh:mm:ssA").format("hh:mm A");
                     return (
-                      <Option
-                        key={option._id}
-                        value={`${option.game_name} ${formattedTime}`}
-                      >
+                      <Option key={option._id} value={option._id}>
                         {`${option.game_name} ${formattedTime}`}
                       </Option>
                     );
                   })}
+                </Select>
+              </Form.Item>
+            </Col>
+            {/* New Open Time Dropdown */}
+            <Col xs={24} sm={12} md={4}>
+              <Form.Item label="Open Time">
+                <Select
+                  showSearch
+                  value={filters.open_time}
+                  placeholder="Select Open Time"
+                  onChange={(value) => handleFilterChange(value, 'open_time')}
+                  filterOption={(input, option) =>
+                    option.children
+                      .toLowerCase()
+                      .indexOf(input.toLowerCase()) >= 0
+                  }
+                  style={{ width: '100%' }}
+                >
+                  {getOpenTimeOptions().map((timeOption) => (
+                    <Option key={timeOption} value={timeOption}>
+                      {timeOption}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -484,18 +499,16 @@ const GalidisawerDeclareResults = () => {
             padding: '10px'
           }}
         >
-        Winners List
-
+          Winners List
         </h2>
-<Table
-  columns={winnersColumns}
-  dataSource={winnersData}
-  rowKey="_id" // changed from "bidNumber" to "_id"
-  pagination={false}
-  locale={{ emptyText: 'No winners available' }}
-  scroll={{ x: '100%' }}
-/>
-
+        <Table
+          columns={winnersColumns}
+          dataSource={winnersData}
+          rowKey="_id"
+          pagination={false}
+          locale={{ emptyText: 'No winners available' }}
+          scroll={{ x: '100%' }}
+        />
       </Card>
 
       {/* Pagination and Search for Declare Results Table */}
@@ -514,7 +527,7 @@ const GalidisawerDeclareResults = () => {
               defaultValue={pagination.pageSize}
               style={{ width: 70 }}
               onChange={(value) =>
-                setPagination((prev) => ({ ...prev, pageSize: value }))
+                setPagination(prev => ({ ...prev, pageSize: value }))
               }
             >
               <Option value={5}>5</Option>
@@ -533,20 +546,20 @@ const GalidisawerDeclareResults = () => {
           </Form.Item>
         </div>
         <Table
-        columns={columns}
-        dataSource={data}
-        rowKey="_id"
-        pagination={false}
-        locale={{ emptyText: 'No data available in table' }}
-        scroll={{ x: '100%' }}
-      />
+          columns={columns}
+          dataSource={data}
+          rowKey="_id"
+          pagination={false}
+          locale={{ emptyText: 'No data available in table' }}
+          scroll={{ x: '100%' }}
+        />
         <div style={{ marginTop: '16px', textAlign: 'right' }}>
           <Pagination
             current={pagination.current}
             pageSize={pagination.pageSize}
             total={data.length}
             onChange={(page) =>
-              setPagination((prev) => ({ ...prev, current: page }))
+              setPagination(prev => ({ ...prev, current: page }))
             }
           />
         </div>
@@ -562,11 +575,7 @@ const GalidisawerDeclareResults = () => {
         }}
         footer={null}
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-          onFinish={handleEditFinish}
-        >
+        <Form form={editForm} layout="vertical" onFinish={handleEditFinish}>
           <Form.Item
             label="Bid Points"
             name="bidPoints"
@@ -575,12 +584,12 @@ const GalidisawerDeclareResults = () => {
             <Input type="number" />
           </Form.Item>
           <Form.Item
-  label="Bid Number"
-  name="bidNumber"
-  rules={[{ required: true, message: "Please enter bid number" }]}>
-  <Input />
-</Form.Item>
-
+            label="Bid Number"
+            name="bidNumber"
+            rules={[{ required: true, message: "Please enter bid number" }]}
+          >
+            <Input />
+          </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Update Bid
