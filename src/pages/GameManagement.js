@@ -15,7 +15,12 @@ import {
   Spin,
   Select,
 } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import moment from "moment";
 import axios from "../utils/axiosInstance";
 
@@ -53,11 +58,15 @@ const GameManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // Search term
-  const [pageSize, setPageSize] = useState(5); // Default page size
-
-  const [firstLoad, setFirstLoad] = useState(true); // New state to track initial loading
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pageSize, setPageSize] = useState(5);
+  const [firstLoad, setFirstLoad] = useState(true);
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
+
+  // Create a sorted copy of gameTypeOptions in ascending order.
+  const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
+    a.localeCompare(b)
+  );
 
   const filteredGames = games.filter((game) =>
     game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -73,38 +82,29 @@ const GameManagement = () => {
       const response = await axios.get(`/api/marketManagement/getMarketGames`);
       if (response.data) {
         let gamesData = response.data || [];
-
         // Get current time in minutes since midnight
         const currentTime = new Date();
         const nowInMinutes =
           currentTime.getHours() * 60 + currentTime.getMinutes();
 
-        // Function to convert time string (e.g., "09:58 AM") to minutes since midnight
+        // Convert time string (e.g., "09:58 AM") to minutes since midnight
         const timeToMinutes = (timeStr) => {
           const [time, modifier] = timeStr.split(" ");
           let [hours, minutes] = time.split(":").map(Number);
-
           if (modifier === "PM" && hours !== 12) hours += 12;
           if (modifier === "AM" && hours === 12) hours = 0;
-
           return hours * 60 + minutes;
         };
 
-        // Sorting Logic
+        // Sorting logic: active games first, then upcoming games, then by open time.
         gamesData.sort((a, b) => {
           const timeA = timeToMinutes(a.openTime);
           const timeB = timeToMinutes(b.openTime);
-
           const isUpcomingA = timeA >= nowInMinutes;
           const isUpcomingB = timeB >= nowInMinutes;
 
-          // 1. Show active markets first
           if (a.isActive !== b.isActive) return b.isActive - a.isActive;
-
-          // 2. Within each group, show upcoming times first
           if (isUpcomingA !== isUpcomingB) return isUpcomingB - isUpcomingA;
-
-          // 3. Sort by `openTime` within each section
           return timeA - timeB;
         });
 
@@ -121,30 +121,34 @@ const GameManagement = () => {
     }
   };
 
-
-  // Create a sorted copy of the array (ascending order)
-const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
-  a.localeCompare(b)
-);
-
-  const allTypes = sortedGameTypeOptionsAsc;
-
-
+  // Handler for Add Form game type select
   const handleGameTypeChange = (selectedValues) => {
-    // If user selects "Select All" OR manually selects all game types:
     if (
       selectedValues.includes("Select All") ||
-      selectedValues.length === allTypes.length
+      selectedValues.length === sortedGameTypeOptionsAsc.length
     ) {
-      setSelectedGameTypes(allTypes);
-      form.setFieldsValue({ gameType: allTypes });
+      setSelectedGameTypes(sortedGameTypeOptionsAsc);
+      form.setFieldsValue({ gameType: sortedGameTypeOptionsAsc });
     } else {
-      // Remove "Select All" if it accidentally appears in the array
       const filteredValues = selectedValues.filter(
         (val) => val !== "Select All"
       );
       setSelectedGameTypes(filteredValues);
       form.setFieldsValue({ gameType: filteredValues });
+    }
+  };
+
+  // Handler for Edit Modal game type select
+  const handleEditGameTypeChange = (selectedValues) => {
+    if (
+      selectedValues.includes("Select All") ||
+      selectedValues.length === sortedGameTypeOptionsAsc.length
+    ) {
+      editForm.setFieldsValue({ gameType: sortedGameTypeOptionsAsc });
+    } else {
+      editForm.setFieldsValue({
+        gameType: selectedValues.filter((val) => val !== "Select All"),
+      });
     }
   };
 
@@ -189,15 +193,17 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
       const updatedGame = {
         gameName: values.gameName,
         gameType: values.gameType,
-        openTime: values.openTime ? values.openTime.format("hh:mm A") : null, // Save main game open time
-        closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null, // Save main game close time
+        openTime: values.openTime ? values.openTime.format("hh:mm A") : null,
+        closeTime: values.closeTime
+          ? values.closeTime.format("hh:mm A")
+          : null,
         weekends: values.weekends
           ? values.weekends.map((day) => ({
-            ...day,
-            openTime: day.openTime ? day.openTime.format("hh:mm A") : null, // Ensure time formatting
-            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-          }))
-          : [], // Handle empty weekends array
+              ...day,
+              openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
+              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+            }))
+          : [],
       };
 
       await axios.put(
@@ -221,8 +227,18 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
       render: (_, __, index) => index + 1,
       width: 50,
     },
-    { title: "Game Name", dataIndex: "gameName", key: "gameName", width: 250 },
-    { title: "Open Time", dataIndex: "openTime", key: "openTime", width: 180 },
+    {
+      title: "Game Name",
+      dataIndex: "gameName",
+      key: "gameName",
+      width: 250,
+    },
+    {
+      title: "Open Time",
+      dataIndex: "openTime",
+      key: "openTime",
+      width: 180,
+    },
     {
       title: "Close Time",
       dataIndex: "closeTime",
@@ -277,21 +293,21 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
   const handleEdit = (record) => {
     setEditingGame(record);
     setIsModalOpen(true);
-  
+
     editForm.setFieldsValue({
       gameName: record.gameName,
-      gameType: record.gameType || [], // <-- Added to pre-populate gameType
-      openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null, // Set default Open Time for main game
-      closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null, // Set default Close Time for main game
+      gameType: record.gameType || [],
+      openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null,
+      closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null,
       weekends: record.weekends.map((day) => ({
         ...day,
-        openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null, // Set default Open Time for weekends
-        closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null, // Set default Close Time for weekends
+        openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null,
+        closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null,
         is_open: day.is_open,
       })),
     });
   };
-  
+
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
@@ -330,7 +346,7 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
             borderRadius: "8px",
             marginBottom: "25px",
             backgroundColor: "#f7fcf8",
-            overflowX: "auto", // Enables horizontal scrolling on small screens
+            overflowX: "auto",
           }}
         >
           <h3
@@ -351,7 +367,9 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
                 <Form.Item
                   label="Market Name"
                   name="marketName"
-                  rules={[{ required: true, message: "Select Market name" }]}
+                  rules={[
+                    { required: true, message: "Select Market name" },
+                  ]}
                 >
                   <Select placeholder="Select Market Name">
                     <Option value="">--Select Market Name--</Option>
@@ -378,7 +396,11 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
                   name="openTime"
                   rules={[{ required: true, message: "Select open time" }]}
                 >
-                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                  <TimePicker
+                    format="hh:mm A"
+                    use12Hours
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
               </Col>
 
@@ -389,46 +411,58 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
                   name="closeTime"
                   rules={[{ required: true, message: "Select close time" }]}
                 >
-                  <TimePicker format="hh:mm A" use12Hours style={{ width: "100%" }} />
+                  <TimePicker
+                    format="hh:mm A"
+                    use12Hours
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
               </Col>
 
               {/* Game Type Selection */}
               <Col xs={24} sm={12} md={8} lg={4}>
-      <Form.Item
-        label="Game Type"
-        name="gameType"
-        rules={[{ required: true, message: "Select at least one game type" }]}
-      >
-        <Select
-          mode="multiple"
-          placeholder="Select Game Types"
-          value={selectedGameTypes}
-          onChange={handleGameTypeChange}
-          style={{ width: "100%" }}
-        >
-          {/* "Select All" Option */}
-          <Option key="Select All" value="Select All">
-            Select All
-          </Option>
-          {sortedGameTypeOptionsAsc.map((type) => (
-            <Option key={type} value={type}>
-              {type}
-            </Option>
-          ))}
-        </Select>
-      </Form.Item>
-    </Col>
+                <Form.Item
+                  label="Game Type"
+                  name="gameType"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Select at least one game type",
+                    },
+                  ]}
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="Select Game Types"
+                    value={selectedGameTypes}
+                    onChange={handleGameTypeChange}
+                    style={{ width: "100%" }}
+                  >
+                    <Option key="Select All" value="Select All">
+                      Select All
+                    </Option>
+                    {sortedGameTypeOptionsAsc.map((type) => (
+                      <Option key={type} value={type}>
+                        {type}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
 
               {/* Market On/Off Switch */}
               <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item label="Market On/Off" name="marketOnOff" valuePropName="checked">
+                <Form.Item
+                  label="Market On/Off"
+                  name="marketOnOff"
+                  valuePropName="checked"
+                >
                   <Switch />
                 </Form.Item>
               </Col>
             </Row>
 
-            {/* Submit Button at Bottom Left */}
+            {/* Submit Button */}
             <Row justify="start">
               <Col>
                 <Form.Item>
@@ -450,8 +484,8 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
         <Card
           style={{
             borderRadius: "8px",
-            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Adds a subtle shadow
-            overflowX: "auto", // Ensures horizontal scrolling on small screens
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            overflowX: "auto",
           }}
         >
           <h3
@@ -459,7 +493,7 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
               fontSize: "20px",
               fontWeight: "600",
               marginBottom: "15px",
-              textAlign: "center", // Centers title on smaller screens
+              textAlign: "center",
             }}
           >
             Game List
@@ -476,7 +510,6 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
               padding: "0 15px",
             }}
           >
-            {/* Show Entries Dropdown */}
             <Col xs={12} sm={6}>
               <label style={{ fontWeight: "500" }}>Show Entries:</label>
               <Select
@@ -491,7 +524,6 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
               </Select>
             </Col>
 
-            {/* Search Box */}
             <Col xs={12} sm={6}>
               <label style={{ fontWeight: "500" }}>Search:</label>
               <Input
@@ -504,16 +536,12 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
             </Col>
           </Row>
 
-          {/* Table Section */}
           {firstLoad ? (
             <div style={{ textAlign: "center", padding: "10px" }}>
               <Spin size="large" />
             </div>
           ) : filteredGames.length === 0 ? (
-            <Empty
-              description="No Games Available"
-              style={{ padding: "10px" }}
-            />
+            <Empty description="No Games Available" style={{ padding: "10px" }} />
           ) : (
             <Table
               columns={columns}
@@ -521,8 +549,8 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
               loading={loading}
               pagination={{ pageSize: pageSize }}
               bordered
-              scroll={{ x: "max-content" }} // Allows table to adjust dynamically
-              style={{ whiteSpace: "nowrap" }} // Prevents text wrapping issues
+              scroll={{ x: "max-content" }}
+              style={{ whiteSpace: "nowrap" }}
             />
           )}
         </Card>
@@ -530,98 +558,105 @@ const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
 
       {/* Edit Modal */}
       <Modal
-  title="Edit Game"
-  open={isModalOpen}
-  onCancel={() => setIsModalOpen(false)}
-  onOk={handleUpdate}
-  width={700}
->
-  <Form form={editForm} layout="vertical">
-    {/* Game Name Field */}
-    <Form.Item
-      label="Game Name"
-      name="gameName"
-      rules={[{ required: true, message: "Enter game name" }]}
-    >
-      <Input />
-    </Form.Item>
+        title="Edit Game"
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        onOk={handleUpdate}
+        width={700}
+      >
+        <Form form={editForm} layout="vertical">
+          {/* Game Name Field */}
+          <Form.Item
+            label="Game Name"
+            name="gameName"
+            rules={[{ required: true, message: "Enter game name" }]}
+          >
+            <Input />
+          </Form.Item>
 
-    {/* Game Type Field */}
-    <Form.Item
-      label="Game Type"
-      name="gameType"
-      rules={[{ required: true, message: "Select at least one game type" }]}
-    >
-      <Select mode="multiple" placeholder="Select Game Types">
-        {/* "Select All" Option */}
-        <Option key="Select All" value="Select All">
-          Select All
-        </Option>
-        {/* Render the rest of your game types */}
-        {gameTypeOptions.slice(1).map((type) => (
-          <Option key={type} value={type}>
-            {type}
-          </Option>
-        ))}
-      </Select>
-    </Form.Item>
+          {/* Updated Game Type Field */}
+          <Form.Item
+            label="Game Type"
+            name="gameType"
+            rules={[
+              { required: true, message: "Select at least one game type" },
+            ]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="Select Game Types"
+              onChange={handleEditGameTypeChange}
+            >
+              <Option key="Select All" value="Select All">
+                Select All
+              </Option>
+              {sortedGameTypeOptionsAsc.map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-    {/* Open Time & Close Time for Main Game */}
-    <Row gutter={[16, 16]}>
-      <Col span={12}>
-        <Form.Item
-          label="Open Time"
-          name="openTime"
-          rules={[{ required: true, message: "Enter open time" }]}
-        >
-          <TimePicker format="hh:mm A" use12Hours />
-        </Form.Item>
-      </Col>
-      <Col span={12}>
-        <Form.Item
-          label="Close Time"
-          name="closeTime"
-          rules={[{ required: true, message: "Enter close time" }]}
-        >
-          <TimePicker format="hh:mm A" use12Hours />
-        </Form.Item>
-      </Col>
-    </Row>
-
-    {/* Weekend Open & Close Time */}
-    <Row gutter={[16, 16]}>
-      {editingGame &&
-        editingGame.weekends.map((day, index) => (
-          <Col span={12} key={day.day}>
-            <Card size="small" title={day.day} style={{ textAlign: "center" }}>
+          {/* Open Time & Close Time for Main Game */}
+          <Row gutter={[16, 16]}>
+            <Col span={12}>
               <Form.Item
-                name={["weekends", index, "openTime"]}
                 label="Open Time"
-                rules={[{ required: true }]}
+                name="openTime"
+                rules={[{ required: true, message: "Enter open time" }]}
               >
                 <TimePicker format="hh:mm A" use12Hours />
               </Form.Item>
+            </Col>
+            <Col span={12}>
               <Form.Item
-                name={["weekends", index, "closeTime"]}
                 label="Close Time"
-                rules={[{ required: true }]}
+                name="closeTime"
+                rules={[{ required: true, message: "Enter close time" }]}
               >
                 <TimePicker format="hh:mm A" use12Hours />
               </Form.Item>
-              <Form.Item
-                name={["weekends", index, "is_open"]}
-                label="Is Active"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Card>
-          </Col>
-        ))}
-    </Row>
-  </Form>
-</Modal>
+            </Col>
+          </Row>
 
+          {/* Weekend Open & Close Time */}
+          <Row gutter={[16, 16]}>
+            {editingGame &&
+              editingGame.weekends.map((day, index) => (
+                <Col span={12} key={day.day}>
+                  <Card
+                    size="small"
+                    title={day.day}
+                    style={{ textAlign: "center" }}
+                  >
+                    <Form.Item
+                      name={["weekends", index, "openTime"]}
+                      label="Open Time"
+                      rules={[{ required: true }]}
+                    >
+                      <TimePicker format="hh:mm A" use12Hours />
+                    </Form.Item>
+                    <Form.Item
+                      name={["weekends", index, "closeTime"]}
+                      label="Close Time"
+                      rules={[{ required: true }]}
+                    >
+                      <TimePicker format="hh:mm A" use12Hours />
+                    </Form.Item>
+                    <Form.Item
+                      name={["weekends", index, "is_open"]}
+                      label="Is Active"
+                      valuePropName="checked"
+                    >
+                      <Switch />
+                    </Form.Item>
+                  </Card>
+                </Col>
+              ))}
+          </Row>
+        </Form>
+      </Modal>
     </div>
   );
 };
