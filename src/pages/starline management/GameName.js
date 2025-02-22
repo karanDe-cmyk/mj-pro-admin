@@ -41,18 +41,19 @@ const GameName = () => {
   // Search Handler
   const handleSearch = (value) => {
     setSearchTerm(value);
-    filterGames(value, filterStatus);
+    filterGames(value, filterStatus, games);
   };
 
   // Filter Handler
   const handleFilterChange = (value) => {
     setFilterStatus(value);
-    filterGames(searchTerm, value);
+    filterGames(searchTerm, value, games);
   };
 
-  // Function to filter games based on search and status
-  const filterGames = (search, status) => {
-    let updatedGames = games;
+  // Function to filter games based on search and status.
+  // Accept an optional gamesData parameter (defaulting to the current games state)
+  const filterGames = (search, status, gamesData = games) => {
+    let updatedGames = gamesData;
 
     if (search) {
       updatedGames = updatedGames.filter((game) =>
@@ -69,20 +70,25 @@ const GameName = () => {
     setFilteredGames(updatedGames);
   };
 
-  // Toggle game status
+  // Toggle game status and update the list immediately
   const toggleGameStatus = async (gameId, currentStatus) => {
     setLoadingAction(`toggle-${gameId}`);
     try {
-      const response = await instance.patch(`/api/starline/updateGameById/${gameId}`, {
-        is_active: !currentStatus,
-      });
+      const response = await instance.patch(
+        `/api/starline/updateGameById/${gameId}`,
+        {
+          is_active: !currentStatus,
+        }
+      );
 
       if (response.data.success) {
+        // Create an updated games list
         const updatedGames = games.map((game) =>
           game._id === gameId ? { ...game, is_active: !currentStatus } : game
         );
         setGames(updatedGames);
-        filterGames(searchTerm, filterStatus); // Reapply filter after update
+        // Use the updated list when reapplying filters
+        filterGames(searchTerm, filterStatus, updatedGames);
         message.success("Game status updated.");
       }
     } catch (error) {
@@ -94,10 +100,18 @@ const GameName = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-md rounded-md">
-      <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Game Schedule</h2>
+      <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+        Game Schedule
+      </h2>
 
       {/* Add Game Component */}
-      <AddGame onGameAdded={(newGame) => setGames((prev) => [...prev, newGame])} />
+      <AddGame
+        onGameAdded={(newGame) => {
+          const newGames = [...games, newGame];
+          setGames(newGames);
+          filterGames(searchTerm, filterStatus, newGames);
+        }}
+      />
 
       {/* Search, Filter & Entries Options */}
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 mb-4">
@@ -110,14 +124,22 @@ const GameName = () => {
         />
 
         {/* Filter Dropdown */}
-        <Select value={filterStatus} onChange={handleFilterChange} className="w-40">
+        <Select
+          value={filterStatus}
+          onChange={handleFilterChange}
+          className="w-40"
+        >
           <Option value="all">All Games</Option>
           <Option value="active">Active Games</Option>
           <Option value="inactive">Inactive Games</Option>
         </Select>
 
         {/* Entries Dropdown */}
-        <Select value={pageSize} onChange={(value) => setPageSize(value)} className="w-24">
+        <Select
+          value={pageSize}
+          onChange={(value) => setPageSize(value)}
+          className="w-24"
+        >
           <Option value={5}>5</Option>
           <Option value={10}>10</Option>
           <Option value={20}>20</Option>
@@ -133,9 +155,22 @@ const GameName = () => {
       ) : (
         <Table
           columns={[
-            { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
-            { title: "Game Name", dataIndex: "game_name", key: "game_name" },
-            { title: "Close Time", dataIndex: "close_time", key: "close_time" },
+            {
+              title: "#",
+              dataIndex: "index",
+              key: "index",
+              render: (_, __, index) => index + 1,
+            },
+            {
+              title: "Game Name",
+              dataIndex: "game_name",
+              key: "game_name",
+            },
+            {
+              title: "Close Time",
+              dataIndex: "close_time",
+              key: "close_time",
+            },
             {
               title: "Active",
               dataIndex: "is_active",
@@ -164,7 +199,10 @@ const GameName = () => {
               ),
             },
           ]}
-          dataSource={filteredGames.map((game, index) => ({ ...game, key: index }))}
+          dataSource={filteredGames.map((game, index) => ({
+            ...game,
+            key: index,
+          }))}
           pagination={{ pageSize }}
           className="mt-6"
         />
