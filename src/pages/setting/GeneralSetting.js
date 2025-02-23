@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
-import {  } from "../../utils/config"; // Ensure  is imported properly
+import { useNavigate } from "react-router-dom";
 
 const SettingsForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    id: "", // ✅ Ensure ID is included
+    id: "", // Ensure ID is included
     name: "",
     email: "",
     mobile: "",
@@ -12,8 +13,10 @@ const SettingsForm = () => {
     upi_id: "",
     merchant_id: "",
     min_batting_rate: "",
+    max_batting_rate: "", // new field
     min_withdrawal_rate: "",
-    mai_deposite_rate: "",
+    max_withdrawal_rate: "", // new field
+    min_deposite_rate: "", // renamed from mai_deposite_rate
     max_deposite_rate: "",
     min_transfer: "",
     max_transfer: "",
@@ -34,10 +37,10 @@ const SettingsForm = () => {
       try {
         setLoading(true);
         const response = await axiosInstance.get(`/api/settings/general`);
-        const data = response.data[0]; // ✅ Extract the first object from array response
+        const data = response.data[0]; // Extract the first object from array response
 
         setFormData({
-          id: data._id, // ✅ Correctly set ID
+          id: data._id, // Correctly set ID
           name: data.name || "",
           email: data.email || "",
           mobile: data.mobile || "",
@@ -45,16 +48,18 @@ const SettingsForm = () => {
           upi_id: data.upi_id || "",
           merchant_id: data.merchant_id || "",
           min_batting_rate: data.min_batting_rate || "",
+          max_batting_rate: data.max_batting_rate || "",
           min_withdrawal_rate: data.min_withdrawal_rate || "",
-          mai_deposite_rate: data.mai_deposite_rate || "",
+          max_withdrawal_rate: data.max_withdrawal_rate || "",
+          min_deposite_rate: data.min_deposite_rate || "",
           max_deposite_rate: data.max_deposite_rate || "",
           min_transfer: data.min_transfer || "",
           max_transfer: data.max_transfer || "",
           min_bid_amount: data.min_bid_amount || "",
           max_bid_amount: data.max_bid_amount || "",
           welcome_bonus: data.welcome_bonus || "",
-          openTime: data.withdraw_timings?.split(" - ")[0] || "", // ✅ Extract open time
-          closeTime: data.withdraw_timings?.split(" - ")[1] || "", // ✅ Extract close time
+          openTime: data.withdraw_timings?.split(" - ")[0] || "", // Extract open time
+          closeTime: data.withdraw_timings?.split(" - ")[1] || "", // Extract close time
           global_betting: data.global_betting || false,
         });
 
@@ -117,120 +122,119 @@ const SettingsForm = () => {
   };
 
   return (
-<div className="relative">
-  {/* Fullscreen loading overlay */}
-  {(loading || fetchingData) && (
-    <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
-      <div className="text-white text-xl">Loading...</div>
-    </div>
-  )}
+    <div className="relative">
+      {/* Fullscreen loading overlay */}
+      {(loading || fetchingData) && (
+        <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
+          <div className="text-white text-xl">Loading...</div>
+        </div>
+      )}
 
-  <h2 className="text-xl font-bold mb-4">Settings Update</h2>
+      <h2 className="text-xl font-bold mb-4">Settings Update</h2>
 
-  {fetchingData && (
-    <div className="flex justify-center items-center py-4">
-      <div className="spinner"></div> {/* Loading spinner */}
-      <p className="ml-2">Loading settings...</p>
-    </div>
-  )}
+      {fetchingData && (
+        <div className="flex justify-center items-center py-4">
+          <div className="spinner"></div> {/* Loading spinner */}
+          <p className="ml-2">Loading settings...</p>
+        </div>
+      )}
 
-  {/* 3-column grid for inputs */}
-  <div className="grid grid-cols-3 gap-4">
-    {Object.keys(formData).map(
-      (key) =>
-        key !== "id" && // Exclude ID from inputs
-        key !== "global_betting" &&
-        key !== "openTime" &&
-        key !== "closeTime" && (
-          <div key={key} className="flex flex-col">
-            <label className="text-sm font-semibold capitalize">
-              {key.replace(/_/g, " ")}
-            </label>
-            <input
-              type="text"
-              name={key}
-              value={formData[key]}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded-md mt-1"
-              disabled={loading} // Disable input when loading
-            />
-          </div>
-        )
-    )}
-
-    {/* Open Time Selection */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold">Withdraw Open Time</label>
-      <select
-        name="openTime"
-        value={formData.openTime}
-        onChange={handleChange}
-        className="border border-gray-300 p-2 rounded-md mt-1"
-        disabled={loading} // Disable input when loading
-      >
-        {generateTimeOptions().map((time) => (
-          <option key={time} value={time}>
-            {time}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    {/* Close Time Selection */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold">Withdraw Close Time</label>
-      <select
-        name="closeTime"
-        value={formData.closeTime}
-        onChange={handleChange}
-        className="border border-gray-300 p-2 rounded-md mt-1"
-        disabled={loading} // Disable input when loading
-      >
-        {generateTimeOptions().map((time) => (
-          <option key={time} value={time}>
-            {time}
-          </option>
-        ))}
-      </select>
-    </div>
-  </div>
-
-  {/* Global Betting Checkbox */}
-  <div className="flex items-center mt-4">
-    <input
-      type="checkbox"
-      name="global_betting"
-      checked={formData.global_betting}
-      onChange={handleChange}
-      className="w-5 h-5 mr-2"
-      disabled={loading} // Disable input when loading
-    />
-    <label className="text-sm font-semibold">Enable Global Betting</label>
-  </div>
-
-  {/* Centered Update Button */}
-  <div className="grid grid-cols-3 mt-4">
-    <div></div>
-    <div className="flex justify-center">
-      <button
-        onClick={handleSubmit}
-        className="bg-[#556EE6] text-white px-4 py-2 rounded-md"
-        disabled={loading} // Disable button when loading
-      >
-        {loading ? (
-          <div className="flex justify-center items-center">
-            <div className="spinner"></div> {/* Spinner during saving */}
-            Saving...
-          </div>
-        ) : (
-          "Update"
+      {/* 3-column grid for inputs */}
+      <div className="grid grid-cols-3 gap-4">
+        {Object.keys(formData).map(
+          (key) =>
+            key !== "id" && // Exclude ID from inputs
+            key !== "global_betting" &&
+            key !== "openTime" &&
+            key !== "closeTime" && (
+              <div key={key} className="flex flex-col">
+                <label className="text-sm font-semibold capitalize">
+                  {key.replace(/_/g, " ")}
+                </label>
+                <input
+                  type="text"
+                  name={key}
+                  value={formData[key]}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 rounded-md mt-1"
+                  disabled={loading} // Disable input when loading
+                />
+              </div>
+            )
         )}
-      </button>
-    </div>
-    <div></div>
-  </div>
-</div>
 
+        {/* Open Time Selection */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold">Withdraw Open Time</label>
+          <select
+            name="openTime"
+            value={formData.openTime}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          >
+            {generateTimeOptions().map((time) => (
+              <option key={time} value={time}>
+                {time}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Close Time Selection */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold">Withdraw Close Time</label>
+          <select
+            name="closeTime"
+            value={formData.closeTime}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          >
+            {generateTimeOptions().map((time) => (
+              <option key={time} value={time}>
+                {time}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Global Betting Checkbox */}
+      <div className="flex items-center mt-4">
+        <input
+          type="checkbox"
+          name="global_betting"
+          checked={formData.global_betting}
+          onChange={handleChange}
+          className="w-5 h-5 mr-2"
+          disabled={loading}
+        />
+        <label className="text-sm font-semibold">Enable Global Betting</label>
+      </div>
+
+      {/* Centered Update Button */}
+      <div className="grid grid-cols-3 mt-4">
+        <div></div>
+        <div className="flex justify-center">
+          <button
+            onClick={handleSubmit}
+            className="bg-[#556EE6] text-white px-4 py-2 rounded-md"
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex justify-center items-center">
+                <div className="spinner"></div>
+                Saving...
+              </div>
+            ) : (
+              "Update"
+            )}
+          </button>
+        </div>
+        <div></div>
+      </div>
+    </div>
   );
 };
 
