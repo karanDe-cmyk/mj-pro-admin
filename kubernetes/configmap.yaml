@@ -4,4 +4,4 @@ metadata:
   name: backend-config
   namespace: matka
 data:
-  DEFAULT_DB_URI: "mongodb://kalyandadmin:kalyand123@mongo-headless-service.jannat-admin.svc.cluster.local:27017/kalyandapp?authSource=admin"
+  DEFAULT_DB_URI: "mongodb+srv://Sumit9625:Z3oQ6fKzd7Zb5jUD@sumit.xro5h.mongodb.net/matkaDB"
