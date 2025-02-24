@@ -19,11 +19,17 @@ spec:
           image: mongo:latest
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
-              value: "newuser"  # Set your MongoDB root username here
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGO_USER
             - name: MONGO_INITDB_ROOT_PASSWORD
-              value: "newpassword123"  # Set your MongoDB root password here
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGO_PASSWORD
             - name: MONGO_INITDB_DATABASE
-              value: jannatapp  # Set your initial database name
+              value: kalyandDB
           ports:
             - containerPort: 27017
           volumeMounts:
@@ -39,7 +45,7 @@ spec:
       resources:
         requests:
           storage: 2Gi
-      storageClassName: jannat-storage-class
+      storageClassName: kalyandboss-storage-class
 
 ---
 
@@ -67,7 +73,7 @@ metadata:
   name: mongo-loadbalancer-service
   namespace: matka
 spec:
-  type: LoadBalancer     # External access
+  type: LoadBalancer  # External access
   selector:
     app: mongodb
   ports:
