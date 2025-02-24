@@ -18,9 +18,9 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/matka-backend:v4.4
+          image: saurav547/kalyandpboss-backend-admin-prod:v1
           ports:
-            - containerPort: 5001
+            - containerPort: 5000
           resources:
             limits:
               memory: "500Mi"
@@ -39,7 +39,7 @@ spec:
   selector:
     app: backend
   ports:
-    - port: 5001
-      targetPort: 5001
+    - port: 5000
+      targetPort: 5000
       protocol: TCP
       nodePort: 31100
