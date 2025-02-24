@@ -12,13 +12,13 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - www.kalyandpboss.shop
-    - kalyandpboss.shop
+    - www.dhanlaxmionlinematka.com
+    - dhanlaxmionlinematka.com
     - api.kalyandpboss.shop
     - admin.kalyandpboss.shop
     secretName: matka-tls-secret
   rules:
-  - host: www.kalyandpboss.shop
+  - host: www.dhanlaxmionlinematka.com
     http:
       paths:
       - path: /
@@ -28,7 +28,7 @@ spec:
             name: frontend-service
             port:
               number: 3000
-  -   host: kalyandpboss.shop
+  -   host: dhanlaxmionlinematka.com
       http:
         paths:
         - path: /
