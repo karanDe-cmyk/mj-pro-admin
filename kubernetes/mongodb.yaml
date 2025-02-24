@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongodb
-  namespace: matka
+  namespace: jannat-admin
 spec:
   serviceName: "mongo-headless-service"  # Matches the headless service name
   replicas: 1
@@ -19,17 +19,11 @@ spec:
           image: mongo:latest
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-credentials
-                  key: MONGO_USER
+              value: "newuser"  # Set your MongoDB root username here
             - name: MONGO_INITDB_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-credentials
-                  key: MONGO_PASSWORD
+              value: "newpassword123"  # Set your MongoDB root password here
             - name: MONGO_INITDB_DATABASE
-              value: kalyandbossDB
+              value: jannatapp  # Set your initial database name
           ports:
             - containerPort: 27017
           volumeMounts:
@@ -45,7 +39,7 @@ spec:
       resources:
         requests:
           storage: 2Gi
-      storageClassName: kalyand-storage-class
+      storageClassName: jannat-storage-class
 
 ---
 
@@ -54,7 +48,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongo-headless-service
-  namespace: matka
+  namespace: jannat-admin
 spec:
   clusterIP: None  # Required for StatefulSet
   selector:
@@ -71,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongo-loadbalancer-service
-  namespace: matka
+  namespace: jannat-admin
 spec:
   type: LoadBalancer     # External access
   selector:
