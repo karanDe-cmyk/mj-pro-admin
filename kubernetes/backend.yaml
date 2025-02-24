@@ -19,6 +19,9 @@ spec:
       containers:
         - name: backend
           image: saurav547/kalyandpboss-backend-admin-prod:v1
+          env:
+          - configMapRef:
+              name: backend-config         
           ports:
             - containerPort: 5000
           resources:
