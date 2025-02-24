@@ -13,7 +13,7 @@ spec:
   tls:
   - hosts:
     - www.dhanlaxmionlinematka.com
-    - dhanlaxmionlinematka.com
+    - kalyandpboss.shop
     - api.kalyandpboss.shop
     - admin.kalyandpboss.shop
     secretName: matka-tls-secret
@@ -28,7 +28,7 @@ spec:
             name: frontend-service
             port:
               number: 3000
-  -   host: dhanlaxmionlinematka.com
+  -   host: kalyandpboss.shop
       http:
         paths:
         - path: /
