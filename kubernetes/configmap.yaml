@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: jannat-admin
+data:
+  DEFAULT_DB_URI: "mongodb://jannatadmin:jannat123@mongo-headless-service.jannat-admin.svc.cluster.local:27017/jannatapp?authSource=admin"
