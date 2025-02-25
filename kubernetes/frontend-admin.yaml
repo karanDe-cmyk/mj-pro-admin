@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-admin-deployment
+  namespace: matka
+  labels:
+    app: frontend-admin
+spec:
+  replicas: 2  # HPA will handle scaling
+  selector:
+    matchLabels:
+      app: frontend-admin
+  template:
+    metadata:
+      labels:
+        app: frontend-admin
+    spec:
+      containers:
+        - name: frontend-admin
+          image: saurav547/kalyandpboss-frontend-admin-prod:v1.1
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "300m"      # Minimum guaranteed CPU
+              memory: "512Mi"  # Minimum guaranteed RAM
+            limits:
+              cpu: "600m"      # Max CPU per pod
+              memory: "768Mi"  # Max RAM per pod
+
+         
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-admin-service
+  namespace: matka
+spec:
+  type: NodePort    
+  selector:
+    app: frontend-admin
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      nodePort: 31003

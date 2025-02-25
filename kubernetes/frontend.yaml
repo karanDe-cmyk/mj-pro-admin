@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: saurav547/matka-frontend:v3.6
+          image: saurav547/kalyandpboss-frontend-web-prod:v1
           ports:
             - containerPort: 3000
           resources:
@@ -36,7 +36,7 @@ metadata:
   name: frontend-service
   namespace: matka
 spec:
-  type: LoadBalancer    
+  type: NodePort    
   selector:
     app: frontend
   ports:

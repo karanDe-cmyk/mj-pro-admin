@@ -12,11 +12,44 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - www.kalyandpboss.shop
-    - api.kalyandpboss.shop
-    - mongodb.kalyandpboss.shop
+      - www.dhanlaxmionlinematka.com
+      - dhanlaxmionlinematka.com
+      - kalyandpboss.shop
+      - www.kalyandpboss.shop
+      - api.kalyandpboss.shop
+      - admin.kalyandpboss.shop
     secretName: matka-tls-secret
   rules:
+  - host: dhanlaxmionlinematka.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
+  - host: www.dhanlaxmionlinematka.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
+  - host: kalyandpboss.shop
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
   - host: www.kalyandpboss.shop
     http:
       paths:
@@ -27,7 +60,6 @@ spec:
             name: frontend-service
             port:
               number: 3000
-
   - host: api.kalyandpboss.shop
     http:
       paths:
@@ -37,15 +69,14 @@ spec:
           service:
             name: backend-service
             port:
-              number: 5001
-
-  - host: mongodb.kalyandpboss.shop
+              number: 5000
+  - host: admin.kalyandpboss.shop
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: mongodb-service
+            name: frontend-admin-service
             port:
-              number: 27017
+              number: 3000
