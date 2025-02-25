@@ -24,6 +24,7 @@ import { useParams } from "react-router-dom";
 import instance from "../utils/axiosInstance";
 import moment from "moment";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 const { Search } = Input;
 
@@ -403,17 +404,20 @@ const updateStatus = async (newStatus) => {
   const fetchTransactionsAll = async () => {
     try {
       setLoading(true);
-      // Fetch deposit, withdraw, and manual deposit transactions simultaneously
-      const [depositRes, withdrawRes, manualDepositRes] = await Promise.allSettled([
-        instance.get(`/api/deposit/transactions/${userId}`),
-        instance.get(`/api/withdraw/transactions/${userId}`),
-        instance.get(`/api/manualDeposit/user/${userId}`),
-      ]);
-
+      // Fetch deposit, withdraw, manual deposit, and auto deposit transactions simultaneously
+      const [depositRes, withdrawRes, manualDepositRes, autoDepositRes] =
+        await Promise.allSettled([
+          instance.get(`/api/deposit/transactions/${userId}`),
+          instance.get(`/api/withdraw/transactions/${userId}`),
+          instance.get(`/api/manualDeposit/user/${userId}`),
+          instance.get(`/api/userPayment/getAutoDeposit/${userId}`),
+        ]);
+  
       let depositTransactions = [];
       let withdrawTransactions = [];
       let manualDeposits = [];
-
+      let autoDeposits = [];
+  
       // Handle deposit API response
       if (
         depositRes.status === "fulfilled" &&
@@ -425,7 +429,7 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No deposit transactions found or API failed.");
       }
-
+  
       // Handle withdraw API response
       if (
         withdrawRes.status === "fulfilled" &&
@@ -437,7 +441,7 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No withdrawal transactions found or API failed.");
       }
-
+  
       // Handle manual deposit API response
       if (
         manualDepositRes.status === "fulfilled" &&
@@ -448,14 +452,27 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No manual deposit transactions found or API failed.");
       }
-
-      // Format and merge the transactions from all sources
-      formatTransactionData(depositTransactions, withdrawTransactions, manualDeposits);
-
+  
+      // Handle auto deposit API response
+      if (
+        autoDepositRes.status === "fulfilled" &&
+        autoDepositRes.value.status === 200 &&
+        autoDepositRes.value.data.success &&
+        Array.isArray(autoDepositRes.value.data.data)
+      ) {
+        autoDeposits = autoDepositRes.value.data.data;
+      } else {
+        console.warn("No auto deposit transactions found or API failed.");
+      }
+  
+      // Format and merge the transactions from all sources, including auto deposits
+      formatTransactionData(depositTransactions, withdrawTransactions, manualDeposits, autoDeposits);
+  
       if (
         depositTransactions.length === 0 &&
         withdrawTransactions.length === 0 &&
-        manualDeposits.length === 0
+        manualDeposits.length === 0 &&
+        autoDeposits.length === 0
       ) {
         message.info("No transactions found for this user.");
       } else {
@@ -468,7 +485,7 @@ const updateStatus = async (newStatus) => {
       setLoading(false);
     }
   };
-
+  
   const parseDate = (dateStr) => {
     // Check if dateStr is a valid ISO 8601 string
     if (moment(dateStr, moment.ISO_8601, true).isValid()) {
@@ -477,9 +494,13 @@ const updateStatus = async (newStatus) => {
     // Otherwise, attempt parsing using the native Date constructor
     return moment(new Date(dateStr));
   };
-
   
-  const formatTransactionData = (depositTransactions, withdrawTransactions, manualDeposits) => {
+  const formatTransactionData = (
+    depositTransactions,
+    withdrawTransactions,
+    manualDeposits,
+    autoDeposits
+  ) => {
     // Format deposit transactions
     const formattedDeposits = depositTransactions.map((txn, index) => {
       const parsedDate = parseDate(txn.date);
@@ -493,49 +514,71 @@ const updateStatus = async (newStatus) => {
         type: "deposit",
       };
     });
-
+  
     // Format withdrawal transactions
-    const formattedWithdrawals = withdrawTransactions.map((txn, index) => ({
-      key: `withdraw-${index}`,
-      requestNumber: txn.requestNumber || txn.transaction_id || "N/A",
-      amount: txn.amount,
-      transactionType: "Withdraw Request",
-      date: moment(txn.time || txn.date).format("YYYY-MM-DD hh:mm:ss A"),
-      sortDate: moment(txn.time || txn.date).toDate(),
-      type: "withdraw",
-    }));
-
+    const formattedWithdrawals = withdrawTransactions.map((txn, index) => {
+      const parsedDate = moment(txn.time || txn.date);
+      return {
+        key: `withdraw-${index}`,
+        requestNumber: txn.requestNumber || txn.transaction_id || "N/A",
+        amount: txn.amount,
+        transactionType: "Withdraw Request",
+        date: parsedDate.format("YYYY-MM-DD hh:mm:ss A"),
+        sortDate: parsedDate.toDate(),
+        type: "withdraw",
+      };
+    });
+  
     // Filter manual deposits to only include those with status "Accepted"
     const acceptedManualDeposits = manualDeposits.filter(
       (txn) => txn.status && txn.status.toLowerCase() === "accepted"
     );
-
+  
     // Format manual deposit transactions (using createdAt for date)
-    const formattedManualDeposits = acceptedManualDeposits.map((txn, index) => ({
-      key: `manual-${index}`,
-      requestNumber: txn.transactionId, // from the API response
-      amount: txn.amount,
-      transactionType: "Money Added",
-      date: moment(txn.createdAt).format("M/D/YYYY, h:mm:ss A"),
-      sortDate: moment(txn.createdAt).toDate(),
-      type: "manual",
-    }));
-
+    const formattedManualDeposits = acceptedManualDeposits.map((txn, index) => {
+      const parsedDate = moment(txn.createdAt);
+      return {
+        key: `manual-${index}`,
+        requestNumber: txn.transactionId, // from the API response
+        amount: txn.amount,
+        transactionType: "Money Added",
+        date: parsedDate.format("M/D/YYYY, h:mm:ss A"),
+        sortDate: parsedDate.toDate(),
+        type: "manual",
+      };
+    });
+  
+    // Format auto deposit transactions
+    const formattedAutoDeposits = autoDeposits.map((txn, index) => {
+      // For auto deposits, the date is in the format "DD-MM-YYYY HH:mm"
+      const parsedDate = dayjs(txn.date, "DD-MM-YYYY HH:mm");
+      return {
+        key: `auto-${index}`,
+        requestNumber: txn.txnId || txn.transaction_id || "N/A",
+        amount: txn.amount,
+        transactionType: "Money Added",
+        date: parsedDate.format("YYYY-MM-DD hh:mm:ss A"),
+        sortDate: parsedDate.toDate(),
+        type: "auto",
+      };
+    });
+  
     // Merge all transactions
     const allTransactions = [
       ...formattedDeposits,
       ...formattedWithdrawals,
       ...formattedManualDeposits,
+      ...formattedAutoDeposits,
     ];
-
+  
     // Sort them by sortDate (latest first)
     allTransactions.sort((a, b) => b.sortDate - a.sortDate);
-
+  
     // Assign sequential serial numbers after sorting
     allTransactions.forEach((txn, index) => {
       txn.sNo = index + 1;
     });
-
+  
     setTransactionHistoryDataAll(allTransactions);
   };
 
@@ -988,6 +1031,7 @@ const updateStatus = async (newStatus) => {
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, filteredWalletHistoryData.length);
 
+
   const transactionHistoryColumnsAll = [
     {
       title: "#",
@@ -1005,20 +1049,21 @@ const updateStatus = async (newStatus) => {
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => {
-        const isDeposit = record.type === "deposit" || record.type === "manual";
+        // Treat "auto" type as deposit for styling
+        const isDeposit = record.type === "deposit" || record.type === "manual" || record.type === "auto";
         const style = {
           padding: "4px 8px",
           borderRadius: "4px",
-          color: isDeposit ? "#000" : "#fff",
           display: "inline-block",
           minWidth: "80px",
           fontWeight: "bold",
           textAlign: "center",
+          color: isDeposit ? "#389e0d" : "#fff",
           backgroundColor: isDeposit ? "#d9f7be" : "#ff4d4f",
         };
         return (
           <span style={style}>
-            {record.type === "withdraw" ? `- ${amount || 0}` : `+ ${amount || 0}`}
+            {isDeposit ? `+ ${amount || 0}` : `- ${amount || 0}`}
           </span>
         );
       },
@@ -1028,17 +1073,19 @@ const updateStatus = async (newStatus) => {
       dataIndex: "transactionType",
       key: "transactionType",
       render: (text, record) => {
-        const isDeposit = record.type === "deposit" || record.type === "manual";
+        // Again, treat "auto" as deposit
+        const isDeposit = record.type === "deposit" || record.type === "manual" || record.type === "auto";
         const style = {
           padding: "6px 12px",
           borderRadius: "4px",
-          color: isDeposit ? "#389e0d" : "#ad6800",
           fontWeight: "bold",
-          border: `2px solid ${isDeposit ? "#b7eb8f" : "#ffa940"}`,
-          backgroundColor: isDeposit ? "#f6ffed" : "#fffbe6",
           display: "inline-block",
           minWidth: "120px",
           textAlign: "center",
+          // Colors for "Money Added" style
+          color: isDeposit ? "#389e0d" : "#ad6800",
+          border: `2px solid ${isDeposit ? "#b7eb8f" : "#ffa940"}`,
+          backgroundColor: isDeposit ? "#f6ffed" : "#fffbe6",
         };
         return <span style={style}>{text || "Unknown"}</span>;
       },
@@ -1048,9 +1095,10 @@ const updateStatus = async (newStatus) => {
       dataIndex: "date",
       key: "date",
       render: (date, record) =>
-        record.sortDate ? moment(record.sortDate).format("M/D/YYYY, h:mm:ss A") : "N/A",
+        record.sortDate ? dayjs(record.sortDate).format("M/D/YYYY, h:mm:ss A") : "N/A",
     },
   ];
+  
   
 
   return (
