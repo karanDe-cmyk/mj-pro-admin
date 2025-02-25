@@ -469,18 +469,30 @@ const updateStatus = async (newStatus) => {
     }
   };
 
+  const parseDate = (dateStr) => {
+    // Check if dateStr is a valid ISO 8601 string
+    if (moment(dateStr, moment.ISO_8601, true).isValid()) {
+      return moment(dateStr);
+    }
+    // Otherwise, attempt parsing using the native Date constructor
+    return moment(new Date(dateStr));
+  };
+
   
   const formatTransactionData = (depositTransactions, withdrawTransactions, manualDeposits) => {
     // Format deposit transactions
-    const formattedDeposits = depositTransactions.map((txn, index) => ({
-      key: `deposit-${index}`,
-      requestNumber: txn.requestNumber || txn.transaction_id || "N/A",
-      amount: txn.amount,
-      transactionType: "Money Added",
-      date: moment(txn.date).format("YYYY-MM-DD hh:mm:ss A"),
-      sortDate: moment(txn.date).toDate(),
-      type: "deposit",
-    }));
+    const formattedDeposits = depositTransactions.map((txn, index) => {
+      const parsedDate = parseDate(txn.date);
+      return {
+        key: `deposit-${index}`,
+        requestNumber: txn.requestNumber || txn.transaction_id || "N/A",
+        amount: txn.amount,
+        transactionType: "Money Added",
+        date: parsedDate.format("YYYY-MM-DD hh:mm:ss A"),
+        sortDate: parsedDate.toDate(),
+        type: "deposit",
+      };
+    });
 
     // Format withdrawal transactions
     const formattedWithdrawals = withdrawTransactions.map((txn, index) => ({

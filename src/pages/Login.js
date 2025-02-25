@@ -67,10 +67,10 @@ const Login = () => {
 
         <div style={styles.avatarContainer}>
           <Avatar size={60} src="https://via.placeholder.com/50" />
-          <Title level={4} style={{ marginTop: 10 }}>Main Kalyan</Title>
+          <Title level={4} style={{ marginTop: 10 }}>Kalyan Admin</Title>
         </div>
 
-        <Form layout="vertical" onFinish={handleLogin} initialValues={{ username: "check", password: "check" }}>
+        <Form layout="vertical" onFinish={handleLogin} initialValues={{ username: "", password: "" }}>
           <Form.Item name="username" label="Username" rules={[{ required: true, message: "Please enter your username" }]}> 
             <Input prefix={<UserOutlined />} placeholder="Enter username" />
           </Form.Item>
