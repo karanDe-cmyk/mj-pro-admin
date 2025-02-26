@@ -67,7 +67,7 @@ pipeline {
                             git status
                             
                             echo "Adding changes..."
-                            git add kubernetes/frontend.yaml
+                            git add kubernetes/frontend-admin.yaml
                             
                             echo "Committing changes..."
                             git commit -m "Updated frontend image tag to ${FRONTEND_DOCKER_TAG}" || echo "No changes to commit"
