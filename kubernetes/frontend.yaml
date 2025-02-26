@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: saurav547/kalyandpboss-frontend-web-prod:v1.2
+          image: saurav547/kalyandpboss-frontend-web-prod:v1.3
           ports:
             - containerPort: 3000
           resources:
