@@ -47,7 +47,7 @@ pipeline {
                     dir('kubernetes') {
                         sh """
                             #!/bin/bash
-                            sed -i 's|image: saurav547/matka-backend:.*|image: saurav547/matka-backend:${params.BACKEND_DOCKER_TAG}|' backend.yaml
+                            sed -i 's|image: saurav547/kalyandpboss-backend-admin-prod:.*|image: saurav547/kalyandpboss-backend-admin-prod:${params.BACKEND_DOCKER_TAG}|' backend.yaml
                         """
                     }
                 }
