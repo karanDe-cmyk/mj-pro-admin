@@ -60,7 +60,7 @@ pipeline {
 
     post {
         success {
-            build job: "Matka-Fronted-CD", parameters: [
+            build job: "Kalyand-Fronted-Admin-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}")
             ]
         }
