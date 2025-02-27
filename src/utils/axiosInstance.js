@@ -30,29 +30,25 @@ instance.interceptors.request.use(
     }
 );
 
-
 // Response interceptor
-instance.interceptors.request.use(
-    async (config) => {
-        try {
-            const accessToken = localStorage.getItem("accessToken");
-
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
-                // console.log("Authorization Token in Request Header:", config.headers.Authorization);
-            } else {
-                // console.log("No Authorization token found in localStorage.");
-            }
-
-            return config;
-        } catch (error) {
-            console.error("Error setting Authorization header:", error);
-            return Promise.reject(error);
-        }
-    },
-    (error) => {
-        console.error("Request error:", error);
-        return Promise.reject(error);
+instance.interceptors.response.use(
+  (response) => response, // pass through successful responses
+  (error) => {
+    // Check if the response error contains the "Invalid Token" message
+    if (
+      error.response &&
+      error.response.data &&
+      error.response.data.message === "Invalid Token !!"
+    ) {
+      // Clear all localStorage data
+      localStorage.clear();
+      // Optionally, display a toast message that the session expired
+      // Redirect the user to the login page
+      window.location.href = "/"; // adjust this path based on your routing setup
     }
+    return Promise.reject(error);
+  }
 );
+
+
 export default instance;
