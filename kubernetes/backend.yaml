@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/kalyandpboss-backend-admin-prod:v1.3
+          image: saurav547/kalyandpboss-backend-admin-prod:v1.2
           envFrom:
             - configMapRef:
                 name: backend-config  
