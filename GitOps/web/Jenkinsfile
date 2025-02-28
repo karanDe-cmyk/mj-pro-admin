@@ -47,7 +47,7 @@ pipeline {
                     dir('kubernetes') {
                         sh """
                             #!/bin/bash
-                            sed -i 's|image: saurav547/kalyandpboss-frontend-admin-prod:.*|image: saurav547/kalyandpboss-frontend-admin-prod:${params.FRONTEND_DOCKER_TAG}|' frontend-admin.yaml
+                            sed -i 's|image: saurav547/kalyandpboss-frontend-web-prod:.*|image: saurav547/kalyandpboss-frontend-web-prod:${params.FRONTEND_DOCKER_TAG}|' frontend.yaml
                         """
                     }
                 }
@@ -67,7 +67,7 @@ pipeline {
                             git status
                             
                             echo "Adding changes..."
-                            git add kubernetes/frontend-admin.yaml
+                            git add kubernetes/frontend.yaml
                             
                             echo "Committing changes..."
                             git commit -m "Updated frontend image tag to ${FRONTEND_DOCKER_TAG}" || echo "No changes to commit"
@@ -90,7 +90,7 @@ pipeline {
                 body: """
                     <html>
                     <body>
-                        <h3 style="color: green;">Matka Frontend Admin Deployment Success</h3>
+                        <h3 style="color: green;">Matka Web Deployment Success</h3>
                         <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                         <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
@@ -110,7 +110,7 @@ pipeline {
                 body: """
                     <html>
                     <body>
-                        <h3 style="color: red;">Matka Backend Frontend Admin Deployment Failed</h3>
+                        <h3 style="color: red;">Matka Web Deployment Failed</h3>
                         <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                     </body>

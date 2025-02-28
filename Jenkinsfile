@@ -44,7 +44,7 @@ pipeline {
         stage("Docker: Build Image") {
             steps {
                 script {
-                    docker_build("matka-frontend", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
+                    docker_build("kalyandpboss-frontend-admin-prod", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
         }
@@ -52,7 +52,7 @@ pipeline {
         stage("Docker: Push to DockerHub") {
             steps {
                 script {
-                    docker_push("matka-frontend", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
+                    docker_push("kalyandpboss-frontend-admin-prod", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
         }
@@ -60,7 +60,7 @@ pipeline {
 
     post {
         success {
-            build job: "Matka-Fronted-CD", parameters: [
+            build job: "Kalyand-Fronted-Admin-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}")
             ]
         }
