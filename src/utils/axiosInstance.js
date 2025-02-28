@@ -1,58 +1,62 @@
 import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const instance = axios.create({
-    baseURL: "https://api.kalyandpboss.shop",
+  baseURL: "https://api.kalyandpboss.shop",
 });
 
-// Request interceptor
+let isRedirecting = false; // Prevent multiple redirects
+
+// ✅ Request Interceptor (Attach Token)
 instance.interceptors.request.use(
-    async (config) => {
-        try {
-            const accessToken = localStorage.getItem("accessToken");
-
-            if (accessToken) {
-                // Log the Authorization header to check if the token is set
-                // console.log("Authorization Token in Request Header:", config.headers.Authorization);
-                config.headers.Authorization = `Bearer ${accessToken}`;
-            } else {
-                // console.log("No Authorization token found in localStorage.");
-            }
-
-            return config;
-        } catch (error) {
-            console.error("Error setting Authorization header:", error);
-            return Promise.reject(error);
-        }
-    },
-    (error) => {
-        console.error("Request error:", error);
-        return Promise.reject(error);
+  (config) => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    return config;
+  },
+  (error) => {
+    console.error("Request error:", error);
+    return Promise.reject(error);
+  }
 );
 
+// ✅ Response Interceptor (Handle Expired Token)
+instance.interceptors.response.use(
+  (response) => response, // Pass through successful responses
+  (error) => {
+    if (
+      error.response &&
+      error.response.data &&
+      error.response.data.message === "Invalid Token !!"
+    ) {
+      if (!isRedirecting) {
+        isRedirecting = true;
 
-// Response interceptor
-instance.interceptors.request.use(
-    async (config) => {
-        try {
-            const accessToken = localStorage.getItem("accessToken");
+        // Show Toast Notification
+        toast.error("Session expired. Please log in again.", {
+          position: "top-right",
+          autoClose: 3000, // 3s delay before closing
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+        });
 
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
-                // console.log("Authorization Token in Request Header:", config.headers.Authorization);
-            } else {
-                // console.log("No Authorization token found in localStorage.");
-            }
+        // Clear local storage
+        localStorage.clear();
 
-            return config;
-        } catch (error) {
-            console.error("Error setting Authorization header:", error);
-            return Promise.reject(error);
-        }
-    },
-    (error) => {
-        console.error("Request error:", error);
-        return Promise.reject(error);
+        // Redirect after a short delay (allows user to see the message)
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 300); // 3s delay before redirecting
+      }
     }
+    return Promise.reject(error);
+  }
 );
+
 export default instance;

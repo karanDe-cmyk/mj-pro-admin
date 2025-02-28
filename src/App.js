@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
@@ -63,6 +65,7 @@ const App = () => {
 
   return (
     <Router>
+      <ToastContainer/>
       <Routes>
         {/* Public Route - Login */}
         <Route path="/" element={<Login />} />
