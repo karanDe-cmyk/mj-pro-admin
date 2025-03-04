@@ -186,12 +186,18 @@ const updateStatus = async (newStatus) => {
       const response = await instance.get(`/api/withdraw/transactions/${userId}`);
       if (response.data.status) {
         const today = moment().format("YYYY-MM-DD");
-
-        // Filter to show only today's pending transactions
-        const filteredData = response.data.transactions.filter(
-          (txn) => txn.status.toLowerCase() === "pending" && moment(txn.date).format("YYYY-MM-DD") === today
-        );
-
+  
+        // Filter transactions for today with status "pending"
+        const filteredData = response.data.transactions.filter((txn) => {
+          const transactionDate = moment(txn.date || txn.time, [
+            "YYYY-MM-DD hh:mm:ss A",
+            "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ (z)",
+            "YYYY-MM-DDTHH:mm:ss.SSSZ"
+          ]).format("YYYY-MM-DD");
+  
+          return txn.status.toLowerCase() === "pending" && transactionDate === today;
+        });
+  
         setWithdrawData(filteredData);
       } else {
         message.error("Failed to fetch withdrawal transactions");
@@ -542,7 +548,7 @@ const updateStatus = async (newStatus) => {
         requestNumber: txn.transactionId, // from the API response
         amount: txn.amount,
         transactionType: "Money Added",
-        date: parsedDate.format("M/D/YYYY, h:mm:ss A"),
+        date: parsedDate.format("MM/DD/YYYY, h:mm:ss A"),
         sortDate: parsedDate.toDate(),
         type: "manual",
       };
@@ -606,8 +612,12 @@ const updateStatus = async (newStatus) => {
           closeDigitValue = bid.digit; // Main Market close: digit in "Close Digits" column
           sessionValue = "Close";
         }
+        // If both open and close are false, assign digitValue from bid.digit
+        if (!bid.open && !bid.close) {
+          digitValue = bid.digit;
+        }
       }
-
+      
       return {
         key: index + 1,
         sNo: index + 1,
@@ -616,7 +626,6 @@ const updateStatus = async (newStatus) => {
         gameType: bid.gameType || bid.gametype,
         session: sessionValue || "  ━━━━", // New session column
         digit: digitValue || closeDigitValue,
-        // closeDigits: closeDigitValue,
         points: bid.points,
         date: moment(bid.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
       };
