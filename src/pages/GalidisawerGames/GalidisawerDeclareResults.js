@@ -104,8 +104,12 @@ const GalidisawerDeclareResults = () => {
   useEffect(() => {
     axiosInstance.get('/api/GaliDisawar/getAllMarket')
       .then(response => {
-        // Assuming the response data is an array of objects
-        setGameOptions(response.data);
+        // Assuming the response has a structure: { message, success, data: [...] }
+        if (response.data && Array.isArray(response.data.data)) {
+          setGameOptions(response.data.data);
+        } else {
+          setGameOptions([]);
+        }
       })
       .catch(error => {
         console.error("Error fetching game options:", error);
@@ -115,7 +119,7 @@ const GalidisawerDeclareResults = () => {
   // Handle filter changes
   const handleFilterChange = (value, key) => {
     // When game selection changes, clear any previously selected open_time.
-    if(key === 'game'){
+    if (key === 'game') {
       setFilters(prev => ({ ...prev, [key]: value, open_time: '' }));
     } else {
       setFilters(prev => ({ ...prev, [key]: value }));

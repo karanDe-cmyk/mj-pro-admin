@@ -75,7 +75,7 @@ const SliderManagement = () => {
 
   // 🔹 Upload Image to API
   const handleFormSubmit = async (values) => {
-    console.log("Form Values:", values); // Debugging Log
+    // console.log("Form Values:", values); // Debugging Log
 
     if (!values.image || values.image.length === 0) {
       message.error("Please upload an image");

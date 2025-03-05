@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Switch, message, Spin, Input, Select } from "antd";
-import { EditOutlined } from "@ant-design/icons";
+import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
 import EditGameModal from "./EditGameModal";
@@ -98,6 +98,25 @@ const GameName = () => {
     }
   };
 
+  // Delete game function
+  const deleteGame = async (gameId) => {
+    setLoadingAction(`delete-${gameId}`);
+    try {
+      const response = await instance.delete(`/api/starline/deleteGameById/${gameId}`);
+      if (response.data.success) {
+        // Remove the deleted game from the state
+        const updatedGames = games.filter((game) => game._id !== gameId);
+        setGames(updatedGames);
+        filterGames(searchTerm, filterStatus, updatedGames);
+        message.success("Game deleted successfully.");
+      }
+    } catch (error) {
+      message.error("Error deleting game.");
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-md rounded-md">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
@@ -188,14 +207,24 @@ const GameName = () => {
               key: "actions",
               render: (_, record) => (
                 <div className="flex space-x-2">
-                  <Button
-                    type="primary"
-                    icon={<EditOutlined />}
-                    onClick={() => setEditingGame(record)}
-                  >
-                    Edit
-                  </Button>
-                </div>
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => setEditingGame(record)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => deleteGame(record._id)}
+                  loading={loadingAction === `delete-${record._id}`}
+                >
+                  Delete
+                </Button>
+              </div>
+              
               ),
             },
           ]}

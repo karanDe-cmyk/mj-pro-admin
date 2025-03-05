@@ -1,7 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Modal, Form, TimePicker, Row, Col, Card, Typography, message, Switch } from 'antd';
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import React, { useState, useEffect } from "react";
+import {
+  Table,
+  Button,
+  Input,
+  Modal,
+  Form,
+  TimePicker,
+  Row,
+  Col,
+  Card,
+  Typography,
+  message,
+  Switch,
+} from "antd";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import axiosInstance from "../../utils/axiosInstance";
 
 dayjs.extend(customParseFormat);
@@ -13,14 +26,21 @@ const GameName = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMarket, setEditingMarket] = useState(null);
   const [form] = Form.useForm();
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
 
+  // Fetch markets from API
   const fetchMarkets = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get('/api/GaliDisawar/getAllMarket');
-      // Assume response.data is an array of market objects
-      setMarkets(response.data);
+      const response = await axiosInstance.get("/api/GaliDisawar/getAllMarket");
+
+      // The actual array of markets is in response.data.data
+      if (response.data && Array.isArray(response.data.data)) {
+        setMarkets(response.data.data);
+      } else {
+        setMarkets([]);
+        message.warning("No valid market data found.");
+      }
     } catch (error) {
       console.error("Error fetching markets", error);
       message.error("Error fetching market data");
@@ -67,7 +87,10 @@ const GameName = () => {
         open_time: values.time.format("hh:mm:ssA"),
         is_active: true, // Sending is_active true by default for edit
       };
-      await axiosInstance.put(`/api/GaliDisawar/updateMarket/${editingMarket._id}`, payload);
+      await axiosInstance.put(
+        `/api/GaliDisawar/updateMarket/${editingMarket._id}`,
+        payload
+      );
       message.success("Market updated successfully");
       setEditingMarket(null);
       form.resetFields();
@@ -92,7 +115,10 @@ const GameName = () => {
         open_time: record.open_time,
         is_active: checked,
       };
-      await axiosInstance.put(`/api/GaliDisawar/updateMarket/${record._id}`, payload);
+      await axiosInstance.put(
+        `/api/GaliDisawar/updateMarket/${record._id}`,
+        payload
+      );
       message.success("Market status updated");
       fetchMarkets();
     } catch (error) {
@@ -123,34 +149,34 @@ const GameName = () => {
     setEditingMarket(record);
     form.setFieldsValue({
       name: record.game_name,
-      time: dayjs(record.open_time, 'hh:mm:ssA')
+      time: dayjs(record.open_time, "hh:mm:ssA"),
     });
     setIsModalOpen(true);
   };
 
-  // Table columns definition with added "Status" column.
+  // Table columns definition with added "Status" column
   const columns = [
     {
-      title: '#',
-      key: 'sNo',
+      title: "#",
+      key: "sNo",
       render: (_, record, index) => index + 1,
     },
     {
-      title: 'Game Name',
-      dataIndex: 'game_name',
-      key: 'game_name',
+      title: "Game Name",
+      dataIndex: "game_name",
+      key: "game_name",
       sorter: (a, b) => a.game_name.localeCompare(b.game_name),
       render: (text) => text.toUpperCase(),
     },
     {
-      title: 'Open Time',
-      dataIndex: 'open_time',
-      key: 'open_time',
+      title: "Open Time",
+      dataIndex: "open_time",
+      key: "open_time",
       sorter: (a, b) => a.open_time.localeCompare(b.open_time),
     },
     {
-      title: 'Status',
-      key: 'status',
+      title: "Status",
+      key: "status",
       render: (_, record) => (
         <Switch
           checked={record.is_active}
@@ -161,11 +187,15 @@ const GameName = () => {
       ),
     },
     {
-      title: 'Action',
-      key: 'action',
+      title: "Action",
+      key: "action",
       render: (_, record) => (
         <>
-          <Button type="primary" style={{ marginRight: '8px' }} onClick={() => handleEdit(record)}>
+          <Button
+            type="primary"
+            style={{ marginRight: "8px" }}
+            onClick={() => handleEdit(record)}
+          >
             Edit
           </Button>
           <Button type="primary" danger onClick={() => handleDelete(record._id)}>
@@ -177,19 +207,22 @@ const GameName = () => {
   ];
 
   // Filter markets by search text (game_name or open_time)
-  const filteredData = markets.filter(item =>
-    item.game_name.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.open_time.toLowerCase().includes(searchText.toLowerCase())
+  const filteredData = markets.filter(
+    (item) =>
+      item.game_name.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.open_time.toLowerCase().includes(searchText.toLowerCase())
   );
 
   return (
-    <div style={{ padding: '20px', width: '100%' }}>
-      <Title level={2} style={{ textAlign: 'center', marginBottom: '20px' }}>Galidisawar Games</Title>
-      
-      <Row justify="space-between" align="middle" style={{ marginBottom: '20px' }}>
+    <div style={{ padding: "20px", width: "100%" }}>
+      <Title level={2} style={{ textAlign: "center", marginBottom: "20px" }}>
+        Galidisawar Games
+      </Title>
+
+      <Row justify="space-between" align="middle" style={{ marginBottom: "20px" }}>
         <Col xs={24} sm={12}>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             onClick={() => {
               setEditingMarket(null);
               form.resetFields();
@@ -199,22 +232,22 @@ const GameName = () => {
             Add Game
           </Button>
         </Col>
-        <Col xs={24} sm={12} style={{ textAlign: 'right', marginTop: '10px' }}>
+        <Col xs={24} sm={12} style={{ textAlign: "right", marginTop: "10px" }}>
           <Input
             placeholder="Search by Game Name or Open Time"
             value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            style={{ width: '80%', maxWidth: '300px' }}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ width: "80%", maxWidth: "300px" }}
           />
         </Col>
       </Row>
-      
-      <Card bordered style={{ marginBottom: '20px' }}>
-        <Table 
-          columns={columns} 
-          dataSource={filteredData} 
-          pagination={{ pageSize: 5 }} 
-          rowKey="_id" 
+
+      <Card bordered style={{ marginBottom: "20px" }}>
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          pagination={{ pageSize: 5 }}
+          rowKey="_id"
           loading={loading}
           scroll={{ x: true }}
         />
@@ -232,23 +265,23 @@ const GameName = () => {
         okText={editingMarket ? "Update" : "Add"}
       >
         <Form form={form} layout="vertical">
-          <Form.Item 
-            name="name" 
-            label="Game Name" 
-            rules={[{ required: true, message: 'Please enter game name' }]}
-          > 
+          <Form.Item
+            name="name"
+            label="Game Name"
+            rules={[{ required: true, message: "Please enter game name" }]}
+          >
             <Input placeholder="Enter game name" />
           </Form.Item>
-          <Form.Item 
-            name="time" 
-            label="Open Time" 
-            rules={[{ required: true, message: 'Please select open time' }]}
-          > 
-            <TimePicker 
-              use12Hours 
-              format="hh:mm:ssA" 
-              style={{ width: '100%' }}
-              placeholder="Select time" 
+          <Form.Item
+            name="time"
+            label="Open Time"
+            rules={[{ required: true, message: "Please select open time" }]}
+          >
+            <TimePicker
+              use12Hours
+              format="hh:mm:ssA"
+              style={{ width: "100%" }}
+              placeholder="Select time"
             />
           </Form.Item>
         </Form>

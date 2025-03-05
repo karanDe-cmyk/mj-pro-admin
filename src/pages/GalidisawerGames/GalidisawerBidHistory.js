@@ -44,7 +44,12 @@ const BidHistory = () => {
   const fetchGameMarkets = async () => {
     try {
       const response = await axiosInstance.get("/api/GaliDisawar/getAllMarket");
-      setGameOptions(response.data);
+      // Assuming response.data has a structure like { message, success, data: [...] }
+      if (response.data && Array.isArray(response.data.data)) {
+        setGameOptions(response.data.data);
+      } else {
+        setGameOptions([]);
+      }
     } catch (error) {
       console.error("Error fetching game markets", error);
       message.error("Error fetching game markets");
