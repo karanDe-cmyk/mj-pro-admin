@@ -19,6 +19,11 @@ spec:
       containers:
         - name: backend
           image: saurav547/kalyandpboss-backend-admin-prod:v1.9
+          env: 
+            - name: TZ
+              value: "Asia/Kolkata"
+            - name: LC_TIME
+              value: "en_US.UTF-8"
           envFrom:
             - configMapRef:
                 name: backend-config  
