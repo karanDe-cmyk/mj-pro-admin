@@ -13,7 +13,8 @@ import {
   Modal,
   Form,
   Input,
-  message, Tag
+  message,
+  Tag,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -44,12 +45,13 @@ const UserDetails = () => {
   // State to store the amount entered in the popup
   const [amount, setAmount] = useState("");
   const [depositTransactions, setDepositTransactions] = useState([]);
-  const [manualDepositTransactions, setManualDepositTransactions] = useState([]);
+  const [manualDepositTransactions, setManualDepositTransactions] = useState(
+    []
+  );
 
   const [winningData, setWinningData] = useState([]);
   const [entries, setEntries] = useState(5);
   const { userId } = useParams();
-
 
   // console.log("userId....", userId);
 
@@ -62,8 +64,6 @@ const UserDetails = () => {
     []
   );
 
-
-  
   // Fetch today's deposit transactions from the new API
   const fetchManualTransactionsAll = async () => {
     try {
@@ -116,25 +116,24 @@ const UserDetails = () => {
     fetchManualTransactionsAll();
   }, [userId]);
 
-
-
-
-// Update the status using a separate state variable.
-const updateStatus = async (newStatus) => {
-  try {
-    const response = await instance.post(`/api/auth/userStatusUpdate/${userId}`, {
-      type: "status",
-      value: newStatus,
-    });
-    if (response.data && response.data.user) {
-      // Update only the status state
-      setStatus(response.data.user.status);
+  // Update the status using a separate state variable.
+  const updateStatus = async (newStatus) => {
+    try {
+      const response = await instance.post(
+        `/api/auth/userStatusUpdate/${userId}`,
+        {
+          type: "status",
+          value: newStatus,
+        }
+      );
+      if (response.data && response.data.user) {
+        // Update only the status state
+        setStatus(response.data.user.status);
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
     }
-  } catch (error) {
-    console.error("Error updating status:", error);
-  }
-};
-
+  };
 
   const fetchTransactions = async (userId) => {
     try {
@@ -165,9 +164,6 @@ const updateStatus = async (newStatus) => {
     }
   };
 
-
-
-  
   // Always call useEffect at the top level.
   // Use an inner async function to handle async logic and include userData in dependencies.
   useEffect(() => {
@@ -183,21 +179,25 @@ const updateStatus = async (newStatus) => {
   // **Fetch Withdraw Transactions (Only Pending & Today’s)**
   const fetchWithdrawTransactions = async () => {
     try {
-      const response = await instance.get(`/api/withdraw/transactions/${userId}`);
+      const response = await instance.get(
+        `/api/withdraw/transactions/${userId}`
+      );
       if (response.data.status) {
         const today = moment().format("YYYY-MM-DD");
-  
+
         // Filter transactions for today with status "pending"
         const filteredData = response.data.transactions.filter((txn) => {
           const transactionDate = moment(txn.date || txn.time, [
             "YYYY-MM-DD hh:mm:ss A",
             "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ (z)",
-            "YYYY-MM-DDTHH:mm:ss.SSSZ"
+            "YYYY-MM-DDTHH:mm:ss.SSSZ",
           ]).format("YYYY-MM-DD");
-  
-          return txn.status.toLowerCase() === "pending" && transactionDate === today;
+
+          return (
+            txn.status.toLowerCase() === "pending" && transactionDate === today
+          );
         });
-  
+
         setWithdrawData(filteredData);
       } else {
         message.error("Failed to fetch withdrawal transactions");
@@ -218,19 +218,19 @@ const updateStatus = async (newStatus) => {
     try {
       await instance.patch(`/api/users/withdrawals/status/${id}`, {
         status: status,
-        
       });
 
       // Remove the transaction from UI immediately
       setWithdrawData((prevData) => prevData.filter((txn) => txn._id !== id));
 
-      message.success(`Withdrawal request ${status.toLowerCase()} successfully!`);
+      message.success(
+        `Withdrawal request ${status.toLowerCase()} successfully!`
+      );
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
       message.error(`Failed to ${status.toLowerCase()} withdrawal request.`);
     }
   };
-
 
   // Load withdrawal transactions once userData is available.
   const loadWithdrawTransactions = async () => {
@@ -256,14 +256,12 @@ const updateStatus = async (newStatus) => {
       const response = await instance.get(`/api/app/users/${userId}`);
       setUserData(response.data);
       setStatus(response.data.status);
-
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchUserData();
@@ -369,7 +367,9 @@ const updateStatus = async (newStatus) => {
     );
 
     // Sort by latest date (Descending)
-    const sortedData = formattedData.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sortedData = formattedData.sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
 
     // Assign proper sequential S.No (1,2,3,4...)
     const finalData = sortedData.map((item, index) => ({
@@ -418,12 +418,12 @@ const updateStatus = async (newStatus) => {
           instance.get(`/api/manualDeposit/user/${userId}`),
           instance.get(`/api/userPayment/getAutoDeposit/${userId}`),
         ]);
-  
+
       let depositTransactions = [];
       let withdrawTransactions = [];
       let manualDeposits = [];
       let autoDeposits = [];
-  
+
       // Handle deposit API response
       if (
         depositRes.status === "fulfilled" &&
@@ -435,7 +435,7 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No deposit transactions found or API failed.");
       }
-  
+
       // Handle withdraw API response
       if (
         withdrawRes.status === "fulfilled" &&
@@ -447,7 +447,7 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No withdrawal transactions found or API failed.");
       }
-  
+
       // Handle manual deposit API response
       if (
         manualDepositRes.status === "fulfilled" &&
@@ -458,7 +458,7 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No manual deposit transactions found or API failed.");
       }
-  
+
       // Handle auto deposit API response
       if (
         autoDepositRes.status === "fulfilled" &&
@@ -470,10 +470,15 @@ const updateStatus = async (newStatus) => {
       } else {
         console.warn("No auto deposit transactions found or API failed.");
       }
-  
+
       // Format and merge the transactions from all sources, including auto deposits
-      formatTransactionData(depositTransactions, withdrawTransactions, manualDeposits, autoDeposits);
-  
+      formatTransactionData(
+        depositTransactions,
+        withdrawTransactions,
+        manualDeposits,
+        autoDeposits
+      );
+
       if (
         depositTransactions.length === 0 &&
         withdrawTransactions.length === 0 &&
@@ -491,7 +496,7 @@ const updateStatus = async (newStatus) => {
       setLoading(false);
     }
   };
-  
+
   const parseDate = (dateStr) => {
     // Check if dateStr is a valid ISO 8601 string
     if (moment(dateStr, moment.ISO_8601, true).isValid()) {
@@ -500,7 +505,7 @@ const updateStatus = async (newStatus) => {
     // Otherwise, attempt parsing using the native Date constructor
     return moment(new Date(dateStr));
   };
-  
+
   const formatTransactionData = (
     depositTransactions,
     withdrawTransactions,
@@ -520,7 +525,7 @@ const updateStatus = async (newStatus) => {
         type: "deposit",
       };
     });
-  
+
     // Format withdrawal transactions
     const formattedWithdrawals = withdrawTransactions.map((txn, index) => {
       const parsedDate = moment(txn.time || txn.date);
@@ -534,12 +539,12 @@ const updateStatus = async (newStatus) => {
         type: "withdraw",
       };
     });
-  
+
     // Filter manual deposits to only include those with status "Accepted"
     const acceptedManualDeposits = manualDeposits.filter(
       (txn) => txn.status && txn.status.toLowerCase() === "accepted"
     );
-  
+
     // Format manual deposit transactions (using createdAt for date)
     const formattedManualDeposits = acceptedManualDeposits.map((txn, index) => {
       const parsedDate = moment(txn.createdAt);
@@ -553,7 +558,7 @@ const updateStatus = async (newStatus) => {
         type: "manual",
       };
     });
-  
+
     // Format auto deposit transactions
     const formattedAutoDeposits = autoDeposits.map((txn, index) => {
       // For auto deposits, the date is in the format "DD-MM-YYYY HH:mm"
@@ -568,7 +573,7 @@ const updateStatus = async (newStatus) => {
         type: "auto",
       };
     });
-  
+
     // Merge all transactions
     const allTransactions = [
       ...formattedDeposits,
@@ -576,18 +581,17 @@ const updateStatus = async (newStatus) => {
       ...formattedManualDeposits,
       ...formattedAutoDeposits,
     ];
-  
+
     // Sort them by sortDate (latest first)
     allTransactions.sort((a, b) => b.sortDate - a.sortDate);
-  
+
     // Assign sequential serial numbers after sorting
     allTransactions.forEach((txn, index) => {
       txn.sNo = index + 1;
     });
-  
+
     setTransactionHistoryDataAll(allTransactions);
   };
-
 
   const formatData = (responseData) => {
     const allBids = [
@@ -617,7 +621,7 @@ const updateStatus = async (newStatus) => {
           digitValue = bid.digit;
         }
       }
-      
+
       return {
         key: index + 1,
         sNo: index + 1,
@@ -656,8 +660,7 @@ const updateStatus = async (newStatus) => {
   const winningFilteredData = winningData.filter((record) =>
     Object.values(record).some(
       (value) =>
-        value &&
-        value.toString().toLowerCase().includes(search.toLowerCase())
+        value && value.toString().toLowerCase().includes(search.toLowerCase())
     )
   );
   const getTodaysWinningData = (startIndex, endIndex) => {
@@ -671,18 +674,15 @@ const updateStatus = async (newStatus) => {
     return todaysData.slice(startIndex - 1, endIndex); // Apply pagination
   };
 
-
   const filteredWinningData = winningData.filter((item) =>
-    Object.values(item).some((value) =>
-      value && value.toString().toLowerCase().includes(search.toLowerCase())
+    Object.values(item).some(
+      (value) =>
+        value && value.toString().toLowerCase().includes(search.toLowerCase())
     )
   );
 
-
-
-
-   // Handler to update transaction status to Accepted
-   const handleAccept = async (id) => {
+  // Handler to update transaction status to Accepted
+  const handleAccept = async (id) => {
     try {
       await instance.put(`/api/manualDeposit/${id}`, { status: "Accepted" });
       message.success("Transaction accepted successfully.");
@@ -707,9 +707,8 @@ const updateStatus = async (newStatus) => {
     }
   };
 
-
-   // Updated columns for the table
-   const depositTransactionColumns = [
+  // Updated columns for the table
+  const depositTransactionColumns = [
     {
       title: "#",
       key: "sno",
@@ -781,24 +780,21 @@ const updateStatus = async (newStatus) => {
   ];
 
   const filteredData = data.filter((item) =>
-    Object.values(item).some((value) =>
-      value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
+    Object.values(item).some(
+      (value) =>
+        value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
     )
   );
 
-
- // ✅ Filter transaction data
- const historyFilteredData = transactionHistoryDataAll.filter((item) =>
-  Object.values(item).some((value) => {
-    if (value !== null && value !== undefined) {
-      return value.toString().toLowerCase().includes(search.toLowerCase());
-    }
-    return false; // Skip null/undefined values
-  })
-);
-
-
-
+  // ✅ Filter transaction data
+  const historyFilteredData = transactionHistoryDataAll.filter((item) =>
+    Object.values(item).some((value) => {
+      if (value !== null && value !== undefined) {
+        return value.toString().toLowerCase().includes(search.toLowerCase());
+      }
+      return false; // Skip null/undefined values
+    })
+  );
 
   const winningHistoryColumns = [
     {
@@ -860,21 +856,23 @@ const updateStatus = async (newStatus) => {
     },
   ];
 
-    // Filtered transactions based on the search text
-    const filteredDepositTransactions = manualDepositTransactions.filter((item) =>
-      Object.values(item || {}).some(
-        (value) =>
-          value !== null &&
-          value !== undefined &&
-          value.toString().toLowerCase().includes((search || "").toLowerCase())
-      )
-    );
+  // Filtered transactions based on the search text
+  const filteredDepositTransactions = manualDepositTransactions.filter((item) =>
+    Object.values(item || {}).some(
+      (value) =>
+        value !== null &&
+        value !== undefined &&
+        value
+          .toString()
+          .toLowerCase()
+          .includes((search || "").toLowerCase())
+    )
+  );
 
-    
   // const filteredDepositTransactions = depositTransactions
   // ? depositTransactions.filter((item) =>
-  //     Object.values(item || {}).some((value) => 
-  //       value !== null && value !== undefined && 
+  //     Object.values(item || {}).some((value) =>
+  //       value !== null && value !== undefined &&
   //       value.toString().toLowerCase().includes((search || "").toLowerCase()) // ✅ Safe search handling
   //     )
   //   )
@@ -961,7 +959,7 @@ const updateStatus = async (newStatus) => {
           >
             Accept
           </Button>
-    
+
           {/* Reject Button */}
           <Button
             type="primary"
@@ -978,7 +976,7 @@ const updateStatus = async (newStatus) => {
           </Button>
         </Row>
       ),
-    }
+    },
   ];
 
   const allbidHistoryColumns = [
@@ -1025,21 +1023,22 @@ const updateStatus = async (newStatus) => {
     },
   ];
 
-
-  const walletHistoryData = [
-  
-  ];
+  const walletHistoryData = [];
   const getFilteredData = () => {
     return activeTab === "winning"
-      ? walletHistoryData.filter((item) => item.transactionType === "Money Added")
+      ? walletHistoryData.filter(
+          (item) => item.transactionType === "Money Added"
+        )
       : walletHistoryData;
   };
 
   const filteredWalletHistoryData = getFilteredData(); // Call function to get data
 
   const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, filteredWalletHistoryData.length);
-
+  const endIndex = Math.min(
+    currentPage * pageSize,
+    filteredWalletHistoryData.length
+  );
 
   const transactionHistoryColumnsAll = [
     {
@@ -1059,7 +1058,10 @@ const updateStatus = async (newStatus) => {
       key: "amount",
       render: (amount, record) => {
         // Treat "auto" type as deposit for styling
-        const isDeposit = record.type === "deposit" || record.type === "manual" || record.type === "auto";
+        const isDeposit =
+          record.type === "deposit" ||
+          record.type === "manual" ||
+          record.type === "auto";
         const style = {
           padding: "4px 8px",
           borderRadius: "4px",
@@ -1083,7 +1085,10 @@ const updateStatus = async (newStatus) => {
       key: "transactionType",
       render: (text, record) => {
         // Again, treat "auto" as deposit
-        const isDeposit = record.type === "deposit" || record.type === "manual" || record.type === "auto";
+        const isDeposit =
+          record.type === "deposit" ||
+          record.type === "manual" ||
+          record.type === "auto";
         const style = {
           padding: "6px 12px",
           borderRadius: "4px",
@@ -1104,11 +1109,11 @@ const updateStatus = async (newStatus) => {
       dataIndex: "date",
       key: "date",
       render: (date, record) =>
-        record.sortDate ? dayjs(record.sortDate).format("M/D/YYYY, h:mm:ss A") : "N/A",
+        record.sortDate
+          ? dayjs(record.sortDate).format("M/D/YYYY, h:mm:ss A")
+          : "N/A",
     },
   ];
-  
-  
 
   return (
     <div style={{ padding: "20px" }}>
@@ -1118,7 +1123,7 @@ const updateStatus = async (newStatus) => {
           <ArrowLeftOutlined
             style={{ fontSize: "20px", cursor: "pointer", marginRight: "10px" }}
             onClick={() => window.history.back()}
-          // Go back to the previous page
+            // Go back to the previous page
           />
         </Col>
         <Col>
@@ -1152,48 +1157,52 @@ const updateStatus = async (newStatus) => {
                     </Text>
                   </Col>
                   <div>
-      {/* Active */}
-      <div style={{ marginBottom: "8px" }}>
-        <span style={{ marginRight: "8px", fontWeight: "bold" }}>Active:</span>
-        <button
-          style={{
-            backgroundColor: status ? "#28a745" : "#dc3545",
-            color: "#fff",
-            border: "none",
-            borderRadius: "20px",
-            padding: "6px 12px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "0.8rem",
-            minWidth: "80px",
-          }}
-          onClick={() => updateStatus(!status)}
-        >
-          {status ? "Yes" : "No"}
-        </button>
-      </div>
+                    {/* Active */}
+                    <div style={{ marginBottom: "8px" }}>
+                      <span style={{ marginRight: "8px", fontWeight: "bold" }}>
+                        Active:
+                      </span>
+                      <button
+                        style={{
+                          backgroundColor: status ? "#28a745" : "#dc3545",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "20px",
+                          padding: "6px 12px",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          fontSize: "0.8rem",
+                          minWidth: "80px",
+                        }}
+                        onClick={() => updateStatus(!status)}
+                      >
+                        {status ? "Yes" : "No"}
+                      </button>
+                    </div>
 
-      {/* Banned */}
-      <div>
-        <span style={{ marginRight: "8px", fontWeight: "bold" }}>Banned:</span>
-        <button
-          style={{
-            backgroundColor: !status ? "#28a745" : "#dc3545",
-            color: "#fff",
-            border: "none",
-            borderRadius: "20px",
-            padding: "6px 12px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "0.8rem",
-            minWidth: "80px",
-          }}
-          onClick={() => updateStatus(!status)}
-        >
-          {!status ? "Yes" : "No"}
-        </button>
-      </div>
-    </div>
+                    {/* Banned */}
+                    <div>
+                      <span style={{ marginRight: "8px", fontWeight: "bold" }}>
+                        Banned:
+                      </span>
+                      <button
+                        style={{
+                          backgroundColor: !status ? "#28a745" : "#dc3545",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "20px",
+                          padding: "6px 12px",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          fontSize: "0.8rem",
+                          minWidth: "80px",
+                        }}
+                        onClick={() => updateStatus(!status)}
+                      >
+                        {!status ? "Yes" : "No"}
+                      </button>
+                    </div>
+                  </div>
                 </Row>
                 <div style={{ marginTop: "20px" }}>
                   <Text>Available Balance: </Text>
@@ -1286,7 +1295,7 @@ const updateStatus = async (newStatus) => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.bank_name &&
-                          userData.bank_details.bank_name !== "Null"
+                        userData.bank_details.bank_name !== "Null"
                           ? userData.bank_details.bank_name
                           : "N/A"}
                       </Text>
@@ -1303,7 +1312,7 @@ const updateStatus = async (newStatus) => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.account_number &&
-                          userData.bank_details.account_number !== "Null"
+                        userData.bank_details.account_number !== "Null"
                           ? userData.bank_details.account_number
                           : "N/A"}
                       </Text>
@@ -1314,29 +1323,43 @@ const updateStatus = async (newStatus) => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.ifsc_code &&
-                          userData.bank_details.ifsc_code !== "Null"
+                        userData.bank_details.ifsc_code !== "Null"
                           ? userData.bank_details.ifsc_code
                           : "N/A"}
                       </Text>
                     </span>
                   </Col>
-                  {/* Since PhonePe, Google Pay, and Paytm details are not provided in the API, we default to N/A */}
                   <Col span={12}>
                     <Text strong>PhonePe No.:</Text>{" "}
                     <span style={{ marginLeft: "20px" }}>
-                      <Text>N/A</Text>
+                      <Text>
+                        {userData.upi_id?.phonepeUpi &&
+                        userData.upi_id.phonepeUpi !== "Null"
+                          ? userData.upi_id.phonepeUpi
+                          : "N/A"}
+                      </Text>
                     </span>
                   </Col>
                   <Col span={12}>
                     <Text strong>Google Pay No.:</Text>{" "}
                     <span style={{ marginLeft: "20px" }}>
-                      <Text>N/A</Text>
+                      <Text>
+                        {userData.upi_id?.gpayUpi &&
+                        userData.upi_id.gpayUpi !== "Null"
+                          ? userData.upi_id.gpayUpi
+                          : "N/A"}
+                      </Text>
                     </span>
                   </Col>
                   <Col span={12}>
                     <Text strong>Paytm No.:</Text>{" "}
                     <span style={{ marginLeft: "20px" }}>
-                      <Text>N/A</Text>
+                      <Text>
+                        {userData.upi_id?.paytmUpi &&
+                        userData.upi_id.paytmUpi !== "Null"
+                          ? userData.upi_id.paytmUpi
+                          : "N/A"}
+                      </Text>
                     </span>
                   </Col>
                 </Row>
@@ -1348,50 +1371,52 @@ const updateStatus = async (newStatus) => {
 
       {/* Add Fund Request List */}
       <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
-      <Col span={24}>
-        <Card>
-        <Title level={5}>
-  Add Fund Request List {moment().format("DD-MM-YYYY")}
-</Title>
-          {/* Search & Entries Selection */}
-          <div className="flex justify-between mb-4">
-            <input
-              type="text"
-              className="border px-3 py-2 rounded w-1/3"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Select
-              defaultValue={10}
-              onChange={(value) => setEntries(value)}
-              style={{ width: 120 }}
-            >
-              <Option value={10}>10</Option>
-              <Option value={20}>20</Option>
-              <Option value={30}>30</Option>
-              <Option value={40}>40</Option>
-              <Option value={50}>50</Option>
-            </Select>
-          </div>
+        <Col span={24}>
+          <Card>
+            <Title level={5}>
+              Add Fund Request List {moment().format("DD-MM-YYYY")}
+            </Title>
+            {/* Search & Entries Selection */}
+            <div className="flex justify-between mb-4">
+              <input
+                type="text"
+                className="border px-3 py-2 rounded w-1/3"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <Select
+                defaultValue={10}
+                onChange={(value) => setEntries(value)}
+                style={{ width: 120 }}
+              >
+                <Option value={10}>10</Option>
+                <Option value={20}>20</Option>
+                <Option value={30}>30</Option>
+                <Option value={40}>40</Option>
+                <Option value={50}>50</Option>
+              </Select>
+            </div>
 
-          {/* Table */}
-          <Table
-            columns={depositTransactionColumns}
-            dataSource={filteredDepositTransactions}
-            rowKey="_id"
-            loading={loading}
-            pagination={{ pageSize: entries }}
-            scroll={{ x: 1000 }}
-          />
-        </Card>
-      </Col>
-    </Row>
+            {/* Table */}
+            <Table
+              columns={depositTransactionColumns}
+              dataSource={filteredDepositTransactions}
+              rowKey="_id"
+              loading={loading}
+              pagination={{ pageSize: entries }}
+              scroll={{ x: 1000 }}
+            />
+          </Card>
+        </Col>
+      </Row>
       <div style={{ padding: "20px" }}>
         {/* Withdraw Fund Request List */}
         <Card style={{ marginBottom: "20px" }}>
           <Row justify="space-between" align="middle">
-            <Title level={5}>Withdraw Fund Request List {moment().format("DD-MM-YYYY")}</Title>
+            <Title level={5}>
+              Withdraw Fund Request List {moment().format("DD-MM-YYYY")}
+            </Title>
             <div className="flex justify-between mb-4">
               <div>
                 Show{" "}
@@ -1406,8 +1431,6 @@ const updateStatus = async (newStatus) => {
                 </Select>{" "}
                 entries
               </div>
-
-
             </div>
           </Row>
           <Input
@@ -1421,12 +1444,12 @@ const updateStatus = async (newStatus) => {
 
           {/* 📝 Table with filtered data */}
           <Table
-        columns={withdrawColumns}
-        dataSource={withdrawData}
-        rowKey="_id"
-        pagination={{ pageSize: 10 }}
-        scroll={{ x: 1000 }}
-      />
+            columns={withdrawColumns}
+            dataSource={withdrawData}
+            rowKey="_id"
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 1000 }}
+          />
         </Card>
 
         {/* Bid History */}
@@ -1455,8 +1478,6 @@ const updateStatus = async (newStatus) => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="border px-3 py-2 rounded w-1/3 mb-4"
-
-
           />
 
           {/* 📝 Table with filtered data */}
@@ -1470,14 +1491,16 @@ const updateStatus = async (newStatus) => {
           />
         </Card>
 
-      
         <div style={{ padding: "20px" }}>
-    
           <Card style={{ marginBottom: "20px" }}>
             <Tabs defaultActiveKey="all">
               {/* All Winning History */}
               <TabPane tab="All" key="all">
-                <Row justify="space-between" align="middle" style={{ marginBottom: 10 }}>
+                <Row
+                  justify="space-between"
+                  align="middle"
+                  style={{ marginBottom: 10 }}
+                >
                   <Title level={5}>Winning History</Title>
                   <div>
                     Show{" "}
@@ -1524,7 +1547,10 @@ const updateStatus = async (newStatus) => {
                 </Row>
                 <Table
                   columns={winningHistoryColumns}
-                  dataSource={getTodaysWinningData().slice(startIndex - 1, endIndex)}
+                  dataSource={getTodaysWinningData().slice(
+                    startIndex - 1,
+                    endIndex
+                  )}
                   pagination={{
                     pageSize: entries,
                     current: currentPage,
@@ -1532,14 +1558,20 @@ const updateStatus = async (newStatus) => {
                   }}
                 />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex} to ${endIndex} of ${getTodaysWinningData().length} entries`}
+                  {`Showing ${startIndex} to ${endIndex} of ${
+                    getTodaysWinningData().length
+                  } entries`}
                 </div>
               </TabPane>
             </Tabs>
           </Card>
           {/* Wallet Transaction History */}
           <Card>
-            <Row justify="space-between" align="middle" style={{ marginBottom: "10px" }}>
+            <Row
+              justify="space-between"
+              align="middle"
+              style={{ marginBottom: "10px" }}
+            >
               <Title level={5}>Wallet Transaction History</Title>
               <div>
                 Show{" "}
@@ -1555,7 +1587,6 @@ const updateStatus = async (newStatus) => {
                 entries
               </div>
             </Row>
-
             {/* 🔍 Search Box */}
             <Input
               placeholder="Search Transactions..."
@@ -1565,21 +1596,19 @@ const updateStatus = async (newStatus) => {
             />
             {/* 📝 Transaction Table */}
             <Table
-  columns={transactionHistoryColumnsAll}
-  dataSource={historyFilteredData}
-  pagination={{
-    pageSize: entries,
-    current: currentPage,
-    onChange: (page) => setCurrentPage(page),
-  }}
-  loading={loading}
-  rowKey="key"
-  scroll={{ x: 1000 }}
-/>;
-
-            {/* 📊 Showing Entries Count */}
-            <div style={{ marginTop: "10px", textAlign: "right" }}>
-            </div>
+              columns={transactionHistoryColumnsAll}
+              dataSource={historyFilteredData}
+              pagination={{
+                pageSize: entries,
+                current: currentPage,
+                onChange: (page) => setCurrentPage(page),
+              }}
+              loading={loading}
+              rowKey="key"
+              scroll={{ x: 1000 }}
+            />
+            ;{/* 📊 Showing Entries Count */}
+            <div style={{ marginTop: "10px", textAlign: "right" }}></div>
           </Card>
         </div>
       </div>
