@@ -13,10 +13,10 @@ const SettingsForm = () => {
     upi_id: "",
     merchant_id: "",
     min_batting_rate: "",
-    max_batting_rate: "", // new field
+    max_batting_rate: "",
     min_withdrawal_rate: "",
-    max_withdrawal_rate: "", // new field
-    min_deposite_rate: "", // renamed from mai_deposite_rate
+    max_withdrawal_rate: "",
+    min_deposite_rate: "",
     max_deposite_rate: "",
     min_transfer: "",
     max_transfer: "",
@@ -25,6 +25,8 @@ const SettingsForm = () => {
     welcome_bonus: "",
     openTime: "",
     closeTime: "",
+    // New field for WhatsApp Deposit Option:
+    whatsapp_deposit_option: "active",
     global_betting: false,
   });
 
@@ -60,6 +62,7 @@ const SettingsForm = () => {
           welcome_bonus: data.welcome_bonus || "",
           openTime: data.withdraw_timings?.split(" - ")[0] || "", // Extract open time
           closeTime: data.withdraw_timings?.split(" - ")[1] || "", // Extract close time
+          whatsapp_deposit_option: data.whatsapp_deposit_option || "active",
           global_betting: data.global_betting || false,
         });
 
@@ -139,14 +142,15 @@ const SettingsForm = () => {
         </div>
       )}
 
-      {/* 3-column grid for inputs */}
+      {/* 3-column grid for general inputs */}
       <div className="grid grid-cols-3 gap-4">
         {Object.keys(formData).map(
           (key) =>
-            key !== "id" && // Exclude ID from inputs
+            key !== "id" &&
             key !== "global_betting" &&
             key !== "openTime" &&
-            key !== "closeTime" && (
+            key !== "closeTime" &&
+            key !== "whatsapp_deposit_option" && (
               <div key={key} className="flex flex-col">
                 <label className="text-sm font-semibold capitalize">
                   {key.replace(/_/g, " ")}
@@ -162,7 +166,10 @@ const SettingsForm = () => {
               </div>
             )
         )}
+      </div>
 
+      {/* New row for Time and WhatsApp Deposit Option */}
+      <div className="grid grid-cols-3 gap-4 mt-4">
         {/* Open Time Selection */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold">Withdraw Open Time</label>
@@ -196,6 +203,23 @@ const SettingsForm = () => {
                 {time}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* WhatsApp Deposit Option */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold">
+            WhatsApp Deposit Option
+          </label>
+          <select
+            name="whatsapp_deposit_option"
+            value={formData.whatsapp_deposit_option}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
       </div>

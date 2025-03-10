@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useMemo  } from "react";
 import {
   Table,
   Button,
@@ -14,6 +14,7 @@ import {
   Empty,
   Spin,
   Select,
+  Tabs ,
 } from "antd";
 import {
   EditOutlined,
@@ -54,7 +55,8 @@ const gameTypeOptions = [
 const GameManagement = () => {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
-  const [games, setGames] = useState([]);
+  // Remove the separate 'games' state; we will use fetchedGames as our raw data source.
+  const [fetchedGames, setFetchedGames] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -62,13 +64,34 @@ const GameManagement = () => {
   const [pageSize, setPageSize] = useState(5);
   const [firstLoad, setFirstLoad] = useState(true);
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
-
+  const [sortOrder, setSortOrder] = useState("asc"); // "asc" = Old to New, "desc" = New to Old
+  const [marketStatus, setMarketStatus] = useState("active"); // "active" or "inactive"
+  
   // Create a sorted copy of gameTypeOptions in ascending order.
   const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
     a.localeCompare(b)
   );
 
-  const filteredGames = games.filter((game) =>
+  // Compute sortedGames dynamically whenever fetchedGames or sortOrder changes.
+  const sortedGames = useMemo(() => {
+    return [...fetchedGames].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    });
+  }, [fetchedGames, sortOrder]);
+
+  // Filter the sorted games by the search term.
+  const filteredGames = sortedGames
+  .filter((game) => {
+    if (marketStatus === "active") {
+      return game.isActive === true;
+    } else if (marketStatus === "inactive") {
+      return game.isActive === false;
+    }
+    return true;
+  })
+  .filter((game) =>
     game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -81,34 +104,8 @@ const GameManagement = () => {
       setLoading(true);
       const response = await axios.get(`/api/marketManagement/getMarketGames`);
       if (response.data) {
-        let gamesData = response.data || [];
-        // Get current time in minutes since midnight
-        const currentTime = new Date();
-        const nowInMinutes =
-          currentTime.getHours() * 60 + currentTime.getMinutes();
-
-        // Convert time string (e.g., "09:58 AM") to minutes since midnight
-        const timeToMinutes = (timeStr) => {
-          const [time, modifier] = timeStr.split(" ");
-          let [hours, minutes] = time.split(":").map(Number);
-          if (modifier === "PM" && hours !== 12) hours += 12;
-          if (modifier === "AM" && hours === 12) hours = 0;
-          return hours * 60 + minutes;
-        };
-
-        // Sorting logic: active games first, then upcoming games, then by open time.
-        gamesData.sort((a, b) => {
-          const timeA = timeToMinutes(a.openTime);
-          const timeB = timeToMinutes(b.openTime);
-          const isUpcomingA = timeA >= nowInMinutes;
-          const isUpcomingB = timeB >= nowInMinutes;
-
-          if (a.isActive !== b.isActive) return b.isActive - a.isActive;
-          if (isUpcomingA !== isUpcomingB) return isUpcomingB - isUpcomingA;
-          return timeA - timeB;
-        });
-
-        setGames(gamesData);
+        // Store the raw games data.
+        setFetchedGames(response.data || []);
       } else {
         message.error("Failed to fetch market games.");
       }
@@ -501,28 +498,41 @@ const GameManagement = () => {
 
           {/* Search & Show Entries */}
           <Row
-            gutter={[16, 16]}
-            style={{
-              marginBottom: "15px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 15px",
-            }}
+        gutter={[16, 16]}
+        style={{
+          marginBottom: "15px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 15px",
+        }}
+      >
+        <Col xs={12} sm={6}>
+          <label style={{ fontWeight: "500" }}>Sort by:</label>
+          <Select
+            value={sortOrder}
+            onChange={(value) => setSortOrder(value)}
+            style={{ width: "100%", marginTop: "5px" }}
           >
+            <Select.Option value="asc">Old to New</Select.Option>
+            <Select.Option value="desc">New to Old</Select.Option>
+          </Select>
+        </Col>
+
             <Col xs={12} sm={6}>
-              <label style={{ fontWeight: "500" }}>Show Entries:</label>
-              <Select
-                value={pageSize}
-                onChange={(value) => setPageSize(value)}
-                style={{ width: "100%", marginTop: "5px" }}
-              >
-                <Select.Option value={5}>5</Select.Option>
-                <Select.Option value={10}>10</Select.Option>
-                <Select.Option value={20}>20</Select.Option>
-                <Select.Option value={50}>50</Select.Option>
-              </Select>
-            </Col>
+          <label style={{ fontWeight: "500" }}>Show Entries:</label>
+          <Select
+            value={pageSize}
+            onChange={(value) => setPageSize(value)}
+            style={{ width: "100%", marginTop: "5px" }}
+          >
+            <Select.Option value={5}>5</Select.Option>
+            <Select.Option value={10}>10</Select.Option>
+            <Select.Option value={20}>20</Select.Option>
+            <Select.Option value={50}>50</Select.Option>
+          </Select>
+        </Col>
+
 
             <Col xs={12} sm={6}>
               <label style={{ fontWeight: "500" }}>Search:</label>
@@ -535,6 +545,20 @@ const GameManagement = () => {
               />
             </Col>
           </Row>
+
+          
+          {/* Tabs for filtering by Market Status */}
+      <Tabs
+        activeKey={marketStatus}
+        onChange={(key) => setMarketStatus(key)}
+        style={{ margin: "0 15px 15px" }}
+      >
+        <Tabs.TabPane tab="Active Market" key="active" />
+        <Tabs.TabPane tab="Inactive Market" key="inactive" />
+      </Tabs>
+
+      
+
 
           {firstLoad ? (
             <div style={{ textAlign: "center", padding: "10px" }}>
