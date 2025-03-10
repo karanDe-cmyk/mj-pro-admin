@@ -563,9 +563,14 @@ const UserDetails = () => {
     const formattedAutoDeposits = autoDeposits.map((txn, index) => {
       // For auto deposits, the date is in the format "DD-MM-YYYY HH:mm"
       const parsedDate = dayjs(txn.date, "DD-MM-YYYY HH:mm");
+    
+      // Extract txnRef from comments string
+      const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
+      const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
+    
       return {
         key: `auto-${index}`,
-        requestNumber: txn.txnId || txn.transaction_id || "N/A",
+        requestNumber: txnRef, // Show txnRef only
         amount: txn.amount,
         transactionType: "Money Added",
         date: parsedDate.format("YYYY-MM-DD hh:mm:ss A"),
@@ -573,6 +578,7 @@ const UserDetails = () => {
         type: "auto",
       };
     });
+    
 
     // Merge all transactions
     const allTransactions = [
