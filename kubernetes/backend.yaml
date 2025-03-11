@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/kalyandpboss-backend-admin-prod:v2.6
+          image: saurav547/kalyandpboss-backend-admin-prod:v2.7
           env: 
             - name: TZ
               value: "Asia/Kolkata"
