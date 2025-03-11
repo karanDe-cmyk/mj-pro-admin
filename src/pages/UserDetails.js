@@ -644,6 +644,9 @@ const UserDetails = () => {
     setData(formattedData);
   };
 
+
+
+
   // Handle WhatsApp icon click to open WhatsApp chat
   const handleWhatsAppClick = () => {
     if (userData?.userWhatsappNumber) {
@@ -669,23 +672,14 @@ const UserDetails = () => {
         value && value.toString().toLowerCase().includes(search.toLowerCase())
     )
   );
-  const getTodaysWinningData = (startIndex, endIndex) => {
-    const today = moment().format("YYYY-MM-DD"); // Get today's date in YYYY-MM-DD format
 
-    const todaysData = winningData.filter((record) => {
-      const recordDate = moment(record.date).format("YYYY-MM-DD"); // Extract record date
-      return recordDate === today; // Return records that match today's date
-    });
-
-    return todaysData.slice(startIndex - 1, endIndex); // Apply pagination
+  const getTodaysWinningData = () => {
+    const today = moment().format("YYYY-MM-DD");
+    return winningData.filter((record) =>
+      moment(record.date).format("YYYY-MM-DD") === today
+    );
   };
 
-  const filteredWinningData = winningData.filter((item) =>
-    Object.values(item).some(
-      (value) =>
-        value && value.toString().toLowerCase().includes(search.toLowerCase())
-    )
-  );
 
   // Handler to update transaction status to Accepted
   const handleAccept = async (id) => {
@@ -712,6 +706,11 @@ const UserDetails = () => {
       message.error("Error canceling transaction.");
     }
   };
+
+
+  const pageStart = (currentPage - 1) * entries;
+const pageEnd = currentPage * entries;
+
 
   // Updated columns for the table
   const depositTransactionColumns = [
@@ -791,7 +790,6 @@ const UserDetails = () => {
         value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
     )
   );
-
   // ✅ Filter transaction data
   const historyFilteredData = transactionHistoryDataAll.filter((item) =>
     Object.values(item).some((value) => {
@@ -1531,19 +1529,20 @@ const UserDetails = () => {
                 />
                 {/* Table */}
                 <Table
-                  columns={winningHistoryColumns}
-                  dataSource={filteredData.slice(startIndex - 1, endIndex)}
-                  pagination={{
-                    pageSize: entries,
-                    current: currentPage,
-                    onChange: (page) => setCurrentPage(page),
-                  }}
-                  loading={loading}
-                  scroll={{ x: 1000 }}
-                />
-                <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex} to ${endIndex} of ${filteredData.length} entries`}
-                </div>
+  columns={winningHistoryColumns}
+  dataSource={winningFilteredData.slice(pageStart, pageEnd)}
+  pagination={{
+    pageSize: entries,
+    current: currentPage,
+    total: winningFilteredData.length,
+    onChange: (page) => setCurrentPage(page),
+  }}
+  loading={loading}
+  scroll={{ x: 1000 }}
+/>
+<div style={{ marginTop: "10px", textAlign: "right" }}>
+  {`Showing ${startIndex + 1} to ${Math.min(endIndex, winningFilteredData.length)} of ${winningFilteredData.length} entries`}
+</div>
               </TabPane>
 
               {/* Today's Winning History */}
@@ -1552,17 +1551,14 @@ const UserDetails = () => {
                   <Title level={5}>Today's Winning History</Title>
                 </Row>
                 <Table
-                  columns={winningHistoryColumns}
-                  dataSource={getTodaysWinningData().slice(
-                    startIndex - 1,
-                    endIndex
-                  )}
-                  pagination={{
-                    pageSize: entries,
-                    current: currentPage,
-                    onChange: (page) => setCurrentPage(page),
-                  }}
-                />
+  columns={winningHistoryColumns}
+  dataSource={getTodaysWinningData().slice(pageStart, pageEnd)}
+  pagination={{
+    pageSize: entries,
+    current: currentPage,
+    onChange: (page) => setCurrentPage(page),
+  }}
+/>
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
                   {`Showing ${startIndex} to ${endIndex} of ${
                     getTodaysWinningData().length

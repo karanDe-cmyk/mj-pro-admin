@@ -62,11 +62,12 @@ const handlePannaChange = (value) => {
   // Get last digit of the sum
   const lastDigit = sum % 10;
 
-  // Update state and form values
+  // Update state and form values as a string
   setSelectedPanna(value);
-  setDigitValue(lastDigit);
-  form.setFieldsValue({ digit: lastDigit });
+  setDigitValue(lastDigit.toString());
+  form.setFieldsValue({ digit: lastDigit.toString() });
 };
+
 
   const { Search } = Input;
   // ---------------------------
@@ -248,7 +249,7 @@ const handlePannaChange = (value) => {
           ? values.resultDate.format("DD-MM-YYYY")
           : moment().format("DD-MM-YYYY"),
         gameType: values.gameType,
-        digit: values.digit,
+        digit: String(values.digit), // converting here
         panna: values.panna,
       });
       if (response?.data?.winners && Array.isArray(response.data.winners)) {

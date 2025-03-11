@@ -14,6 +14,7 @@ import HowToPlay from "./HowToPlay";
 import ReferAndEarn from "./ReferEarn";
 import WelcomeSettings from "./WelcomeSettings";
 
+
 const MainSetting = () => {
   return (
     <div style={{ padding: 35, backgroundColor: "#fff" }}>

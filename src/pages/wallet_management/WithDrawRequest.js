@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEye } from "react-icons/fa";
 import axios from '../../utils/axiosInstance';
-import {  } from "../../utils/config";
 import WithdrawalDetailsModal from './WithdrawalDetailsModal'; // Import the modal component
 
 const WithDrawRequest = () => {
@@ -99,7 +98,15 @@ const WithDrawRequest = () => {
                 {requests.map((req, index) => (
                   <tr key={req._id} className="text-gray-800 hover:bg-gray-100">
                     <td className="border p-2 text-center">{index + 1}</td>
-                    <td className="border p-2 text-blue-500 hover:underline">{req.username}</td>
+                    <td className="border p-2 text-blue-500 hover:underline">
+                      <a
+                        href={`/admin/user-management/user-details/${req.user_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {req.username}
+                      </a>
+                    </td>
                     <td className="border p-2 text-center">{req.amount}</td>
                     <td className="border p-2 text-center">{req.payment_method}</td>
                     <td

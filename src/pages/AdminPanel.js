@@ -198,6 +198,12 @@ const AdminPanel = () => {
           path: "/admin/settings/slider-management",
           icon: <i className="fa fa-sliders" />,
         },
+        {
+          key: "change-password",
+          label: "Change Password",
+          path: "/admin/settings/ChangePassword",
+          icon: <i className="fa-solid fa-key"></i>,
+        },
       ],
     },
     {

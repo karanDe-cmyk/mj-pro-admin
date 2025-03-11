@@ -31,7 +31,7 @@ import DeclareResult from './pages/DeclareResult';
 import GameName from './pages/starline management/GameName';
 import AllBidHistory from './pages/AllBidHistory';
 import BidHistory from './pages/starline management/BidHistory';
-
+import ChangePassword from './pages/setting/ChangePassword ';
 import GameRates from './pages/starline management/GameRates';
 import WinningPrediction from './pages/WinningPrediction';
 import DeclareResultStarline from './pages/starline management/DeclareResultStarline';
@@ -40,17 +40,7 @@ import NoticeManagement from './pages/NoticeManagement';
 import ProtectedRoute from './utils/ProtectedRoute';
 import MarketDeclareResult from './pages/MarketDeclareResult';
 import MainSetting from './pages/setting/MainSetting';
-import GeneralSetting from './pages/setting/GeneralSetting';
-import BankDetails from './pages/setting/BankDetails';
-import AppLinks from './pages/setting/AppLinks';
-import UPISettings from "./pages/setting/UPISettings"; // Import the component
-import HomeTitleSettings from "./pages/setting/HomeTitleSettings"; // Import the component
-import OtherSettings from "./pages/setting/OtherSettings"; // Import the component
-import HowToPlay from "./pages/setting/HowToPlay"; // Import the component
-import ReferEarn from "./pages/setting/ReferEarn"; // Import the component
-import WelcomeSettings from "./pages/setting/WelcomeSettings"; // Import the component
 import UserDetails from './pages/UserDetails';
-import QrCode from './pages/setting/QrCode';
 import SliderManagement from './pages/setting/SliderManagement';
 import WalletAllDepositeHistory from './pages/wallet_management/AllDepositHistory';
 import GalidisawerGameName  from './pages/GalidisawerGames/GameName';
@@ -121,6 +111,7 @@ const App = () => {
             {/* Settings Section */}
             <Route path="settings">
             <Route path="main" element={<MainSetting />} />
+            <Route path="ChangePassword" element={<ChangePassword />} />
             <Route path="slider-management" element={<SliderManagement/>} />
             </Route>
             <Route path="galidisawer-games">
