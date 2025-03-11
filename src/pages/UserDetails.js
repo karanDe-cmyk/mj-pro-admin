@@ -360,6 +360,7 @@ const UserDetails = () => {
         market: record.marketName || "Starline",
         gameName: record.gameName || record.market,
         bidAmount: winner.points,
+        gameType:winner.gameType,
         winningAmount: winner.winningAmount || winner.winningPoints,
         status: "Win",
         date: moment(record.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
@@ -815,6 +816,11 @@ const pageEnd = currentPage * entries;
       title: "Game Name",
       dataIndex: "gameName",
       key: "gameName",
+    },
+    {
+      title: "Game Type",
+      dataIndex: "gameType",
+      key: "gameType",
     },
     {
       title: "Bid Amount",

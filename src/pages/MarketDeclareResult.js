@@ -305,19 +305,25 @@ const handlePannaChange = (value) => {
         setIsWinnerModalVisible(false);
   
         // Create a new result object based on the form values
-        const newResult = {
-          sNo: gameResults.length + 1, // Recalculate numbering later if needed
-          gameName: values.gameName,
-          date: declaredDateStr,
-          open:
-            values.gameType === "open"
-              ? { value: `${values.panna}-${values.digit}`, id: response.data.resultId || new Date().getTime() }
-              : null,
-          close:
-            values.gameType === "close"
-              ? { value: `${values.panna}-${values.digit}`, id: response.data.resultId || new Date().getTime() }
-              : null,
-        };
+       // When declaring the winner:
+const newResult = {
+  sNo: gameResults.length + 1,
+  gameName: values.gameName,
+  date: declaredDateStr,
+  
+  // Keep Open in panna-digit format
+  open:
+    values.gameType === "open"
+      ? { value: `${values.panna}-${values.digit}`, id: response.data.resultId || new Date().getTime() }
+      : null,
+      
+  // Use digit-panna for Close
+  close:
+    values.gameType === "close"
+      ? { value: `${values.digit}-${values.panna}`, id: response.data.resultId || new Date().getTime() }
+      : null,
+};
+
   
         // Optimistically update local state so the table shows the new result immediately.
         setGameResults((prevResults) => {
