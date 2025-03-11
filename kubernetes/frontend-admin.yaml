@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend-admin
-          image: saurav547/kalyandpboss-frontend-admin-prod:v2.2
+          image: saurav547/kalyandpboss-frontend-admin-prod:v2.3
           ports:
             - containerPort: 3000
           resources:
