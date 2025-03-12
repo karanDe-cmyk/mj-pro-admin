@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-deployment
-  namespace: matka
+  namespace: jannat-admin
   labels:
     app: backend
 spec:
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/kalyandpboss-backend-admin-prod:v2.8
+          image: saurav547/jannat-backend-admin-prod:v1.1
           env: 
             - name: TZ
               value: "Asia/Kolkata"
@@ -42,7 +42,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
-  namespace: matka
+  namespace: jannat-admin
 spec:
   type: NodePort   
   selector:
