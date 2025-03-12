@@ -2,25 +2,22 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: matka-ingress
-  namespace: matka
+  namespace: jannat-admin
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/whitelist-source-range: "172.27.224.0/22"  # Adjust this to match your VPN IP range
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
-      - www.dhanlaxmionlinematka.com
-      - dhanlaxmionlinematka.com
-      - kalyandpboss.shop
-      - www.kalyandpboss.shop
-      - api.kalyandpboss.shop
-      - admin.kalyandpboss.shop
+    - api.jannatmatka.shop
+    - admin.jannatmatka.shop
     secretName: matka-tls-secret
   rules:
-  - host: dhanlaxmionlinematka.com
+  - host: admin.jannatmatka.shop
     http:
       paths:
       - path: /
@@ -30,37 +27,8 @@ spec:
             name: frontend-service
             port:
               number: 3000
-  - host: www.dhanlaxmionlinematka.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 3000
-  - host: kalyandpboss.shop
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 3000
-  - host: www.kalyandpboss.shop
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 3000
-  - host: api.kalyandpboss.shop
+
+  - host: api.jannatmatka.shop
     http:
       paths:
       - path: /
@@ -70,13 +38,3 @@ spec:
             name: backend-service
             port:
               number: 5000
-  - host: admin.kalyandpboss.shop
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-admin-service
-            port:
-              number: 3000
