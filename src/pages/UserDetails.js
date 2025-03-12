@@ -360,7 +360,7 @@ const UserDetails = () => {
         market: record.marketName || "Starline",
         gameName: record.gameName || record.market,
         bidAmount: winner.points,
-        gameType:winner.gameType,
+        gameType: winner.gameType,
         winningAmount: winner.winningAmount || winner.winningPoints,
         status: "Win",
         date: moment(record.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
@@ -564,11 +564,11 @@ const UserDetails = () => {
     const formattedAutoDeposits = autoDeposits.map((txn, index) => {
       // For auto deposits, the date is in the format "DD-MM-YYYY HH:mm"
       const parsedDate = dayjs(txn.date, "DD-MM-YYYY HH:mm");
-    
+
       // Extract txnRef from comments string
       const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
       const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
-    
+
       return {
         key: `auto-${index}`,
         requestNumber: txnRef, // Show txnRef only
@@ -579,7 +579,6 @@ const UserDetails = () => {
         type: "auto",
       };
     });
-    
 
     // Merge all transactions
     const allTransactions = [
@@ -645,9 +644,6 @@ const UserDetails = () => {
     setData(formattedData);
   };
 
-
-
-
   // Handle WhatsApp icon click to open WhatsApp chat
   const handleWhatsAppClick = () => {
     if (userData?.userWhatsappNumber) {
@@ -676,11 +672,10 @@ const UserDetails = () => {
 
   const getTodaysWinningData = () => {
     const today = moment().format("YYYY-MM-DD");
-    return winningData.filter((record) =>
-      moment(record.date).format("YYYY-MM-DD") === today
+    return winningData.filter(
+      (record) => moment(record.date).format("YYYY-MM-DD") === today
     );
   };
-
 
   // Handler to update transaction status to Accepted
   const handleAccept = async (id) => {
@@ -708,10 +703,8 @@ const UserDetails = () => {
     }
   };
 
-
   const pageStart = (currentPage - 1) * entries;
-const pageEnd = currentPage * entries;
-
+  const pageEnd = currentPage * entries;
 
   // Updated columns for the table
   const depositTransactionColumns = [
@@ -1535,20 +1528,23 @@ const pageEnd = currentPage * entries;
                 />
                 {/* Table */}
                 <Table
-  columns={winningHistoryColumns}
-  dataSource={winningFilteredData.slice(pageStart, pageEnd)}
-  pagination={{
-    pageSize: entries,
-    current: currentPage,
-    total: winningFilteredData.length,
-    onChange: (page) => setCurrentPage(page),
-  }}
-  loading={loading}
-  scroll={{ x: 1000 }}
-/>
-<div style={{ marginTop: "10px", textAlign: "right" }}>
-  {`Showing ${startIndex + 1} to ${Math.min(endIndex, winningFilteredData.length)} of ${winningFilteredData.length} entries`}
-</div>
+                  columns={winningHistoryColumns}
+                  dataSource={winningFilteredData.slice(pageStart, pageEnd)}
+                  pagination={{
+                    pageSize: entries,
+                    current: currentPage,
+                    total: winningFilteredData.length,
+                    onChange: (page) => setCurrentPage(page),
+                  }}
+                  loading={loading}
+                  scroll={{ x: 1000 }}
+                />
+                <div style={{ marginTop: "10px", textAlign: "right" }}>
+                  {`Showing ${startIndex + 1} to ${Math.min(
+                    endIndex,
+                    winningFilteredData.length
+                  )} of ${winningFilteredData.length} entries`}
+                </div>
               </TabPane>
 
               {/* Today's Winning History */}
@@ -1557,18 +1553,20 @@ const pageEnd = currentPage * entries;
                   <Title level={5}>Today's Winning History</Title>
                 </Row>
                 <Table
-  columns={winningHistoryColumns}
-  dataSource={getTodaysWinningData().slice(pageStart, pageEnd)}
-  pagination={{
-    pageSize: entries,
-    current: currentPage,
-    onChange: (page) => setCurrentPage(page),
-  }}
-/>
+                  columns={winningHistoryColumns}
+                  dataSource={getTodaysWinningData().slice(pageStart, pageEnd)}
+                  pagination={{
+                    pageSize: entries,
+                    current: currentPage,
+                    total: getTodaysWinningData.length,
+
+                    onChange: (page) => setCurrentPage(page),
+                  }}
+                />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
                   {`Showing ${startIndex} to ${endIndex} of ${
                     getTodaysWinningData().length
-                  } entries`}
+                  }  of ${getTodaysWinningData.length} entries`}
                 </div>
               </TabPane>
             </Tabs>
