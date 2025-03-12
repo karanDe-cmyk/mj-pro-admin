@@ -73,7 +73,7 @@ pipeline {
                             git commit -m "Updated frontend image tag to ${FRONTEND_DOCKER_TAG}" || echo "No changes to commit"
                             
                             echo "Pushing changes..."
-                            git push origin main
+                            git push origin jannat-frontend-admin
                         '''
                     }
                 }
