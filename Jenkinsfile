@@ -29,7 +29,7 @@ pipeline {
 
         stage('Git: Code Checkout') {
             steps {
-                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
+                git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'jannat-frontend-admin'
             }
         }
 
@@ -44,7 +44,7 @@ pipeline {
         stage("Docker: Build Image") {
             steps {
                 script {
-                    docker_build("kalyandpboss-frontend-admin-prod", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
+                    docker_build("jannat-frontend-admin-prod", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
         }
@@ -52,7 +52,7 @@ pipeline {
         stage("Docker: Push to DockerHub") {
             steps {
                 script {
-                    docker_push("kalyandpboss-frontend-admin-prod", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
+                    docker_push("jannat-frontend-admin-prod", "${params.FRONTEND_DOCKER_TAG}", "saurav547")
                 }
             }
         }
@@ -60,7 +60,7 @@ pipeline {
 
     post {
         success {
-            build job: "Kalyand-Fronted-Admin-CD", parameters: [
+            build job: "Jannat-Fronted-Admin-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}")
             ]
         }
