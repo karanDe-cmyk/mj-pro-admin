@@ -67,7 +67,7 @@ const Login = () => {
 
         <div style={styles.avatarContainer}>
           <Avatar size={60} src="https://via.placeholder.com/50" />
-          <Title level={4} style={{ marginTop: 10 }}>Kalyan Admin</Title>
+          <Title level={4} style={{ marginTop: 10 }}>Jannat Admin</Title>
         </div>
 
         <Form layout="vertical" onFinish={handleLogin} initialValues={{ username: "", password: "" }}>
