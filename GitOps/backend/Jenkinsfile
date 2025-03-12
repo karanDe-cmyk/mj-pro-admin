@@ -28,7 +28,7 @@ pipeline {
         stage('Git: Code Checkout') {
             steps {
                 script {
-                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'himanshu'
+                    git credentialsId: 'Github-Cred', url: 'https://github.com/MaccoTechgit/Matka-Fronted.git', branch: 'jannat-frontend-admin'
                 }
             }
         }
@@ -47,7 +47,7 @@ pipeline {
                     dir('kubernetes') {
                         sh """
                             #!/bin/bash
-                            sed -i 's|image: saurav547/kalyandpboss-backend-admin-prod:.*|image: saurav547/kalyandpboss-backend-admin-prod:${params.BACKEND_DOCKER_TAG}|' backend.yaml
+                            sed -i 's|image: saurav547/jannat-backend-admin-prod:.*|image: saurav547/jannat-backend-admin-prod:${params.BACKEND_DOCKER_TAG}|' backend.yaml
                         """
                     }
                 }
@@ -73,7 +73,7 @@ pipeline {
                             git commit -m "Updated backend image tag to ${BACKEND_DOCKER_TAG}" || echo "No changes to commit"
                             
                             echo "Pushing changes..."
-                            git push origin himanshu
+                            git push origin jannat-frontend-admin
                         '''
                     }
                 }
