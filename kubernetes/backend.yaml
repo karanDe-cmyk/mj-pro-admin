@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: saurav547/jannat-backend-admin-prod:v1.1
+          image: saurav547/jannat-backend-admin-prod:v1.2
           env: 
             - name: TZ
               value: "Asia/Kolkata"
