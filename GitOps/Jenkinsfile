@@ -9,7 +9,7 @@ pipeline {
     environment {
         ARGOCD_SERVER = '15.207.103.107:31102'  // Your ArgoCD URL
         ARGOCD_TOKEN = credentials('argocd-api-token') // Store token in Jenkins credentials
-        APP_NAME = 'KALYANDBOS'  // ArgoCD application name
+        APP_NAME = 'JANNAT-ADMIN-APP'  // ArgoCD application name
     }
 
     stages {
