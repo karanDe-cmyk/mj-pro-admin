@@ -6,6 +6,12 @@ pipeline {
         string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Backend Docker tag of the image built by the CI job')
     }
 
+    environment {
+        ARGOCD_SERVER = '15.207.103.107:31102'  // Your ArgoCD URL
+        ARGOCD_TOKEN = credentials('argocd-api-token') // Store token in Jenkins credentials
+        APP_NAME = 'JANNAT-ADMIN-APP'  // ArgoCD application name
+    }
+
     stages {
         stage("Validate Parameters") {
             steps {
@@ -76,6 +82,20 @@ pipeline {
                             git push origin jannat-frontend-admin
                         '''
                     }
+                }
+            }
+        }
+
+        // ✅ Automate ArgoCD Sync & Prune after Git Update
+        stage("Sync ArgoCD") {
+            steps {
+                script {
+                    sh '''
+                        curl -k -X POST https://${ARGOCD_SERVER}/api/v1/applications/${APP_NAME}/sync \
+                        -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
+                        -H "Content-Type: application/json" \
+                        -d '{ "prune": true, "dryRun": false, "strategy": { "hook": { } } }'
+                    '''
                 }
             }
         }
