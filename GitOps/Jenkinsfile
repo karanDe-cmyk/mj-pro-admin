@@ -6,6 +6,12 @@ pipeline {
         string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'frontend Docker tag of the image built by the CI job')
     }
 
+    environment {
+        ARGOCD_SERVER = '15.207.103.107:31102'  // Your ArgoCD URL
+        ARGOCD_TOKEN = credentials('argocd-api-token') // Store token in Jenkins credentials
+        APP_NAME = 'KALYANDBOS'  // ArgoCD application name
+    }
+
     stages {
         stage("Validate Parameters") {
             steps {
@@ -79,6 +85,20 @@ pipeline {
                 }
             }
         }
+
+        // ✅ Automate ArgoCD Sync & Prune after Git Update
+        stage("Sync ArgoCD") {
+            steps {
+                script {
+                    sh '''
+                        curl -k -X POST https://${ARGOCD_SERVER}/api/v1/applications/${APP_NAME}/sync \
+                        -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
+                        -H "Content-Type: application/json" \
+                        -d '{ "prune": true, "dryRun": false, "strategy": { "hook": { } } }'
+                    '''
+                }
+            }
+        }
     }
     
     post {
@@ -86,11 +106,11 @@ pipeline {
             script {
                 emailext attachLog: true,
                 from: 'sauravgarg5922@gmail.com',
-                subject: "Janta Frontend Application Deployed - '${currentBuild.result}'",
+                subject: "Jannat Frontend Application Deployed - '${currentBuild.result}'",
                 body: """
                     <html>
                     <body>
-                        <h3 style="color: green;">Janta Frontend Deployment Success</h3>
+                        <h3 style="color: green;">Jannat Frontend Deployment Success</h3>
                         <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                         <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                         <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
