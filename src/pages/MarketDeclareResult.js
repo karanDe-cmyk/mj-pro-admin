@@ -126,23 +126,35 @@ const handlePannaChange = (value) => {
       setLoading(true);
       const formattedDate = date.format("YYYY-MM-DD"); // e.g. "2025-03-17"
   
-      // 1) Fetch all possible games for "Main Market" (or any market)
+      // 1) Fetch all possible games for "Main Market"
+      //    (Or reuse the data you already fetched in `allGames` if you prefer.)
       const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
+  
+      // IMPORTANT: Make sure there are indeed games labeled "Main Market".
+      // If the data uses "MAIN MARKET" or "main market", this filter must match.
       const mainMarketGames = gameResponse.data
         .filter((game) => game.marketName === "Main Market")
         .map((game) => game.gameName);
   
-      // 2) Fetch declared results
-      const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
-      const results = resultResponse?.data?.results || [];
+      console.log("mainMarketGames:", mainMarketGames);
+      // If mainMarketGames is empty, the table will have no rows.
   
-      // 3) Build a map:  { "gameName_date": { open: {...}, close: {...} } }
+      // 2) Fetch declared results (might be { success:false } => no results)
+      let results = [];
+      try {
+        const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
+        results = resultResponse?.data?.results || [];
+      } catch (err) {
+        // If API fails or returns success:false, results stays []
+        console.log("No declared results found or API error:", err);
+      }
+  
+      // 3) Build a map { "gameName_dd-mm-yyyy": { open: {...}, close: {...} } }
       const resultMap = {};
       results.forEach((item) => {
         if (item.marketName === "Main Market" && item.date === formattedDate) {
-          // exact key: "test_17-03-2025"
           const key = `${item.gameName}_${moment(item.date, "YYYY-MM-DD").format("DD-MM-YYYY")}`;
-          
+  
           if (!resultMap[key]) {
             resultMap[key] = {
               gameName: item.gameName,
@@ -151,6 +163,7 @@ const handlePannaChange = (value) => {
               close: null,
             };
           }
+  
           // If it's an open result, store in 'open'
           if (item.gameType === "open") {
             resultMap[key].open = {
@@ -170,19 +183,22 @@ const handlePannaChange = (value) => {
   
       // 4) Merge the known game list with the resultMap
       const mergedResults = mainMarketGames.map((gameName, index) => {
-        // build the exact same key
         const exactKey = `${gameName}_${moment(date).format("DD-MM-YYYY")}`;
-        const resultData = resultMap[exactKey] || null;
+        const resultData = resultMap[exactKey] || {};
   
+        // If no result, set open and close to null
         return {
           sNo: index + 1,
           gameName,
           date: moment(date).format("DD-MM-YYYY"),
-          open: resultData ? resultData.open : null,
-          close: resultData ? resultData.close : null,
+          open: resultData.open || null,
+          close: resultData.close || null,
         };
       });
   
+      console.log("mergedResults:", mergedResults);
+  
+      // 5) Update state
       setGameResults(mergedResults);
       setFilteredResults(mergedResults);
     } catch (error) {
@@ -192,6 +208,7 @@ const handlePannaChange = (value) => {
       setLoading(false);
     }
   };
+  
   
   
   // ✅ Run the function correctly inside `useEffect`
@@ -367,26 +384,69 @@ const handlePannaChange = (value) => {
   // ---------------------------
   const handleDeleteDeclaredResult = async (declaredId) => {
     if (!declaredId) {
-        message.error("Invalid data. Please refresh and try again.");
-        return;
+      message.error("Invalid data. Please refresh and try again.");
+      return;
     }
-
+  
+    // Look up the result row and determine which result type (open/close) is being deleted
+    let deletedRow = null;
+    let deletedType = "";
+    gameResults.forEach((result) => {
+      if (result.open?.id === declaredId) {
+        deletedRow = result;
+        deletedType = "Open";
+      } else if (result.close?.id === declaredId) {
+        deletedRow = result;
+        deletedType = "Close";
+      }
+    });
+  
     try {
-        await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
-        message.success("Declared result deleted successfully!");
-
-        // ✅ Remove deleted result from UI instantly
-        setGameResults((prevResults) =>
-            prevResults.filter((result) => result.open?.id !== declaredId && result.close?.id !== declaredId)
-        );
-
-        // ✅ Force a UI update to refresh results
-        setRefresh((prev) => !prev);
-
+      await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
+  
+      // Build the alert message
+      let alertMessage = "";
+      if (deletedRow) {
+        alertMessage = `${deletedType} result for ${deletedRow.gameName} deleted successfully!`;
+      } else {
+        alertMessage = "Declared result deleted successfully!";
+      }
+  
+      // Show both an Ant Design message and a native browser alert
+      message.success(alertMessage);
+      alert(alertMessage);
+  
+      // Update gameResults and filteredResults by setting the corresponding result to null,
+      // so the row remains (showing the game name with "━━" for open/close)
+      setGameResults((prevResults) =>
+        prevResults.map((result) => {
+          if (result.open?.id === declaredId) {
+            return { ...result, open: null };
+          } else if (result.close?.id === declaredId) {
+            return { ...result, close: null };
+          }
+          return result;
+        })
+      );
+  
+      setFilteredResults((prevResults) =>
+        prevResults.map((result) => {
+          if (result.open?.id === declaredId) {
+            return { ...result, open: null };
+          } else if (result.close?.id === declaredId) {
+            return { ...result, close: null };
+          }
+          return result;
+        })
+      );
+  
+      // Force a UI refresh if needed
+      setRefresh((prev) => !prev);
     } catch (error) {
-        message.error("Failed to delete declared result.");
+      message.error("Failed to delete declared result.");
     }
-};
+  };
+  
 
 
 
