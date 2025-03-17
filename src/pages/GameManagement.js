@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useMemo  } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Button,
@@ -14,7 +14,7 @@ import {
   Empty,
   Spin,
   Select,
-  Tabs ,
+  Tabs,
 } from "antd";
 import {
   EditOutlined,
@@ -66,7 +66,7 @@ const GameManagement = () => {
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc"); // "asc" = Old to New, "desc" = New to Old
   const [marketStatus, setMarketStatus] = useState("active"); // "active" or "inactive"
-  
+
   // Create a sorted copy of gameTypeOptions in ascending order.
   const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
     a.localeCompare(b)
@@ -83,17 +83,17 @@ const GameManagement = () => {
 
   // Filter the sorted games by the search term.
   const filteredGames = sortedGames
-  .filter((game) => {
-    if (marketStatus === "active") {
-      return game.isActive === true;
-    } else if (marketStatus === "inactive") {
-      return game.isActive === false;
-    }
-    return true;
-  })
-  .filter((game) =>
-    game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    .filter((game) => {
+      if (marketStatus === "active") {
+        return game.isActive === true;
+      } else if (marketStatus === "inactive") {
+        return game.isActive === false;
+      }
+      return true;
+    })
+    .filter((game) =>
+      game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   useEffect(() => {
     fetchGames();
@@ -191,14 +191,13 @@ const GameManagement = () => {
         gameName: values.gameName,
         gameType: values.gameType,
         openTime: values.openTime ? values.openTime.format("hh:mm A") : null,
-        closeTime: values.closeTime
-          ? values.closeTime.format("hh:mm A")
-          : null,
+        closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null,
         weekends: values.weekends
           ? values.weekends.map((day) => ({
               ...day,
               openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
               closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+              is_on: day.is_on, // pass the is_on flag to the backend
             }))
           : [],
       };
@@ -290,7 +289,6 @@ const GameManagement = () => {
   const handleEdit = (record) => {
     setEditingGame(record);
     setIsModalOpen(true);
-
     editForm.setFieldsValue({
       gameName: record.gameName,
       gameType: record.gameType || [],
@@ -301,6 +299,7 @@ const GameManagement = () => {
         openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null,
         closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null,
         is_open: day.is_open,
+        is_on: day.is_on, // include the new flag for editing
       })),
     });
   };
@@ -498,41 +497,40 @@ const GameManagement = () => {
 
           {/* Search & Show Entries */}
           <Row
-        gutter={[16, 16]}
-        style={{
-          marginBottom: "15px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 15px",
-        }}
-      >
-        <Col xs={12} sm={6}>
-          <label style={{ fontWeight: "500" }}>Sort by:</label>
-          <Select
-            value={sortOrder}
-            onChange={(value) => setSortOrder(value)}
-            style={{ width: "100%", marginTop: "5px" }}
+            gutter={[16, 16]}
+            style={{
+              marginBottom: "15px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 15px",
+            }}
           >
-            <Select.Option value="asc">Old to New</Select.Option>
-            <Select.Option value="desc">New to Old</Select.Option>
-          </Select>
-        </Col>
+            <Col xs={12} sm={6}>
+              <label style={{ fontWeight: "500" }}>Sort by:</label>
+              <Select
+                value={sortOrder}
+                onChange={(value) => setSortOrder(value)}
+                style={{ width: "100%", marginTop: "5px" }}
+              >
+                <Select.Option value="asc">Old to New</Select.Option>
+                <Select.Option value="desc">New to Old</Select.Option>
+              </Select>
+            </Col>
 
             <Col xs={12} sm={6}>
-          <label style={{ fontWeight: "500" }}>Show Entries:</label>
-          <Select
-            value={pageSize}
-            onChange={(value) => setPageSize(value)}
-            style={{ width: "100%", marginTop: "5px" }}
-          >
-            <Select.Option value={5}>5</Select.Option>
-            <Select.Option value={10}>10</Select.Option>
-            <Select.Option value={20}>20</Select.Option>
-            <Select.Option value={50}>50</Select.Option>
-          </Select>
-        </Col>
-
+              <label style={{ fontWeight: "500" }}>Show Entries:</label>
+              <Select
+                value={pageSize}
+                onChange={(value) => setPageSize(value)}
+                style={{ width: "100%", marginTop: "5px" }}
+              >
+                <Select.Option value={5}>5</Select.Option>
+                <Select.Option value={10}>10</Select.Option>
+                <Select.Option value={20}>20</Select.Option>
+                <Select.Option value={50}>50</Select.Option>
+              </Select>
+            </Col>
 
             <Col xs={12} sm={6}>
               <label style={{ fontWeight: "500" }}>Search:</label>
@@ -546,19 +544,15 @@ const GameManagement = () => {
             </Col>
           </Row>
 
-          
           {/* Tabs for filtering by Market Status */}
-      <Tabs
-        activeKey={marketStatus}
-        onChange={(key) => setMarketStatus(key)}
-        style={{ margin: "0 15px 15px" }}
-      >
-        <Tabs.TabPane tab="Active Market" key="active" />
-        <Tabs.TabPane tab="Inactive Market" key="inactive" />
-      </Tabs>
-
-      
-
+          <Tabs
+            activeKey={marketStatus}
+            onChange={(key) => setMarketStatus(key)}
+            style={{ margin: "0 15px 15px" }}
+          >
+            <Tabs.TabPane tab="Active Market" key="active" />
+            <Tabs.TabPane tab="Inactive Market" key="inactive" />
+          </Tabs>
 
           {firstLoad ? (
             <div style={{ textAlign: "center", padding: "10px" }}>
@@ -589,7 +583,6 @@ const GameManagement = () => {
         width={700}
       >
         <Form form={editForm} layout="vertical">
-          {/* Game Name Field */}
           <Form.Item
             label="Game Name"
             name="gameName"
@@ -597,14 +590,10 @@ const GameManagement = () => {
           >
             <Input />
           </Form.Item>
-
-          {/* Updated Game Type Field */}
           <Form.Item
             label="Game Type"
             name="gameType"
-            rules={[
-              { required: true, message: "Select at least one game type" },
-            ]}
+            rules={[{ required: true, message: "Select at least one game type" }]}
           >
             <Select
               mode="multiple"
@@ -621,8 +610,6 @@ const GameManagement = () => {
               ))}
             </Select>
           </Form.Item>
-
-          {/* Open Time & Close Time for Main Game */}
           <Row gutter={[16, 16]}>
             <Col span={12}>
               <Form.Item
@@ -643,17 +630,11 @@ const GameManagement = () => {
               </Form.Item>
             </Col>
           </Row>
-
-          {/* Weekend Open & Close Time */}
           <Row gutter={[16, 16]}>
             {editingGame &&
               editingGame.weekends.map((day, index) => (
                 <Col span={12} key={day.day}>
-                  <Card
-                    size="small"
-                    title={day.day}
-                    style={{ textAlign: "center" }}
-                  >
+                  <Card size="small" title={day.day} style={{ textAlign: "center" }}>
                     <Form.Item
                       name={["weekends", index, "openTime"]}
                       label="Open Time"
@@ -669,12 +650,13 @@ const GameManagement = () => {
                       <TimePicker format="hh:mm A" use12Hours />
                     </Form.Item>
                     <Form.Item
-                      name={["weekends", index, "is_open"]}
-                      label="Is Active"
+                      name={["weekends", index, "is_on"]}
+                      label="Active Status"
                       valuePropName="checked"
                     >
                       <Switch />
                     </Form.Item>
+                   
                   </Card>
                 </Col>
               ))}

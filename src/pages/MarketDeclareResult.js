@@ -120,27 +120,29 @@ const handlePannaChange = (value) => {
   // FETCH Market GAME NAME 
   // ----------------------- ----
   const fetchDeclaredResults = async (date) => {
-    if (!date) return; // ✅ Prevent running on empty/null date
+    if (!date) return;
   
     try {
       setLoading(true);
-      const formattedDate = date.format("YYYY-MM-DD"); // API needs YYYY-MM-DD
+      const formattedDate = date.format("YYYY-MM-DD"); // e.g. "2025-03-17"
   
-      // Fetch game names under "Main Market"
+      // 1) Fetch all possible games for "Main Market" (or any market)
       const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
       const mainMarketGames = gameResponse.data
         .filter((game) => game.marketName === "Main Market")
         .map((game) => game.gameName);
   
-      // Fetch declared results for selected date
+      // 2) Fetch declared results
       const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
       const results = resultResponse?.data?.results || [];
   
-      // Map results by game name & date
+      // 3) Build a map:  { "gameName_date": { open: {...}, close: {...} } }
       const resultMap = {};
       results.forEach((item) => {
         if (item.marketName === "Main Market" && item.date === formattedDate) {
+          // exact key: "test_17-03-2025"
           const key = `${item.gameName}_${moment(item.date, "YYYY-MM-DD").format("DD-MM-YYYY")}`;
+          
           if (!resultMap[key]) {
             resultMap[key] = {
               gameName: item.gameName,
@@ -149,12 +151,14 @@ const handlePannaChange = (value) => {
               close: null,
             };
           }
+          // If it's an open result, store in 'open'
           if (item.gameType === "open") {
             resultMap[key].open = {
               value: `${item.panna}-${item.digit}`,
               id: item._id,
             };
           }
+          // If it's a close result, store in 'close'
           if (item.gameType === "close") {
             resultMap[key].close = {
               value: `${item.panna}-${item.digit}`,
@@ -164,29 +168,23 @@ const handlePannaChange = (value) => {
         }
       });
   
-      // Merge market game names with results
-      const mergedResults = mainMarketGames.flatMap((gameName, index) => {
-        const resultKey = Object.keys(resultMap).find((key) => key.startsWith(gameName));
-        const resultData = resultKey ? resultMap[resultKey] : null;
+      // 4) Merge the known game list with the resultMap
+      const mergedResults = mainMarketGames.map((gameName, index) => {
+        // build the exact same key
+        const exactKey = `${gameName}_${moment(date).format("DD-MM-YYYY")}`;
+        const resultData = resultMap[exactKey] || null;
   
         return {
-          sNo: index + 1, // Ensures continuous numbering
+          sNo: index + 1,
           gameName,
-          date: resultData ? resultData.date : moment(date).format("DD-MM-YYYY"),
+          date: moment(date).format("DD-MM-YYYY"),
           open: resultData ? resultData.open : null,
           close: resultData ? resultData.close : null,
         };
       });
   
-      // ✅ Ensure unique `sNo`
-      const formattedResults = mergedResults.map((item, index) => ({
-        ...item,
-        sNo: index + 1,
-      }));
-  
-      // ✅ Update State Correctly
-      setGameResults(formattedResults);
-      setFilteredResults(formattedResults);
+      setGameResults(mergedResults);
+      setFilteredResults(mergedResults);
     } catch (error) {
       console.error("Error fetching declared results:", error);
       message.error("Failed to fetch declared results.");
@@ -194,6 +192,7 @@ const handlePannaChange = (value) => {
       setLoading(false);
     }
   };
+  
   
   // ✅ Run the function correctly inside `useEffect`
   useEffect(() => {
@@ -275,20 +274,24 @@ const handlePannaChange = (value) => {
     const values = form.getFieldsValue();
     try {
       setLoadingDeclareResult(true);
-      
-      // Determine the declared date from the form
+  
+      // Normalize gameName: trim and lowercase so that "test" and "test1" are distinct.
+      const normalizedGameName = values.gameName.trim().toLowerCase();
+  
+      // Determine the declared date from the form (format: "DD-MM-YYYY")
       const declaredDateStr = values.resultDate
         ? values.resultDate.format("DD-MM-YYYY")
         : moment().format("DD-MM-YYYY");
-        
-      // Convert to a moment object for later use in fetchDeclaredResults and updating DatePicker state
+  
+      // Convert declared date string to a moment object for later use in fetchDeclaredResults and DatePicker
       const declaredDateMoment = moment(declaredDateStr, "DD-MM-YYYY");
   
+      // Post to the API, using the normalized gameName
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
           marketName: values.marketGame,
-          gameName: values.gameName,
+          gameName: normalizedGameName, // normalized value passed to backend
           date: declaredDateStr,
           gameType: values.gameType,
           digit: values.digit,
@@ -296,7 +299,7 @@ const handlePannaChange = (value) => {
           winners: winners.length > 0 ? winners : [],
         }
       );
-      
+  
       if (response.data.success === false) {
         alert(response.data.message);
       } else {
@@ -304,26 +307,29 @@ const handlePannaChange = (value) => {
         alert("Result declared successfully!");
         setIsWinnerModalVisible(false);
   
-        // Create a new result object based on the form values
-       // When declaring the winner:
-const newResult = {
-  sNo: gameResults.length + 1,
-  gameName: values.gameName,
-  date: declaredDateStr,
-  
-  // Keep Open in panna-digit format
-  open:
-    values.gameType === "open"
-      ? { value: `${values.panna}-${values.digit}`, id: response.data.resultId || new Date().getTime() }
-      : null,
-      
-  // Use digit-panna for Close
-  close:
-    values.gameType === "close"
-      ? { value: `${values.digit}-${values.panna}`, id: response.data.resultId || new Date().getTime() }
-      : null,
-};
-
+        // Create a new result object based on the form values,
+        // using normalizedGameName for consistency.
+        const newResult = {
+          sNo: gameResults.length + 1,
+          gameName: normalizedGameName,
+          date: declaredDateStr,
+          // For open results, format as "panna-digit"
+          open:
+            values.gameType === "open"
+              ? {
+                  value: `${values.panna}-${values.digit}`,
+                  id: response.data.resultId || new Date().getTime(),
+                }
+              : null,
+          // For close results, format as "digit-panna"
+          close:
+            values.gameType === "close"
+              ? {
+                  value: `${values.digit}-${values.panna}`,
+                  id: response.data.resultId || new Date().getTime(),
+                }
+              : null,
+        };
   
         // Optimistically update local state so the table shows the new result immediately.
         setGameResults((prevResults) => {
@@ -338,15 +344,16 @@ const newResult = {
         // Update the DatePicker state to reflect the declared date
         setSelectedDate(declaredDateMoment);
   
-        // Refresh from the backend using the declared date
+        // Refresh results from the back end using the declared date
         fetchDeclaredResults(declaredDateMoment);
       }
     } catch (error) {
-      alert((error.response?.data?.message) || "Failed to declare winner.");
+      alert(error.response?.data?.message || "Failed to declare winner.");
     } finally {
       setLoadingDeclareResult(false);
     }
   };
+  
   
   
   
