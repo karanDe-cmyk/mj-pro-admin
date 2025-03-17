@@ -276,7 +276,7 @@ const handlePannaChange = (value) => {
       setLoadingDeclareResult(true);
   
       // Normalize gameName: trim and lowercase so that "test" and "test1" are distinct.
-      const normalizedGameName = values.gameName.trim().toLowerCase();
+      const normalizedGameName = values.gameName.trim();
   
       // Determine the declared date from the form (format: "DD-MM-YYYY")
       const declaredDateStr = values.resultDate
