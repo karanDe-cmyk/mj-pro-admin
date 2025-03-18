@@ -560,25 +560,25 @@ const UserDetails = () => {
       };
     });
 
-    // Format auto deposit transactions
-    const formattedAutoDeposits = autoDeposits.map((txn, index) => {
-      // For auto deposits, the date is in the format "DD-MM-YYYY HH:mm"
-      const parsedDate = dayjs(txn.date, "DD-MM-YYYY HH:mm");
+ // Format auto deposit transactions
+ const formattedAutoDeposits = autoDeposits.map((txn, index) => {
+  // Try parsing with both formats
+  const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
 
-      // Extract txnRef from comments string
-      const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
-      const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
+  // Extract txnRef from comments string
+  const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
+  const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
 
-      return {
-        key: `auto-${index}`,
-        requestNumber: txnRef, // Show txnRef only
-        amount: txn.amount,
-        transactionType: "Money Added",
-        date: parsedDate.format("YYYY-MM-DD hh:mm:ss A"),
-        sortDate: parsedDate.toDate(),
-        type: "auto",
-      };
-    });
+  return {
+    key: `auto-${index}`,
+    requestNumber: txnRef, // Show txnRef only
+    amount: txn.amount,
+    transactionType: "Money Added",
+    date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
+    sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
+    type: "auto",
+  };
+});
 
     // Merge all transactions
     const allTransactions = [
