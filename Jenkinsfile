@@ -45,6 +45,14 @@ pipeline {
             }
         }
 
+        stage("Workspace cleanup"){
+            steps{
+                script{
+                    cleanWs()
+                }
+            }
+        }
+
         stage('Git: Checkout Code Repo') {
             steps {
                 script {
@@ -60,6 +68,21 @@ pipeline {
             steps {
                 script {
                     trivy_scan()
+                }
+            }
+        }
+        stage("SonarQube: Code Analysis"){
+            steps{
+                script{
+                    sonarqube_analysis("Sonar","jannat-frontend-admin","jannat-frontend-admin")
+                }
+            }
+        }
+        
+        stage("SonarQube: Code Quality Gates"){
+            steps{
+                script{
+                    sonarqube_code_quality()
                 }
             }
         }
@@ -144,7 +167,7 @@ pipeline {
         success {
             script {
                 emailext attachLog: true,
-                from: 'jenkins@yourcompany.com',
+                from: 'jenkins@maccotech.in',
                 subject: "✅ SUCCESS: ${env.JOB_NAME} Deployment - Build ${env.BUILD_NUMBER}",
                 body: """
                     <html>
@@ -157,7 +180,7 @@ pipeline {
                         </body>
                     </html>
                 """,
-                to: 'team@yourcompany.com, devops@yourcompany.com',
+                to: 'sauravgarg5922@gmail.com, sumit.in9625@gmail.com',
                 mimeType: 'text/html'
             }
         }
@@ -165,7 +188,7 @@ pipeline {
         failure {
             script {
                 emailext attachLog: true,
-                from: 'jenkins@yourcompany.com',
+                from: 'jenkins@maccotech.in',
                 subject: "❌ URGENT: ${env.JOB_NAME} Deployment Failed - Build ${env.BUILD_NUMBER}",
                 body: """
                     <html>
@@ -179,7 +202,7 @@ pipeline {
                         </body>
                     </html>
                 """,
-                to: 'devops@yourcompany.com, support@yourcompany.com',
+                to: 'sauravgarg5922@gmail.com, sumit.in9625@gmail.com',
                 mimeType: 'text/html'
             }
         }
