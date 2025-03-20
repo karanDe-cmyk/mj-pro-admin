@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import instance from "../utils/axiosInstance";
 import { Table, Input, Button, Switch, Pagination, Spin, Select } from "antd";
-import { SearchOutlined, WhatsAppOutlined ,PhoneOutlined  } from "@ant-design/icons";
+import { SearchOutlined, WhatsAppOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
@@ -22,8 +22,12 @@ const UnapprovedUsers = () => {
       setLoading(true);
       const response = await instance.get(`/api/auth/userStatus?status=false`);
       if (response?.data) {
-        setUsers(response.data);
-        setFilteredUsers(response.data); // ✅ Initialize filtered users
+        // Sort users in descending order based on createdAt date (newest first)
+        const sortedUsers = response.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setUsers(sortedUsers);
+        setFilteredUsers(sortedUsers); // ✅ Initialize filtered users
       } else {
         throw new Error("Failed to fetch user data");
       }
@@ -87,13 +91,14 @@ const UnapprovedUsers = () => {
     navigate(`/admin/user-management/user-details/${userId}`);
   };
 
-  //mobile number
+  // Mobile number
   const handleUserNumber = (userMobileNumber) => {
     if (userMobileNumber) {
-      // Use window.location.href to trigger a phone call
+      // Trigger a phone call
       window.location.href = `tel:+91${userMobileNumber}`;
     }
   };
+
   // ✅ Open WhatsApp Chat
   const handleWhatsAppClick = (userWhatsappNumber) => {
     if (userWhatsappNumber) {
@@ -107,10 +112,31 @@ const UnapprovedUsers = () => {
     setPageSize(size);
   };
 
-  // ✅ Table Columns
+  // ✅ Table Columns (Date and Time columns added)
   const columns = [
-    { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => (currentPage - 1) * pageSize + index + 1 },
-    { title: "Member Name", dataIndex: "userName", key: "userName" },
+    { 
+      title: "#", 
+      dataIndex: "_id", 
+      key: "_id", 
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1 
+    },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "date",
+      render: (text) => new Date(text).toLocaleDateString(),
+    },
+    {
+      title: "Time",
+      dataIndex: "createdAt",
+      key: "time",
+      render: (text) => new Date(text).toLocaleTimeString(),
+    },
+    { 
+      title: "Member Name", 
+      dataIndex: "userName", 
+      key: "userName" 
+    },
     {
       title: "Member Mobile No",
       dataIndex: "phone",
@@ -163,7 +189,11 @@ const UnapprovedUsers = () => {
       title: "Option",
       dataIndex: "option",
       key: "option",
-      render: (_, record) => <Button type="link" onClick={() => handleViewClick(record._id)}>View</Button>,
+      render: (_, record) => (
+        <Button type="link" onClick={() => handleViewClick(record._id)}>
+          View
+        </Button>
+      ),
     },
   ];
 
@@ -176,7 +206,11 @@ const UnapprovedUsers = () => {
         {/* Show Entries Dropdown */}
         <div className="flex items-center">
           <span className="mr-2">Show</span>
-          <Select value={pageSize} onChange={(value) => handlePaginationChange(1, value)} style={{ width: 80 }}>
+          <Select 
+            value={pageSize} 
+            onChange={(value) => handlePaginationChange(1, value)} 
+            style={{ width: 80 }}
+          >
             <Option value={5}>5</Option>
             <Option value={10}>10</Option>
             <Option value={20}>20</Option>
