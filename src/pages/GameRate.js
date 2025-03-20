@@ -2,30 +2,36 @@ import React, { useState, useEffect } from "react";
 import axios from "../utils/axiosInstance";
 import { Spin, message } from "antd";
 
-// Define the fields you want to manage, pairing each rate with its corresponding value.
-const fields = [
-  { label: "Triple Pana", rateKey: "triplePana", valueKey: "triplePanaValue" },
-  { label: "Panel Group", rateKey: "panelGroup", valueKey: "panelGroupValue" },
-  { label: "SP DP TP", rateKey: "spDpTp", valueKey: "spDpTpValue" },
-  { label: "Choice Panna SP DP", rateKey: "choicePannaSpDp", valueKey: "choicePannaSpDpValue" },
-  { label: "SP Motor", rateKey: "spMotor", valueKey: "spMotorValue" },
-  { label: "DP Motor", rateKey: "dpMotor", valueKey: "dpMotorValue" },
-  { label: "Odd Even", rateKey: "oddEven", valueKey: "oddEvenValue" },
-  { label: "Two Digits Panel", rateKey: "twoDigitsPanel", valueKey: "twoDigitsPanelValue" },
-  { label: "Group Jodi", rateKey: "groupJodi", valueKey: "groupJodiValue" },
-  { label: "Digit Based Jodi", rateKey: "digitBasedJodi", valueKey: "digitBasedJodiValue" },
-  { label: "Red Bracket", rateKey: "redBracket", valueKey: "redBracketValue" },
-  { label: "Half Sangam A", rateKey: "halfSangamA", valueKey: "halfSangamAValue" },
-  { label: "Half Sangam B", rateKey: "halfSangamB", valueKey: "halfSangamBValue" },
-  { label: "Full Sangam", rateKey: "fullSangam", valueKey: "fullSangamValue" },
-  { label: "Single Digits", rateKey: "singleDigits", valueKey: "singleDigitsValue" },
-  { label: "Single Digits Bulk", rateKey: "singleDigitsBulk", valueKey: "singleDigitsBulkValue" },
-  { label: "Jodi", rateKey: "jodi", valueKey: "jodiValue" },
-  { label: "Jodi Bulk", rateKey: "jodiBulk", valueKey: "jodiBulkValue" },
-  { label: "Single Pana", rateKey: "singlePana", valueKey: "singlePanaValue" },
-  { label: "Single Pana Bulk", rateKey: "singlePanaBulk", valueKey: "singlePanaBulkValue" },
-  { label: "Double Pana", rateKey: "doublePana", valueKey: "doublePanaValue" },
-  { label: "Double Pana Bulk", rateKey: "doublePanaBulk", valueKey: "doublePanaBulkValue" },
+// Define the 7 groups and the subcategory keys for each group.
+const groups = [
+  {
+    groupLabel: "Single Digit",
+    subKeys: ["singleDigits", "singleDigitsBulk", "spMotor", "oddEven"],
+  },
+  {
+    groupLabel: "Single Pana",
+    subKeys: ["singlePana", "choicePannaSpDp", "singlePanaBulk"],
+  },
+  {
+    groupLabel: "Double Pana",
+    subKeys: ["doublePana", "doublePanaBulk", "dpMotor"],
+  },
+  {
+    groupLabel: "Jodi Digit",
+    subKeys: ["groupJodi", "digitBasedJodi", "jodi", "jodiBulk", "redBracket"],
+  },
+  {
+    groupLabel: "Triple Pana",
+    subKeys: ["triplePana"],
+  },
+  {
+    groupLabel: "Half Sangam",
+    subKeys: ["halfSangamA", "halfSangamB"],
+  },
+  {
+    groupLabel: "Full Sangam",
+    subKeys: ["fullSangam"],
+  },
 ];
 
 const GameRate = () => {
@@ -55,10 +61,19 @@ const GameRate = () => {
     }
   };
 
-  // Update the state when an input value changes.
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setRates({ ...rates, [name]: value });
+  // Handle changes for a group field (rate or value)
+  const handleGroupInputChange = (group, field, e) => {
+    const { value } = e.target;
+    // Create a new state object
+    const updatedRates = { ...rates };
+    group.subKeys.forEach((key) => {
+      if (field === "rate") {
+        updatedRates[key] = value;
+      } else if (field === "value") {
+        updatedRates[key + "Value"] = value;
+      }
+    });
+    setRates(updatedRates);
   };
 
   // Call the update API and refresh data.
@@ -87,33 +102,33 @@ const GameRate = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {fields.map((field) => (
-              <div key={field.rateKey} className="grid grid-cols-2 gap-4 items-center">
+            {groups.map((group) => (
+              <div key={group.groupLabel} className="grid grid-cols-2 gap-4 items-center">
                 {/* Column for Rate Input */}
                 <div className="flex flex-col">
                   <label className="font-bold text-gray-900 text-sm mb-1">
-                    {field.label} (Rate)
+                    {group.groupLabel} (Rate)
                   </label>
                   <input
                     type="number"
-                    name={field.rateKey}
-                    value={rates[field.rateKey] || ""}
-                    onChange={handleInputChange}
+                    name={group.subKeys[0]}
+                    value={rates[group.subKeys[0]] || ""}
+                    onChange={(e) => handleGroupInputChange(group, "rate", e)}
                     className="border border-gray-300 rounded-md p-2 text-sm"
                   />
                 </div>
                 {/* Column for Value Input with rupee symbol */}
                 <div className="flex flex-col">
                   <label className="font-bold text-gray-900 text-sm mb-1">
-                    {field.label} (Value)
+                    {group.groupLabel} (Value)
                   </label>
                   <div className="flex items-center border border-gray-300 rounded-md">
                     <span className="px-2 text-lg">₹</span>
                     <input
                       type="number"
-                      name={field.valueKey}
-                      value={rates[field.valueKey] || ""}
-                      onChange={handleInputChange}
+                      name={group.subKeys[0] + "Value"}
+                      value={rates[group.subKeys[0] + "Value"] || ""}
+                      onChange={(e) => handleGroupInputChange(group, "value", e)}
                       className="p-2 text-sm flex-1 outline-none"
                     />
                   </div>
