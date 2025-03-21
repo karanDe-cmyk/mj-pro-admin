@@ -22,8 +22,12 @@ const UnapprovedUsers = () => {
     try {
       const response = await instance.get(`/api/auth/userStatus?status=true`);
       if (response?.data) {
-        setUsers(response.data);
-        setFilteredUsers(response.data); // Initialize filtered users
+        // Sort users in descending order based on createdAt date (newest first)
+        const sortedUsers = response.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setUsers(sortedUsers);
+        setFilteredUsers(sortedUsers); // Initialize filtered users
       } else {
         throw new Error("Failed to fetch user data");
       }
@@ -67,6 +71,7 @@ const UnapprovedUsers = () => {
       window.location.href = `tel:+91${userMobileNumber}`;
     }
   };
+
   // ✅ WhatsApp Click
   const handleWhatsAppClick = (userWhatsappNumber) => {
     if (userWhatsappNumber) {
@@ -103,9 +108,21 @@ const UnapprovedUsers = () => {
     }
   };
 
-  // ✅ Table Columns
+  // ✅ Table Columns (with Date and Time columns added)
   const columns = [
     { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "date",
+      render: (text) => new Date(text).toLocaleDateString(),
+    },
+    {
+      title: "Time",
+      dataIndex: "createdAt",
+      key: "time",
+      render: (text) => new Date(text).toLocaleTimeString(),
+    },
     { title: "Member Name", dataIndex: "userName", key: "userName" },
     {
       title: "Member Mobile No",
@@ -224,8 +241,6 @@ const UnapprovedUsers = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{ width: 200 }}
         />
-
-
       </div>
 
       {/* 🔄 Global Loading Spinner */}
