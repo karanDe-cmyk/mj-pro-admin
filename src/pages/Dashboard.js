@@ -23,7 +23,6 @@ import {
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
-
 import moment from "moment";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -48,7 +47,7 @@ const Dashboard = () => {
   const [mainMarketGamesListLeft, setMainMarketGamesListLeft] = useState([]);
   const [selectedGame, setSelectedGame] = useState("");
   const [selectedSession, setSelectedSession] = useState("");
-  const [error, setError] = useState(null); // Error state
+  const [error, setError] = useState(null);
   const [profitLossData, setProfitLossData] = useState([]);
   const [dashboardData2, setDashboardData2] = useState({
     totalBidAmount: 0,
@@ -64,54 +63,47 @@ const Dashboard = () => {
   const [loadingButton3, setLoadingButton3] = useState(false);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [betRates, setBetRates] = useState([]);
-  const [selectedGameType, setSelectedGameType] = useState(""); // ✅ Store selected game type
+  const [selectedGameType, setSelectedGameType] = useState("");
   const today = dayjs().format("YYYY-MM-DD");
+  const todayFormatted = dayjs().format("DD-MM-YYYY"); // For title and filtering today's records
   const navigate = useNavigate();
+
   // Handler for DatePicker changes.
-  // We expect the date to come in as a Moment object; we then convert it to "DD-MM-YYYY" format.
   const handleDateChange2 = (date) => {
     if (date) {
-      const formattedDate = dayjs(date).format("DD-MM-YYYY"); // ✅ Convert to "YYYY-MM-DD"
-      setSelectedDate(formattedDate); // ✅ Store formatted date
+      const formattedDate = dayjs(date).format("DD-MM-YYYY");
+      setSelectedDate(formattedDate);
     } else {
-      setSelectedDate(""); // ✅ Reset if no date is selected
+      setSelectedDate("");
     }
   };
 
   // Handler for game selection.
   const handleGameChange2 = (value) => {
-    // console.log("Selected Game:", value);
     setSelectedGame2(value);
   };
 
   // Submit handler that calls the API directly.
   const handleSubmit = async () => {
-    // console.log("Submit clicked with:", { selectedGame2, selectedDate });
     if (!selectedDate || !selectedGame2) {
       message.error("Please select both a date and a game name.");
       return;
     }
     try {
       setLoadingButton(true);
-      // Prepare the request body.
       const requestBody = {
         gameName: selectedGame2,
         date: selectedDate, // Expected in "DD-MM-YYYY" format.
       };
-      // console.log("Posting to API with:", requestBody);
 
       const response = await instance.post(
         `/api/mainmarketdeclareResult/get-total-winnings`,
         requestBody
       );
-      // console.log("API response:", response.data);
 
-      // Assuming the response data has { totalPoints, totalWinningPoints }
       const { totalPoints, totalWinningPoints } = response.data;
-      // Calculate profit (for example, difference between points and winning points).
       const totalProfitAmount = totalPoints - totalWinningPoints;
 
-      // Set the dashboard data.
       setDashboardData2({
         totalBidAmount: totalPoints,
         totalWinAmount: totalWinningPoints,
@@ -125,8 +117,6 @@ const Dashboard = () => {
     }
   };
 
-  // console.log(profitLossData)
-  // Fetch data for Total Users
   const fetchTotalUsers = async () => {
     try {
       const response = await instance.get(`/api/app/users`);
@@ -141,7 +131,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch data for ApprovedUsers
   const fetchApprovedUsers = async () => {
     try {
       const response = await instance.get(`/api/app/users`);
@@ -156,7 +145,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch data for UnApprovedUsers
   const fetchUnApprovedUsers = async () => {
     try {
       const response = await instance.get(`/api/app/users`);
@@ -180,40 +168,36 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDepositHistory = async () => {
       try {
-        setLoading(true); // Set loading to true before API call
+        setLoading(true);
         const response = await instance.get(
           `/api/userPayment/getpaymentResponse`
         );
-        setAutoDepositHistory(response.data.data || []); // Ensure data is an array
-        setLoading(false); // Set loading to false after fetching
+        setAutoDepositHistory(response.data.data || []);
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching deposit history:", err);
         setError("Failed to fetch deposit history. Please try again.");
-        setLoading(false); // Stop loading on error
+        setLoading(false);
       }
     };
 
     fetchDepositHistory();
   }, []);
 
-  // Handler for Game Name selection
   const handleGameChange = (value) => {
     setSelectedGame(value);
   };
 
-  // Handler for Session selection
   const handleSessionChange = (value) => {
     setSelectedSession(value);
   };
 
   const handleGetClick = async () => {
-    // Validate selections
     if (!selectedGame || !selectedSession || !selectedGameType) {
       message.error("Please select a game name, session, and game type");
       return;
     }
   
-    // Determine the open/close flags based on selection
     let openFlag = false;
     let closeFlag = false;
     if (selectedSession === "open") {
@@ -228,14 +212,13 @@ const Dashboard = () => {
       gameName: selectedGame,
       open: openFlag,
       close: closeFlag,
-      gameType: selectedGameType, // ✅ Now sending the selected game type
+      gameType: selectedGameType,
     };
   
     try {
       setLoadingButton2(true);
       const response = await instance.post(`/api/bid/todayDigitSummary`, body);
   
-      // Assuming response.data.data contains the summary for digits 0–9
       if (response.data && response.data.data) {
         setDashboardData(response.data.data);
       } else {
@@ -248,7 +231,6 @@ const Dashboard = () => {
       setLoadingButton2(false);
     }
   };
-  
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -258,15 +240,12 @@ const Dashboard = () => {
         const response = await instance.get(
           `/api/marketManagement/getMarketGames`
         );
-        // Ensure the response is an array
         if (Array.isArray(response.data)) {
-          // Filter out only the games with marketName exactly "Main Market"
           const filteredGames = response.data.filter(
             (game) => game.marketName === "Main Market"
           );
           setMainMarketGamesList(filteredGames);
           setMainMarketGamesListLeft(filteredGames);
-          // console.log("Main Market Games List:", filteredGames);
         } else {
           console.error("Response data is not an array:", response.data);
         }
@@ -287,18 +266,15 @@ const Dashboard = () => {
         const response = await instance.get("api/rates/getBetRates");
   
         if (response.data && typeof response.data === "object") {
-          // Destructure the data to remove unwanted keys
           const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
   
-          // Filter out the keys ending with 'Value'
           const cleanedData = Object.keys(filteredData)
-            .filter(key => !key.includes('Value')) // Exclude 'Value' keys
+            .filter(key => !key.includes('Value'))
             .reduce((acc, key) => {
               acc[key] = filteredData[key];
               return acc;
             }, {});
   
-          // Save the cleaned keys (game types) in state
           setBetRates(Object.keys(cleanedData));
         } else {
           console.error("Invalid response format:", response.data);
@@ -345,22 +321,15 @@ const Dashboard = () => {
     const fetchGamesList = async () => {
       try {
         const response = await instance.get(`/api/gameRoutes/getGameList`);
-
-        // console.log("API Response for Games List:", response.data);
-
-        // Ensure response.data is an array before setting state
         if (Array.isArray(response.data)) {
           setGamesList(response.data);
         } else {
-          setGamesList([]); // Fallback to empty array if data is not an array
-          console.error(
-            "Error: Expected an array but received:",
-            response.data
-          );
+          setGamesList([]);
+          console.error("Error: Expected an array but received:", response.data);
         }
       } catch (error) {
         console.error("Error fetching games list:", error);
-        setGamesList([]); // Fallback to empty array on error
+        setGamesList([]);
       }
     };
 
@@ -369,7 +338,6 @@ const Dashboard = () => {
     fetchGamesList();
   }, []);
 
-  // Fetch data for Starline
   const fetchStarlineData = async () => {
     try {
       const response = await instance.get(
@@ -386,7 +354,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch data for Main Market
   const fetchMainMarketData = async () => {
     try {
       const response = await instance.get(`/api/bid/todayBids`);
@@ -401,7 +368,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch data for Total  Games
   const fetchTotalGames = async () => {
     try {
       const response = await instance.get(
@@ -418,7 +384,6 @@ const Dashboard = () => {
     }
   };
 
-  // Call both fetch functions when the component mounts or  changes
   useEffect(() => {
     fetchMainMarketData();
     fetchStarlineData();
@@ -430,15 +395,12 @@ const Dashboard = () => {
       try {
         setLoadingButton3(true);
         setError(null);
-        // Call the API using a GET request.
         const response = await instance.get(`/api/users/total-profit-loss`);
-        // console.log("Profit/Loss API response:", response.data);
 
         if (response.data && response.data.success) {
           const totalDeposit = response.data.totalDeposit || 0;
           const totalWithdraw = response.data.totalWithdraw || 0;
           const total = totalDeposit - totalWithdraw;
-          // Set the table data as a single-row array.
           setProfitLossData([
             {
               key: 1,
@@ -460,20 +422,16 @@ const Dashboard = () => {
     };
 
     fetchProfitLossData();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // ✅ Fetch Only Today's Pending Withdrawals
   useEffect(() => {
     const fetchWithdrawals = async () => {
       setLoading(true);
       try {
         const response = await instance.get("/api/users/todaywithdrawals");
-
-        // ✅ Filter Only "Pending" Withdrawals
         const pendingWithdrawals = response.data.filter(
           (withdrawal) => withdrawal.status === "pending"
         );
-
         setWithdrawalHistory(pendingWithdrawals);
       } catch (err) {
         console.error("Error fetching withdrawal requests:", err);
@@ -486,24 +444,18 @@ const Dashboard = () => {
     fetchWithdrawals();
   }, []);
 
-    // ✅ Handle Approve/Reject Withdrawal (PATCH API)
-    const handleStatusChange = async (id, status) => {
-      try {
-        await instance.patch(`api/users/withdrawals/status/${id}`, { status });
-  
-        // ✅ Remove Processed Withdrawal from Table
-        setWithdrawalHistory(withdrawalHistory.filter((item) => item._id !== id));
-  
-        message.success(`Withdrawal ${status} successfully!`);
-      } catch (error) {
-        console.error(`Error updating withdrawal status to ${status}:`, error);
-        message.error(`Failed to ${status} withdrawal.`);
-      }
-    };
+  const handleStatusChange = async (id, status) => {
+    try {
+      await instance.patch(`api/users/withdrawals/status/${id}`, { status });
+      setWithdrawalHistory(withdrawalHistory.filter((item) => item._id !== id));
+      message.success(`Withdrawal ${status} successfully!`);
+    } catch (error) {
+      console.error(`Error updating withdrawal status to ${status}:`, error);
+      message.error(`Failed to ${status} withdrawal.`);
+    }
+  };
 
-  // Define table columns
-   // ✅ Define Table Columns
-   const withdrawalColumns = [
+  const withdrawalColumns = [
     {
       title: "#",
       key: "index",
@@ -540,7 +492,6 @@ const Dashboard = () => {
       title: "Action",
       key: "action",
       render: (text, record) => {
-        // ✅ If Already Processed, Show "Action Taken"
         if (record.status === "approved" || record.status === "rejected") {
           return <span style={{ fontWeight: "bold" }}>Action Taken</span>;
         }
@@ -604,7 +555,6 @@ const Dashboard = () => {
       title: "Date",
       dataIndex: "createdAt",
       key: "date",
-      // Format the createdAt date using moment.
       render: (createdAt) => moment(createdAt).format("DD-MM-YYYY HH:mm:ss"),
     },
     {
@@ -620,7 +570,6 @@ const Dashboard = () => {
     },
   ];
 
-  // Table columns for Profit / Loss Summary
   const profitLossColumns = [
     {
       title: "Deposit",
@@ -644,8 +593,6 @@ const Dashboard = () => {
       render: (result) => {
         const isProfit = result > 0;
         const isLoss = result < 0;
-
-        // Set background color
         const bgColor = isProfit ? "#7f56c7" : isLoss ? "#ed583e" : "inherit";
         const textColor = isLoss ? "white" : "black";
 
@@ -728,9 +675,9 @@ const Dashboard = () => {
                   <DatePicker
                     style={{ width: "100%" }}
                     placeholder="Select Date"
-                    value={dayjs(selectedDate, "DD-MM-YYYY")} // ✅ Convert back to dayjs for display
+                    value={dayjs(selectedDate, "DD-MM-YYYY")}
                     onChange={handleDateChange2}
-                    format="DD-MM-YYYY" // ✅ Ensures date is shown correctly
+                    format="DD-MM-YYYY"
                   />
                 </Col>
                 <Col span={24} style={{ marginTop: 10 }}>
@@ -760,7 +707,6 @@ const Dashboard = () => {
                     loading={loadingButton}
                     style={{
                       backgroundColor: "#349163",
-                      // borderColor: "#90ee90",
                       color: "white",
                       fontWeight: "bold",
                     }}
@@ -771,7 +717,6 @@ const Dashboard = () => {
               </Row>
 
               <Row>
-                {/* Total Bid Amount */}
                 <Col style={{ marginTop: "55px" }} span={24}>
                   <div className="dashboard-card-inner">
                     <Row className="dashboard-card-row">
@@ -788,7 +733,6 @@ const Dashboard = () => {
                   </div>
                 </Col>
 
-                {/* Total Win Amount */}
                 <Col span={24}>
                   <div className="dashboard-card-inner">
                     <Row className="dashboard-card-row">
@@ -805,7 +749,6 @@ const Dashboard = () => {
                   </div>
                 </Col>
 
-                {/* Total Profit Amount */}
                 <Col span={24}>
                   <div className="dashboard-card-inner profit-card">
                     <Row className="dashboard-card-row">
@@ -838,18 +781,16 @@ const Dashboard = () => {
                       cursor: "pointer",
                     }}
                   >
-                    {/* Title & Value */}
                     <div>
                       <span style={{ fontWeight: "bold" }}>Users</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {totalUsers.totalUsers ?? "Failed to fetch"}
                       </div>
                     </div>
-                    {/* Icon */}
                     <div
                       style={{
-                        backgroundColor: "#1890ff", // Blue background
-                        borderRadius: "50%", // Circular shape
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
                         width: "40px",
                         height: "40px",
                         display: "flex",
@@ -875,14 +816,12 @@ const Dashboard = () => {
                       cursor: "pointer",
                     }}
                   >
-                    {/* Title & Value */}
                     <div>
                       <span style={{ fontWeight: "bold" }}>Games</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {totalGames.totalGameCount ?? "Failed to fetch"}
                       </div>
                     </div>
-                    {/* Icon */}
                     <div
                       style={{
                         backgroundColor: "#1890ff",
@@ -912,7 +851,6 @@ const Dashboard = () => {
                       cursor: "pointer",
                     }}
                   >
-                    {/* Title & Value */}
                     <div>
                       <span style={{ fontWeight: "bold" }}>
                         Main Market Bid Amount
@@ -921,7 +859,6 @@ const Dashboard = () => {
                         {mainMarketData.totalAmount ?? "Failed to fetch"}
                       </div>
                     </div>
-                    {/* Icon */}
                     <div
                       style={{
                         backgroundColor: "#1890ff",
@@ -951,7 +888,6 @@ const Dashboard = () => {
                       cursor: "pointer",
                     }}
                   >
-                    {/* Title & Value */}
                     <div>
                       <span style={{ fontWeight: "bold" }}>
                         Starline Bid Amount
@@ -960,7 +896,6 @@ const Dashboard = () => {
                         {starlineData.totalAmount ?? "Failed to fetch"}
                       </div>
                     </div>
-                    {/* Icon */}
                     <div
                       style={{
                         backgroundColor: "#1890ff",
@@ -1004,25 +939,24 @@ const Dashboard = () => {
                   <Select
                     placeholder="Select Session"
                     style={{ width: "100%" }}
-                    onChange={handleSessionChange} // You can still capture the selection here
+                    onChange={handleSessionChange}
                   >
                     <Option value="open">Open</Option>
                     <Option value="close">Close</Option>
                   </Select>
                 </Col>
                 <Col span={6}>
-                <Select
-  placeholder="Game Type"
-  style={{ width: "100%" }}
-  onChange={(value) => setSelectedGameType(value)} // ✅ Store the selected game type
->
-  {betRates.map((gameType, index) => (
-    <Option key={index} value={gameType}>
-      {gameType} {/* Show game type names dynamically */}
-    </Option>
-  ))}
-</Select>
-
+                  <Select
+                    placeholder="Game Type"
+                    style={{ width: "100%" }}
+                    onChange={(value) => setSelectedGameType(value)}
+                  >
+                    {betRates.map((gameType, index) => (
+                      <Option key={index} value={gameType}>
+                        {gameType}
+                      </Option>
+                    ))}
+                  </Select>
                 </Col>
                 <Col span={4}>
                   <Button
@@ -1037,10 +971,9 @@ const Dashboard = () => {
               </Row>
             </Card>
 
-            {/* Dashboard Row */}
             <div className="card-container">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
-                const hue = 36 * ank; // Generate unique color for each card
+                const hue = 36 * ank;
                 const color = `hsl(${hue}, 60%, 50%)`;
 
                 const digitData = dashboardData[ank] || {
@@ -1059,7 +992,7 @@ const Dashboard = () => {
                     </p>
 
                     <h4 className="card-title">{digitData.totalAmount}</h4>
-                    <span className="font-bold  ">Total Bid Amount</span>
+                    <span className="font-bold">Total Bid Amount</span>
 
                     <button
                       className="card-btn"
@@ -1072,7 +1005,6 @@ const Dashboard = () => {
               })}
             </div>
 
-            {/* Profit / Loss Summary Table */}
             <Card style={{ marginTop: 20, width: "100%" }}>
               <Title level={5}>
                 Profit/Loss Report On Date{" "}
@@ -1088,7 +1020,7 @@ const Dashboard = () => {
                   dataSource={profitLossData}
                   pagination={false}
                   rowKey="key"
-                  scroll={{ x: 800 }} // Adjust this value if needed for your layout
+                  scroll={{ x: 800 }}
                 />
               )}
             </Card>
@@ -1097,7 +1029,9 @@ const Dashboard = () => {
       )}
 
       <Card style={{ marginTop: 20, width: "100%" }}>
-        <Title level={5}>Fund Request Auto Deposit History</Title>
+        <Title level={5}>
+          Fund Request Auto Deposite History {todayFormatted}
+        </Title>
         {loading ? (
           <Spin />
         ) : error ? (
@@ -1105,31 +1039,31 @@ const Dashboard = () => {
         ) : (
           <Table
             columns={fundRequestColumns}
-            dataSource={autoDepositHistory}
+            dataSource={autoDepositHistory.filter((record) =>
+              moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+            )}
             rowKey="_id"
-            // Optional: enable horizontal scrolling if your table is wider than the viewport
             scroll={{ x: true }}
           />
         )}
       </Card>
 
       <Card style={{ marginTop: 20, width: "100%" }}>
-      <Title level={5}>Withdraw Request History {today}</Title>
-
-      {loading ? (
-        <Spin />
-      ) : error ? (
-        <p>{error}</p>
-      ) : (
-        <Table
-          columns={withdrawalColumns}
-          dataSource={withdrawalHistory}
-          rowKey="_id"
-          scroll={{ x: true }}
-          pagination={{ pageSize: 10 }} // ✅ Pagination: 10 records per page
-        />
-      )}
-    </Card>
+        <Title level={5}>Withdraw Request History {today}</Title>
+        {loading ? (
+          <Spin />
+        ) : error ? (
+          <p>{error}</p>
+        ) : (
+          <Table
+            columns={withdrawalColumns}
+            dataSource={withdrawalHistory}
+            rowKey="_id"
+            scroll={{ x: true }}
+            pagination={{ pageSize: 10 }}
+          />
+        )}
+      </Card>
     </div>
   );
 };
