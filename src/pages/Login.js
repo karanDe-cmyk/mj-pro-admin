@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Input, Button, Card, Typography, Avatar, message } from "antd";
+import { Form, Input, Button, Card, Typography, Avatar } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -7,6 +7,8 @@ import { login } from "../features/auth/authSlice";
 import instance from "../utils/axiosInstance";
 
 import "antd/dist/reset.css";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 
@@ -26,34 +28,35 @@ const Login = () => {
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      // console.log("API URL:", `${apiUrl}/api/auth/adminLogin`);
-      // console.log("Sending:", values);
-
       const response = await instance.post(`/api/auth/adminLogin`, values);
 
       if (response && response.data) {
-        // console.log("API Response after login:", response.data);
-
         const token = response.data.token;
         if (token) {
           localStorage.setItem("accessToken", token);
           localStorage.setItem("isAuthenticated", "true");
 
           dispatch(login({ token })); // 🔹 Dispatch login action
-          message.success("Login successful!");
+          toast.success("Login successful!");
 
-          navigate("/admin/dashboard");
+          // Delay navigation for 1 second to allow toast to be visible
+          setTimeout(() => {
+            navigate("/admin/dashboard");
+          }, 1000);
         } else {
           console.error("No token received in API response.");
-          message.error("Login failed. No token received.");
+          toast.error("Login failed. No token received.");
         }
       }
     } catch (error) {
       console.error("Login failed:", error);
       if (error.response) {
-        message.error(error.response.data.message || "Invalid credentials. Please try again.");
+        toast.error(
+          error.response.data.message ||
+            "Invalid credentials. Please try again."
+        );
       } else {
-        message.error("Network error. Please check your connection.");
+        toast.error("Network error. Please check your connection.");
       }
     }
     setLoading(false);
@@ -67,16 +70,33 @@ const Login = () => {
 
         <div style={styles.avatarContainer}>
           <Avatar size={60} src="https://via.placeholder.com/50" />
-          <Title level={4} style={{ marginTop: 10 }}>Jannat Admin</Title>
+          <Title level={4} style={{ marginTop: 10 }}>
+            Jannat Admin
+          </Title>
         </div>
 
-        <Form layout="vertical" onFinish={handleLogin} initialValues={{ username: "", password: "" }}>
-          <Form.Item name="username" label="Username" rules={[{ required: true, message: "Please enter your username" }]}> 
+        <Form
+          layout="vertical"
+          onFinish={handleLogin}
+          initialValues={{ username: "", password: "" }}
+        >
+          <Form.Item
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: "Please enter your username" }]}
+          >
             <Input prefix={<UserOutlined />} placeholder="Enter username" />
           </Form.Item>
 
-          <Form.Item name="password" label="Password" rules={[{ required: true, message: "Please enter your password" }]}> 
-            <Input.Password prefix={<LockOutlined />} placeholder="Enter password" />
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: "Please enter your password" }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Enter password"
+            />
           </Form.Item>
 
           <Form.Item>
@@ -86,6 +106,7 @@ const Login = () => {
           </Form.Item>
         </Form>
       </Card>
+      <ToastContainer />
     </div>
   );
 };

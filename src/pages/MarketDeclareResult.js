@@ -119,95 +119,83 @@ const handlePannaChange = (value) => {
   // ---------------------------
   // FETCH Market GAME NAME 
   // ----------------------- ----
-  const fetchDeclaredResults = async (date) => {
-    if (!date) return;
-  
-    try {
-      setLoading(true);
-      const formattedDate = date.format("YYYY-MM-DD"); // e.g. "2025-03-17"
-  
-      // 1) Fetch all possible games for "Main Market"
-      //    (Or reuse the data you already fetched in `allGames` if you prefer.)
-      const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
-  
-      // IMPORTANT: Make sure there are indeed games labeled "Main Market".
-      // If the data uses "MAIN MARKET" or "main market", this filter must match.
-      const mainMarketGames = gameResponse.data
-        .filter((game) => game.marketName === "Main Market")
-        .map((game) => game.gameName);
-  
-      console.log("mainMarketGames:", mainMarketGames);
-      // If mainMarketGames is empty, the table will have no rows.
-  
-      // 2) Fetch declared results (might be { success:false } => no results)
-      let results = [];
+    const fetchDeclaredResults = async (date) => {
+      if (!date) return;
+
       try {
-        const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
-        results = resultResponse?.data?.results || [];
-      } catch (err) {
-        // If API fails or returns success:false, results stays []
-        console.log("No declared results found or API error:", err);
-      }
+        setLoading(true);
+        // Format the date for API call: "YYYY-MM-DD"
+        const formattedDate = date.format("YYYY-MM-DD");
   
-      // 3) Build a map { "gameName_dd-mm-yyyy": { open: {...}, close: {...} } }
-      const resultMap = {};
-      results.forEach((item) => {
-        if (item.marketName === "Main Market" && item.date === formattedDate) {
-          const key = `${item.gameName}_${moment(item.date, "YYYY-MM-DD").format("DD-MM-YYYY")}`;
+        // 1) Fetch all possible games for "Main Market"
+        const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
+        const mainMarketGames = gameResponse.data
+          .filter((game) => game.marketName === "Main Market")
+          .map((game) => game.gameName);
   
-          if (!resultMap[key]) {
-            resultMap[key] = {
-              gameName: item.gameName,
-              date: moment(item.date, "YYYY-MM-DD").format("DD-MM-YYYY"),
-              open: null,
-              close: null,
-            };
-          }
-  
-          // If it's an open result, store in 'open'
-          if (item.gameType === "open") {
-            resultMap[key].open = {
-              value: `${item.panna}-${item.digit}`,
-              id: item._id,
-            };
-          }
-          // If it's a close result, store in 'close'
-          if (item.gameType === "close") {
-            resultMap[key].close = {
-              value: `${item.panna}-${item.digit}`,
-              id: item._id,
-            };
-          }
+        // 2) Fetch declared results
+        let results = [];
+        try {
+          const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
+          results = resultResponse?.data?.results || [];
+        } catch (err) {
+          console.error("No declared results found or API error:", err);
         }
-      });
   
-      // 4) Merge the known game list with the resultMap
-      const mergedResults = mainMarketGames.map((gameName, index) => {
-        const exactKey = `${gameName}_${moment(date).format("DD-MM-YYYY")}`;
-        const resultData = resultMap[exactKey] || {};
+        // 3) Build a map with keys in the format: "gameName_DD-MM-YYYY"
+        const resultMap = {};
+        results.forEach((item) => {
+          if (item.marketName === "Main Market" && item.date === formattedDate) {
+            // Convert the API date to "DD-MM-YYYY" using dayjs
+            const key = `${item.gameName}_${dayjs(item.date).format("DD-MM-YYYY")}`;
+            if (!resultMap[key]) {
+              resultMap[key] = {
+                gameName: item.gameName,
+                date: dayjs(item.date).format("DD-MM-YYYY"),
+                open: null,
+                close: null,
+              };
+            }
+            // Store open/close based on gameType
+            if (item.gameType === "open") {
+              resultMap[key].open = {
+                value: `${item.panna}-${item.digit}`,
+                id: item._id,
+              };
+            }
+            if (item.gameType === "close") {
+              resultMap[key].close = {
+                value: `${item.digit}-${item.panna}`,
+                id: item._id,
+              };
+            }
+          }
+        });
+    
+        // 4) Merge the known game list with the resultMap
+        const mergedResults = mainMarketGames.map((gameName, index) => {
+          // Format the selected date as "DD-MM-YYYY" for display & key lookup
+          const displayDate = date.format("DD-MM-YYYY");
+          const exactKey = `${gameName}_${displayDate}`;
+          const resultData = resultMap[exactKey] || {};
+          return {
+            sNo: index + 1,
+            gameName,
+            date: displayDate,
+            open: resultData.open || null,
+            close: resultData.close || null,
+          };
+        });
   
-        // If no result, set open and close to null
-        return {
-          sNo: index + 1,
-          gameName,
-          date: moment(date).format("DD-MM-YYYY"),
-          open: resultData.open || null,
-          close: resultData.close || null,
-        };
-      });
-  
-      console.log("mergedResults:", mergedResults);
-  
-      // 5) Update state
-      setGameResults(mergedResults);
-      setFilteredResults(mergedResults);
-    } catch (error) {
-      console.error("Error fetching declared results:", error);
-      message.error("Failed to fetch declared results.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        setGameResults(mergedResults);
+        setFilteredResults(mergedResults);
+      } catch (error) {
+        console.error("Error fetching declared results:", error);
+        message.error("Failed to fetch declared results.");
+      } finally {
+        setLoading(false);
+      }
+    };
   
   
   
@@ -836,15 +824,16 @@ const handlePannaChange = (value) => {
       {/* Search Box & Date Picker */}
       <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         {/* Ant Design Date Picker */}
+       {/* DatePicker for filtering the table */}
        <DatePicker
-      value={selectedDate}
-      onChange={handleDateChange}
-      format="DD-MM-YYYY"
-      style={{ width: 160 }}
-      allowClear={false} // Prevent clearing the default date
-      defaultPickerValue={dayjs()} // Ensures the calendar opens on the correct month and year
-      placeholder="Select Date"
-    />
+            value={selectedDate}
+            onChange={handleDateChange}
+            format="DD-MM-YYYY"
+            style={{ width: 160 }}
+            allowClear={false}
+            defaultPickerValue={dayjs()}
+            placeholder="Select Date"
+          />
 
         {/* Search Box */}
         <Search
