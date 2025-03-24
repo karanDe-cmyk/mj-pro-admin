@@ -45,14 +45,6 @@ pipeline {
             }
         }
 
-        stage("Workspace cleanup"){
-            steps{
-                script{
-                    cleanWs()
-                }
-            }
-        }
-
         stage('Git: Checkout Code Repo') {
             steps {
                 script {
@@ -161,6 +153,23 @@ pipeline {
                 }
             }
         }
+
+        stage("Docker Image Remove"){
+            steps{
+                script{
+                    sh "docker rmi ${IMAGE_NAME}:${env.FRONTEND_DOCKER_TAG} || echo 'Image remove failed, might be in use or already deleted'"
+                }
+            }
+        }
+
+        stage("Workspace cleanup"){
+            steps{
+                script{
+                    cleanWs()
+                }
+            }
+        }
+
     }
 
     post {
