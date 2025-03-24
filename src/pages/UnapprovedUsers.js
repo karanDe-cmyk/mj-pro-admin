@@ -212,9 +212,10 @@ const UnapprovedUsers = () => {
             style={{ width: 80 }}
           >
             <Option value={5}>5</Option>
-            <Option value={10}>10</Option>
-            <Option value={20}>20</Option>
-            <Option value={50}>50</Option>
+          <Option value={10}>10</Option>
+          <Option value={20}>20</Option>
+          <Option value={50}>50</Option>
+          <Option value={100}>100</Option>
           </Select>
           <span className="ml-2">entries</span>
         </div>

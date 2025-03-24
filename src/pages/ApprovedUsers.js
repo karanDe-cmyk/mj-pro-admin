@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
-const UnapprovedUsers = () => {
+const ApprovedUsers = () => {
   const [users, setUsers] = useState([]); // Original users data
   const [filteredUsers, setFilteredUsers] = useState([]); // Filtered users data
   const [loading, setLoading] = useState(false);
@@ -233,6 +233,9 @@ const UnapprovedUsers = () => {
           <Option value={5}>5</Option>
           <Option value={10}>10</Option>
           <Option value={20}>20</Option>
+          <Option value={50}>50</Option>
+          <Option value={100}>100</Option>
+
         </Select>
         <Input
           prefix={<SearchOutlined />}
@@ -273,4 +276,4 @@ const UnapprovedUsers = () => {
   );
 };
 
-export default UnapprovedUsers;
+export default ApprovedUsers;
