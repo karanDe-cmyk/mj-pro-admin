@@ -3,6 +3,7 @@ import instance from "../utils/axiosInstance";
 import { Table, Input, Button, Switch, Pagination, Spin, Select } from "antd";
 import { SearchOutlined, WhatsAppOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const { Option } = Select;
 
@@ -90,7 +91,19 @@ const UnapprovedUsers = () => {
   const handleViewClick = (userId) => {
     navigate(`/admin/user-management/user-details/${userId}`);
   };
-
+  
+  
+  const handleDelete = async (id) => {
+    try {
+      await instance.delete(`/api/auth/deleteUser/${id}`);
+      toast.success("User deleted successfully");
+      // Update the table data immediately by removing the deleted user
+      setUsers((prevData) => prevData.filter((record) => record._id !== id));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user");
+    }
+  };
   // Mobile number
   const handleUserNumber = (userMobileNumber) => {
     if (userMobileNumber) {
@@ -190,9 +203,14 @@ const UnapprovedUsers = () => {
       dataIndex: "option",
       key: "option",
       render: (_, record) => (
-        <Button type="link" onClick={() => handleViewClick(record._id)}>
-          View
-        </Button>
+        <>
+          <Button type="link" onClick={() => handleViewClick(record._id)}>
+            View
+          </Button>
+          <Button type="link" danger onClick={() => handleDelete(record._id)}>
+            Delete
+          </Button>
+        </>
       ),
     },
   ];

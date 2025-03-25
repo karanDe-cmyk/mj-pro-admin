@@ -3,6 +3,7 @@ import instance from "../utils/axiosInstance";
 import { Table, Input, Button, Switch, Pagination, Spin, Select } from "antd";
 import { PhoneOutlined, SearchOutlined, WhatsAppOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const { Option } = Select;
 
@@ -65,6 +66,21 @@ const ApprovedUsers = () => {
     navigate(`/admin/user-management/user-details/${userId}`);
   };
 
+
+  // Function to handle deletion
+  const handleDelete = async (id) => {
+    try {
+      await instance.delete(`/api/auth/deleteUser/${id}`);
+      toast.success("User deleted successfully");
+      // Update the table data immediately by removing the deleted user
+      setUsers((prevData) => prevData.filter((record) => record._id !== id));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user");
+    }
+  };
+
+
   const handleUserNumber = (userMobileNumber) => {
     if (userMobileNumber) {
       // Use window.location.href to trigger a phone call
@@ -109,106 +125,116 @@ const ApprovedUsers = () => {
   };
 
   // ✅ Table Columns (with Date and Time columns added)
-  const columns = [
-    { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
-    {
-      title: "Date",
-      dataIndex: "createdAt",
-      key: "date",
-      render: (text) => new Date(text).toLocaleDateString(),
-    },
-    {
-      title: "Time",
-      dataIndex: "createdAt",
-      key: "time",
-      render: (text) => new Date(text).toLocaleTimeString(),
-    },
-    { title: "Member Name", dataIndex: "userName", key: "userName" },
-    {
-      title: "Member Mobile No",
-      dataIndex: "phone",
-      key: "phone",
-      render: (text) => (
-        <span>
-          {text}
-          {text && (
-            <>
-              &nbsp;
-              <PhoneOutlined
-                style={{ color: "green", cursor: "pointer" }}
-                onClick={() => handleUserNumber(text)}
-              />
-            </>
-          )}
-        </span>
-      ),
-    },
-    {
-      title: "Member Whatsapp No",
-      dataIndex: "userWhatsappNumber",
-      key: "userWhatsappNumber",
-      render: (text) => (
-        <span>
-          {text}
-          {text && (
-            <>
-              &nbsp;
-              <WhatsAppOutlined
-                style={{ color: "green", cursor: "pointer" }}
-                onClick={() => handleWhatsAppClick(text)}
-              />
-            </>
-          )}
-        </span>
-      ),
-    },
-    { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
-    {
-      title: "Betting",
-      dataIndex: "betting",
-      key: "betting",
-      render: (_, record) => (
-        <Spin spinning={loadingSwitch === record._id}>
-          <Switch
-            checked={record.betting}
-            onChange={() => toggleSwitch(record, "betting")}
-          />
-        </Spin>
-      ),
-    },
-    {
-      title: "Transfer",
-      dataIndex: "transfer",
-      key: "transfer",
-      render: (_, record) => (
-        <Spin spinning={loadingSwitch === record._id}>
-          <Switch
-            checked={record.transfer}
-            onChange={() => toggleSwitch(record, "transfer")}
-          />
-        </Spin>
-      ),
-    },
-    {
-      title: "Active",
-      dataIndex: "status",
-      key: "status",
-      render: (_, record) => (
-        <Spin spinning={loadingSwitch === record._id}>
-          <Switch
-            checked={record.status}
-            onChange={() => toggleSwitch(record, "status")}
-          />
-        </Spin>
-      ),
-    },
-    {
-      title: "Option",
-      dataIndex: "option",
-      key: "option",
-      render: (_, record) => <Button type="link" onClick={() => handleViewClick(record._id)}>View</Button>,
-    },
-  ];
+ const columns = [
+  { title: "#", dataIndex: "_id", key: "_id", render: (_, __, index) => index + 1 },
+  {
+    title: "Date",
+    dataIndex: "createdAt",
+    key: "date",
+    render: (text) => new Date(text).toLocaleDateString(),
+  },
+  {
+    title: "Time",
+    dataIndex: "createdAt",
+    key: "time",
+    render: (text) => new Date(text).toLocaleTimeString(),
+  },
+  { title: "Member Name", dataIndex: "userName", key: "userName" },
+  {
+    title: "Member Mobile No",
+    dataIndex: "phone",
+    key: "phone",
+    render: (text) => (
+      <span>
+        {text}
+        {text && (
+          <>
+            &nbsp;
+            <PhoneOutlined
+              style={{ color: "green", cursor: "pointer" }}
+              onClick={() => handleUserNumber(text)}
+            />
+          </>
+        )}
+      </span>
+    ),
+  },
+  {
+    title: "Member Whatsapp No",
+    dataIndex: "userWhatsappNumber",
+    key: "userWhatsappNumber",
+    render: (text) => (
+      <span>
+        {text}
+        {text && (
+          <>
+            &nbsp;
+            <WhatsAppOutlined
+              style={{ color: "green", cursor: "pointer" }}
+              onClick={() => handleWhatsAppClick(text)}
+            />
+          </>
+        )}
+      </span>
+    ),
+  },
+  { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
+  {
+    title: "Betting",
+    dataIndex: "betting",
+    key: "betting",
+    render: (_, record) => (
+      <Spin spinning={loadingSwitch === record._id}>
+        <Switch
+          checked={record.betting}
+          onChange={() => toggleSwitch(record, "betting")}
+        />
+      </Spin>
+    ),
+  },
+  {
+    title: "Transfer",
+    dataIndex: "transfer",
+    key: "transfer",
+    render: (_, record) => (
+      <Spin spinning={loadingSwitch === record._id}>
+        <Switch
+          checked={record.transfer}
+          onChange={() => toggleSwitch(record, "transfer")}
+        />
+      </Spin>
+    ),
+  },
+  {
+    title: "Active",
+    dataIndex: "status",
+    key: "status",
+    render: (_, record) => (
+      <Spin spinning={loadingSwitch === record._id}>
+        <Switch
+          checked={record.status}
+          onChange={() => toggleSwitch(record, "status")}
+        />
+      </Spin>
+    ),
+  },
+  {
+    title: "Option",
+    dataIndex: "option",
+    key: "option",
+    render: (_, record) => (
+      <>
+        <Button type="link" onClick={() => handleViewClick(record._id)}>
+          View
+        </Button>
+        <Button type="link" danger onClick={() => handleDelete(record._id)}>
+          Delete
+        </Button>
+      </>
+    ),
+  },
+];
+
 
   // ✅ Pagination Logic
   const indexOfLastEntry = currentPage * entriesPerPage;
