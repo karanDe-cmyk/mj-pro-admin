@@ -38,6 +38,7 @@ const UserDetails = () => {
   const [pageSize, setPageSize] = useState(5);
   const [withdrawData, setWithdrawData] = useState([]);
   const [search, setSearch] = useState(""); // Search input
+  const [userPassword, setUserPassword] = useState(""); // New state for password
 
   const [modalVisible, setModalVisible] = useState(false);
   // State to track which action to perform ("add" or "withdraw")
@@ -63,6 +64,29 @@ const UserDetails = () => {
   const [transactionHistoryDataAll, setTransactionHistoryDataAll] = useState(
     []
   );
+
+
+    // New function to fetch the user password.
+    const fetchUserPassword = async () => {
+      try {
+        const response = await instance.get(`/api/auth/getuserpassword/${userId}`);
+        if (
+          response.data &&
+          response.data.data &&
+          response.data.data.password
+        ) {
+          setUserPassword(response.data.data.password);
+        }
+      } catch (error) {
+        console.error("Error fetching user password:", error);
+      }
+    };
+
+    useEffect(() => {
+        if (userId) {
+          fetchUserPassword();
+        }
+      }, [userId]);
 
   // Fetch today's deposit transactions from the new API
   const fetchManualTransactionsAll = async () => {
@@ -560,25 +584,25 @@ const UserDetails = () => {
       };
     });
 
- // Format auto deposit transactions
- const formattedAutoDeposits = autoDeposits.map((txn, index) => {
-  // Try parsing with both formats
-  const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
-
-  // Extract txnRef from comments string
-  const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
-  const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
-
-  return {
-    key: `auto-${index}`,
-    requestNumber: txnRef, // Show txnRef only
-    amount: txn.amount,
-    transactionType: "Money Added",
-    date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
-    sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
-    type: "auto",
-  };
-});
+   // Format auto deposit transactions
+   const formattedAutoDeposits = autoDeposits.map((txn, index) => {
+    // Try parsing with both formats
+    const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
+  
+    // Extract txnRef from comments string
+    const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
+    const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
+  
+    return {
+      key: `auto-${index}`,
+      requestNumber: txnRef, // Show txnRef only
+      amount: txn.amount,
+      transactionType: "Money Added",
+      date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
+      sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
+      type: "auto",
+    };
+  });
 
     // Merge all transactions
     const allTransactions = [
@@ -1285,7 +1309,8 @@ const UserDetails = () => {
                     <Text>{userData.securityPin}</Text>
                   </Col>
                   <Col span={12}>
-                    <Text strong>Password:</Text> <Text>******</Text>
+                  <Text strong>Password:</Text>{" "}
+                  <Text>{userPassword || "******"}</Text>
                     {/* Password is typically not sent back from the API */}
                   </Col>
                 </Row>
