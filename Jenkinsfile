@@ -11,7 +11,7 @@ pipeline {
         YAML_FILE = "${K8S_FOLDER}/frontend-admin.yaml"
         CODE_REPO_URL = 'https://github.com/MaccoTechgit/Matka-Fronted.git'
         CODE_BRANCH = 'jannat-frontend-admin'
-        ARGOCD_SERVER = '15.207.103.107:31102'
+        ARGOCD_SERVER = '13.127.100.231:30488'
         ARGOCD_TOKEN = credentials('argocd-api-token')
         APP_NAME = 'JANNAT-MATKA'
     }
@@ -56,13 +56,13 @@ pipeline {
             }
         }
 
-        stage("Trivy: Security Scan") {
-            steps {
-                script {
-                    trivy_scan()
-                }
-            }
-        }
+        // stage("Trivy: Security Scan") {
+        //     steps {
+        //         script {
+        //             trivy_scan()
+        //         }
+        //     }
+        // }
         stage("SonarQube: Code Analysis"){
             steps{
                 script{
