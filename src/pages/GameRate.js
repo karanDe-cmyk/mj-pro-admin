@@ -36,10 +36,10 @@ const groups = [
 
 const GameRate = () => {
   const [rates, setRates] = useState({});
+  const [displayRates, setDisplayRates] = useState({});
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  // Fetch Bet Rates on component mount.
   useEffect(() => {
     fetchBetRates();
   }, []);
@@ -49,9 +49,19 @@ const GameRate = () => {
       setLoading(true);
       const response = await axios.get(`/api/rates/getBetRates`);
       if (response.data) {
-        // Remove unwanted fields from the response.
         const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
         setRates(filteredData);
+
+        // Prepare displayRates (value fields * 10)
+        const transformed = {};
+        for (const key in filteredData) {
+          if (key.endsWith("Value")) {
+            transformed[key] = filteredData[key] * 10;
+          } else {
+            transformed[key] = filteredData[key];
+          }
+        }
+        setDisplayRates(transformed);
       }
     } catch (error) {
       console.error("Error fetching bet rates:", error);
@@ -61,27 +71,36 @@ const GameRate = () => {
     }
   };
 
-  // Handle changes for a group field (rate or value)
   const handleGroupInputChange = (group, field, e) => {
     const { value } = e.target;
-    // Create a new state object
     const updatedRates = { ...rates };
+    const updatedDisplayRates = { ...displayRates };
+
     group.subKeys.forEach((key) => {
       if (field === "rate") {
         updatedRates[key] = value;
+        updatedDisplayRates[key] = value;
       } else if (field === "value") {
-        updatedRates[key + "Value"] = value;
+        updatedRates[key + "Value"] = value / 10;
+        updatedDisplayRates[key + "Value"] = value;
       }
     });
+
     setRates(updatedRates);
+    setDisplayRates(updatedDisplayRates);
   };
 
-  // Call the update API and refresh data.
   const handleUpdate = async () => {
     try {
       setUpdating(true);
-      await axios.put(`/api/rates/updateBetRates`, rates);
-      fetchBetRates(); // Refresh data after update
+      const transformedRates = { ...rates };
+      for (const key in transformedRates) {
+        if (key.endsWith("Value")) {
+          transformedRates[key] = transformedRates[key];
+        }
+      }
+      await axios.put(`/api/rates/updateBetRates`, transformedRates);
+      fetchBetRates();
       message.success("Rates updated successfully!");
       alert("Rates updated successfully!");
     } catch (error) {
@@ -104,7 +123,7 @@ const GameRate = () => {
           <div className="space-y-4">
             {groups.map((group) => (
               <div key={group.groupLabel} className="grid grid-cols-2 gap-4 items-center">
-                {/* Column for Rate Input */}
+                {/* Rate Input */}
                 <div className="flex flex-col">
                   <label className="font-bold text-gray-900 text-sm mb-1">
                     {group.groupLabel} (Rate)
@@ -112,12 +131,12 @@ const GameRate = () => {
                   <input
                     type="number"
                     name={group.subKeys[0]}
-                    value={rates[group.subKeys[0]] || ""}
+                    value={displayRates[group.subKeys[0]] || ""}
                     onChange={(e) => handleGroupInputChange(group, "rate", e)}
                     className="border border-gray-300 rounded-md p-2 text-sm"
                   />
                 </div>
-                {/* Column for Value Input with rupee symbol */}
+                {/* Value Input */}
                 <div className="flex flex-col">
                   <label className="font-bold text-gray-900 text-sm mb-1">
                     {group.groupLabel} (Value)
@@ -127,7 +146,7 @@ const GameRate = () => {
                     <input
                       type="number"
                       name={group.subKeys[0] + "Value"}
-                      value={rates[group.subKeys[0] + "Value"] || ""}
+                      value={displayRates[group.subKeys[0] + "Value"] || ""}
                       onChange={(e) => handleGroupInputChange(group, "value", e)}
                       className="p-2 text-sm flex-1 outline-none"
                     />
