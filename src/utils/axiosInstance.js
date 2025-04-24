@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const instance = axios.create({
-  baseURL: "https://api.jannatmatka.shop",
+  baseURL: "https://gama-api.kglame.com",
 });
 
 let isRedirecting = false; // Prevent multiple redirects

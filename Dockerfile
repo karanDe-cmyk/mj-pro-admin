@@ -1,27 +1,23 @@
-# Stage 1: Build React App
-FROM node:22-alpine AS build
+# Step 1: Build React App
+FROM node:18 AS multiStage
+
 WORKDIR /app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
 RUN npm install
 
-# Copy source code and build the application
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve React App using Node.js
-FROM node:22-alpine AS production
-WORKDIR /app
+# Step 2: Serve with NGINX
+FROM nginx:alpine
 
-# Install a lightweight static file server
-RUN npm install -g serve
+# Nginx config copy
+COPY NGINX/default.conf /etc/nginx/conf.d/default.conf
 
-# Copy built React files from previous stage
-COPY --from=build /app/build ./build
+# React build copy
+COPY --from=multiStage /app/build /usr/share/nginx/html
 
-# Expose port 3000 for the React app
-EXPOSE 3000
+EXPOSE 80
 
-# Start the static file server on port 3000
-CMD ["serve", "-s", "build", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]

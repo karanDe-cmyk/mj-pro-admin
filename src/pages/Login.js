@@ -71,7 +71,7 @@ const Login = () => {
         <div style={styles.avatarContainer}>
           <Avatar size={60} src="https://via.placeholder.com/50" />
           <Title level={4} style={{ marginTop: 10 }}>
-            Jannat Admin
+            GAMA567 Admin
           </Title>
         </div>
 

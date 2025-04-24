@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: backend-config
-  namespace: matka
-data:
-  DEFAULT_DB_URI: "mongodb://kalyandadmin:kalyand123@a834612b9a8284a5e9abf7df22ea4712-446934983.ap-south-1.elb.amazonaws.com:27017/kalyandDB?authSource=admin"
