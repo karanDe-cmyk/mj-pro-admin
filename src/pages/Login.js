@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../features/auth/authSlice";
 import instance from "../utils/axiosInstance";
-
+import logoImage from "../images/logo512.png"
 import "antd/dist/reset.css";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
@@ -53,7 +53,7 @@ const Login = () => {
       if (error.response) {
         toast.error(
           error.response.data.message ||
-            "Invalid credentials. Please try again."
+          "Invalid credentials. Please try again."
         );
       } else {
         toast.error("Network error. Please check your connection.");
@@ -68,8 +68,10 @@ const Login = () => {
         <Title level={3}>Welcome Back!</Title>
         <Text type="secondary">Sign in to continue to Admin Console.</Text>
 
-        <div style={styles.avatarContainer}>
-          <Avatar size={60} src="https://via.placeholder.com/50" />
+        <div style={styles.avatarContainer} className="flex flex-col items-center ">
+          <div className=" border border-gray-250 w-[2.4cm] rounded-[50%] p-[.4cm]  " >
+            <img src={logoImage} className="w-full " alt="" />
+          </div>
           <Title level={4} style={{ marginTop: 10 }}>
             GAMA567 Admin
           </Title>
@@ -128,7 +130,7 @@ const styles = {
     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   },
   avatarContainer: {
-    margin: "20px 0",
+    margin: "20px 0"
   },
 };
 

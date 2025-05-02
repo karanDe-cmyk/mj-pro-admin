@@ -42,6 +42,7 @@ const Dashboard = () => {
   const [unapprovedUsers, setUnApprovedUsers] = useState({
     unapprovedUsers: 0,
   });
+  const [data, setData] = useState([]);
   const [totalGames, setTotalGames] = useState({ totalGameCount: 0 });
   const [mainMarketGamesList, setMainMarketGamesList] = useState([]);
   const [mainMarketGamesListLeft, setMainMarketGamesListLeft] = useState([]);
@@ -65,7 +66,10 @@ const Dashboard = () => {
   const [betRates, setBetRates] = useState([]);
   const [selectedGameType, setSelectedGameType] = useState("");
   const today = dayjs().format("YYYY-MM-DD");
-  const todayFormatted = dayjs().format("DD-MM-YYYY"); // For title and filtering today's records
+  const todayFormatted = dayjs().format("DD-MM-YYYY");
+  // const today = dayjs().subtract(2, 'day').format("YYYY-MM-DD");
+  // const todayFormatted = dayjs().subtract(2, 'day').format("DD-MM-YYYY");
+
   const navigate = useNavigate();
 
   // Handler for DatePicker changes.
@@ -77,6 +81,27 @@ const Dashboard = () => {
       setSelectedDate("");
     }
   };
+
+  // console.log("Manual Deposits : ", data)
+  // console.log("Auto Deposits : ", autoDepositHistory);
+
+
+  const fetchDeposits = async () => {
+    try {
+      setLoading(true);
+      const res = await instance.get("/api/manualDeposit");
+      // Assuming API response is an array of deposit transactions
+      setData(res.data);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      message.error("Failed to fetch deposit transactions");
+    }
+  };
+
+  useEffect(() => {
+    fetchDeposits();
+  }, []);
 
   // Handler for game selection.
   const handleGameChange2 = (value) => {
@@ -197,7 +222,7 @@ const Dashboard = () => {
       message.error("Please select a game name, session, and game type");
       return;
     }
-  
+
     let openFlag = false;
     let closeFlag = false;
     if (selectedSession === "open") {
@@ -207,18 +232,18 @@ const Dashboard = () => {
       openFlag = false;
       closeFlag = true;
     }
-  
+
     const body = {
       gameName: selectedGame,
       open: openFlag,
       close: closeFlag,
       gameType: selectedGameType,
     };
-  
+
     try {
       setLoadingButton2(true);
       const response = await instance.post(`/api/bid/todayDigitSummary`, body);
-  
+
       if (response.data && response.data.data) {
         setDashboardData(response.data.data);
       } else {
@@ -264,17 +289,17 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const response = await instance.get("api/rates/getBetRates");
-  
+
         if (response.data && typeof response.data === "object") {
           const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
-  
+
           const cleanedData = Object.keys(filteredData)
             .filter(key => !key.includes('Value'))
             .reduce((acc, key) => {
               acc[key] = filteredData[key];
               return acc;
             }, {});
-  
+
           setBetRates(Object.keys(cleanedData));
         } else {
           console.error("Invalid response format:", response.data);
@@ -285,10 +310,10 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-  
+
     fetchBetRates();
   }, []);
-  
+
 
   const mainMarketGames = mainMarketGamesList.filter(
     (game) => game.marketName === "Main Market"
@@ -354,10 +379,13 @@ const Dashboard = () => {
     }
   };
 
+
+
   const fetchMainMarketData = async () => {
     try {
-      const response = await instance.get(`/api/bid/todayBids`);
+      const response = await instance.get(`/api/bid/getAllBid`);
       const data = response.data;
+
       if (data.totalAmount !== undefined) {
         setMainMarketData({ totalAmount: data.totalAmount });
       } else {
@@ -570,6 +598,46 @@ const Dashboard = () => {
     },
   ];
 
+  const fundRequestColumnsManualDeposit = [
+    {
+      title: "#",
+      key: "serial",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "User Name",
+      dataIndex: "userName",
+      key: "userName",
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+    },
+    {
+      title: "Txn ID",
+      dataIndex: "transactionId",
+      key: "transactionId",
+    },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "date",
+      render: (createdAt) => moment(createdAt).format("DD-MM-YYYY HH:mm:ss"),
+    },
+    {
+      title: "Type",
+      key: "type",
+      render: (_, record) => (
+        <>
+          <Button type="primary" style={{ marginRight: 8 }}>
+            {record.status}
+          </Button>
+        </>
+      ),
+    },
+  ];
+
   const profitLossColumns = [
     {
       title: "Deposit",
@@ -609,13 +677,113 @@ const Dashboard = () => {
             {isProfit
               ? `Profit: ${result}`
               : isLoss
-              ? `Loss: ${Math.abs(result)}`
-              : "No Profit/Loss"}
+                ? `Loss: ${Math.abs(result)}`
+                : "No Profit/Loss"}
           </div>
         );
       },
     },
   ];
+
+  const [totalAutoDeposit, setTotalAutoDeposit] = useState(0)
+  const [totalManualDeposit, setTotalManualDeposit] = useState(0)
+  const [todayTotalAutoDeposit, setTodayTotalAutoDeposit] = useState(0)
+  const [todayTotalManualDeposit, setTodayTotalManualDeposit] = useState(0)
+
+  const [adminData, setAdminData] = useState({
+    totalMainMarketBidAmount: 0,
+    totalStarlineBidAmount: 0,
+    totalGaliDisawarBidAmount: 0,
+    lifetimeTotalBidAmount: 0,
+    lifetimeWithdrawalAmount: 0
+  })
+
+  // console.log(adminData)
+  // New functions
+  useEffect(() => {
+    const calculateDashboardStats = async () => {
+      try {
+        // ---- Auto Deposit ----
+        const totalAuto = Array.isArray(autoDepositHistory)
+          ? autoDepositHistory.reduce((acc, curr) => acc + (curr.amount || 0), 0)
+          : 0;
+
+        const todayAuto = Array.isArray(autoDepositHistory)
+          ? autoDepositHistory
+            .filter((entry) => dayjs(entry.date).format("YYYY-MM-DD") === today)
+            .reduce((acc, curr) => acc + (curr.amount || 0), 0)
+          : 0;
+
+        setTotalAutoDeposit(totalAuto);
+        setTodayTotalAutoDeposit(todayAuto);
+
+        // ---- Manual Deposit ----
+        const totalManual = Array.isArray(data)
+          ? data.reduce((acc, curr) => acc + (curr.amount || 0), 0)
+          : 0;
+
+        const todayManual = Array.isArray(data)
+          ? data
+            .filter((entry) => dayjs(entry.date).format("YYYY-MM-DD") === today)
+            .reduce((acc, curr) => acc + (curr.amount || 0), 0)
+          : 0;
+
+        setTotalManualDeposit(totalManual);
+        setTodayTotalManualDeposit(todayManual);
+
+        // ---- Lifetime Bids ----
+        const [mainMarketRes, starlineRes, galiDisawarRes] = await Promise.all([
+          instance.get('/api/bid/getAllBid'),
+          instance.get('/api/Starlinebid/getallbid'),
+          instance.get('/api/GaliDisawarbid/getAllbid'),
+        ]);
+
+        const bidArray = mainMarketRes?.data || [];
+        const starlineArray = starlineRes?.data || [];
+        const galiArray = galiDisawarRes?.data || [];
+
+        const totalMain = Array.isArray(bidArray)
+          ? bidArray.reduce((acc, curr) => acc + (curr.points || 0), 0)
+          : 0;
+
+        const totalStarline = Array.isArray(starlineArray)
+          ? starlineArray.reduce((acc, curr) => acc + (curr.points || 0), 0)
+          : 0;
+
+        const totalGali = Array.isArray(galiArray)
+          ? galiArray.reduce((acc, curr) => acc + (curr.points || 0), 0)
+          : 0;
+
+        const lifetimeTotal = totalMain + totalStarline + totalGali;
+
+        // ---- Lifetime Withdrawals ----
+        const withdrawRes = await instance.get('/api/users/withdrawals');
+        const filteredWithdrawals = Array.isArray(withdrawRes.data)
+          ? withdrawRes.data.filter((w) => w.status === "approved")
+          : [];
+
+        const totalWithdrawals = filteredWithdrawals.reduce(
+          (acc, curr) => acc + Number(curr.amount || 0),
+          0
+        );
+
+        // ---- Final Admin Data Set ----
+        setAdminData({
+          totalMainMarketBidAmount: totalMain,
+          totalStarlineBidAmount: totalStarline,
+          totalGaliDisawarBidAmount: totalGali,
+          lifetimeTotalBidAmount: lifetimeTotal,
+          lifetimeWithdrawalAmount: totalWithdrawals,
+        });
+
+      } catch (error) {
+        console.error("❌ Error calculating dashboard stats:", error);
+      }
+    };
+
+    calculateDashboardStats();
+  }, [autoDepositHistory, data]);
+
 
   return (
     <div style={{ padding: 5 }}>
@@ -853,10 +1021,12 @@ const Dashboard = () => {
                   >
                     <div>
                       <span style={{ fontWeight: "bold" }}>
-                        Main Market Bid Amount
+                        Today's Main Market Bid Amount
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {mainMarketData.totalAmount ?? "Failed to fetch"}
+                        {
+                          `₹${mainMarketData.totalAmount}`
+                        }
                       </div>
                     </div>
                     <div
@@ -890,10 +1060,240 @@ const Dashboard = () => {
                   >
                     <div>
                       <span style={{ fontWeight: "bold" }}>
-                        Starline Bid Amount
+                        Today's Starline Bid Amount
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {starlineData.totalAmount ?? "Failed to fetch"}
+                        {
+                          `₹${starlineData.totalAmount}`
+                        }
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Today's total auto deposit
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        ₹{todayTotalAutoDeposit}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Today's total manual deposit
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        {`₹${todayTotalManualDeposit}`}
+
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Lifetime total auto deposit
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        ₹{totalAutoDeposit}
+                            
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Lifetime total manual deposit
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        ₹{totalManualDeposit}
+                           
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Lifetime total withdrawal
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        ₹{adminData.lifetimeWithdrawalAmount ?? 0}
+
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <FundOutlined
+                        style={{ color: "#fff", fontSize: "24px" }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/all-bid-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Lifetime total bid amount
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        {
+                          `₹${adminData.lifetimeTotalBidAmount}`
+                        }
                       </div>
                     </div>
                     <div
@@ -1040,6 +1440,26 @@ const Dashboard = () => {
           <Table
             columns={fundRequestColumns}
             dataSource={autoDepositHistory.filter((record) =>
+              moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+            )}
+            rowKey="_id"
+            scroll={{ x: true }}
+          />
+        )}
+      </Card>
+
+      <Card style={{ marginTop: 20, width: "100%" }}>
+        <Title level={5}>
+          Fund Request Manual Deposits History {todayFormatted}
+        </Title>
+        {loading ? (
+          <Spin />
+        ) : error ? (
+          <p>{error}</p>
+        ) : (
+          <Table
+            columns={fundRequestColumnsManualDeposit}
+            dataSource={data.filter((record) =>
               moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
             )}
             rowKey="_id"
