@@ -69,11 +69,11 @@ const Login = () => {
         <Text type="secondary">Sign in to continue to Admin Console.</Text>
 
         <div style={styles.avatarContainer} className="flex flex-col items-center ">
-          <div className=" border border-gray-250 w-[2.4cm] rounded-[50%] p-[.4cm]  " >
-            <img src={logoImage} className="w-full " alt="" />
+          <div className=" border border-gray-250 w-[2.4cm] rounded-[50%]  " >
+            <img src={logoImage} className="w-full rounded-[50%] " alt="" />
           </div>
           <Title level={4} style={{ marginTop: 10 }}>
-            GAMA567 Admin
+            Kalyan257 Admin
           </Title>
         </div>
 
