@@ -4,16 +4,16 @@ pipeline {
 
     environment {
         SONAR_HOME = tool "Sonar"
-        IMAGE_NAME = "maccotech/gama-frontend-admin-prod"
+        IMAGE_NAME = "maccotech/kalyan257-frontend-admin-prod"
         K8S_REPO_URL = 'https://github.com/MaccoTechgit/aws-Kubernetes.git'
-        K8S_BRANCH = 'gama-matka'
+        K8S_BRANCH = 'kalyan257'
         K8S_FOLDER = 'kubernetes'
         YAML_FILE = "${K8S_FOLDER}/frontend-admin.yaml"
         CODE_REPO_URL = 'https://github.com/MaccoTechgit/Matka-Fronted.git'
-        CODE_BRANCH = 'gama567-frontend-admin'
+        CODE_BRANCH = 'kalyan257-admin'
         ARGOCD_SERVER = '13.127.100.231:30488'
         ARGOCD_TOKEN = credentials('argocd-api-token')
-        APP_NAME = 'GAMA-MATKA'
+        APP_NAME = 'KALYAN257-MATKA'
     }
 
     stages {
@@ -66,7 +66,7 @@ pipeline {
         stage("SonarQube: Code Analysis"){
             steps{
                 script{
-                    sonarqube_analysis("Sonar","gama-frontend-admin","gama-frontend-admin")
+                    sonarqube_analysis("Sonar","kalyan257-frontend-admin","kalyan257-frontend-admin")
                 }
             }
         }
@@ -110,14 +110,14 @@ pipeline {
                         cat ${YAML_FILE}
 
                         # Update the image tag, accounting for variable whitespace
-                        sed -i 's#image:\\s*maccotech/gama-frontend-admin-prod:.*#image: maccotech/gama-frontend-admin-prod:${env.FRONTEND_DOCKER_TAG}#' ${YAML_FILE}
+                        sed -i 's#image:\\s*maccotech/kalyan257-frontend-admin-prod:.*#image: maccotech/kalyan257-frontend-admin-prod:${env.FRONTEND_DOCKER_TAG}#' ${YAML_FILE}
 
                         # Debug: Show updated file content
                         echo "After sed:"
                         cat ${YAML_FILE}
 
                         # Verify the change was applied
-                        grep "image: maccotech/gama-frontend-admin-prod:${env.FRONTEND_DOCKER_TAG}" ${YAML_FILE} || { echo "❌ Failed to update YAML file"; exit 1; }
+                        grep "image: maccotech/kalyan257-frontend-admin-prod:${env.FRONTEND_DOCKER_TAG}" ${YAML_FILE} || { echo "❌ Failed to update YAML file"; exit 1; }
                     """
                 }
             }
