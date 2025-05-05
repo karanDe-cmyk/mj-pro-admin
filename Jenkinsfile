@@ -11,7 +11,7 @@ pipeline {
         YAML_FILE = "${K8S_FOLDER}/frontend-admin.yaml"
         CODE_REPO_URL = 'https://github.com/MaccoTechgit/Matka-Fronted.git'
         CODE_BRANCH = 'kalyan257-admin'
-        ARGOCD_SERVER = '13.127.100.231:30488'
+        ARGOCD_SERVER = '13.233.183.101:32149'
         ARGOCD_TOKEN = credentials('argocd-api-token')
         APP_NAME = 'KALYAN257-MATKA'
     }
