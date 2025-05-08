@@ -43,7 +43,7 @@ const ChangePassword = () => {
         <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-center mb-6">Change Password</h2>
           
-          <form onSubmit={handleSubmit}>
+          <form>
             {/* Old Password Field */}
             <div className="mb-4">
               <label htmlFor="oldPassword" className="block text-gray-700 font-medium mb-2">
