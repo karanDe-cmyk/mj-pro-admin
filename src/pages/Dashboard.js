@@ -193,7 +193,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDepositHistory = async () => {
       try {
-        setLoading(true);
+        setLoading(true); 
         const response = await instance.get(
           `/api/userPayment/getpaymentResponse`
         );
