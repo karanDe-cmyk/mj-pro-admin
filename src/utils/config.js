@@ -1,3 +1,3 @@
-export const apiUrl = "https://gama-api.kglame.com"
+export const apiUrl = "https://kalyan257-api.kglame.com"
 
 // export const dummyUrl ="https://jsonplaceholder.typicode.com/posts"
