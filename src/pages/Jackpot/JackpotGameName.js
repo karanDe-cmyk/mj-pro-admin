@@ -15,7 +15,8 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import axiosInstance from "../../utils/axiosInstance";
+// import axiosInstance from "../../utils/axiosInstance";
+import axios from "axios";
 
 dayjs.extend(customParseFormat);
 const { Title } = Typography;
@@ -32,7 +33,12 @@ const GameName = () => {
   const fetchMarkets = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get("/api/JackpotMarket/getAllMarket");
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get("https://maya-api.kglame.com/api/JackpotMarket/getAllMarket", 
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
 
       // The actual array of markets is in response.data.data
       if (response.data && Array.isArray(response.data.data)) {
@@ -62,7 +68,12 @@ const GameName = () => {
         open_time: values.time.format("hh:mm:ssA"),
         is_active: true,
       };
-      await axiosInstance.post("/api/JackpotMarket/AddMarket", payload);
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.post("https://maya-api.kglame.com/api/JackpotMarket/AddMarket", payload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
       message.success("Market added successfully");
       form.resetFields();
       setIsModalOpen(false);
@@ -87,9 +98,13 @@ const GameName = () => {
         open_time: values.time.format("hh:mm:ssA"),
         is_active: true, // Sending is_active true by default for edit
       };
-      await axiosInstance.put(
-        `/api/JackpotMarket/updateMarket/${editingMarket._id}`,
-        payload
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${editingMarket._id}`,
+        payload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       message.success("Market updated successfully");
       setEditingMarket(null);
@@ -115,9 +130,13 @@ const GameName = () => {
         open_time: record.open_time,
         is_active: checked,
       };
-      await axiosInstance.put(
-        `/api/JackpotMarket/updateMarket/${record._id}`,
-        payload
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${record._id}`,
+        payload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       message.success("Market status updated");
       fetchMarkets();
@@ -135,7 +154,12 @@ const GameName = () => {
   // Handler for deleting a market (DELETE API)
   const handleDelete = async (id) => {
     try {
-      await axiosInstance.delete(`/api/JackpotMarket/deleteMarketById/${id}`);
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.delete(`https://maya-api.kglame.com/api/JackpotMarket/deleteMarketById/${id}`,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
       message.success("Market deleted successfully");
       fetchMarkets();
     } catch (error) {

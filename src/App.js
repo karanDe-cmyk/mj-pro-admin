@@ -43,10 +43,14 @@ import MainSetting from './pages/setting/MainSetting';
 import UserDetails from './pages/UserDetails';
 import SliderManagement from './pages/setting/SliderManagement';
 import WalletAllDepositeHistory from './pages/wallet_management/AllDepositHistory';
-import GalidisawerGameName  from './pages/GalidisawerGames/GameName';
+import GalidisawerGameName from './pages/GalidisawerGames/GameName';
 import GalidisawerBidHistory from './pages/GalidisawerGames/GalidisawerBidHistory';
 import GalidisawerGameRates from './pages/GalidisawerGames/GalidisawerGameRates'
-import GalidisawerDeclareResults from "./pages/GalidisawerGames/GalidisawerDeclareResults"
+import GalidisawerDeclareResults from "./pages/GalidisawerGames/GalidisawerDeclareResults";
+import JackpotGameName from './pages/Jackpot/JackpotGameName';
+import JackpotBid from './pages/Jackpot/JackpotBid';
+import JackpotGamerates from './pages/Jackpot/JackpotGamerates';
+import JackpotDeclareResults from './pages/Jackpot/JackpotDeclareResults';
 
 
 const App = () => {
@@ -55,7 +59,7 @@ const App = () => {
 
   return (
     <Router>
-      <ToastContainer/>
+      <ToastContainer />
       <Routes>
         {/* Public Route - Login */}
         <Route path="/" element={<Login />} />
@@ -90,7 +94,7 @@ const App = () => {
               <Route path="full-sangam" element={<FullSangam />} />
             </Route>
             <Route path="wallet-management">
-            <Route path="all-deposit-history" element={<WalletAllDepositeHistory/>} />
+              <Route path="all-deposit-history" element={<WalletAllDepositeHistory />} />
               <Route path="fund-request" element={<FundRequest />} />
               <Route path="offline-payment-records" element={<OfflinePaymentRecords />} />
               <Route path="withdraw-request" element={<WithDrawRequest />} />
@@ -110,24 +114,31 @@ const App = () => {
 
             {/* Settings Section */}
             <Route path="settings">
-            <Route path="main" element={<MainSetting />} />
-            <Route path="ChangePassword" element={<ChangePassword />} />
-            <Route path="slider-management" element={<SliderManagement/>} />
+              <Route path="main" element={<MainSetting />} />
+              <Route path="ChangePassword" element={<ChangePassword />} />
+              <Route path="slider-management" element={<SliderManagement />} />
             </Route>
             <Route path="galidisawer-games">
-              <Route path="game-list" element={<GalidisawerGameName/>} />
-              <Route path="bid-history" element={<GalidisawerBidHistory/>} />
+              <Route path="game-list" element={<GalidisawerGameName />} />
+              <Route path="bid-history" element={<GalidisawerBidHistory />} />
               <Route path="game-rates" element={<GalidisawerGameRates />} />
               <Route path="declare-result" element={<GalidisawerDeclareResults />} />
-           
+
+            </Route>
+            <Route path="jackpot-games">
+              <Route path="jackpot-game-list" element={<JackpotGameName />} />
+              <Route path="jackpot-bid-history" element={<JackpotBid />} />
+              <Route path="jackpot-game-rates" element={< JackpotGamerates />} />
+              <Route path="jackpot-declare-result" element={< JackpotDeclareResults />} />
+
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
-           
 
-            
+
+
           </Route>
-        
+
           <Route path="/user-details/:userId" element={<UserDetails />} />
         </Route>
 

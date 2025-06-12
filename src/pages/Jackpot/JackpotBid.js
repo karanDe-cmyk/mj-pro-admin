@@ -15,7 +15,8 @@ import {
 } from "antd";
 
 
-import axiosInstance from "../../utils/axiosInstance";
+// import axiosInstance from "../../utils/axiosInstance";
+import axios from 'axios';
 import dayjs from "dayjs";
 const { Option } = Select;
 const { Title } = Typography;
@@ -43,7 +44,12 @@ const BidHistory = () => {
   // Fetch game markets from the API for the Game Name select box
   const fetchGameMarkets = async () => {
     try {
-      const response = await axiosInstance.get("/api/jackpotMarket/getAllMarket");
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get("https://maya-api.kglame.com/api/jackpotMarket/getAllMarket",
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
       // Assuming response.data has a structure like { message, success, data: [...] }
       if (response.data && Array.isArray(response.data.data)) {
         setGameOptions(response.data.data);
@@ -81,9 +87,13 @@ const BidHistory = () => {
         gametype: gameTypeMapping[values.gameType] || values.gameType, // map to desired value
       };
 
-      const response = await axiosInstance.post(
-        "/api/jackpotBid/filterBids",
-        payload
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.post(
+        "https://maya-api.kglame.com/api/jackpotBid/filterBids",
+        payload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       if (response.data.success) {
         message.success("Bids filtered successfully");
@@ -137,9 +147,14 @@ const BidHistory = () => {
         // fallback case (if gametype doesn't match expected values)
         payload.pana = values.newNumber;
       }
-      await axiosInstance.put(
-        `/api/jackpotBid/updateBid/${editingBid.bidId}`,
-        payload
+
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        `https://maya-api.kglame.com/api/jackpotBid/updateBid/${editingBid.bidId}`,
+        payload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       message.success("Bid updated successfully");
       setIsEditModalOpen(false);
@@ -155,7 +170,12 @@ const BidHistory = () => {
   // Handler for deleting a bid via the delete API
   const handleDeleteBid = async (bidId) => {
     try {
-      await axiosInstance.delete(`/api/jackpotBid/deleteBid/${bidId}`);
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.delete(`https://maya-api.kglame.com/api/jackpotBid/deleteBid/${bidId}`, 
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
       message.success("Bid deleted successfully");
       // Refresh bid data
       handleFilterBids();
@@ -249,7 +269,7 @@ const BidHistory = () => {
       }}
     >
       <Title level={2} style={{ textAlign: "center", marginBottom: "20px" }}>
-      JackPot Bid History
+        JackPot Bid History
       </Title>
 
       {/* Filter Form */}
@@ -388,9 +408,8 @@ const BidHistory = () => {
           </Form.Item>
           <Form.Item
             name="newNumber"
-            label={`New Number for ${
-              editingBid ? displayGameType(editingBid.gametype) : ""
-            }`}
+            label={`New Number for ${editingBid ? displayGameType(editingBid.gametype) : ""
+              }`}
             rules={[{ required: true, message: "Please enter new number" }]}
           >
             <Input placeholder="Enter new number" />

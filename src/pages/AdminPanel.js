@@ -218,6 +218,17 @@ const AdminPanel = () => {
       ],
     },
     {
+      key: "Jackpot-games",
+      label: "Jackpot Games",
+      icon: <i className="fa fa-dice" />,
+      children: [
+        { key: "jackpot-game-name", label: "Game Name", path: "/admin/jackpot-games/jackpot-game-list" },
+        { key: "jackpot-bid-history", label: "Bid History", path: "/admin/jackpot-games/jackpot-bid-history" },
+        { key: "jackpot-declare-results", label: "Declare Results", path: "/admin/jackpot-games/jackpot-declare-result" },
+        { key: "jackpot-game-rates", label: "Game Rates", path: "/admin/jackpot-games/jackpot-game-rates" },
+      ],
+    },
+    {
       key: "notice-management",
       label: "Notice Management",
       path: "/admin/notice-management",
@@ -316,10 +327,10 @@ const AdminPanel = () => {
               Admin Panel
             </NavLink>
           </div>
-          <Menu 
-            theme="dark" 
-            mode="inline" 
-            selectedKeys={selectedKeys} 
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={selectedKeys}
             openKeys={openKeys}
             onOpenChange={(keys) => setOpenKeys(keys)}
           >

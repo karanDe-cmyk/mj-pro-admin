@@ -13,7 +13,8 @@ import {
   Modal
 } from 'antd';
 import moment from 'moment';
-import axiosInstance from "../../utils/axiosInstance";
+// import axiosInstance from "../../utils/axiosInstance";
+import axios from 'axios';
 import dayjs from "dayjs";
 const { Option } = Select;
 const GalidisawerDeclareResults = () => {
@@ -55,7 +56,11 @@ const GalidisawerDeclareResults = () => {
   };
   const fetchDeclareResults = async () => {
     try {
-      const response = await axiosInstance.get('/api/JackpotDeclareResult/getResult');
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get('https://maya-api.kglame.com/api/JackpotDeclareResult/getResult',
+        {
+          Authorization: `Bearer ${accessToken}`
+        });
       setData(response.data.results);
     } catch (error) {
       console.error("Error fetching declare results:", error);
@@ -67,7 +72,12 @@ const GalidisawerDeclareResults = () => {
   const handleDeleteDeclareResult = async (record) => {
     if (window.confirm("Are you sure you want to delete this declare result?")) {
       try {
-        await axiosInstance.delete(`/api/JackpotDeclareResult/delete/${record._id}`);
+        const accessToken = localStorage.getItem("accessToken");
+        await axios.delete(`https://maya-api.kglame.com/api/JackpotDeclareResult/delete/${record._id}`,
+          {
+            Authorization: `Bearer ${accessToken}`
+          }
+        );
         alert("Declare result deleted successfully. The winning amount has been deducted from the user's wallet.");
         fetchDeclareResults();
       } catch (error) {
@@ -77,7 +87,12 @@ const GalidisawerDeclareResults = () => {
     }
   };
   useEffect(() => {
-    axiosInstance.get('/api/jackpotMarket/getAllMarket')
+    const accessToken = localStorage.getItem("accessToken");
+    axios.get('https://maya-api.kglame.com/api/jackpotMarket/getAllMarket',
+      {
+        Authorization: `Bearer ${accessToken}`
+      }
+    )
       .then(response => {
         if (response.data && Array.isArray(response.data.data)) {
           setGameOptions(response.data.data);
@@ -118,9 +133,13 @@ const GalidisawerDeclareResults = () => {
         leftDigit: filters.leftDigit,
         rightDigit: filters.rightDigit
       };
-      const response = await axiosInstance.post(
-        "/api/jackpotWinners/showwinners",
-        reqBody
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.post(
+        "https://maya-api.kglame.com/api/jackpotWinners/showwinners",
+        reqBody,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       setWinnersData(response.data.winners);
     } catch (error) {
@@ -142,9 +161,13 @@ const GalidisawerDeclareResults = () => {
         leftDigit: filters.leftDigit,
         rightDigit: filters.rightDigit
       };
-      await axiosInstance.post(
-        "/api/JackpotDeclareResult/declare",
-        reqBody
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.post(
+        "https://maya-api.kglame.com/api/JackpotDeclareResult/declare",
+        reqBody,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       alert("Result Declared successfully!");
       setTimeout(() => {
@@ -168,10 +191,10 @@ const GalidisawerDeclareResults = () => {
       record.pana && record.pana !== "false"
         ? record.pana
         : record.leftDigit && record.leftDigit !== "false"
-        ? record.leftDigit
-        : record.rightDigit && record.rightDigit !== "false"
-        ? record.rightDigit
-        : "";
+          ? record.leftDigit
+          : record.rightDigit && record.rightDigit !== "false"
+            ? record.rightDigit
+            : "";
     editForm.setFieldsValue({
       bidPoints: record.bidPoints,
       bidNumber: computedBidNum
@@ -181,7 +204,12 @@ const GalidisawerDeclareResults = () => {
   const handleDelete = async (record) => {
     if (window.confirm("Are you sure you want to delete this bid?")) {
       try {
-        await axiosInstance.delete(`/api/jackpotWinners/deletewinner/${record._id}`);
+        const accessToken = localStorage.getItem("accessToken");
+        await axios.delete(`https://maya-api.kglame.com/api/jackpotWinners/deletewinner/${record._id}`,
+          {
+            Authorization: `Bearer ${accessToken}`
+          }
+        );
         handleShowWinnersClick();
       } catch (error) {
         console.error("Error deleting bid:", error);
@@ -198,9 +226,13 @@ const GalidisawerDeclareResults = () => {
       } else if (editingRecord.bidType === "rightDigit") {
         updatePayload.rightdigit = values.bidNumber;
       }
-      await axiosInstance.put(
-        `/api/jackpotWinners/updatewinner/${editingRecord._id}`,
-        updatePayload
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        `https://maya-api.kglame.com/api/jackpotWinners/updatewinner/${editingRecord._id}`,
+        updatePayload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
       );
       setIsEditModalVisible(false);
       setEditingRecord(null);
@@ -235,8 +267,8 @@ const GalidisawerDeclareResults = () => {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           style={{ backgroundColor: '#ff4d4f', borderColor: '#ff4d4f', marginRight: '8px' }}
           onClick={() => handleDeleteDeclareResult(record)}
         >
@@ -318,7 +350,7 @@ const GalidisawerDeclareResults = () => {
       )
     }
   ];
- return (
+  return (
     <div style={{ padding: '20px', width: '100%' }}>
       <h1
         style={{

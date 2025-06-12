@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Row, Col, Form, Card, Typography, message } from "antd";
-import axiosInstance from "../../utils/axiosInstance";
+// import axiosInstance from "../../utils/axiosInstance";
+import axios from "axios";
 
 const { Title } = Typography;
 
@@ -17,7 +18,12 @@ const GameRates = () => {
   const fetchBetRates = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get("/api/jackpotRate/getBetRates");
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get("https://maya-api.kglame.com/api/jackpotRate/getBetRates",
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
       // Assuming response.data includes _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue
       const { _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue } = response.data;
       setRateId(_id);
@@ -46,7 +52,12 @@ const GameRates = () => {
         jodiDigit,
         jodiDigitValue,
       };
-      const response = await axiosInstance.put(`/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload);
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.put(`https://maya-api.kglame.com/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload,
+        {
+          Authorization: `Bearer ${accessToken}`
+        }
+      );
       if (response.data.message === "Bet rates updated successfully!") {
         message.success("Rates updated successfully");
         alert("Rates updated successfully");
