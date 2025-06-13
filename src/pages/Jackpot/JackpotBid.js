@@ -47,7 +47,9 @@ const BidHistory = () => {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get("https://maya-api.kglame.com/api/jackpotMarket/getAllMarket",
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       // Assuming response.data has a structure like { message, success, data: [...] }
@@ -92,7 +94,9 @@ const BidHistory = () => {
         "https://maya-api.kglame.com/api/jackpotBid/filterBids",
         payload,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       if (response.data.success) {
@@ -153,7 +157,9 @@ const BidHistory = () => {
         `https://maya-api.kglame.com/api/jackpotBid/updateBid/${editingBid.bidId}`,
         payload,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       message.success("Bid updated successfully");
@@ -173,7 +179,9 @@ const BidHistory = () => {
       const accessToken = localStorage.getItem("accessToken");
       await axios.delete(`https://maya-api.kglame.com/api/jackpotBid/deleteBid/${bidId}`, 
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       message.success("Bid deleted successfully");

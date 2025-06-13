@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const SettingsForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    id: "", // Ensure ID is included
+    id: "",
     name: "",
     email: "",
     mobile: "",
@@ -25,8 +25,9 @@ const SettingsForm = () => {
     welcome_bonus: "",
     openTime: "",
     closeTime: "",
-    // New field for WhatsApp Deposit Option:
-    whatsapp_deposit_option: "active",
+    closeWeek: "Sunday",
+    whatsapp_deposit_option: "active", // Keep existing
+    withdraw_option: "active", // Add new
     global_betting: false,
   });
 
@@ -40,6 +41,7 @@ const SettingsForm = () => {
         setLoading(true);
         const response = await axiosInstance.get(`/api/settings/general`);
         const data = response.data[0]; // Extract the first object from array response
+
 
         setFormData({
           id: data._id, // Correctly set ID
@@ -64,6 +66,10 @@ const SettingsForm = () => {
           closeTime: data.withdraw_timings?.split(" - ")[1] || "", // Extract close time
           whatsapp_deposit_option: data.whatsapp_deposit_option || "active",
           global_betting: data.global_betting || false,
+          whatsapp_deposit_option: data.whatsapp_deposit_option || "active", // Keep
+          withdraw_option: data.withdraw_option || "active", // Add new
+          global_betting: data.global_betting || false,
+          closeWeek: data.closeWeek || 'Friday'
         });
 
         setFetchingData(false); // Done fetching data
@@ -150,6 +156,9 @@ const SettingsForm = () => {
             key !== "global_betting" &&
             key !== "openTime" &&
             key !== "closeTime" &&
+            key !== "openWeek" &&
+            key !== "closeWeek" &&
+            key !== "withdraw_option" &&
             key !== "whatsapp_deposit_option" && (
               <div key={key} className="flex flex-col">
                 <label className="text-sm font-semibold capitalize">
@@ -214,6 +223,44 @@ const SettingsForm = () => {
           <select
             name="whatsapp_deposit_option"
             value={formData.whatsapp_deposit_option}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-4 mt-4">
+
+        {/* Close Week Selection */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold">Withdraw Close Week</label>
+          <select
+            name="closeWeek"
+            value={formData.closeWeek}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          >
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold">
+            Withdraw Option
+          </label>
+          <select
+            name="withdraw_option"
+            value={formData.withdraw_option}
             onChange={handleChange}
             className="border border-gray-300 p-2 rounded-md mt-1"
             disabled={loading}

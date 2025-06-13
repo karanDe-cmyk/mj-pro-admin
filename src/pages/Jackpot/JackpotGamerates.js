@@ -21,7 +21,9 @@ const GameRates = () => {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get("https://maya-api.kglame.com/api/jackpotRate/getBetRates",
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       // Assuming response.data includes _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue
@@ -55,7 +57,9 @@ const GameRates = () => {
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.put(`https://maya-api.kglame.com/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       if (response.data.message === "Bet rates updated successfully!") {
@@ -138,7 +142,7 @@ const GameRates = () => {
             <Form layout="vertical">
               <Row gutter={[16, 16]}>
                 {/* Single Digit Row: Two Columns */}
-                <Col xs={24} sm={12}>
+                {/* <Col xs={24} sm={12}>
                   <Form.Item label="Single Digit (Rate)">
                     <Input
                       value={singleDigit}
@@ -156,7 +160,7 @@ const GameRates = () => {
                       placeholder="Enter Single Digit Value"
                     />
                   </Form.Item>
-                </Col>
+                </Col> */}
                 {/* Jodi Digit Row: Two Columns */}
                 <Col xs={24} sm={12}>
                   <Form.Item label="Jodi Digit (Rate)">

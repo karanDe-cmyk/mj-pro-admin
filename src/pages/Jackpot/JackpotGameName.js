@@ -34,9 +34,11 @@ const GameName = () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("https://maya-api.kglame.com/api/JackpotMarket/getAllMarket", 
+      const response = await axios.get("https://maya-api.kglame.com/api/JackpotMarket/getAllMarket",
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
 
@@ -71,7 +73,9 @@ const GameName = () => {
       const accessToken = localStorage.getItem("accessToken");
       await axios.post("https://maya-api.kglame.com/api/JackpotMarket/AddMarket", payload,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       message.success("Market added successfully");
@@ -103,7 +107,9 @@ const GameName = () => {
         `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${editingMarket._id}`,
         payload,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       message.success("Market updated successfully");
@@ -135,7 +141,9 @@ const GameName = () => {
         `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${record._id}`,
         payload,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       message.success("Market status updated");
@@ -157,7 +165,9 @@ const GameName = () => {
       const accessToken = localStorage.getItem("accessToken");
       await axios.delete(`https://maya-api.kglame.com/api/JackpotMarket/deleteMarketById/${id}`,
         {
-          Authorization: `Bearer ${accessToken}`
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         }
       );
       message.success("Market deleted successfully");

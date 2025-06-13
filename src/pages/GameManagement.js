@@ -194,11 +194,11 @@ const GameManagement = () => {
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null,
         weekends: values.weekends
           ? values.weekends.map((day) => ({
-              ...day,
-              openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
-              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-              is_on: day.is_on, // pass the is_on flag to the backend
-            }))
+            ...day,
+            openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
+            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+            is_on: day.is_on, // pass the is_on flag to the backend
+          }))
           : [],
       };
 
@@ -338,11 +338,10 @@ const GameManagement = () => {
         {/* ADD GAME SECTION */}
         <Card
           style={{
-            padding: "10px",
+            padding: "16px",
             borderRadius: "8px",
             marginBottom: "25px",
             backgroundColor: "#f7fcf8",
-            overflowX: "auto",
           }}
         >
           <h3
@@ -357,15 +356,14 @@ const GameManagement = () => {
           </h3>
 
           <Form form={form} layout="vertical" onFinish={handleAddGame}>
-            <Row gutter={[16, 16]} wrap={false} style={{ overflowX: "auto" }}>
+            {/* Responsive Row - will stack vertically on small screens */}
+            <Row gutter={[16, 16]}>
               {/* Market Name */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Market Name"
                   name="marketName"
-                  rules={[
-                    { required: true, message: "Select Market name" },
-                  ]}
+                  rules={[{ required: true, message: "Select Market name" }]}
                 >
                   <Select placeholder="Select Market Name">
                     <Option value="">--Select Market Name--</Option>
@@ -458,8 +456,8 @@ const GameManagement = () => {
               </Col>
             </Row>
 
-            {/* Submit Button */}
-            <Row justify="start">
+            {/* Submit Button - centered on all screens */}
+            <Row justify="center">
               <Col>
                 <Form.Item>
                   <Button
@@ -481,7 +479,7 @@ const GameManagement = () => {
           style={{
             borderRadius: "8px",
             boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-            overflowX: "auto",
+            overflow: "hidden", // Changed from overflowX
           }}
         >
           <h3
@@ -490,87 +488,105 @@ const GameManagement = () => {
               fontWeight: "600",
               marginBottom: "15px",
               textAlign: "center",
+              padding: "0 10px" // Added padding for mobile
             }}
           >
             Game List
           </h3>
 
-          {/* Search & Show Entries */}
-          <Row
-            gutter={[16, 16]}
-            style={{
-              marginBottom: "15px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 15px",
-            }}
-          >
-            <Col xs={12} sm={6}>
-              <label style={{ fontWeight: "500" }}>Sort by:</label>
-              <Select
-                value={sortOrder}
-                onChange={(value) => setSortOrder(value)}
-                style={{ width: "100%", marginTop: "5px" }}
-              >
-                <Select.Option value="asc">Old to New</Select.Option>
-                <Select.Option value="desc">New to Old</Select.Option>
-              </Select>
-            </Col>
+          {/* Search & Filter Controls - Now properly responsive */}
+          <div style={{ padding: "0 10px" }}>
+            <Row gutter={[16, 16]} align="middle">
+              {/* Sort By - Full width on mobile */}
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item label="Sort by:" style={{ marginBottom: 0 }}>
+                  <Select
+                    value={sortOrder}
+                    onChange={(value) => setSortOrder(value)}
+                    style={{ width: "100%" }}
+                  >
+                    <Select.Option value="asc">Old to New</Select.Option>
+                    <Select.Option value="desc">New to Old</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-            <Col xs={12} sm={6}>
-              <label style={{ fontWeight: "500" }}>Show Entries:</label>
-              <Select
-                value={pageSize}
-                onChange={(value) => setPageSize(value)}
-                style={{ width: "100%", marginTop: "5px" }}
-              >
-                <Select.Option value={5}>5</Select.Option>
-                <Select.Option value={10}>10</Select.Option>
-                <Select.Option value={20}>20</Select.Option>
-                <Select.Option value={50}>50</Select.Option>
-              </Select>
-            </Col>
+              {/* Show Entries - Full width on mobile */}
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item label="Show Entries:" style={{ marginBottom: 0 }}>
+                  <Select
+                    value={pageSize}
+                    onChange={(value) => setPageSize(value)}
+                    style={{ width: "100%" }}
+                  >
+                    <Select.Option value={5}>5</Select.Option>
+                    <Select.Option value={10}>10</Select.Option>
+                    <Select.Option value={20}>20</Select.Option>
+                    <Select.Option value={50}>50</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-            <Col xs={12} sm={6}>
-              <label style={{ fontWeight: "500" }}>Search:</label>
-              <Input
-                placeholder="Search Games..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ marginTop: "5px" }}
-                prefix={<SearchOutlined />}
+              {/* Search - Full width on mobile */}
+              <Col xs={24} sm={24} md={12}>
+                <Form.Item label="Search:" style={{ marginBottom: 0 }}>
+                  <Input
+                    placeholder="Search Games..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    prefix={<SearchOutlined />}
+                    allowClear
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Tabs - Full width with centered text on mobile */}
+          <div style={{ padding: "0 10px", margin: "15px 0" }}>
+            <Tabs
+              activeKey={marketStatus}
+              onChange={(key) => setMarketStatus(key)}
+              centered
+              tabBarStyle={{ margin: 0 }}
+            >
+              <Tabs.TabPane tab="Active Market" key="active" />
+              <Tabs.TabPane tab="Inactive Market" key="inactive" />
+            </Tabs>
+          </div>
+
+          {/* Table Container with responsive padding */}
+          <div style={{ padding: "0 10px" }}>
+            {firstLoad ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <Spin size="large" />
+              </div>
+            ) : filteredGames.length === 0 ? (
+              <Empty
+                description="No Games Available"
+                style={{ padding: "20px 0" }}
+                imageStyle={{ display: "block", margin: "0 auto" }}
               />
-            </Col>
-          </Row>
-
-          {/* Tabs for filtering by Market Status */}
-          <Tabs
-            activeKey={marketStatus}
-            onChange={(key) => setMarketStatus(key)}
-            style={{ margin: "0 15px 15px" }}
-          >
-            <Tabs.TabPane tab="Active Market" key="active" />
-            <Tabs.TabPane tab="Inactive Market" key="inactive" />
-          </Tabs>
-
-          {firstLoad ? (
-            <div style={{ textAlign: "center", padding: "10px" }}>
-              <Spin size="large" />
-            </div>
-          ) : filteredGames.length === 0 ? (
-            <Empty description="No Games Available" style={{ padding: "10px" }} />
-          ) : (
-            <Table
-              columns={columns}
-              dataSource={filteredGames}
-              loading={loading}
-              pagination={{ pageSize: pageSize }}
-              bordered
-              scroll={{ x: "max-content" }}
-              style={{ whiteSpace: "nowrap" }}
-            />
-          )}
+            ) : (
+              <Table
+                columns={columns}
+                dataSource={filteredGames}
+                loading={loading}
+                pagination={{
+                  pageSize: pageSize,
+                  showSizeChanger: false, // Hide on mobile
+                  responsive: true
+                }}
+                bordered
+                scroll={{ x: true }} // Allow horizontal scroll when needed
+                style={{
+                  width: "100%",
+                  overflowX: "auto" // Only show scroll when needed
+                }}
+                size="middle" // Better for mobile
+              />
+            )}
+          </div>
         </Card>
       </Card>
 
@@ -581,7 +597,7 @@ const GameManagement = () => {
         onCancel={() => setIsModalOpen(false)}
         onOk={handleUpdate}
         width={700}
-      >
+       >
         <Form form={editForm} layout="vertical">
           <Form.Item
             label="Game Name"
@@ -656,7 +672,7 @@ const GameManagement = () => {
                     >
                       <Switch />
                     </Form.Item>
-                   
+
                   </Card>
                 </Col>
               ))}
