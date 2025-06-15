@@ -51,6 +51,7 @@ import JackpotGameName from './pages/Jackpot/JackpotGameName';
 import JackpotBid from './pages/Jackpot/JackpotBid';
 import JackpotGamerates from './pages/Jackpot/JackpotGamerates';
 import JackpotDeclareResults from './pages/Jackpot/JackpotDeclareResults';
+import Bidrevert from './pages/BidRevert'
 
 
 const App = () => {
@@ -134,8 +135,7 @@ const App = () => {
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
-
-
+            <Route path="bidrevert" element={<Bidrevert />} />
 
           </Route>
 

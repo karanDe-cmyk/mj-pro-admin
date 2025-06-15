@@ -240,6 +240,12 @@ const AdminPanel = () => {
       path: "/admin/all-bid-history",
       icon: <i className="fa fa-history" />,
     },
+    {
+      key: "bidrevert",
+      label: "BidRevert",
+      path: "/admin/bidrevert",
+      icon: <i className="fa fa-history" />,
+    },
   ];
 
   // Determine selected keys based on the location

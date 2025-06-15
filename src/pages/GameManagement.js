@@ -24,6 +24,7 @@ import {
 } from "@ant-design/icons";
 import moment from "moment";
 import axios from "../utils/axiosInstance";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 
@@ -75,11 +76,12 @@ const GameManagement = () => {
   // Compute sortedGames dynamically whenever fetchedGames or sortOrder changes.
   const sortedGames = useMemo(() => {
     return [...fetchedGames].sort((a, b) => {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+      const timeA = dayjs(a.openTime, "hh:mm A").valueOf();
+      const timeB = dayjs(b.openTime, "hh:mm A").valueOf();
+      return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
     });
   }, [fetchedGames, sortOrder]);
+
 
   // Filter the sorted games by the search term.
   const filteredGames = sortedGames
@@ -597,7 +599,7 @@ const GameManagement = () => {
         onCancel={() => setIsModalOpen(false)}
         onOk={handleUpdate}
         width={700}
-       >
+      >
         <Form form={editForm} layout="vertical">
           <Form.Item
             label="Game Name"
@@ -648,35 +650,37 @@ const GameManagement = () => {
           </Row>
           <Row gutter={[16, 16]}>
             {editingGame &&
-              editingGame.weekends.map((day, index) => (
-                <Col span={12} key={day.day}>
-                  <Card size="small" title={day.day} style={{ textAlign: "center" }}>
-                    <Form.Item
-                      name={["weekends", index, "openTime"]}
-                      label="Open Time"
-                      rules={[{ required: true }]}
-                    >
-                      <TimePicker format="hh:mm A" use12Hours />
-                    </Form.Item>
-                    <Form.Item
-                      name={["weekends", index, "closeTime"]}
-                      label="Close Time"
-                      rules={[{ required: true }]}
-                    >
-                      <TimePicker format="hh:mm A" use12Hours />
-                    </Form.Item>
-                    <Form.Item
-                      name={["weekends", index, "is_on"]}
-                      label="Active Status"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-
-                  </Card>
-                </Col>
-              ))}
+              [...editingGame.weekends]
+                .sort((a, b) => dayjs(a.openTime, "hh:mm A").valueOf() - dayjs(b.openTime, "hh:mm A").valueOf())
+                .map((day, index) => (
+                  <Col span={12} key={day.day}>
+                    <Card size="small" title={day.day} style={{ textAlign: "center" }}>
+                      <Form.Item
+                        name={["weekends", index, "openTime"]}
+                        label="Open Time"
+                        rules={[{ required: true }]}
+                      >
+                        <TimePicker format="hh:mm A" use12Hours />
+                      </Form.Item>
+                      <Form.Item
+                        name={["weekends", index, "closeTime"]}
+                        label="Close Time"
+                        rules={[{ required: true }]}
+                      >
+                        <TimePicker format="hh:mm A" use12Hours />
+                      </Form.Item>
+                      <Form.Item
+                        name={["weekends", index, "is_on"]}
+                        label="Active Status"
+                        valuePropName="checked"
+                      >
+                        <Switch />
+                      </Form.Item>
+                    </Card>
+                  </Col>
+                ))}
           </Row>
+
         </Form>
       </Modal>
     </div>
