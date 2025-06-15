@@ -123,6 +123,75 @@ const AllBidHistory = () => {
     )
   );
 
+  const handleShareOnWhatsApp = () => {
+    // 1. First validate and prepare the data
+    const validBids = filteredData.filter(bid =>
+      bid?.gameType && bid?.digit && !isNaN(Number(bid?.points))
+    );
+
+    if (validBids.length === 0) {
+      alert('No valid betting data to share!');
+      return;
+    }
+
+    // 2. Group by game type
+    const groupedBids = validBids.reduce((acc, bid) => {
+      const type = bid.gameType.trim();
+      if (!acc[type]) acc[type] = [];
+      acc[type].push({
+        digit: bid.digit.toString().trim(),
+        points: parseInt(bid.points) || 0
+      });
+      return acc;
+    }, {});
+
+    // 3. Create display order - first get all existing game types
+    const allGameTypes = Object.keys(groupedBids);
+
+    // Then define preferred order (customize this as needed)
+    const preferredOrder = [
+      'Single Digit',
+      'Jodi',
+      'Single Pana',
+      'Double Pana',
+      'Tripple Pana',
+      'Half Sangam',
+      'Full Sangam'
+    ];
+
+    // Combine preferred order with any remaining game types
+    const displayOrder = [
+      ...preferredOrder.filter(type => allGameTypes.includes(type)),
+      ...allGameTypes.filter(type => !preferredOrder.includes(type))
+    ];
+
+    // 4. Generate the message
+    let message = `*Main Market (open)*\n`;
+    message += `Date and Time: ${new Date().toISOString().slice(0, 19).replace('T', ' ')}\n`;
+    message += `${'_'.repeat(35)}\n\n`;
+
+    // 5. Add each game type section
+    displayOrder.forEach(gameType => {
+      message += `*${gameType}*\n`;
+
+      const bids = groupedBids[gameType];
+      if (bids?.length > 0) {
+        bids.forEach(bid => {
+          message += `${bid.digit}->${bid.points}\n`;
+        });
+      }
+
+      message += `${'_'.repeat(35)}\n`;
+    });
+
+    // 6. Calculate and add total
+    const totalAmount = validBids.reduce((sum, bid) => sum + (parseInt(bid.points) || 0), 0);
+    message += `\n*Total amount: ${totalAmount}Rs*`;
+
+    // 7. Open WhatsApp
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   const totalPages = Math.ceil(filteredData.length / entries);
   const paginatedData = filteredData.slice((currentPage - 1) * entries, currentPage * entries);
 
@@ -198,6 +267,23 @@ const AllBidHistory = () => {
 
       {/* Table Section */}
       <div className="overflow-x-auto">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-lg font-semibold">
+            Total Betting Amount: {filteredData.reduce((sum, bid) => sum + Number(bid.points || 0), 0)}
+          </div>
+          {filteredData.length > 0 && (
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded flex items-center"
+              onClick={handleShareOnWhatsApp}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-6.29-3.63c.545 1.486 1.66 2.975 1.855 3.175.193.198 2.744 2.69 6.735 3.63.198.05.396.05.545.05.149 0 .347 0 .545-.05.198-.05.347-.248.248-.545-.05-.198-.396-1.139-1.436-2.329-.396-.446-.842-.843-1.04-.992-.198-.15-.347-.124-.446-.075-.099.05-.421.248-.991.545-.396.198-.843.298-1.29.15-1.387-.446-2.873-1.735-3.963-3.222-1.09-1.486-1.635-2.976-1.784-3.42-.15-.446-.05-.843.173-1.091.223-.248.595-.347.842-.347.149 0 .298 0 .446.05.149.05.298.1.347.248.446-.05.347-.545 1.637-.05 3.123" />
+              </svg>
+              Share as List
+            </button>
+          )}
+        </div>
+
         <table className="min-w-full bg-white border text-center">
           <thead>
             <tr className="bg-gray-200">
@@ -223,7 +309,6 @@ const AllBidHistory = () => {
                     {bid.gamename || bid.gameName}
                   </td>
                   <td className="border px-4 py-2">{bid.gameType}</td>
-
                   <td className="border px-4 py-2">{bid.points}</td>
                   <td className="border px-4 py-2">{bid.digit}</td>
                   <td className="border px-4 py-2">{bid.time}</td>
@@ -241,7 +326,7 @@ const AllBidHistory = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center py-4 text-gray-500">
+                <td colSpan="9" className="text-center py-4 text-gray-500">
                   No Data Found
                 </td>
               </tr>

@@ -25,6 +25,8 @@ import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
 import moment from "moment";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Collapse } from 'antd';
+import { UpOutlined, DownOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -69,6 +71,10 @@ const Dashboard = () => {
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   // const today = dayjs().subtract(2, 'day').format("YYYY-MM-DD");
   // const todayFormatted = dayjs().subtract(2, 'day').format("DD-MM-YYYY");
+  const [showAutoDepositHistory, setShowAutoDepositHistory] = useState(false);
+  const [showManualDeposits, setShowManualDeposits] = useState(false);
+  const [showWithdrawals, setShowWithdrawals] = useState(false);
+
 
   const navigate = useNavigate();
 
@@ -193,7 +199,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDepositHistory = async () => {
       try {
-        setLoading(true); 
+        setLoading(true);
         const response = await instance.get(
           `/api/userPayment/getpaymentResponse`
         );
@@ -1178,7 +1184,7 @@ const Dashboard = () => {
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         ₹{totalAutoDeposit}
-                            
+
                       </div>
                     </div>
                     <div
@@ -1216,7 +1222,7 @@ const Dashboard = () => {
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         ₹{totalManualDeposit}
-                           
+
                       </div>
                     </div>
                     <div
@@ -1428,62 +1434,136 @@ const Dashboard = () => {
         </Row>
       )}
 
-      <Card style={{ marginTop: 20, width: "100%" }}>
-        <Title level={5}>
-          Fund Request Auto Deposite History {todayFormatted}
-        </Title>
-        {loading ? (
-          <Spin />
-        ) : error ? (
-          <p>{error}</p>
-        ) : (
-          <Table
-            columns={fundRequestColumns}
-            dataSource={autoDepositHistory.filter((record) =>
-              moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+      <Card
+        style={{ marginTop: 20, width: "100%" }}
+        extra={
+          <Button
+            type="link"
+            onClick={() => setShowAutoDepositHistory(!showAutoDepositHistory)}
+            icon={showAutoDepositHistory ? <UpOutlined /> : <DownOutlined />}
+          >
+            {showAutoDepositHistory ? 'Hide' : 'Show'} History
+          </Button>
+        }
+      >
+        <Collapse
+          activeKey={showAutoDepositHistory ? ['1'] : []}
+          ghost
+        >
+          <Collapse.Panel
+            header={
+              <Title level={5} style={{ marginBottom: 0 }}>
+                Fund Request Auto Deposit History {todayFormatted}
+              </Title>
+            }
+            key="1"
+            showArrow={false}
+          >
+            {loading ? (
+              <Spin />
+            ) : error ? (
+              <p>{error}</p>
+            ) : (
+              <Table
+                columns={fundRequestColumns}
+                dataSource={autoDepositHistory.filter((record) =>
+                  moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+                )}
+                rowKey="_id"
+                scroll={{ x: true }}
+              />
             )}
-            rowKey="_id"
-            scroll={{ x: true }}
-          />
-        )}
+          </Collapse.Panel>
+        </Collapse>
       </Card>
 
-      <Card style={{ marginTop: 20, width: "100%" }}>
-        <Title level={5}>
-          Fund Request Manual Deposits History {todayFormatted}
-        </Title>
-        {loading ? (
-          <Spin />
-        ) : error ? (
-          <p>{error}</p>
-        ) : (
-          <Table
-            columns={fundRequestColumnsManualDeposit}
-            dataSource={data.filter((record) =>
-              moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+
+      <Card
+        style={{ marginTop: 20, width: "100%" }}
+        extra={
+          <Button
+            type="link"
+            onClick={() => setShowManualDeposits(!showManualDeposits)}
+            icon={showManualDeposits ? <UpOutlined /> : <DownOutlined />}
+          >
+            {showManualDeposits ? 'Hide' : 'Show'} Manual Deposits
+          </Button>
+        }
+      >
+        <Collapse
+          activeKey={showManualDeposits ? ['1'] : []}
+          ghost
+        >
+          <Collapse.Panel
+            header={
+              <Title level={5} style={{ marginBottom: 0 }}>
+                Fund Request Manual Deposits History {todayFormatted}
+              </Title>
+            }
+            key="1"
+            showArrow={false}
+          >
+            {loading ? (
+              <Spin />
+            ) : error ? (
+              <p>{error}</p>
+            ) : (
+              <Table
+                columns={fundRequestColumnsManualDeposit}
+                dataSource={data.filter((record) =>
+                  moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+                )}
+                rowKey="_id"
+                scroll={{ x: true }}
+              />
             )}
-            rowKey="_id"
-            scroll={{ x: true }}
-          />
-        )}
+          </Collapse.Panel>
+        </Collapse>
       </Card>
 
-      <Card style={{ marginTop: 20, width: "100%" }}>
-        <Title level={5}>Withdraw Request History {today}</Title>
-        {loading ? (
-          <Spin />
-        ) : error ? (
-          <p>{error}</p>
-        ) : (
-          <Table
-            columns={withdrawalColumns}
-            dataSource={withdrawalHistory}
-            rowKey="_id"
-            scroll={{ x: true }}
-            pagination={{ pageSize: 10 }}
-          />
-        )}
+      {/* Withdrawals Card */}
+      <Card
+        style={{ marginTop: 20, width: "100%" }}
+        extra={
+          <Button
+            type="link"
+            onClick={() => setShowWithdrawals(!showWithdrawals)}
+            icon={showWithdrawals ? <UpOutlined /> : <DownOutlined />}
+          >
+            {showWithdrawals ? 'Hide' : 'Show'} Withdrawals
+          </Button>
+        }
+      >
+        <Collapse
+          activeKey={showWithdrawals ? ['1'] : []}
+          ghost
+        >
+          <Collapse.Panel
+            header={
+              <Title level={5} style={{ marginBottom: 0 }}>
+                Withdraw Request History {today}
+              </Title>
+            }
+            key="1"
+            showArrow={false}
+          >
+            {loading ? (
+              <Spin />
+            ) : error ? (
+              <p>{error}</p>
+            ) : (
+              <Table
+                columns={withdrawalColumns}
+                dataSource={withdrawalHistory}
+                rowKey="_id"
+                scroll={{ x: true }}
+                pagination={{ pageSize: 10 }}
+              />
+            )}
+          </Collapse.Panel>
+        </Collapse>
       </Card>
+
     </div>
   );
 };

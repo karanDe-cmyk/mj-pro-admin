@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typography, Col, Row, Card, Divider,Pagination  } from "antd";
+import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typography, Col, Row, Card, Divider, Pagination } from "antd";
 import instance from "../utils/axiosInstance";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -30,43 +30,43 @@ const MarketDeclareResult = () => {
   const [gameResultDate, setGameResultDate] = useState(moment().format("DD-MM-YYYY"));
 
   const [refresh, setRefresh] = useState(false);
-const [ date,setDate] = useState(dayjs());
+  const [date, setDate] = useState(dayjs());
 
-const pannaOptions = {
-  0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
-  1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
-  2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
-  3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
-  4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
-  5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
-  6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
-  7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
-  8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
-  9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
-};
+  const pannaOptions = {
+    0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
+    1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
+    2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
+    3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
+    4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
+    5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
+    6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
+    7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
+    8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
+    9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
+  };
 
 
-const [selectedPanna, setSelectedPanna] = useState(null);
-const [digitValue, setDigitValue] = useState(null);
+  const [selectedPanna, setSelectedPanna] = useState(null);
+  const [digitValue, setDigitValue] = useState(null);
 
-// Flatten all Panna numbers from categories 0-9
-const allPannaNumbers = Object.values(pannaOptions).flat();
+  // Flatten all Panna numbers from categories 0-9
+  const allPannaNumbers = Object.values(pannaOptions).flat();
 
-// Handle Panna Selection & Calculate Digit Sum
-const handlePannaChange = (value) => {
-  if (!value) return;
+  // Handle Panna Selection & Calculate Digit Sum
+  const handlePannaChange = (value) => {
+    if (!value) return;
 
-  // Calculate sum of digits
-  const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+    // Calculate sum of digits
+    const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
 
-  // Get last digit of the sum
-  const lastDigit = sum % 10;
+    // Get last digit of the sum
+    const lastDigit = sum % 10;
 
-  // Update state and form values as a string
-  setSelectedPanna(value);
-  setDigitValue(lastDigit.toString());
-  form.setFieldsValue({ digit: lastDigit.toString() });
-};
+    // Update state and form values as a string
+    setSelectedPanna(value);
+    setDigitValue(lastDigit.toString());
+    form.setFieldsValue({ digit: lastDigit.toString() });
+  };
 
 
   const { Search } = Input;
@@ -100,7 +100,7 @@ const handlePannaChange = (value) => {
   useEffect(() => {
     fetchMarketGameList();
   }, []);
-  
+
   // ---------------------------
   // EDIT MODAL FOR BIDS
   // ---------------------------
@@ -119,86 +119,86 @@ const handlePannaChange = (value) => {
   // ---------------------------
   // FETCH Market GAME NAME 
   // ----------------------- ----
-    const fetchDeclaredResults = async (date) => {
-      if (!date) return;
+  const fetchDeclaredResults = async (date) => {
+    if (!date) return;
 
+    try {
+      setLoading(true);
+      // Format the date for API call: "YYYY-MM-DD"
+      const formattedDate = date.format("YYYY-MM-DD");
+
+      // 1) Fetch all possible games for "Main Market"
+      const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
+      const mainMarketGames = gameResponse.data
+        .filter((game) => game.marketName === "Main Market")
+        .map((game) => game.gameName);
+
+      // 2) Fetch declared results
+      let results = [];
       try {
-        setLoading(true);
-        // Format the date for API call: "YYYY-MM-DD"
-        const formattedDate = date.format("YYYY-MM-DD");
-  
-        // 1) Fetch all possible games for "Main Market"
-        const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
-        const mainMarketGames = gameResponse.data
-          .filter((game) => game.marketName === "Main Market")
-          .map((game) => game.gameName);
-  
-        // 2) Fetch declared results
-        let results = [];
-        try {
-          const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
-          results = resultResponse?.data?.results || [];
-        } catch (err) {
-          console.error("No declared results found or API error:", err);
-        }
-  
-        // 3) Build a map with keys in the format: "gameName_DD-MM-YYYY"
-        const resultMap = {};
-        results.forEach((item) => {
-          if (item.marketName === "Main Market" && item.date === formattedDate) {
-            // Convert the API date to "DD-MM-YYYY" using dayjs
-            const key = `${item.gameName}_${dayjs(item.date).format("DD-MM-YYYY")}`;
-            if (!resultMap[key]) {
-              resultMap[key] = {
-                gameName: item.gameName,
-                date: dayjs(item.date).format("DD-MM-YYYY"),
-                open: null,
-                close: null,
-              };
-            }
-            // Store open/close based on gameType
-            if (item.gameType === "open") {
-              resultMap[key].open = {
-                value: `${item.panna}-${item.digit}`,
-                id: item._id,
-              };
-            }
-            if (item.gameType === "close") {
-              resultMap[key].close = {
-                value: `${item.digit}-${item.panna}`,
-                id: item._id,
-              };
-            }
-          }
-        });
-    
-        // 4) Merge the known game list with the resultMap
-        const mergedResults = mainMarketGames.map((gameName, index) => {
-          // Format the selected date as "DD-MM-YYYY" for display & key lookup
-          const displayDate = date.format("DD-MM-YYYY");
-          const exactKey = `${gameName}_${displayDate}`;
-          const resultData = resultMap[exactKey] || {};
-          return {
-            sNo: index + 1,
-            gameName,
-            date: displayDate,
-            open: resultData.open || null,
-            close: resultData.close || null,
-          };
-        });
-  
-        setGameResults(mergedResults);
-        setFilteredResults(mergedResults);
-      } catch (error) {
-        console.error("Error fetching declared results:", error);
-        message.error("Failed to fetch declared results.");
-      } finally {
-        setLoading(false);
+        const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
+        results = resultResponse?.data?.results || [];
+      } catch (err) {
+        console.error("No declared results found or API error:", err);
       }
-    };
-  
-  
-  
+
+      // 3) Build a map with keys in the format: "gameName_DD-MM-YYYY"
+      const resultMap = {};
+      results.forEach((item) => {
+        if (item.marketName === "Main Market" && item.date === formattedDate) {
+          // Convert the API date to "DD-MM-YYYY" using dayjs
+          const key = `${item.gameName}_${dayjs(item.date).format("DD-MM-YYYY")}`;
+          if (!resultMap[key]) {
+            resultMap[key] = {
+              gameName: item.gameName,
+              date: dayjs(item.date).format("DD-MM-YYYY"),
+              open: null,
+              close: null,
+            };
+          }
+          // Store open/close based on gameType
+          if (item.gameType === "open") {
+            resultMap[key].open = {
+              value: `${item.panna}-${item.digit}`,
+              id: item._id,
+            };
+          }
+          if (item.gameType === "close") {
+            resultMap[key].close = {
+              value: `${item.digit}-${item.panna}`,
+              id: item._id,
+            };
+          }
+        }
+      });
+
+      // 4) Merge the known game list with the resultMap
+      const mergedResults = mainMarketGames.map((gameName, index) => {
+        // Format the selected date as "DD-MM-YYYY" for display & key lookup
+        const displayDate = date.format("DD-MM-YYYY");
+        const exactKey = `${gameName}_${displayDate}`;
+        const resultData = resultMap[exactKey] || {};
+        return {
+          sNo: index + 1,
+          gameName,
+          date: displayDate,
+          open: resultData.open || null,
+          close: resultData.close || null,
+        };
+      });
+
+      setGameResults(mergedResults);
+      setFilteredResults(mergedResults);
+    } catch (error) {
+      console.error("Error fetching declared results:", error);
+      message.error("Failed to fetch declared results.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   // ✅ Run the function correctly inside `useEffect`
   useEffect(() => {
     if (selectedDate) {
@@ -206,7 +206,7 @@ const handlePannaChange = (value) => {
       fetchDeclaredResults(selectedDate);
     }
   }, [selectedDate, refresh]); // ✅ Runs when `selectedDate` or `refresh` changes
-  
+
 
   // Handle search  
   // Handle search
@@ -256,6 +256,7 @@ const handlePannaChange = (value) => {
         digit: String(values.digit), // converting here
         panna: values.panna,
       });
+
       if (response?.data?.winners && Array.isArray(response.data.winners)) {
         setWinners(response.data.winners);
       } else {
@@ -279,24 +280,23 @@ const handlePannaChange = (value) => {
     const values = form.getFieldsValue();
     try {
       setLoadingDeclareResult(true);
-  
-      // Normalize gameName: trim and lowercase so that "test" and "test1" are distinct.
+
+      // Normalize gameName
       const normalizedGameName = values.gameName.trim();
-  
-      // Determine the declared date from the form (format: "DD-MM-YYYY")
+
+      // Format date
       const declaredDateStr = values.resultDate
         ? values.resultDate.format("DD-MM-YYYY")
         : moment().format("DD-MM-YYYY");
-  
-      // Convert declared date string to a moment object for later use in fetchDeclaredResults and DatePicker
+
       const declaredDateMoment = moment(declaredDateStr, "DD-MM-YYYY");
-  
-      // Post to the API, using the normalized gameName
+
+      // API call to declare result
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
           marketName: values.marketGame,
-          gameName: normalizedGameName, // normalized value passed to backend
+          gameName: normalizedGameName,
           date: declaredDateStr,
           gameType: values.gameType,
           digit: values.digit,
@@ -304,53 +304,54 @@ const handlePannaChange = (value) => {
           winners: winners.length > 0 ? winners : [],
         }
       );
-  
+
       if (response.data.success === false) {
         alert(response.data.message);
       } else {
         message.success("Result declared successfully!");
         alert("Result declared successfully!");
         setIsWinnerModalVisible(false);
-  
-        // Create a new result object based on the form values,
-        // using normalizedGameName for consistency.
+
+        // Create new result object
         const newResult = {
           sNo: gameResults.length + 1,
           gameName: normalizedGameName,
           date: declaredDateStr,
-          // For open results, format as "panna-digit"
-          open:
-            values.gameType === "open"
-              ? {
-                  value: `${values.panna}-${values.digit}`,
-                  id: response.data.resultId || new Date().getTime(),
-                }
-              : null,
-          // For close results, format as "digit-panna"
-          close:
-            values.gameType === "close"
-              ? {
-                  value: `${values.digit}-${values.panna}`,
-                  id: response.data.resultId || new Date().getTime(),
-                }
-              : null,
+          open: values.gameType === "open" ? {
+            value: `${values.panna}-${values.digit}`,
+            id: response.data.resultId || new Date().getTime(),
+          } : null,
+          close: values.gameType === "close" ? {
+            value: `${values.digit}-${values.panna}`,
+            id: response.data.resultId || new Date().getTime(),
+          } : null,
         };
-  
-        // Optimistically update local state so the table shows the new result immediately.
-        setGameResults((prevResults) => {
-          const updatedResults = [...prevResults, newResult];
-          return updatedResults.map((item, index) => ({ ...item, sNo: index + 1 }));
-        });
-        setFilteredResults((prevResults) => {
-          const updatedResults = [...prevResults, newResult];
-          return updatedResults.map((item, index) => ({ ...item, sNo: index + 1 }));
-        });
-  
-        // Update the DatePicker state to reflect the declared date
+
+        // Update local state
+        setGameResults(prev => [...prev, newResult].map((item, i) => ({ ...item, sNo: i + 1 })));
+        setFilteredResults(prev => [...prev, newResult].map((item, i) => ({ ...item, sNo: i + 1 })));
+
         setSelectedDate(declaredDateMoment);
-  
-        // Refresh results from the back end using the declared date
         fetchDeclaredResults(declaredDateMoment);
+
+        // Send push notification after successful declaration
+        try {
+          const notificationResponse = await instance.post('/api/notification', {
+            market: values.marketGame,
+            gameType: values.gameType,
+            result: values.gameType === "open"
+              ? `${values.panna}-${values.digit}`
+              : `${values.digit}-${values.panna}`,
+            declaredAt: new Date().toISOString()
+          });
+
+          if (!notificationResponse.data.success) {
+            console.warn("Notification sent but API reported failure");
+          }
+        } catch (notificationError) {
+          console.error("Failed to send notification:", notificationError);
+          // Don't show this error to user as the main operation succeeded
+        }
       }
     } catch (error) {
       alert(error.response?.data?.message || "Failed to declare winner.");
@@ -358,13 +359,6 @@ const handlePannaChange = (value) => {
       setLoadingDeclareResult(false);
     }
   };
-  
-  
-  
-  
-  
-  
-
 
 
   // ---------------------------
@@ -375,7 +369,7 @@ const handlePannaChange = (value) => {
       message.error("Invalid data. Please refresh and try again.");
       return;
     }
-  
+
     // Look up the result row and determine which result type (open/close) is being deleted
     let deletedRow = null;
     let deletedType = "";
@@ -388,10 +382,10 @@ const handlePannaChange = (value) => {
         deletedType = "Close";
       }
     });
-  
+
     try {
       await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
-  
+
       // Build the alert message
       let alertMessage = "";
       if (deletedRow) {
@@ -399,11 +393,11 @@ const handlePannaChange = (value) => {
       } else {
         alertMessage = "Declared result deleted successfully!";
       }
-  
+
       // Show both an Ant Design message and a native browser alert
       message.success(alertMessage);
       alert(alertMessage);
-  
+
       // Update gameResults and filteredResults by setting the corresponding result to null,
       // so the row remains (showing the game name with "━━" for open/close)
       setGameResults((prevResults) =>
@@ -416,7 +410,7 @@ const handlePannaChange = (value) => {
           return result;
         })
       );
-  
+
       setFilteredResults((prevResults) =>
         prevResults.map((result) => {
           if (result.open?.id === declaredId) {
@@ -427,14 +421,14 @@ const handlePannaChange = (value) => {
           return result;
         })
       );
-  
+
       // Force a UI refresh if needed
       setRefresh((prev) => !prev);
     } catch (error) {
       message.error("Failed to delete declared result.");
     }
   };
-  
+
 
 
 
@@ -458,33 +452,33 @@ const handlePannaChange = (value) => {
   // ---------------------------
   const handleDelete = async (record) => {
     if (!record || !record._id) {
-        message.error("Invalid bid data. Please refresh and try again.");
-        return;
+      message.error("Invalid bid data. Please refresh and try again.");
+      return;
     }
 
     try {
-        setIsDeleting(true);
-        await instance.delete(`/api/bid/deleteBid/${record._id}`, {
-            data: { bidId: record.bidId },
-        });
-        message.success("Bid deleted successfully!");
+      setIsDeleting(true);
+      await instance.delete(`/api/bid/deleteBid/${record._id}`, {
+        data: { bidId: record.bidId },
+      });
+      message.success("Bid deleted successfully!");
 
-        const updatedWinners = winners.filter((winner) => winner._id !== record._id);
-        setWinners(updatedWinners);
+      const updatedWinners = winners.filter((winner) => winner._id !== record._id);
+      setWinners(updatedWinners);
 
-        // ✅ Close modal if no winners left
-        if (updatedWinners.length === 0) {
-            setIsWinnerModalVisible(false);
-        }
+      // ✅ Close modal if no winners left
+      if (updatedWinners.length === 0) {
+        setIsWinnerModalVisible(false);
+      }
 
-        setRefresh((prev) => !prev);
+      setRefresh((prev) => !prev);
     } catch (error) {
-        console.error("Error deleting bid:", error);
-        message.error("Failed to delete bid.");
+      console.error("Error deleting bid:", error);
+      message.error("Failed to delete bid.");
     } finally {
-        setIsDeleting(false);
+      setIsDeleting(false);
     }
-};
+  };
 
 
 
@@ -537,14 +531,14 @@ const handlePannaChange = (value) => {
   const gameResultColumns = [
     { title: "#", dataIndex: "sNo", key: "sNo", width: 50 },
     { title: "Game Name", dataIndex: "gameName", key: "gameName", width: 200 },
-  
+
     // Open Pana Column
     {
       title: "Open Pana",
       key: "open",
       render: (_, record) => (record.open ? <span>{record.open.value}</span> : "━━"),
     },
-  
+
     // Action Column for Open Pana
     {
       title: "Action",
@@ -560,14 +554,14 @@ const handlePannaChange = (value) => {
         </Button>
       ),
     },
-  
+
     // Close Pana Column
     {
       title: "Close Pana",
       key: "close",
       render: (_, record) => (record.close ? <span>{record.close.value}</span> : "━━"),
     },
-  
+
     // Action Column for Close Pana
     {
       title: "Action",
@@ -584,7 +578,7 @@ const handlePannaChange = (value) => {
       ),
     },
   ];
-  
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <Card scroll={{ x: 1000 }}
@@ -596,142 +590,142 @@ const handlePannaChange = (value) => {
 
           {/* Date Picker Section */}
           <div style={{ marginBottom: "12px" }}>
-  <Title level={5} style={{ marginBottom: "4px" }}>Select Date</Title>
-  <Form.Item 
-    name="resultDate" 
-    rules={[{ required: true }]} 
-    style={{ marginBottom: "8px" }}
-    initialValue={moment()} // ✅ Set default date
-  >
-    <DatePicker 
-      format="DD-MM-YYYY" 
-      style={{ width: "150px" }}
-      allowClear={false} // Prevent clearing the default date
-      defaultPickerValue={dayjs()} // Ensures the calendar opens on the correct month and year
-      placeholder="Select Date" // ✅ Display today's date in the box
-    />
-  </Form.Item>
-</div>
+            <Title level={5} style={{ marginBottom: "4px" }}>Select Date</Title>
+            <Form.Item
+              name="resultDate"
+              rules={[{ required: true }]}
+              style={{ marginBottom: "8px" }}
+              initialValue={moment()} // ✅ Set default date
+            >
+              <DatePicker
+                format="DD-MM-YYYY"
+                style={{ width: "150px" }}
+                allowClear={false} // Prevent clearing the default date
+                defaultPickerValue={dayjs()} // Ensures the calendar opens on the correct month and year
+                placeholder="Select Date" // ✅ Display today's date in the box
+              />
+            </Form.Item>
+          </div>
 
 
           <Divider style={{ margin: "10px 0" }} />
 
           {/* Market & Game Selection */}
           <div>
-    <Title level={5} style={{ marginBottom: "4px" }}>Market & Game Selection</Title>
-    <Row gutter={12} style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between" }}>
-        {/* Market Name */}
-        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-            <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                <Select
+            <Title level={5} style={{ marginBottom: "4px" }}>Market & Game Selection</Title>
+            <Row gutter={12} style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between" }}>
+              {/* Market Name */}
+              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+                <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select
                     onChange={handleMarketChange}
                     placeholder="Select Market"
                     loading={loading}
                     style={{ width: "100%" }}
-                >
+                  >
                     {marketGameList.map((market, index) => (
-                        <Select.Option key={index} value={market}>
-                            {market}
-                        </Select.Option>
+                      <Select.Option key={index} value={market}>
+                        {market}
+                      </Select.Option>
                     ))}
-                </Select>
-            </Form.Item>
-        </Col>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-        {/* Game Name */}
-        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-            <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                <Select
+              {/* Game Name */}
+              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+                <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select
                     onChange={(value) => setSelectedGameName(value)}
                     placeholder="Select Game"
                     disabled={!gameOptions.length}
                     style={{ width: "100%" }}
-                >
+                  >
                     {gameOptions.map((game, index) => (
-                        <Select.Option key={index} value={game}>
-                            {game}
-                        </Select.Option>
+                      <Select.Option key={index} value={game}>
+                        {game}
+                      </Select.Option>
                     ))}
-                </Select>
-            </Form.Item>
-        </Col>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-        {/* Game Type */}
-        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-            <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                <Select placeholder="Select Type" style={{ width: "100%" }}>
+              {/* Game Type */}
+              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+                <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select placeholder="Select Type" style={{ width: "100%" }}>
                     <Select.Option value="open">Open</Select.Option>
                     <Select.Option value="close">Close</Select.Option>
-                </Select>
-            </Form.Item>
-        </Col>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-        {/* Panna */}
-        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-            <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                <Select
+              {/* Panna */}
+              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+                <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+                  <Select
                     onChange={handlePannaChange}
                     placeholder="Select Panna"
                     showSearch
                     filterOption={(input, option) => option.children.includes(input)}
                     style={{ width: "100%" }}
-                >
+                  >
                     {allPannaNumbers.map((panna) => (
-                        <Select.Option key={panna} value={panna}>
-                            {panna}
-                        </Select.Option>
+                      <Select.Option key={panna} value={panna}>
+                        {panna}
+                      </Select.Option>
                     ))}
-                </Select>
-            </Form.Item>
-        </Col>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-        {/* Digit Output */}
-        <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-            <Form.Item name="digit" label="Digit">
-                <Input value={digitValue} readOnly />
-            </Form.Item>
-        </Col>
-    </Row>
-</div>
+              {/* Digit Output */}
+              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
+                <Form.Item name="digit" label="Digit">
+                  <Input value={digitValue} readOnly />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
 
           <Divider style={{ margin: "10px 0" }} />
 
           {/* Buttons Section */}
           <Row gutter={12} justify="center" style={{ width: "100%" }}>
-  <Col span={12} style={{ padding: "10px" }}>
-    <Button 
-      type="primary" 
-      onClick={fetchWinners}
-      style={{
-        width: "100%",  // Ensures button takes full width of its column
-        backgroundColor: "#EEA529", // Custom background color
-        borderColor: "#EEA529", // Ensures border matches background
-        height: "50px", // Adjust height for better appearance
-        fontSize: "16px", // Improve readability
-      }}
-    >
-      Show Winners
-    </Button>
-  </Col>
+            <Col span={12} style={{ padding: "10px" }}>
+              <Button
+                type="primary"
+                onClick={fetchWinners}
+                style={{
+                  width: "100%",  // Ensures button takes full width of its column
+                  backgroundColor: "#EEA529", // Custom background color
+                  borderColor: "#EEA529", // Ensures border matches background
+                  height: "50px", // Adjust height for better appearance
+                  fontSize: "16px", // Improve readability
+                }}
+              >
+                Show Winners
+              </Button>
+            </Col>
 
-  <Col span={12} style={{ padding: "10px" }}>
-    <Button 
-      type="primary" 
-      loading={loadingDeclareResult} 
-      onClick={declareWinner}
-      style={{
-        width: "100%", 
-        backgroundColor: "#556EE6", 
-        borderColor: "#556EE6",
-        height: "50px",
-        fontSize: "16px",
-      }}
-    >
-      Declare Result
-    </Button>
-  </Col>
-</Row>
+            <Col span={12} style={{ padding: "10px" }}>
+              <Button
+                type="primary"
+                loading={loadingDeclareResult}
+                onClick={declareWinner}
+                style={{
+                  width: "100%",
+                  backgroundColor: "#556EE6",
+                  borderColor: "#556EE6",
+                  height: "50px",
+                  fontSize: "16px",
+                }}
+              >
+                Declare Result
+              </Button>
+            </Col>
+          </Row>
 
 
         </Form>
@@ -758,7 +752,15 @@ const handlePannaChange = (value) => {
                   record.open ? "Open" : record.close ? "Close" : "N/A",
               },
               { title: "Bid Amount", dataIndex: "points" },
-              { title: "Winning Amount", dataIndex: "winningPoints" },
+              {
+                title: "Winning Amount",
+                render: (_, record) =>
+                  record.digit.length === 1 ? (
+                    <span style={{ color: "green", fontWeight: "bold" }}>Running</span>
+                  ) : (
+                    <span>{record.winningPoints}</span>
+                  ),
+              },
               {
                 title: "Action",
                 render: (_, record) => (
@@ -819,13 +821,13 @@ const handlePannaChange = (value) => {
         </Form>
       </Modal>
       <div style={{ maxWidth: "92%" }} className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
-      <h2 className="text-lg font-bold mb-4">Game Result History</h2>
+        <h2 className="text-lg font-bold mb-4">Game Result History</h2>
 
-      {/* Search Box & Date Picker */}
-      <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        {/* Ant Design Date Picker */}
-       {/* DatePicker for filtering the table */}
-       <DatePicker
+        {/* Search Box & Date Picker */}
+        <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {/* Ant Design Date Picker */}
+          {/* DatePicker for filtering the table */}
+          <DatePicker
             value={selectedDate}
             onChange={handleDateChange}
             format="DD-MM-YYYY"
@@ -835,30 +837,30 @@ const handlePannaChange = (value) => {
             placeholder="Select Date"
           />
 
-        {/* Search Box */}
-        <Search
-          placeholder="Search by Game Name"
-          allowClear
-          onSearch={handleSearch}
-          style={{ width: 300 }}
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
+          {/* Search Box */}
+          <Search
+            placeholder="Search by Game Name"
+            allowClear
+            onSearch={handleSearch}
+            style={{ width: 300 }}
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        </div>
+
+        <Table
+          columns={gameResultColumns}
+          dataSource={[...filteredResults]} // ✅ Merged Data
+          scroll={{ x: 1000 }}
+          pagination={false} // ✅ Removes pagination for a cleaner look
+          rowClassName={(record, index) => (index % 2 === 0 ? "light-blue-row" : "white-row")} // ✅ Alternating row colors
+          bordered // ✅ Adds table borders for a cleaner design
+          style={{ border: "1px solid #ddd", borderRadius: "8px", marginTop: "10px" }} // ✅ Better spacing and design
         />
+
+
+
       </div>
-        
-      <Table
-  columns={gameResultColumns}
-  dataSource={[...filteredResults]} // ✅ Merged Data
-  scroll={{ x: 1000 }} 
-  pagination={false} // ✅ Removes pagination for a cleaner look
-  rowClassName={(record, index) => (index % 2 === 0 ? "light-blue-row" : "white-row")} // ✅ Alternating row colors
-  bordered // ✅ Adds table borders for a cleaner design
-  style={{ border: "1px solid #ddd", borderRadius: "8px", marginTop: "10px" }} // ✅ Better spacing and design
-/>
-
-
-
-    </div>
     </div>
   );
 };
