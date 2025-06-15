@@ -755,27 +755,61 @@ const MarketDeclareResult = () => {
               {
                 title: "Winning Amount",
                 render: (_, record) => {
-                  if (record.gameType === "jodi") {
-                    const isCloseDeclared = record.close === true;
+                  const isDeclared = record.open || record.close;
+                  const { gameType, digit = "", panna = "", winningPoints } = record;
+
+                  const renderRunning = () => (
+                    <span style={{ color: "green", fontWeight: "bold" }}>Running</span>
+                  );
+
+                  const renderPoints = () => (
+                    <span style={{ color: "green", fontWeight: "bold" }}>{winningPoints}</span>
+                  );
+
+                  const renderNA = () => <span>{winningPoints || "N/A"}</span>;
+
+                  // Game: JODI
+                  if (gameType === "jodi") {
+                    if (!record.close) return renderRunning();
+
                     const hasMatch =
-                      record.digit === record.panna ||
-                      record.digit?.split("-")[0] === record.panna?.charAt(0);
+                      digit === panna ||
+                      digit?.split?.("-")?.[0] === panna?.charAt?.(0);
 
-                    if (!isCloseDeclared) {
-                      return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
-                    }
-
-                    if (isCloseDeclared && hasMatch) {
-                      return <span style={{ color: "green", fontWeight: "bold" }}>{record.winningPoints}</span>;
-                    }
-
-                    return <span>{record.winningPoints || "N/A"}</span>;
+                    return hasMatch ? renderPoints() : renderNA();
                   }
 
-                  // Default render for other game types
-                  return <span>{record.winningPoints || "N/A"}</span>;
+                  // Game: Half Sangam A (digit-panna)
+                  if (gameType === "halfSangamA") {
+                    if (!isDeclared) return renderRunning();
+                    const [d = "", p = ""] = digit?.split?.("-") || [];
+                    return d === record?.pannaDigit && p === record?.panna
+                      ? renderPoints()
+                      : renderNA();
+                  }
+
+                  // Game: Half Sangam B (panna-digit)
+                  if (gameType === "halfSangamB") {
+                    if (!isDeclared) return renderRunning();
+                    const [p = "", d = ""] = digit?.split?.("-") || [];
+                    return p === record?.panna && d === record?.digit
+                      ? renderPoints()
+                      : renderNA();
+                  }
+
+                  // Game: Full Sangam (panna-digit)
+                  if (gameType === "fullSangam") {
+                    if (!isDeclared) return renderRunning();
+                    const [p = "", d = ""] = digit?.split?.("-") || [];
+                    return p === record?.panna && d === record?.digit
+                      ? renderPoints()
+                      : renderNA();
+                  }
+
+                  return renderNA();
                 }
               }
+
               ,
               {
                 title: "Action",
