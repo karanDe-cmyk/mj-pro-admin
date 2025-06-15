@@ -754,13 +754,29 @@ const MarketDeclareResult = () => {
               { title: "Bid Amount", dataIndex: "points" },
               {
                 title: "Winning Amount",
-                render: (_, record) =>
-                  record.digit.length === 1 ? (
-                    <span style={{ color: "green", fontWeight: "bold" }}>Running</span>
-                  ) : (
-                    <span>{record.winningPoints}</span>
-                  ),
-              },
+                render: (_, record) => {
+                  if (record.gameType === "jodi") {
+                    const isCloseDeclared = record.close === true;
+                    const hasMatch =
+                      record.digit === record.panna ||
+                      record.digit?.split("-")[0] === record.panna?.charAt(0);
+
+                    if (!isCloseDeclared) {
+                      return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
+                    }
+
+                    if (isCloseDeclared && hasMatch) {
+                      return <span style={{ color: "green", fontWeight: "bold" }}>{record.winningPoints}</span>;
+                    }
+
+                    return <span>{record.winningPoints || "N/A"}</span>;
+                  }
+
+                  // Default render for other game types
+                  return <span>{record.winningPoints || "N/A"}</span>;
+                }
+              }
+              ,
               {
                 title: "Action",
                 render: (_, record) => (
