@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../features/auth/authSlice";
 import instance from "../utils/axiosInstance";
-import logoImage from "../images/logo512.png"
+import logoImage from "../images/kalyan257.jpeg"
 import "antd/dist/reset.css";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
@@ -68,12 +68,16 @@ const Login = () => {
         <Title level={3}>Welcome Back!</Title>
         <Text type="secondary">Sign in to continue to Admin Console.</Text>
 
-        <div style={styles.avatarContainer} className="flex flex-col items-center ">
-          <div className=" border border-gray-250 w-[2.4cm] rounded-[50%]  " >
-            <img src={logoImage} className="w-full rounded-[50%] " alt="" />
+        <div style={styles.avatarContainer} className="flex flex-col items-center">
+          <div className="w-24 h-24 overflow-hidden rounded-full border-2 border-gray-200">
+            <img
+              src={logoImage}
+              className="w-full h-full object-cover"
+              alt="Admin Avatar"
+            />
           </div>
-          <Title level={4} style={{ marginTop: 10 }}>
-            Kalyan257 Admin
+          <Title level={4} className="mt-2.5">
+            Maya Admin
           </Title>
         </div>
 
