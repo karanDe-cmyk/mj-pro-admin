@@ -347,6 +347,8 @@ const MarketDeclareResult = () => {
 
           if (!notificationResponse.data.success) {
             console.warn("Notification sent but API reported failure");
+          } else {
+            alert(notificationResponse.data.message);
           }
         } catch (notificationError) {
           console.error("Failed to send notification:", notificationError);

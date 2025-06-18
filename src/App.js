@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { getToken } from "firebase/messaging";
+import { messaging } from './firebase';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -57,6 +59,40 @@ import Bidrevert from './pages/BidRevert'
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
+
+  useEffect(() => {
+    // get permission to user for notification
+    const requestPermission = async () => {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        // generate token
+        getToken(messaging, { vapidKey: "BIE_S0OKXX3rJHefoglKf7gXbLv1hdPeZkhtsFzI-gwA_ETyrse0vS7hAeXBaymROegtAUp1E_2-dXFUH-mLoFQ" }).then((currentToken) => {
+          if (currentToken) {
+            // Send the token to your server and update the UI if necessary
+            fetch('http://localhost:5001/api/notification/save-fcm-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ token: currentToken })
+            });
+            console.log("Sending FCM token to backend:", currentToken)
+          } else {
+            // Show permission request UI
+            console.log('No registration token available. Request permission to generate one.');
+
+          }
+        }).catch((err) => {
+          console.log('An error occurred while retrieving token. ', err);
+        })
+      } else {
+        // you dined for the notification
+        alert("you deined for notification")
+      }
+    }
+
+    requestPermission();
+  }, [])
 
   return (
     <Router>
