@@ -3,6 +3,8 @@ import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typogra
 import instance from "../utils/axiosInstance";
 import moment from "moment";
 import dayjs from "dayjs";
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
 
 const { Title } = Typography;
 
@@ -31,6 +33,7 @@ const MarketDeclareResult = () => {
 
   const [refresh, setRefresh] = useState(false);
   const [date, setDate] = useState(dayjs());
+
 
   const pannaOptions = {
     0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
@@ -276,6 +279,32 @@ const MarketDeclareResult = () => {
   // ---------------------------
   // DECLARE WINNER
   // ---------------------------
+
+  // const [tokenform, setTokenForm] = useState({
+  //   token: "cfyIWN79TqSlNu6LvX2DO8:APA91bEIHDeCvIityVbhn7u_Ce9ZNQMiQC99wA5bCAbN0hHs95PZDUaOA5egBEVcPst0cue8rkchjvZK6mZDEoQSJYUB5c2avIsRn2MSNhlhDW3bexZKTD8", // Get this from your database
+  //   title: "Hello",
+  //   body: "karan this side",
+  //   customData: JSON.stringify({ key: "value" }), // Optional
+  // });
+
+  // const sendNotification = async () => {
+  //   try {
+  //     const response = await axios.post("http://localhost:5001/api/notification/send-notification", {
+  //       token: tokenform.token,
+  //       title: tokenform.title,
+  //       body: tokenform.body,
+  //       data: JSON.parse(tokenform.customData),
+  //     });
+  //     alert("Notification sent!");
+  //   } catch (error) {
+  //     alert("Error: " + error.message);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   sendNotification();
+  // }, [])
+  
   const declareWinner = async () => {
     const values = form.getFieldsValue();
     try {
@@ -306,10 +335,10 @@ const MarketDeclareResult = () => {
       );
 
       if (response.data.success === false) {
-        alert(response.data.message);
+        toast.error(response.data.message);
       } else {
         message.success("Result declared successfully!");
-        alert("Result declared successfully!");
+        toast.success("Result declared successfully!");
         setIsWinnerModalVisible(false);
 
         // Create new result object
@@ -336,9 +365,11 @@ const MarketDeclareResult = () => {
 
         // Send push notification after successful declaration
         try {
-          const notificationResponse = await instance.post('/api/notification', {
+          const notificationResponse = await axios.post('http://localhost:5001/api/notification', {
+            token: "cfyIWN79TqSlNu6LvX2DO8:APA91bEIHDeCvIityVbhn7u_Ce9ZNQMiQC99wA5bCAbN0hHs95PZDUaOA5egBEVcPst0cue8rkchjvZK6mZDEoQSJYUB5c2avIsRn2MSNhlhDW3bexZKTD8",
             market: values.marketGame,
             gameType: values.gameType,
+            gameName: normalizedGameName,
             result: values.gameType === "open"
               ? `${values.panna}-${values.digit}`
               : `${values.digit}-${values.panna}`,
@@ -348,15 +379,15 @@ const MarketDeclareResult = () => {
           if (!notificationResponse.data.success) {
             console.warn("Notification sent but API reported failure");
           } else {
-            alert(notificationResponse.data.message);
+            toast.success(notificationResponse.data.message);
           }
         } catch (notificationError) {
-          console.error("Failed to send notification:", notificationError);
+          toast.error("Failed to send notification:", notificationError);
           // Don't show this error to user as the main operation succeeded
         }
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to declare winner.");
+      toast.error(error.response?.data?.message || "Failed to declare winner.");
     } finally {
       setLoadingDeclareResult(false);
     }
@@ -910,7 +941,7 @@ const MarketDeclareResult = () => {
           style={{ border: "1px solid #ddd", borderRadius: "8px", marginTop: "10px" }} // ✅ Better spacing and design
         />
 
-
+        <ToastContainer />
 
       </div>
     </div>
