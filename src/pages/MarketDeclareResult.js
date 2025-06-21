@@ -260,6 +260,8 @@ const MarketDeclareResult = () => {
         panna: values.panna,
       });
 
+      console.log(response.data);
+
       if (response?.data?.winners && Array.isArray(response.data.winners)) {
         setWinners(response.data.winners);
       } else {
