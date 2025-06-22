@@ -33,7 +33,8 @@ const MarketDeclareResult = () => {
 
   const [refresh, setRefresh] = useState(false);
   const [date, setDate] = useState(dayjs());
-
+  const [declaredDigit, setDeclaredDigit] = useState(null);
+  console.log("declaredDigit:", declaredDigit);
 
   const pannaOptions = {
     0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
@@ -109,10 +110,10 @@ const MarketDeclareResult = () => {
   // ---------------------------
   const handleEdit = (record) => {
     setEditingWinner(record);
-    // Pre-fill the edit form with current values
     editForm.setFieldsValue({
       points: record.points,
       digit: record.digit,
+      gameType: record.open ? "open" : "close" // Convert boolean to string
     });
     setIsEditModalVisible(true);
   };
@@ -260,13 +261,16 @@ const MarketDeclareResult = () => {
         panna: values.panna,
       });
 
-      console.log(response.data);
+      // console.log(response.data);
 
       if (response?.data?.winners && Array.isArray(response.data.winners)) {
         setWinners(response.data.winners);
       } else {
         setWinners([]);
       }
+
+      setDeclaredDigit(response?.data?.declaredResult?.digit || null);
+
       setIsWinnerModalVisible(true);
     } catch (error) {
       console.error("Error fetching winners:", error);
@@ -306,7 +310,7 @@ const MarketDeclareResult = () => {
   // useEffect(() => {
   //   sendNotification();
   // }, [])
-  
+
   const declareWinner = async () => {
     const values = form.getFieldsValue();
     try {
@@ -395,6 +399,7 @@ const MarketDeclareResult = () => {
     }
   };
 
+  // console.log("winner:", winners);
 
   // ---------------------------
   // DELETE DECLARED RESULT BY ID
@@ -514,10 +519,6 @@ const MarketDeclareResult = () => {
       setIsDeleting(false);
     }
   };
-
-
-
-
 
   // ---------------------------
   // UPDATE BID (For Winner List)
@@ -761,8 +762,6 @@ const MarketDeclareResult = () => {
               </Button>
             </Col>
           </Row>
-
-
         </Form>
       </Card>
       <Modal
@@ -775,77 +774,67 @@ const MarketDeclareResult = () => {
       >
         {winners.length > 0 ? (
           <Table
+
             columns={[
               { title: "User Name", dataIndex: "userName" },
               { title: "Game Name", dataIndex: "gameName" },
-              { title: "Game Type", dataIndex: "gameType" },
+              {
+                title: "Game Type", // or "Game Category"
+                dataIndex: "gameType",
+                render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A"
+              },
               { title: "Date", dataIndex: "time" },
               { title: "Digit/Pana", dataIndex: "digit" },
               {
-                title: "Type",
-                render: (_, record) =>
-                  record.open ? "Open" : record.close ? "Close" : "N/A",
-              },
+                title: "Status",
+                render: (_, record) => {
+                  // if (record.open) {
+                  //   return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
+                  // }
+                  return record.close ? "Declared" : "Running";
+                },
+              }
+              ,
               { title: "Bid Amount", dataIndex: "points" },
               {
                 title: "Winning Amount",
                 render: (_, record) => {
-                  const isDeclared = record.open || record.close;
-                  const { gameType, digit = "", panna = "", winningPoints } = record;
-
-                  const renderRunning = () => (
-                    <span style={{ color: "green", fontWeight: "bold" }}>Running</span>
-                  );
-
                   const renderPoints = () => (
-                    <span style={{ color: "green", fontWeight: "bold" }}>{winningPoints}</span>
+                    <span style={{ color: "green", fontWeight: "bold" }}>{record.winningPoints}</span>
                   );
 
-                  const renderNA = () => <span>{winningPoints || "N/A"}</span>;
+                  const renderNA = () => <span>{record.winningPoints || "N/A"}</span>;
 
-                  // Game: JODI
-                  if (gameType === "jodi") {
-                    if (!record.close) return renderRunning();
+                  const closingDigit = record.digit?.[1];
 
-                    const hasMatch =
-                      digit === panna ||
-                      digit?.split?.("-")?.[0] === panna?.charAt?.(0);
-
-                    return hasMatch ? renderPoints() : renderNA();
+                  // Show winningPoints if closing digit matches declared digit (even if record.open is true)
+                  if (
+                    record.close &&
+                    record.gameType === "jodi" &&
+                    closingDigit === declaredDigit?.toString()
+                  ) {
+                    return renderPoints();
                   }
 
-                  // Game: Half Sangam A (digit-panna)
-                  if (gameType === "halfSangamA") {
-                    if (!isDeclared) return renderRunning();
-                    const [d = "", p = ""] = digit?.split?.("-") || [];
-                    return d === record?.pannaDigit && p === record?.panna
-                      ? renderPoints()
-                      : renderNA();
+                  if (record.gameType === "fullSangam" && record.close) {
+                    return renderPoints();
                   }
 
-                  // Game: Half Sangam B (panna-digit)
-                  if (gameType === "halfSangamB") {
-                    if (!isDeclared) return renderRunning();
-                    const [p = "", d = ""] = digit?.split?.("-") || [];
-                    return p === record?.panna && d === record?.digit
-                      ? renderPoints()
-                      : renderNA();
+                  if(record.gameType === "halfSangamA" && record.close) {
+                    return renderPoints();
+                  }
+                  
+                  if(record.gameType === "halfSangamB" && record.close) {
+                    return renderPoints();
                   }
 
-                  // Game: Full Sangam (panna-digit)
-                  if (gameType === "fullSangam") {
-                    if (!isDeclared) return renderRunning();
-                    const [p = "", d = ""] = digit?.split?.("-") || [];
-                    return p === record?.panna && d === record?.digit
-                      ? renderPoints()
-                      : renderNA();
+                  if (record.open || record.gameType === "fullSangam" || record.gameType === "halfSangamA" || record.gameType === "halfSangamB") {
+                    return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
                   }
 
                   return renderNA();
-                }
-              }
-
-              ,
+                },
+              },
               {
                 title: "Action",
                 render: (_, record) => (
