@@ -104,7 +104,7 @@ const GameName = () => {
       };
       const accessToken = localStorage.getItem("accessToken");
       await axios.put(
-        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${editingMarket._id}`,
+        `http://localhost:5001/api/JackpotMarket/updateMarket/${editingMarket._id}`,
         payload,
         {
           headers: {
@@ -138,7 +138,7 @@ const GameName = () => {
       };
       const accessToken = localStorage.getItem("accessToken");
       await axios.put(
-        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${record._id}`,
+        `http://localhost:5001/api/JackpotMarket/updateMarket/${record._id}`,
         payload,
         {
           headers: {
@@ -163,7 +163,7 @@ const GameName = () => {
   const handleDelete = async (id) => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-      await axios.delete(`https://maya-api.kglame.com/api/JackpotMarket/deleteMarketById/${id}`,
+      await axios.delete(`http://localhost:5001/api/JackpotMarket/deleteMarketById/${id}`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`

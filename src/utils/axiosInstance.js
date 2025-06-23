@@ -3,8 +3,8 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const instance = axios.create({
-  // baseURL: "https://kalyan257-api.kglame.com",
-  baseURL :'http://localhost:5001'
+ baseURL: "https://maya-api.kglame.com",
+  // baseURL :'http://localhost:5001'
 });
 
 let isRedirecting = false; // Prevent multiple redirects

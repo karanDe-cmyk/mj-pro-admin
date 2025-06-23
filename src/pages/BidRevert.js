@@ -123,7 +123,7 @@ const BidRevert = () => {
                                 <Select placeholder="Select Type">
                                     <Select.Option value="open">Open</Select.Option>
                                     <Select.Option value="close">Close</Select.Option>
-                                    <Select.Option value="jodi">Jodi</Select.Option>
+                                    <Select.Option value="jodi">All</Select.Option>
                                 </Select>
                             </Form.Item>
                         </Col>

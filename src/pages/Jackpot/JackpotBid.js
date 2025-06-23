@@ -154,7 +154,7 @@ const BidHistory = () => {
 
       const accessToken = localStorage.getItem("accessToken");
       await axios.put(
-        `https://maya-api.kglame.com/api/jackpotBid/updateBid/${editingBid.bidId}`,
+        `http://localhost:5001/api/jackpotBid/updateBid/${editingBid.bidId}`,
         payload,
         {
           headers: {
