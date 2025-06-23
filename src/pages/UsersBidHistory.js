@@ -27,9 +27,13 @@ const UserBidHistory = () => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/bid/getAllBid?date=${date}`);
+      // console.log("Response Data:", response.data);
       if (response.data) {
         // Filter bids for the selected date
-        let filteredData = response.data.filter((item) => item.time.startsWith(date));
+        let filteredData = response.data.filter(
+          (item) => item.time && item.time.startsWith(date)
+        );
+
 
         // Filter by Market Name & Game Name if provided
         if (market) filteredData = filteredData.filter((item) => item.market === market);
