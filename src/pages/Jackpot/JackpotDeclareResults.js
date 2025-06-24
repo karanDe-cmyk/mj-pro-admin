@@ -141,7 +141,7 @@ const GalidisawerDeclareResults = () => {
       };
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.post(
-        "https://maya-api.kglame.com/api/jackpotWinners/showwinners",
+        "http://localhost:5001/api/jackpotWinners/showwinners",
         reqBody,
         {
           headers: {
@@ -215,7 +215,7 @@ const GalidisawerDeclareResults = () => {
     if (window.confirm("Are you sure you want to delete this bid?")) {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        await axios.delete(`https://maya-api.kglame.com/api/jackpotWinners/deletewinner/${record._id}`,
+        await axios.delete(`http://localhost:5001/api/jackpotWinners/deletewinner/${record._id}`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -240,7 +240,7 @@ const GalidisawerDeclareResults = () => {
       }
       const accessToken = localStorage.getItem("accessToken");
       await axios.put(
-        `https://maya-api.kglame.com/api/jackpotWinners/updatewinner/${editingRecord._id}`,
+        `http://localhost:5001/api/jackpotWinners/updatewinner/${editingRecord._id}`,
         updatePayload,
         {
           headers: {

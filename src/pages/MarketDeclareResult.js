@@ -52,11 +52,7 @@ const MarketDeclareResult = () => {
 
   const [selectedPanna, setSelectedPanna] = useState(null);
   const [digitValue, setDigitValue] = useState(null);
-
-  // Flatten all Panna numbers from categories 0-9
   const allPannaNumbers = Object.values(pannaOptions).flat();
-
-  // Handle Panna Selection & Calculate Digit Sum
   const handlePannaChange = (value) => {
     if (!value) return;
 
@@ -74,9 +70,6 @@ const MarketDeclareResult = () => {
 
 
   const { Search } = Input;
-  // ---------------------------
-  // FETCH MARKET & GAME LIST
-  // ---------------------------
   const fetchMarketGameList = async () => {
     try {
       setLoading(true);
@@ -105,9 +98,6 @@ const MarketDeclareResult = () => {
     fetchMarketGameList();
   }, []);
 
-  // ---------------------------
-  // EDIT MODAL FOR BIDS
-  // ---------------------------
   const handleEdit = (record) => {
     setEditingWinner(record);
     editForm.setFieldsValue({
@@ -117,12 +107,6 @@ const MarketDeclareResult = () => {
     });
     setIsEditModalVisible(true);
   };
-
-
-
-  // ---------------------------
-  // FETCH Market GAME NAME 
-  // ----------------------- ----
   const fetchDeclaredResults = async (date) => {
     if (!date) return;
 
@@ -200,21 +184,12 @@ const MarketDeclareResult = () => {
       setLoading(false);
     }
   };
-
-
-
-  // ✅ Run the function correctly inside `useEffect`
   useEffect(() => {
     if (selectedDate) {
       setWinners([]); // ✅ Reset winners before fetching new results
       fetchDeclaredResults(selectedDate);
     }
   }, [selectedDate, refresh]); // ✅ Runs when `selectedDate` or `refresh` changes
-
-
-  // Handle search  
-  // Handle search
-  // Handle search
   const handleSearch = (value) => {
     setSearchTerm(value);
     const filtered = gameResults.filter((item) =>
@@ -235,13 +210,6 @@ const MarketDeclareResult = () => {
     setDate(date);
     handleDateChange(date.format("DD-MM-YYYY")); // Send formatted date to parent component
   };
-
-  // -----
-  // -----
-  // 
-  // -----------------
-  // FETCH WINNERS BASED ON FORM
-  // ---------------------------
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
     if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
@@ -371,7 +339,7 @@ const MarketDeclareResult = () => {
 
         // Send push notification after successful declaration
         try {
-          const notificationResponse = await axios.post('http://localhost:5001/api/notification', {
+          const notificationResponse = await axios.post('https://maya-api.kglame.com/api/notification', {
             token: "cfyIWN79TqSlNu6LvX2DO8:APA91bEIHDeCvIityVbhn7u_Ce9ZNQMiQC99wA5bCAbN0hHs95PZDUaOA5egBEVcPst0cue8rkchjvZK6mZDEoQSJYUB5c2avIsRn2MSNhlhDW3bexZKTD8",
             market: values.marketGame,
             gameType: values.gameType,
@@ -438,8 +406,6 @@ const MarketDeclareResult = () => {
       message.success(alertMessage);
       alert(alertMessage);
 
-      // Update gameResults and filteredResults by setting the corresponding result to null,
-      // so the row remains (showing the game name with "━━" for open/close)
       setGameResults((prevResults) =>
         prevResults.map((result) => {
           if (result.open?.id === declaredId) {
@@ -468,10 +434,6 @@ const MarketDeclareResult = () => {
       message.error("Failed to delete declared result.");
     }
   };
-
-
-
-
   const handleMarketChange = (selectedMarket) => {
     const filteredGames = allGames
       .filter((game) => game.marketName === selectedMarket)
@@ -481,15 +443,6 @@ const MarketDeclareResult = () => {
     form.setFieldsValue({ gameName: undefined });
   };
 
-  // const handlePannaChange = (value) => {
-  //   const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
-  //   setDigitValue(sum % 10);
-  //   form.setFieldsValue({ digit: sum % 10 });
-  // };
-
-  // ---------------------------
-  // DELETE BID (For Winner List)
-  // ---------------------------
   const handleDelete = async (record) => {
     if (!record || !record._id) {
       message.error("Invalid bid data. Please refresh and try again.");
@@ -547,10 +500,6 @@ const MarketDeclareResult = () => {
       setIsSavingEdit(false);
     }
   };
-
-  // ---------------------------
-  // WINNER TABLE COLUMNS
-  // ---------------------------
   const winnerColumns = [
     { title: "Member Name", dataIndex: "userName", key: "userName" },
     { title: "Game Name", dataIndex: "gameName", key: "gameName" },
@@ -559,11 +508,6 @@ const MarketDeclareResult = () => {
     { title: "Bid Amount", dataIndex: "points", key: "points" },
     { title: "Winning Amount", dataIndex: "winningPoints", key: "winningPoints" },
   ];
-
-
-
-  // ---------------------------
-  // DECLARED RESULTS TABLE COLUMNS (MERGED)
   const gameResultColumns = [
     { title: "#", dataIndex: "sNo", key: "sNo", width: 50 },
     { title: "Game Name", dataIndex: "gameName", key: "gameName", width: 200 },
@@ -575,7 +519,6 @@ const MarketDeclareResult = () => {
       render: (_, record) => (record.open ? <span>{record.open.value}</span> : "━━"),
     },
 
-    // Action Column for Open Pana
     {
       title: "Action",
       key: "openAction",
@@ -591,7 +534,7 @@ const MarketDeclareResult = () => {
       ),
     },
 
-    // Close Pana Column
+  
     {
       title: "Close Pana",
       key: "close",
