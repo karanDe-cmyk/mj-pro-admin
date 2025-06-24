@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Form, Input, Select, Button, Table, message, Modal, Row, Col } from "antd";
 import axios from "../utils/axiosInstance";
 import dayjs from "dayjs"; // For date formatting
+import moment from "moment";
 
 const UserBidHistory = () => {
   const [form] = Form.useForm();
@@ -27,21 +28,26 @@ const UserBidHistory = () => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/bid/getAllBid?date=${date}`);
-      // console.log("Response Data:", response.data);
+
       if (response.data) {
-        // Filter bids for the selected date
-        let filteredData = response.data.filter(
-          (item) => item.time && item.time.startsWith(date)
-        );
+        let filteredData = response.data.filter((item) => {
+          if (item.time) {
+            // Use time string for filtering (format: 'YYYY-MM-DD hh:mm:ss A')
+            return item.time.startsWith(date);
+          } else if (item.createdAt) {
+            // Use createdAt fallback for ISO date comparison
+            return moment(item.createdAt).format("YYYY-MM-DD") === date;
+          }
+          return false;
+        });
 
-
-        // Filter by Market Name & Game Name if provided
+        // Filter by Market & Game if specified
         if (market) filteredData = filteredData.filter((item) => item.market === market);
         if (game) filteredData = filteredData.filter((item) => item.gameName === game);
 
         setBidHistory(filteredData);
 
-        // Extract unique market names and game names from the response
+        // Extract unique Market and Game names
         const uniqueMarkets = [...new Set(response.data.map((item) => item.market))];
         const uniqueGames = [...new Set(response.data.map((item) => item.gameName))];
 

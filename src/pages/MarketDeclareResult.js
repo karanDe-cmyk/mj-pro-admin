@@ -534,7 +534,7 @@ const MarketDeclareResult = () => {
       ),
     },
 
-  
+
     {
       title: "Close Pana",
       key: "close",
@@ -763,11 +763,11 @@ const MarketDeclareResult = () => {
                     return renderPoints();
                   }
 
-                  if(record.gameType === "halfSangamA" && record.close) {
+                  if (record.gameType === "halfSangamA" && record.close) {
                     return renderPoints();
                   }
-                  
-                  if(record.gameType === "halfSangamB" && record.close) {
+
+                  if (record.gameType === "halfSangamB" && record.close) {
                     return renderPoints();
                   }
 
