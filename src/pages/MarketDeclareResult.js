@@ -34,7 +34,7 @@ const MarketDeclareResult = () => {
   const [refresh, setRefresh] = useState(false);
   const [date, setDate] = useState(dayjs());
   const [declaredDigit, setDeclaredDigit] = useState(null);
-  console.log("declaredDigit:", declaredDigit);
+  // console.log("declaredDigit:", declaredDigit);
 
   const pannaOptions = {
     0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
@@ -726,7 +726,7 @@ const MarketDeclareResult = () => {
                 dataIndex: "gameType",
                 render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A"
               },
-              { title: "Date", dataIndex: "time" },
+              { title: "Date", dataIndex: "createdAt" },
               { title: "Digit/Pana", dataIndex: "digit" },
               {
                 title: "Status",
@@ -750,28 +750,35 @@ const MarketDeclareResult = () => {
 
                   const closingDigit = record.digit?.[1];
 
-                  // Show winningPoints if closing digit matches declared digit (even if record.open is true)
+                  // ✅ Show winning points for jodi if conditions match
                   if (
-                    record.close &&
                     record.gameType === "jodi" &&
+                    record.close &&
                     closingDigit === declaredDigit?.toString()
                   ) {
                     return renderPoints();
                   }
 
-                  if (record.gameType === "fullSangam" && record.close) {
+                  // ✅ Show winning points for sangam games if closed
+                  if (
+                    ["fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType) &&
+                    record.close
+                  ) {
                     return renderPoints();
                   }
 
-                  if (record.gameType === "halfSangamA" && record.close) {
-                    return renderPoints();
+                  // ✅ Show winning points for all other games (like SingleDigits)
+                  if (
+                    !["jodi", "fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType)
+                  ) {
+                    return renderPoints(); // 🎯 This fixes your issue
                   }
 
-                  if (record.gameType === "halfSangamB" && record.close) {
-                    return renderPoints();
-                  }
-
-                  if (record.open || record.gameType === "fullSangam" || record.gameType === "halfSangamA" || record.gameType === "halfSangamB") {
+                  // Show "Running" only for jodi or sangam if still open
+                  if (
+                    record.open &&
+                    ["jodi", "fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType)
+                  ) {
                     return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
                   }
 

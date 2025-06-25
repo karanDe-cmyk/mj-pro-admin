@@ -15,7 +15,7 @@ import {
 } from "antd";
 
 
-// import axiosInstance from "../../utils/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 import axios from 'axios';
 import dayjs from "dayjs";
 const { Option } = Select;
@@ -45,13 +45,7 @@ const BidHistory = () => {
   const fetchGameMarkets = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("https://maya-api.kglame.com/api/jackpotMarket/getAllMarket",
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
+      const response = await axiosInstance.get("https://maya-api.kglame.com/api/jackpotMarket/getAllMarket");
       // Assuming response.data has a structure like { message, success, data: [...] }
       if (response.data && Array.isArray(response.data.data)) {
         setGameOptions(response.data.data);
