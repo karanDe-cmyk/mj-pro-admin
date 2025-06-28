@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import "../styles/styles.css";
 import {
@@ -32,6 +31,8 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Dashboard = () => {
+  // Initialize selectedFilterDate with the current date
+  const [selectedFilterDate, setSelectedFilterDate] = useState(dayjs().format("DD-MM-YYYY"));
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(true);
   const [fundRequests, setFundRequests] = useState([]);
@@ -63,7 +64,6 @@ const Dashboard = () => {
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [betRates, setBetRates] = useState([]);
   const [selectedGameType, setSelectedGameType] = useState("");
-  const [selectedFilterDate, setSelectedFilterDate] = useState(null);
   const [showAutoDepositHistory, setShowAutoDepositHistory] = useState(false);
   const [showManualDeposits, setShowManualDeposits] = useState(false);
   const [showWithdrawals, setShowWithdrawals] = useState(false);
@@ -88,7 +88,8 @@ const Dashboard = () => {
       const formattedDate = dayjs(date).format("DD-MM-YYYY");
       setSelectedFilterDate(formattedDate);
     } else {
-      setSelectedFilterDate(null);
+      // Revert to current date when cleared
+      setSelectedFilterDate(dayjs().format("DD-MM-YYYY"));
     }
   };
 
@@ -98,6 +99,7 @@ const Dashboard = () => {
       const formattedDate = dayjs(date).format("DD-MM-YYYY");
       setSelectedDate(formattedDate);
     } else {
+      // Revert to current date or global filter date
       setSelectedDate(selectedFilterDate || dayjs().format("DD-MM-YYYY"));
     }
   };
@@ -108,7 +110,7 @@ const Dashboard = () => {
       setLoading(true);
       const url = selectedFilterDate
         ? `/api/manualDeposit?date=${selectedFilterDate}`
-        : "/api/manualDeposit";
+        : `/api/manualDeposit`;
       const res = await instance.get(url);
       if (selectedFilterDate) {
         setData(
@@ -123,7 +125,6 @@ const Dashboard = () => {
     } catch (error) {
       setLoading(false);
       message.error("Failed to fetch deposit transactions");
-      // Fallback to client-side filtering
       try {
         const res = await instance.get("/api/manualDeposit");
         if (selectedFilterDate) {
@@ -699,7 +700,7 @@ const Dashboard = () => {
         const galiArray = galiDisawarRes?.data || [];
 
         const totalMain = Array.isArray(bidArray)
-          ? bidArray.reduce( (acc, curr) => acc + (curr.points || 0), 0)
+          ? bidArray.reduce((acc, curr) => acc + (curr.points || 0), 0)
           : 0;
         const totalStarline = Array.isArray(starlineArray)
           ? starlineArray.reduce((acc, curr) => acc + (curr.points || 0), 0)
@@ -953,7 +954,7 @@ const Dashboard = () => {
             <DatePicker
               style={{ width: 200 }}
               placeholder="Select Date"
-              value={selectedFilterDate ? dayjs(selectedFilterDate, "DD-MM-YYYY") : null}
+              value={selectedFilterDate ? dayjs(selectedFilterDate, "DD-MM-YYYY") : dayjs()}
               onChange={handleFilterDateChange}
               format="DD-MM-YYYY"
               allowClear
@@ -1300,76 +1301,6 @@ const Dashboard = () => {
                   </div>
                 </Card>
               </Col>
-              {/* <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/all-bid-history")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>
-                        Lifetime Total Auto Deposit
-                      </span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        ₹{totalAutoDeposit}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        backgroundColor: "#1890ff",
-                        borderRadius: "50%",
-                        width: "40px",
-                        height: "40px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
-                    </div>
-                  </div>
-                </Card>
-              </Col> */}
-              {/* <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/all-bid-history")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>
-                        Lifetime Total Manual Deposit
-                      </span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        ₹{totalManualDeposit}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        backgroundColor: "#1890ff",
-                        borderRadius: "50%",
-                        width: "40px",
-                        height: "40px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
-                    </div>
-                  </div>
-                </Card>
-              </Col> */}
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
                   <div

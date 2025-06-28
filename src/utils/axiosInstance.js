@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const instance = axios.create({
  baseURL: "https://maya-api.kglame.com",
-  //baseURL :'http://localhost:5001'
+ // baseURL :'http://localhost:5001'
 });
 
 let isRedirecting = false; // Prevent multiple redirects

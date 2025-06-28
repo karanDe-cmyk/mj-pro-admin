@@ -4,7 +4,7 @@ import { messaging } from './firebase';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import Note from "./pages/Note"
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -148,7 +148,7 @@ const App = () => {
             <Route path="winning-prediction" element={<WinningPrediction />} />
             <Route path="auto-deposit-history" element={<AutoDepositHistory />} />
             <Route path="notice-management" element={<NoticeManagement />} />
-
+ <Route path="notes" element={<Note />} />
             {/* Settings Section */}
             <Route path="settings">
               <Route path="main" element={<MainSetting />} />
