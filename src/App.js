@@ -4,7 +4,7 @@ import { messaging } from './firebase';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import Note from "./pages/Note"
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -69,7 +69,7 @@ const App = () => {
         getToken(messaging, { vapidKey: "BIE_S0OKXX3rJHefoglKf7gXbLv1hdPeZkhtsFzI-gwA_ETyrse0vS7hAeXBaymROegtAUp1E_2-dXFUH-mLoFQ" }).then((currentToken) => {
           if (currentToken) {
             // Send the token to your server and update the UI if necessary
-            fetch('http://localhost:5001/api/notification/save-fcm-token', {
+            fetch('https://maya-api.kglame.com/api/notification/save-fcm-token', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -148,7 +148,7 @@ const App = () => {
             <Route path="winning-prediction" element={<WinningPrediction />} />
             <Route path="auto-deposit-history" element={<AutoDepositHistory />} />
             <Route path="notice-management" element={<NoticeManagement />} />
-
+ <Route path="notes" element={<Note />} />
             {/* Settings Section */}
             <Route path="settings">
               <Route path="main" element={<MainSetting />} />
