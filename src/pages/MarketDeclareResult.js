@@ -759,7 +759,7 @@ const MarketDeclareResult = () => {
                     return renderPoints();
                   }
 
-                  // ✅ Show winning points for sangam games if closed
+                  // Show winning points for sangam games if closed
                   if (
                     ["fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType) &&
                     record.close
@@ -767,7 +767,7 @@ const MarketDeclareResult = () => {
                     return renderPoints();
                   }
 
-                  // ✅ Show winning points for all other games (like SingleDigits)
+                  // Show winning points for all other games (like SingleDigits)
                   if (
                     !["jodi", "fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType)
                   ) {

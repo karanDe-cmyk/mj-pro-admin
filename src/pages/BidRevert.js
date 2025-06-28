@@ -42,11 +42,18 @@ const BidRevert = () => {
         }
     };
 
+    console.log("form data", form.getFieldsValue());
+
     // Handle revert bids
     const handleRevertBids = async () => {
         try {
             setLoadingRevert(true);
             const values = await form.validateFields();
+
+            console.log({market: values.marketGame,
+                gameName: values.gameName,
+                gameType: values.gameType,
+                date: values.resultDate.format('YYYY-MM-DD')})
 
             const response = await instance.post('/api/bid/revertBid', {
                 market: values.marketGame,
