@@ -16,7 +16,7 @@ const Index = () => {
   const [selectedType, setSelectedType] = useState('withdrawal');
   const [editingNote, setEditingNote] = useState(null);
 
-  //const baseURL = 'http://localhost:5001';
+  //const baseURL = 'https://maya-api.kglame.com';
 const baseURL = 'https://maya-api.kglame.com';
   const fetchWithdrawalNotes = async () => {
     try {

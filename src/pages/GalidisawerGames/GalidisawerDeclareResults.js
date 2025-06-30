@@ -441,7 +441,7 @@ const GalidisawerDeclareResults = () => {
               </Form.Item>
             </Col>
             <Col xs={24} sm={12} md={4}>
-              <Form.Item label="Pana">
+              <Form.Item label="digit">
                 <Select
                   showSearch
                   value={filters.pana}

@@ -259,7 +259,7 @@ const DeclareResult = () => {
 
       {/* Bid History Section */}
       <div className="mt-6 bg-white p-4 shadow-md rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">All Bid History</h3>
+        <h3 className="text-lg font-semibold mb-3">Winning History</h3>
         <div className="flex justify-between mb-2">
           <div>
             Show

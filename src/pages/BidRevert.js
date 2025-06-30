@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Table, Button, Form, Select, DatePicker, message, Typography,
@@ -122,7 +123,7 @@ const BidRevert = () => {
                 <Select placeholder="Select Type">
                   <Select.Option value="open">Open</Select.Option>
                   <Select.Option value="close">Close</Select.Option>
-                  <Select.Option value="all">All</Select.Option>
+                  <Select.Option value="all">All </Select.Option>
                 </Select>
               </Form.Item>
             </Col>
