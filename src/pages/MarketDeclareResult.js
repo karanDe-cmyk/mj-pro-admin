@@ -263,7 +263,7 @@ const MarketDeclareResult = () => {
 
   // const sendNotification = async () => {
   //   try {
-  //     const response = await axios.post("http://localhost:5001/api/notification/send-notification", {
+  //     const response = await axios.post("https://maya-api.kglame.com/api/notification/send-notification", {
   //       token: tokenform.token,
   //       title: tokenform.title,
   //       body: tokenform.body,

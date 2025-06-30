@@ -233,6 +233,9 @@ const AdminPanel = () => {
       label: "Notice Management",
       path: "/admin/notice-management",
       icon: <i className="fa fa-bell" />,
+      children: [
+        { key: "Withdraw & Fund Note", label: "Withdraw & Fund Note", path: "/admin/notes" },
+      ],
     },
     {
       key: "all-bid-history",
