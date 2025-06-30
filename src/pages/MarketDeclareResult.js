@@ -339,8 +339,11 @@ const MarketDeclareResult = () => {
 
         // Send push notification after successful declaration
         try {
+
+          const storedToken = localStorage.getItem("fcmToken");
+
           const notificationResponse = await axios.post('https://maya-api.kglame.com/api/notification', {
-            token: "cfyIWN79TqSlNu6LvX2DO8:APA91bEIHDeCvIityVbhn7u_Ce9ZNQMiQC99wA5bCAbN0hHs95PZDUaOA5egBEVcPst0cue8rkchjvZK6mZDEoQSJYUB5c2avIsRn2MSNhlhDW3bexZKTD8",
+            token: storedToken,
             market: values.marketGame,
             gameType: values.gameType,
             gameName: normalizedGameName,
