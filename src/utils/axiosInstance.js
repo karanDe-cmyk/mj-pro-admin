@@ -3,8 +3,9 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const instance = axios.create({
- baseURL: "https://maya-api.kglame.com",
-  // baseURL :'http://localhost:5001'
+ // baseURL: "https://maya-api.kglame.com",
+  //baseURL :'https://maya-api.kglame.com'
+  baseURL:"https://maya-api.kglame.com"
 });
 
 
@@ -24,6 +25,8 @@ instance.interceptors.request.use(
     return Promise.reject(error);
   } 
 );
+
+
 
 // ✅ Response Interceptor (Handle Expired Token)
 instance.interceptors.response.use(

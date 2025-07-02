@@ -54,8 +54,9 @@ import JackpotBid from './pages/Jackpot/JackpotBid';
 import JackpotGamerates from './pages/Jackpot/JackpotGamerates';
 import JackpotDeclareResults from './pages/Jackpot/JackpotDeclareResults';
 import Bidrevert from './pages/BidRevert'
-
-
+import JackpotBidRevert from './pages/Jackpot/Jackpotbidrevert';
+import GaliDisawarBidRevert from './pages/GalidisawerGames/Galidisawarbidrevert';
+import StarlineRevert from './pages/starline management/Starlinebidrevert';
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
@@ -146,6 +147,8 @@ const App = () => {
               <Route path="bid-history" element={<BidHistory />} />
               <Route path="declare-result-starline" element={<DeclareResultStarline />} />
               <Route path="game-rates" element={<GameRates />} />
+              <Route path="starline-bid-revert" element={<StarlineRevert />} />
+
             </Route>
             <Route path="declare-result" element={<DeclareResult />} />
             <Route path="winning-prediction" element={<WinningPrediction />} />
@@ -163,6 +166,7 @@ const App = () => {
               <Route path="bid-history" element={<GalidisawerBidHistory />} />
               <Route path="game-rates" element={<GalidisawerGameRates />} />
               <Route path="declare-result" element={<GalidisawerDeclareResults />} />
+              <Route path="galidisawar-bid-revert" element={<GaliDisawarBidRevert />} />
 
             </Route>
             <Route path="jackpot-games">
@@ -170,6 +174,7 @@ const App = () => {
               <Route path="jackpot-bid-history" element={<JackpotBid />} />
               <Route path="jackpot-game-rates" element={< JackpotGamerates />} />
               <Route path="jackpot-declare-result" element={< JackpotDeclareResults />} />
+              <Route path="jackpot-bid-revert" element={<JackpotBidRevert />} />
 
             </Route>
 

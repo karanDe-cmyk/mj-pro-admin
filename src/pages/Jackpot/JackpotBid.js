@@ -763,11 +763,12 @@ const BidHistory = () => {
     try {
       const values = await form.validateFields();
       const payload = {
-  date: dayjs(values.date).format("DD-MM-YYYY"),  // ✅ FIXED
-  gamename: values.gameName.trim(),
+  date: dayjs(values.date).format("DD-MM-YYYY"),
+  gamename: values.gameName.split(" [")[0].trim(), // ✅ Fix here
   gametype: "jodi_digit",
   market: "Jackpot",
 };
+
 
 
       console.log("Payload sent to API:", payload); // debug
@@ -846,42 +847,68 @@ const BidHistory = () => {
     }
   };
 
-  const columns = [
-    {
-      title: "#",
-      render: (_, __, index) => index + 1,
-    },
-    { title: "User Name", dataIndex: "userName" },
-    { title: "Email", dataIndex: "email" },
-    { title: "Bid TXID", dataIndex: "bidId" },
-    { title: "Game Name", dataIndex: "gamename" },
-    { title: "Game Type", render: () => "Jodi" },
-    { title: "Digit", dataIndex: "digit" },
-    { title: "Points", dataIndex: "points" },
-    {
-      title: "Action",
-      render: (_, record) => (
-        <>
-          <Button onClick={() => openEditModal(record)} style={{ marginRight: 8 }}>
-            Edit
-          </Button>
-          <Button danger onClick={() => handleDeleteBid(record.bidId)}>
-            Delete
-          </Button>
-        </>
-      ),
-    },
-  ];
+  // const columns = [
+  //   {
+  //     title: "#",
+  //     render: (_, __, index) => index + 1,
+  //   },
+  //   { title: "User Name", dataIndex: "userName" },
+  //   { title: "Email", dataIndex: "email" },
+  //   { title: "Bid TXID", dataIndex: "bidId" },
+  //   { title: "Game Name", dataIndex: "gamename" },
+  //   { title: "Game Type", render: () => "Jodi" },
+  //   { title: "Digit", dataIndex: "digit" },
+  //   { title: "Points", dataIndex: "points" },
+  //   {
+  //     title: "Action",
+  //     render: (_, record) => (
+  //       <>
+  //         <Button onClick={() => openEditModal(record)} style={{ marginRight: 8 }}>
+  //           Edit
+  //         </Button>
+  //         <Button danger onClick={() => handleDeleteBid(record.bidId)}>
+  //           Delete
+  //         </Button>
+  //       </>
+  //     ),
+  //   },
+  // ];
+const columns = [
+  {
+    title: "#",
+    render: (_, __, index) => index + 1,
+  },
+  { title: "User Name", dataIndex: "username" }, // ✅ fixed
+  { title: "Email", dataIndex: "email" },
+  { title: "Bid TXID", dataIndex: "bidId" },
+  { title: "Game Name", dataIndex: "gamename" },
+  { title: "Game Type", render: () => "Jodi" },
+  { title: "Digit", dataIndex: "number" }, // ✅ fixed
+  { title: "Points", dataIndex: "points" },
+  {
+    title: "Action",
+    render: (_, record) => (
+      <>
+        <Button onClick={() => openEditModal(record)} style={{ marginRight: 8 }}>
+          Edit
+        </Button>
+        <Button danger onClick={() => handleDeleteBid(record.bidId)}>
+          Delete
+        </Button>
+      </>
+    ),
+  },
+];
 
   const filteredBidData = bidData.filter(
-    (item) =>
-      item.userName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.bidId?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  (item) =>
+    item.username?.toLowerCase().includes(searchText.toLowerCase()) || 
+    item.bidId?.toLowerCase().includes(searchText.toLowerCase())
+);
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={2} style={{ textAlign: "center" }}>Jackpot Jodi Bid History</Title>
+      <Title level={2} style={{ textAlign: "center" }}>Jackpot Bid History</Title>
 
       <Card style={{ marginBottom: 20 }}>
         <Form form={form} layout="vertical">
