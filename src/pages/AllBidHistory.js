@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { Pagination } from "antd";
 
 const AllBidHistory = () => {
   const [search, setSearch] = useState("");
-  const [gameTypeSearch, setGameTypeSearch] = useState(""); // New state for game type search
+  const [gameTypeSearch, setGameTypeSearch] = useState("");
   const [entries, setEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -20,6 +19,7 @@ const AllBidHistory = () => {
   const [gameNameList, setGameNameList] = useState([]);
   const [selectedGameName, setSelectedGameName] = useState("");
   const [selectedGameType, setSelectedGameType] = useState("");
+
   const gameTypeList = [
     "singleDigits",
     "jodi",
@@ -205,22 +205,14 @@ const AllBidHistory = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  // Updated filtering logic to include game type search
-  // const filteredData = bidHistoryData.filter((bid) =>
-  //   Object.values(bid).some((value) =>
-  //     value?.toString().toLowerCase().includes(search.toLowerCase())
-  //   ) &&
-  //   (!selectedGameType || bid.gameType === selectedGameType) &&
-  //   (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase()))
-  // );
-const filteredData = bidHistoryData.filter((bid) =>
-  !bid.reverted && //  Hides reverted bids
-  Object.values(bid).some((value) =>
-    value?.toString().toLowerCase().includes(search.toLowerCase())
-  ) &&
-  (!selectedGameType || bid.gameType === selectedGameType) &&
-  (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase()))
-);
+  const filteredData = bidHistoryData.filter((bid) =>
+    !bid.reverted &&
+    Object.values(bid).some((value) =>
+      value?.toString().toLowerCase().includes(search.toLowerCase())
+    ) &&
+    (!selectedGameType || bid.gameType === selectedGameType) &&
+    (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase()))
+  );
 
   const totalPages = Math.ceil(filteredData.length / entries);
   const paginatedData = filteredData.slice(
@@ -354,6 +346,7 @@ const filteredData = bidHistoryData.filter((bid) =>
               <th className="py-3 px-4 border">Game Type</th>
               <th className="py-3 px-4 border">Betting Amount</th>
               <th className="py-3 px-4 border">Digit/Pana</th>
+              <th className="py-3 px-4 border">Status</th>
               <th className="py-3 px-4 border">Betting Time</th>
               <th className="py-3 px-4 border">Action</th>
             </tr>
@@ -371,6 +364,15 @@ const filteredData = bidHistoryData.filter((bid) =>
                   <td className="border px-4 py-2">{bid.gameType}</td>
                   <td className="border px-4 py-2">{bid.points}</td>
                   <td className="border px-4 py-2">{bid.digit}</td>
+                  <td className="border px-4 py-2">
+                    {bid.open ? (
+                      <span className="text-green-600">Open</span>
+                    ) : bid.close ? (
+                      <span className="text-red-600">Close</span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td className="border px-4 py-2">{bid.time}</td>
                   <td className="border px-4 py-2">
                     <button
@@ -384,7 +386,7 @@ const filteredData = bidHistoryData.filter((bid) =>
               ))
             ) : (
               <tr>
-                <td colSpan="9" className="text-center py-4 text-gray-500">
+                <td colSpan="10" className="text-center py-4 text-gray-500">
                   No Data Found
                 </td>
               </tr>

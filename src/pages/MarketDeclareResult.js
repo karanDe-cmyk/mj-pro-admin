@@ -5,6 +5,7 @@ import moment from "moment";
 import dayjs from "dayjs";
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import { Tabs } from "antd";
 
 const { Title } = Typography;
 
@@ -49,7 +50,7 @@ const MarketDeclareResult = () => {
     9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
   };
 
-
+  const [currentSessionType, setCurrentSessionType] = useState(null);
   const [selectedPanna, setSelectedPanna] = useState(null);
   const [digitValue, setDigitValue] = useState(null);
   const allPannaNumbers = Object.values(pannaOptions).flat();
@@ -210,6 +211,7 @@ const MarketDeclareResult = () => {
     setDate(date);
     handleDateChange(date.format("DD-MM-YYYY")); // Send formatted date to parent component
   };
+
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
     if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
@@ -218,32 +220,43 @@ const MarketDeclareResult = () => {
     }
     try {
       setLoading(true);
-      const response = await instance.post(`/api/showwinners/getWinningBids`, {
+      setCurrentSessionType(values.gameType);
+      const response = await instance.post(`/api/showwinners/getShowWinnerBids`, {
         marketName: values.marketGame,
         gameName: values.gameName,
         date: values.resultDate
           ? values.resultDate.format("DD-MM-YYYY")
           : moment().format("DD-MM-YYYY"),
         gameType: values.gameType,
-        digit: String(values.digit), // converting here
+        digit: String(values.digit),
         panna: values.panna,
       });
 
-      // console.log(response.data);
+      // Map the API response to your state structure
+      const openWinners = response.data.openSessionWins || [];
+      const jodiWinners = response.data.jodiSessionWins || [];
 
-      if (response?.data?.winners && Array.isArray(response.data.winners)) {
-        setWinners(response.data.winners);
-      } else {
-        setWinners([]);
-      }
+      // For jodi winners, separate into open and close based on their session
+      const jodiOpenWinners = jodiWinners.filter(j => j.open || j.opensession);
+      const jodiCloseWinners = jodiWinners.filter(j => j.close || j.closesession);
+
+      setWinners({
+        openWinners: [...openWinners, ...jodiOpenWinners],
+        closeWinners: response.data.closeSessionWins || [],
+        jodiWinners: jodiWinners
+      });
 
       setDeclaredDigit(response?.data?.declaredResult?.digit || null);
-
       setIsWinnerModalVisible(true);
+
     } catch (error) {
       console.error("Error fetching winners:", error);
       message.error("Failed to fetch winner data.");
-      setWinners([]);
+      setWinners({
+        openWinners: [],
+        closeWinners: [],
+        jodiWinners: []
+      });
       setIsWinnerModalVisible(true);
     } finally {
       setLoading(false);
@@ -340,10 +353,10 @@ const MarketDeclareResult = () => {
         // Send push notification after successful declaration
         try {
 
-          const storedToken = localStorage.getItem("fcmToken");
+          // const storedToken = localStorage.getItem("fcmToken");
 
           const notificationResponse = await axios.post('https://maya-api.kglame.com/api/notification', {
-            token: storedToken,
+            token: "dZ9lT52dTn-Xc0NAWh5Rvp:APA91bGgMLdR5FyjMOUubYNvC50_GItuC9KV6bXeWG2y4STzJX806_K_OdHka_b7Jv7PEFGyhq2hyUIBdCRhdv8olXj9I6AVgUnmm_b1Vos5xyaVAJB4EJc",
             market: values.marketGame,
             gameType: values.gameType,
             gameName: normalizedGameName,
@@ -352,6 +365,8 @@ const MarketDeclareResult = () => {
               : `${values.digit}-${values.panna}`,
             declaredAt: new Date().toISOString()
           });
+
+          // console.log(notificationResponse)
 
           if (!notificationResponse.data.success) {
             console.warn("Notification sent but API reported failure");
@@ -561,6 +576,9 @@ const MarketDeclareResult = () => {
     },
   ];
 
+  // console.log(winners.jodiWinners?.winningPoints)
+
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <Card scroll={{ x: 1000 }}
@@ -718,111 +736,157 @@ const MarketDeclareResult = () => {
         style={{ maxHeight: "80vh", overflowY: "auto" }}
         footer={null}
       >
-        {winners.length > 0 ? (
-          <Table
+        {(winners.openWinners?.length > 0 || winners.closeWinners?.length > 0 || winners.jodiWinners?.length > 0) ? (
+          <>
+            {/* Open Winners - excluding jodi/sangam types */}
+            {winners.openWinners?.length > 0 && (
+              <Table
+                columns={[
+                  { title: "User Name", dataIndex: "userName" },
+                  { title: "Game Name", dataIndex: "gameName" },
+                  {
+                    title: "Game Type",
+                    dataIndex: "gameType",
+                    render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A",
+                  },
+                  { title: "Date", dataIndex: "createdAt" },
+                  { title: "Digit/Pana", dataIndex: "digit" },
+                  { title: "Bid Amount", dataIndex: "points" },
+                  {
+                    title: "Winning Amount",
+                    dataIndex: "winningPoints",
+                    render: (value) => (
+                      <span style={{ color: "green", fontWeight: "bold" }}>
+                        {value}
+                      </span>
+                    )
+                  },
+                  {
+                    title: "Action",
+                    render: (_, record) => (
+                      <div>
+                        <Button type="primary" onClick={() => handleEdit(record)}>Edit</Button>
+                        <Button type="danger" onClick={() => handleDelete(record)} loading={isDeleting} style={{ marginLeft: "10px" }}>Delete</Button>
+                      </div>
+                    ),
+                  },
+                ]}
+                dataSource={winners.openWinners.filter(w => !["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangma"].includes(w.gameType))}
+                rowKey="_id"
+              />
+            )}
 
-            columns={[
-              { title: "User Name", dataIndex: "userName" },
-              { title: "Game Name", dataIndex: "gameName" },
-              {
-                title: "Game Type", // or "Game Category"
-                dataIndex: "gameType",
-                render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A"
-              },
-              { title: "Date", dataIndex: "createdAt" },
-              { title: "Digit/Pana", dataIndex: "digit" },
-              {
-                title: "Status",
-                render: (_, record) => {
-                  // if (record.open) {
-                  //   return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
-                  // }
-                  return record.close ? "Declared" : "Running";
-                },
-              }
-              ,
-              { title: "Bid Amount", dataIndex: "points" },
-              {
-                title: "Winning Amount",
-                render: (_, record) => {
-                  const renderPoints = () => (
-                    <span style={{ color: "green", fontWeight: "bold" }}>{record.winningPoints}</span>
-                  );
+            {/* Close Winners - excluding jodi/sangam types */}
+            {winners.closeWinners?.length > 0 && (
+              <Table
+                columns={[
+                  { title: "User Name", dataIndex: "userName" },
+                  { title: "Game Name", dataIndex: "gameName" },
+                  {
+                    title: "Game Type",
+                    dataIndex: "gameType",
+                    render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A",
+                  },
+                  { title: "Date", dataIndex: "createdAt" },
+                  { title: "Digit/Pana", dataIndex: "digit" },
+                  { title: "Bid Amount", dataIndex: "points" },
+                  {
+                    title: "Winning Amount",
+                    dataIndex: "winningPoints",
+                    render: (value) => (
+                      <span style={{ color: "green", fontWeight: "bold" }}>
+                        {value}
+                      </span>
+                    )
+                  },
+                  {
+                    title: "Action",
+                    render: (_, record) => (
+                      <div>
+                        <Button type="primary" onClick={() => handleEdit(record)}>Edit</Button>
+                        <Button type="danger" onClick={() => handleDelete(record)} loading={isDeleting} style={{ marginLeft: "10px" }}>Delete</Button>
+                      </div>
+                    ),
+                  },
+                ]}
+                dataSource={winners.closeWinners.filter(w => !["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangma"].includes(w.gameType))}
+                rowKey="_id"
+              />
+            )}
 
-                  const renderNA = () => <span>{record.winningPoints || "N/A"}</span>;
+            {/* Jodi + Sangam Winners - shown separately */}
+            {winners.jodiWinners?.length > 0 && (
+              <>
+                <h3 style={{ marginBottom: 16, marginTop: 24 }}>Jodi And Sangam Winners</h3>
+                <Table
+                  columns={[
+                    { title: "User Name", dataIndex: "userName" },
+                    { title: "Game Name", dataIndex: "gameName" },
+                    { title: "Game Type", dataIndex: "gameType" },
+                    { title: "Date", dataIndex: "createdAt" },
+                    { title: "Digit/Pana", dataIndex: "digit" },
+                    { title: "Bid Amount", dataIndex: "points" },
+                    {
+                      title: "Status",
+                      render: (_, record) => {
+                        const jodiTypes = ["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangam"];
+                        const isJodi = jodiTypes.includes(record.gameType);
 
-                  const closingDigit = record.digit?.[1];
-
-                  // ✅ Show winning points for jodi if conditions match
-                  if (
-                    record.gameType === "jodi" &&
-                    record.close &&
-                    closingDigit === declaredDigit?.toString()
-                  ) {
-                    return renderPoints();
-                  }
-
-                  // Show winning points for sangam games if closed
-                  if (
-                    ["fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType) &&
-                    record.close
-                  ) {
-                    return renderPoints();
-                  }
-
-                  // Show winning points for all other games (like SingleDigits)
-                  if (
-                    !["jodi", "fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType)
-                  ) {
-                    return renderPoints(); // 🎯 This fixes your issue
-                  }
-
-                  // Show "Running" only for jodi or sangam if still open
-                  if (
-                    record.open &&
-                    ["jodi", "fullSangam", "halfSangamA", "halfSangamB"].includes(record.gameType)
-                  ) {
-                    return <span style={{ color: "green", fontWeight: "bold" }}>Running</span>;
-                  }
-
-                  return renderNA();
-                },
-              },
-              {
-                title: "Action",
-                render: (_, record) => (
-                  <div>
-                    <Button type="primary" onClick={() => handleEdit(record)}>
-                      Edit
-                    </Button>
-                    <Button
-                      type="danger"
-                      onClick={() => handleDelete(record)}
-                      loading={isDeleting}
-                      style={{ marginLeft: "10px" }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                ),
-              },
-            ]}
-            dataSource={winners}
-            rowKey="_id"
-          />
+                        if (isJodi) {
+                          if (currentSessionType === "open") {
+                            return (
+                              <span style={{ color: "orange", fontWeight: "bold" }}>
+                                Running
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <span style={{ color: "green", fontWeight: "bold" }}>
+                                {record.winningPoints || 0}
+                              </span>
+                            );
+                          }
+                        }
+                        return (
+                          <span style={{ color: "green", fontWeight: "bold" }}>
+                            {record.winningPoints || 0}
+                          </span>
+                        );
+                      }
+                    },
+                    {
+                      title: "Action",
+                      render: (_, record) => (
+                        <div>
+                          <Button type="primary" onClick={() => handleEdit(record)}>
+                            Edit
+                          </Button>
+                          <Button
+                            type="danger"
+                            onClick={() => handleDelete(record)}
+                            loading={isDeleting}
+                            style={{ marginLeft: "10px" }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                  dataSource={winners.jodiWinners.filter(w => !["twoDigitsPanel"].includes(w.gameType))}
+                  rowKey="_id"
+                />
+              </>
+            )}
+          </>
         ) : (
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: "16px",
-              padding: "20px",
-              color: "#ff4d4f",
-            }}
-          >
-            No winners found.
+          <p style={{ textAlign: "center", fontSize: "16px", padding: "20px", color: "#ff4d4f" }}>
+            {winners.closeWinners?.length == 0 ? "Open result not declared for that game." : "No Winners Found"}
           </p>
         )}
       </Modal>
+
+
       <Modal
         title="Edit Bid"
         open={isEditModalVisible}
