@@ -353,26 +353,38 @@ const MarketDeclareResult = () => {
         // Send push notification after successful declaration
         try {
 
-          // const storedToken = localStorage.getItem("fcmToken");
+          const storedToken = localStorage.getItem("fcmTokens");
 
-          const notificationResponse = await axios.post('https://maya-api.kglame.com/api/notification', {
-            token: "dZ9lT52dTn-Xc0NAWh5Rvp:APA91bGgMLdR5FyjMOUubYNvC50_GItuC9KV6bXeWG2y4STzJX806_K_OdHka_b7Jv7PEFGyhq2hyUIBdCRhdv8olXj9I6AVgUnmm_b1Vos5xyaVAJB4EJc",
-            market: values.marketGame,
-            gameType: values.gameType,
-            gameName: normalizedGameName,
-            result: values.gameType === "open"
-              ? `${values.panna}-${values.digit}`
-              : `${values.digit}-${values.panna}`,
-            declaredAt: new Date().toISOString()
-          });
+          if (storedToken) {
+            const tokensArray = JSON.parse(storedToken);
 
-          // console.log(notificationResponse)
+            if (Array.isArray(tokensArray) && tokensArray.length > 0) {
+              const firstToken = tokensArray[0].token; // or .name if needed
+              console.log("First token:", firstToken);
 
-          if (!notificationResponse.data.success) {
-            console.warn("Notification sent but API reported failure");
+              const notificationResponse = await axios.post('http://localhost:5001/api/notification', {
+                token: firstToken,
+                market: values.marketGame,
+                gameType: values.gameType,
+                gameName: normalizedGameName,
+                result: values.gameType === "open"
+                  ? `${values.panna}-${values.digit}`
+                  : `${values.digit}-${values.panna}`,
+                declaredAt: new Date().toISOString()
+              });
+
+              if (!notificationResponse.data.success) {
+                console.warn("Notification sent but API reported failure");
+              } else {
+                toast.success(notificationResponse.data.message);
+              }
+            } else {
+              console.warn("No FCM tokens found in local storage.");
+            }
           } else {
-            toast.success(notificationResponse.data.message);
+            console.warn("No 'fcmTokens' found in local storage.");
           }
+
         } catch (notificationError) {
           toast.error("Failed to send notification:", notificationError);
           // Don't show this error to user as the main operation succeeded
