@@ -886,7 +886,6 @@ const MarketDeclareResult = () => {
         )}
       </Modal>
 
-
       <Modal
         title="Edit Bid"
         open={isEditModalVisible}

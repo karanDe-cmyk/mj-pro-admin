@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm install --forcefully
+RUN npm install 
 
 # Copy source code and build the application
 COPY . .
@@ -12,6 +12,7 @@ RUN npm run build
 
 # Stage 2: Serve React App using Node.js
 FROM node:22-alpine AS production
+
 WORKDIR /app
 
 # Install a lightweight static file server
@@ -19,6 +20,8 @@ RUN npm install -g serve
 
 # Copy built React files from previous stage
 COPY --from=build /app/build ./build
+
+RUN touch /app/build/env.js 
 
 # Expose port 3000 for the React app
 EXPOSE 3000

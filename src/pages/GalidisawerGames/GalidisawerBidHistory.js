@@ -198,16 +198,18 @@ const BidHistory = () => {
       key: "gametype",
       render: (text) => displayGameType(text),
     },
+    
     {
-      title: "Number",
-      dataIndex: "number",
-      key: "number",
-    },
-    {
-      title: "Points",
-      dataIndex: "points",
-      key: "points",
-    },
+  title: "Number",
+  key: "number",
+  render: (_, record) => {
+    if (record.gametype === "left_digit") return record.leftdigit;
+    if (record.gametype === "right_digit") return record.rightdigit;
+    if (record.gametype === "jodi_digit") return record.pana;
+    return "-";
+  },
+},
+
     {
       title: "Action",
       key: "action",

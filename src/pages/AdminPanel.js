@@ -99,6 +99,7 @@ const AdminPanel = () => {
         { key: "starline-bid-history", label: "Bid History", path: "/admin/starline-management/bid-history" },
         { key: "starline-declare-result", label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
         { key: "starline-game-rates", label: "Game Rates", path: "/admin/starline-management/game-rates" },
+        { key: "starline-bid-revert", label: "Starline Bid Revert", path: "/admin/starline-management/starline-bid-revert" },
       ],
     },
     {
@@ -204,6 +205,12 @@ const AdminPanel = () => {
           path: "/admin/settings/ChangePassword",
           icon: <i className="fa-solid fa-key"></i>,
         },
+        {
+          key:"FCM-Management",
+          label: "FCM Management",
+          path: "/admin/settings/fcm",
+          icon: <i className="fa-solid fa-bell"></i>,
+        },
       ],
     },
     {
@@ -215,6 +222,7 @@ const AdminPanel = () => {
         { key: "galidi-bid-history", label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
         { key: "galidi-declare-results", label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
         { key: "galidi-game-rates", label: "Game Rates", path: "/admin/galidisawer-games/game-rates" },
+        { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
       ],
     },
     {
@@ -226,6 +234,7 @@ const AdminPanel = () => {
         { key: "jackpot-bid-history", label: "Bid History", path: "/admin/jackpot-games/jackpot-bid-history" },
         { key: "jackpot-declare-results", label: "Declare Results", path: "/admin/jackpot-games/jackpot-declare-result" },
         { key: "jackpot-game-rates", label: "Game Rates", path: "/admin/jackpot-games/jackpot-game-rates" },
+        { key: "jackpot-bid-revert", label: " Jackpot Bid Revert", path: "/admin/jackpot-games/jackpot-bid-revert" },
       ],
     },
     {
