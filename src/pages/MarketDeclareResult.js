@@ -362,7 +362,7 @@ const MarketDeclareResult = () => {
               const firstToken = tokensArray[0].token; // or .name if needed
               console.log("First token:", firstToken);
 
-              const notificationResponse = await axios.post('http://localhost:5001/api/notification', {
+              const notificationResponse = await instance.post('/api/notification', {
                 token: firstToken,
                 market: values.marketGame,
                 gameType: values.gameType,
@@ -384,7 +384,7 @@ const MarketDeclareResult = () => {
           } else {
             console.warn("No 'fcmTokens' found in local storage.");
           }
-          
+
 
         } catch (notificationError) {
           toast.error("Failed to send notification:", notificationError);
