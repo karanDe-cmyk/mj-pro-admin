@@ -73,7 +73,7 @@ const baseURL = 'https://maya-api.kglame.com';
     const isWithdrawal = type === 'withdrawal';
     const apiBase = isWithdrawal
       ? `${baseURL}/api/withdwawnotice/notes`
-      : `${baseURL}/api/notice/note`;
+      : `${baseURL}/api/notice/notes`;
     const setter = isWithdrawal ? setWithdrawalNotes : setFundNotes;
 
     try {

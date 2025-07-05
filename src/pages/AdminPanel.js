@@ -205,6 +205,12 @@ const AdminPanel = () => {
           path: "/admin/settings/ChangePassword",
           icon: <i className="fa-solid fa-key"></i>,
         },
+        {
+          key:"FCM-Management",
+          label: "FCM Management",
+          path: "/admin/settings/fcm",
+          icon: <i className="fa-solid fa-bell"></i>,
+        },
       ],
     },
     {

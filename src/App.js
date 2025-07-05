@@ -57,6 +57,7 @@ import Bidrevert from './pages/BidRevert'
 import JackpotBidRevert from './pages/Jackpot/Jackpotbidrevert';
 import GaliDisawarBidRevert from './pages/GalidisawerGames/Galidisawarbidrevert';
 import StarlineRevert from './pages/starline management/Starlinebidrevert';
+import FCM from './pages/setting/FCM';
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
@@ -160,6 +161,7 @@ const App = () => {
               <Route path="main" element={<MainSetting />} />
               <Route path="ChangePassword" element={<ChangePassword />} />
               <Route path="slider-management" element={<SliderManagement />} />
+              <Route path="fcm" element={<FCM />} />
             </Route>
             <Route path="galidisawer-games">
               <Route path="game-list" element={<GalidisawerGameName />} />
