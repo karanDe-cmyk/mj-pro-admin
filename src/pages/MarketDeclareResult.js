@@ -384,6 +384,7 @@ const MarketDeclareResult = () => {
           } else {
             console.warn("No 'fcmTokens' found in local storage.");
           }
+          
 
         } catch (notificationError) {
           toast.error("Failed to send notification:", notificationError);
