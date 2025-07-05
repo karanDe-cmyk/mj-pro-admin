@@ -2,16 +2,16 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// ✅ Use runtime-configured API URL
 const instance = axios.create({
  // baseURL: "https://maya-api.kglame.com",
   //baseURL :'https://maya-api.kglame.com'
   baseURL:"http://localhost:5001",
 });
 
+let isRedirecting = false;
 
-let isRedirecting = false; // Prevent multiple redirects
-
-// ✅ Request Interceptor (Attach Token)
+// Attach Token
 instance.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -20,44 +20,31 @@ instance.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    console.error("Request error:", error);
-    return Promise.reject(error);
-  } 
+  (error) => Promise.reject(error)
 );
 
-
-
-// ✅ Response Interceptor (Handle Expired Token)
+// Handle Expired Token
 instance.interceptors.response.use(
-  (response) => response, // Pass through successful responses
+  (response) => response,
   (error) => {
     if (
       error.response &&
-      error.response.data &&
-      error.response.data.message === "Invalid Token !!"
+      error.response.data?.message === "Invalid Token !!"
     ) {
       if (!isRedirecting) {
         isRedirecting = true;
 
-        // Show Toast Notification
         toast.error("Session expired. Please log in again.", {
           position: "top-right",
-          autoClose: 3000, // 3s delay before closing
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "dark",
+          autoClose: 3000,
+          theme: "dark"
         });
 
-        // Clear local storage
         localStorage.clear();
 
-        // Redirect after a short delay (allows user to see the message)
         setTimeout(() => {
           window.location.href = "/";
-        }, 300); // 3s delay before redirecting
+        }, 3000);
       }
     }
     return Promise.reject(error);
