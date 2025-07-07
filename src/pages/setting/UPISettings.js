@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
+import axios from "axios";
 
 const UPISettings = () => {
   // UPI Data State
@@ -115,12 +116,14 @@ const UPISettings = () => {
     }
   };
 
+
+
   // Handle FBM form submission
   const handleFbmUpdate = async () => {
     const { usertoken, minAmount, maxAmount } = fbmData;
 
     if (!usertoken.trim()) {
-      alert("API Key and Merchant ID cannot be empty.");
+      alert("User Token cannot be empty.");
       return;
     }
 
@@ -138,9 +141,13 @@ const UPISettings = () => {
         status: fbmData.status,
       };
 
+      const res = await axiosInstance.get('/api/settings/fbmgateway')
+
+      const fbmGateway = res.data?.data?.[0];
+
       // If we have an ID, update existing. Otherwise create new.
-      if (fbmData.id) {
-        await axiosInstance.put(`/api/settings/fbmgateway/${fbmData.id}`, payload);
+      if (fbmGateway._id) {
+        await axiosInstance.put(`/api/settings/fbmgateway/${fbmGateway._id}`, payload);
       } else {
         await axiosInstance.post(`/api/settings/fbmgateway`, payload);
       }
@@ -314,8 +321,8 @@ const UPISettings = () => {
                 className="w-full border border-gray-300 p-2 rounded-md bg-white"
                 disabled={loading}
               >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
           </div>
