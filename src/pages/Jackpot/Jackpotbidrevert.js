@@ -55,6 +55,7 @@ const JackpotBidRevert = () => {
         gamename: values.gamename.split(" [")[0].trim(),
         gametype: "jodi_digit",
         market: "Jackpot",
+        reverted: false, // Explicitly request only non-reverted bids
         _fresh: Date.now() // Prevent caching
       };
 
@@ -68,14 +69,11 @@ const JackpotBidRevert = () => {
       );
 
       if (res.data.success) {
-        // Filter out reverted bids
-        const filtered = (res.data.bids || []).filter(
-          bid => !bid.reverted && String(bid.reverted).toLowerCase() !== "true"
-        );
-        setBids(filtered);
+        // No need for client-side filtering since API handles it
+        setBids(res.data.bids || []);
       } else {
         setBids([]);
-        message.warning("No bids found");
+        message.warning("No active bids found");
       }
     } catch (err) {
       message.error("Error filtering bids");
@@ -87,10 +85,10 @@ const JackpotBidRevert = () => {
   const handleRevert = async (bidId) => {
     try {
       setReverting(prev => ({ ...prev, [bidId]: true }));
-      
+
       // Optimistic UI update
-      setBids(prev => 
-        prev.map(bid => 
+      setBids(prev =>
+        prev.map(bid =>
           bid.bidId === bidId ? { ...bid, reverted: true } : bid
         )
       );
@@ -98,22 +96,22 @@ const JackpotBidRevert = () => {
       const accessToken = localStorage.getItem("accessToken");
       await axios.put(
         `https://maya-api.kglame.com/api/jackpotBid/revertBid/${bidId}`,
-        {},
+        { bidIds: [bidId] },
         {
           headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
 
       message.success("Bid reverted and amount refunded");
-      
+
       // Refresh data after 1 second to confirm
       setTimeout(() => {
         handleSearch();
       }, 1000);
     } catch (err) {
       // Rollback UI if API fails
-      setBids(prev => 
-        prev.map(bid => 
+      setBids(prev =>
+        prev.map(bid =>
           bid.bidId === bidId ? { ...bid, reverted: false } : bid
         )
       );
@@ -136,7 +134,7 @@ const JackpotBidRevert = () => {
           const accessToken = localStorage.getItem("accessToken");
 
           // Optimistic update
-          setBids(prev => 
+          setBids(prev =>
             prev.map(bid => ({ ...bid, reverted: true }))
           );
 
@@ -156,7 +154,7 @@ const JackpotBidRevert = () => {
           handleSearch();
         } catch (err) {
           // Rollback UI if API fails
-          setBids(prev => 
+          setBids(prev =>
             prev.map(bid => ({ ...bid, reverted: false }))
           );
           message.error("Error reverting all bids");

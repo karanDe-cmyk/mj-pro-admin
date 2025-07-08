@@ -165,6 +165,25 @@ const DeclareResult = () => {
     }
   };
 
+  const handleDeleteGameResult = async (resultId) => {
+    if (!window.confirm("Are you sure you want to delete this game result?")) return;
+
+    try {
+      const response = await axiosInstance.delete(`/api/starline/delete-game-result/${resultId}`);
+      if (response.data.success) {
+        alert("Game result deleted successfully");
+        // Refresh the game result history
+        fetchGameResultHistory();
+      } else {
+        alert("Failed to delete game result");
+      }
+    } catch (error) {
+      console.error("Error deleting game result:", error);
+      alert("Error occurred while deleting game result");
+    }
+  };
+
+
   // Filter game result history by the selected gameResultDate and search text
   const formattedGameResultDate = formatDate(gameResultDate); // "DD-MM-YYYY"
   const filteredGameResults = gameResultHistory.filter((result) =>
@@ -183,8 +202,8 @@ const DeclareResult = () => {
   );
 
   return (
-<div className="p-4 w-full min-h-screen">
-<h2 className="text-2xl font-bold mb-4 text-center">Declare Result</h2>
+    <div className="p-4 w-full min-h-screen">
+      <h2 className="text-2xl font-bold mb-4 text-center">Declare Result</h2>
 
       <div className="bg-white p-4 shadow-md rounded-lg flex flex-wrap gap-4 items-center justify-between">
         <div className="w-full sm:w-auto">
@@ -240,20 +259,20 @@ const DeclareResult = () => {
 
       {/* Show Winners & Declare Result Buttons */}
       <div className="mt-6 flex gap-4">
-    <button 
-        onClick={handleDeclareResult} 
-        className="bg-[#EEA529] text-white px-6 py-2 w-1/2 rounded text-center"
-    >
-        {loading ? "Loading..." : "Show Winners"}
-    </button>
-    
-    <button 
-        onClick={handleSubmitResult} 
-        className="bg-[#556EE6] text-white px-6 py-2 w-1/2 rounded text-center"
-    >
-        {declaring ? "Declaring..." : "Declare Result"}
-    </button>
-</div>
+        <button
+          onClick={handleDeclareResult}
+          className="bg-[#EEA529] text-white px-6 py-2 w-1/2 rounded text-center"
+        >
+          {loading ? "Loading..." : "Show Winners"}
+        </button>
+
+        <button
+          onClick={handleSubmitResult}
+          className="bg-[#556EE6] text-white px-6 py-2 w-1/2 rounded text-center"
+        >
+          {declaring ? "Declaring..." : "Declare Result"}
+        </button>
+      </div>
 
 
 
@@ -312,9 +331,8 @@ const DeclareResult = () => {
                     <td className="py-2 px-4 border">
                       <button
                         onClick={() => handleDeleteBid(bid.bidId)}
-                        className={`bg-red-500 text-white px-3 py-1 rounded ${
-                          deletingBid === bid.bidId ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
+                        className={`bg-red-500 text-white px-3 py-1 rounded ${deletingBid === bid.bidId ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
                         disabled={deletingBid === bid.bidId}
                       >
                         {deletingBid === bid.bidId ? "Deleting..." : "Delete"}
@@ -327,11 +345,11 @@ const DeclareResult = () => {
           </table>
         </div>
       </div>
-      
+
       {/* Game Result History Section */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-3">Game Result History</h3>
-        
+
         {/* Datepicker for Game Result History */}
         <div className="mb-4">
           <label className="font-semibold block mb-2">Select Game Result Date</label>
@@ -345,7 +363,7 @@ const DeclareResult = () => {
             }}
           />
         </div>
-        
+
         {/* Search and Entries Filter */}
         <div className="flex justify-between mb-4">
           <div>
@@ -387,6 +405,7 @@ const DeclareResult = () => {
                   <th className="py-2 px-4 border">Digit</th>
                   <th className="py-2 px-4 border">Total Winners</th>
                   <th className="py-2 px-4 border">Date</th>
+                  <th className="py-2 px-4 border">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -405,6 +424,14 @@ const DeclareResult = () => {
                       <td className="py-2 px-4 border">{result.digit}</td>
                       <td className="py-2 px-4 border">{result.totalWinners}</td>
                       <td className="py-2 px-4 border">{result.date}</td>
+                      <td className="py-2 px-4 border">
+                        <button
+                          onClick={() => handleDeleteGameResult(result.id)} // Assuming result has an 'id' field
+                          className="bg-red-500 text-white px-3 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}

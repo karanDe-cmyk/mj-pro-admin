@@ -4,9 +4,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 // ✅ Use runtime-configured API URL
 const instance = axios.create({
-//  baseURL: "https://maya-api.kglame.com",
   // baseURL :'https://maya-api.kglame.com'
-  baseURL: "http://localhost:5001"
+  baseURL: "https://maya-api.kglame.com"
 });
 
 let isRedirecting = false;

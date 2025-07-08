@@ -362,7 +362,7 @@ const MarketDeclareResult = () => {
               const firstToken = tokensArray[0].token; // or .name if needed
               console.log("First token:", firstToken);
 
-              const notificationResponse = await instance.post('http://localhost:5001/api/notification', {
+              const notificationResponse = await instance.post('https://maya-api.kglame.com/api/notification', {
                 token: firstToken,
                 market: values.marketGame,
                 gameType: values.gameType,
