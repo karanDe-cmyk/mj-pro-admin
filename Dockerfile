@@ -1,40 +1,32 @@
-# ------------ Stage 1: Build React App ------------ #
-FROM node:22-slim AS build
+# 🏗️ Build Stage: React App
+FROM node:20-slim AS build
 
-# Setup working directory
+# Set working directory
 WORKDIR /app
-
-# Improve npm reliability inside Docker
-RUN npm config set fetch-retries 5 \
- && npm config set fetch-retry-mintimeout 20000 \
- && npm config set fetch-retry-maxtimeout 120000 \
- && npm config set registry https://registry.npmmirror.com
 
 # Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy source and build the app
+# Copy source code and build the React app
 COPY . .
 RUN npm run build
 
 
-# ------------ Stage 2: Serve React App ------------ #
-FROM node:22-alpine AS production
+# 🚀 Production Stage: Serve via NGINX
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy built React app from previous stage to NGINX default directory
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Install static file server
-RUN npm install -g serve
+# Optional: Custom NGINX config (used for React routing support)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy build output from previous stage
-COPY --from=build /app/build ./build
+# Create empty env.js file to inject runtime environment variables
+RUN touch /usr/share/nginx/html/env.js
 
-# Optional: environment injection file
-RUN touch /app/build/env.js
+# Expose port 80 (default for NGINX)
+EXPOSE 80
 
-# Expose port
-EXPOSE 3000
-
-# Start server
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Run nginx in foreground
+CMD ["nginx", "-g", "daemon off;"]

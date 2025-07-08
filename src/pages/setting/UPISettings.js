@@ -3,7 +3,9 @@ import axiosInstance from "../../utils/axiosInstance";
 
 const UPISettings = () => {
   // UPI Data State
+  // UPI Data State
   const [upiData, setUpiData] = useState({
+    id: "",
     id: "",
     upiName: "",
     upiPaymentId: "",
@@ -20,17 +22,37 @@ const UPISettings = () => {
     minAmount: "",
     maxAmount: "",
     status: "Inactive",
+    status: "Active",
+  });
+
+  // FBM Gateway Data State
+  const [fbmData, setFbmData] = useState({
+    id: "",
+    usertoken: "",
+    minAmount: "",
+    maxAmount: "",
+    status: "Inactive",
   });
 
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
   const [activeTab, setActiveTab] = useState("upi"); // 'upi' or 'fbm'
+  const [fetchingData, setFetchingData] = useState(true);
+  const [activeTab, setActiveTab] = useState("upi"); // 'upi' or 'fbm'
 
+  // Fetch all settings data on mount
   // Fetch all settings data on mount
   useEffect(() => {
     const fetchSettingsData = async () => {
+    const fetchSettingsData = async () => {
       try {
         setLoading(true);
+        
+        // Fetch UPI data
+        const upiResponse = await axiosInstance.get(`/api/settings/upipayment`);
+        const upiDataResponse = upiResponse.data[0];
+
+        if (upiDataResponse) {
         
         // Fetch UPI data
         const upiResponse = await axiosInstance.get(`/api/settings/upipayment`);
@@ -59,12 +81,36 @@ const UPISettings = () => {
             minAmount: fbmDataResponse.min_amount || "",
             maxAmount: fbmDataResponse.max_amount || "",
             status: fbmDataResponse.status || "Inactive",
+            id: upiDataResponse._id,
+            upiName: upiDataResponse.upi_name || "",
+            upiPaymentId: upiDataResponse.upi_paymentid || "",
+            upiPaytmId: upiDataResponse.upi_paytm_id || "",
+            upiPhonePeId: upiDataResponse.upi_phonepay_id || "",
+            upiGooglePayId: upiDataResponse.upi_googlepay_id || "",
+            status: upiDataResponse.status || "Active",
+          });
+        }
+
+        // Fetch FBM gateway data
+        const fbmResponse = await axiosInstance.get(`/api/settings/fbmgateway`);
+        const fbmDataResponse = fbmResponse.data[0];
+
+        if (fbmDataResponse) {
+          setFbmData({
+            id: fbmDataResponse._id,
+            usertoken: fbmDataResponse.usertoken || "",
+            minAmount: fbmDataResponse.min_amount || "",
+            maxAmount: fbmDataResponse.max_amount || "",
+            status: fbmDataResponse.status || "Inactive",
           });
         }
 
         setFetchingData(false);
+        setFetchingData(false);
         setLoading(false);
       } catch (error) {
+        console.error("Error fetching settings data:", error);
+        alert("Failed to fetch settings data");
         console.error("Error fetching settings data:", error);
         alert("Failed to fetch settings data");
         setLoading(false);
@@ -73,8 +119,11 @@ const UPISettings = () => {
     };
 
     fetchSettingsData();
+    fetchSettingsData();
   }, []);
 
+  // Handle input change for UPI
+  const handleUpiChange = (e) => {
   // Handle input change for UPI
   const handleUpiChange = (e) => {
     const { name, value } = e.target;
@@ -87,6 +136,15 @@ const UPISettings = () => {
     setFbmData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle input change for FBM
+  const handleFbmChange = (e) => {
+    const { name, value } = e.target;
+    setFbmData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle UPI form submission
+  const handleUpiUpdate = async () => {
+    const { upiName, upiPaymentId } = upiData;
   // Handle UPI form submission
   const handleUpiUpdate = async () => {
     const { upiName, upiPaymentId } = upiData;
@@ -156,6 +214,7 @@ const UPISettings = () => {
 
   return (
     <div className="relative">
+      {/* Loading overlay */}
       {/* Loading overlay */}
       {(loading || fetchingData) && (
         <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">

@@ -77,7 +77,7 @@ const Login = () => {
             />
           </div>
           <Title level={4} className="mt-2.5">
-            Maya Admin
+            Matka Admin
           </Title>
         </div>
 
