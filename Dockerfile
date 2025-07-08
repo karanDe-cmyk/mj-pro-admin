@@ -1,30 +1,40 @@
-# Stage 1: Build React App
+# ------------ Stage 1: Build React App ------------ #
 FROM node:22-slim AS build
+
+# Setup working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
-RUN npm install 
+# Improve npm reliability inside Docker
+RUN npm config set fetch-retries 5 \
+ && npm config set fetch-retry-mintimeout 20000 \
+ && npm config set fetch-retry-maxtimeout 120000 \
+ && npm config set registry https://registry.npmmirror.com
 
-# Copy source code and build the application
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source and build the app
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve React App using Node.js
+
+# ------------ Stage 2: Serve React App ------------ #
 FROM node:22-alpine AS production
 
 WORKDIR /app
 
-# Install a lightweight static file server
+# Install static file server
 RUN npm install -g serve
 
-# Copy built React files from previous stage
+# Copy build output from previous stage
 COPY --from=build /app/build ./build
 
-RUN touch /app/build/env.js 
+# Optional: environment injection file
+RUN touch /app/build/env.js
 
-# Expose port 3000 for the React app
+# Expose port
 EXPOSE 3000
 
-# Start the static file server on port 3000
+# Start server
 CMD ["serve", "-s", "build", "-l", "3000"]
