@@ -1,30 +1,32 @@
-# Stage 1: Build React App
-FROM node:22-slim AS build
+# 🏗️ Build Stage: React App
+FROM node:20-slim AS build
+
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Install dependencies
 COPY package*.json ./
-RUN npm install 
+RUN npm install
 
-# Copy source code and build the application
+# Copy source code and build the React app
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve React App using Node.js
-FROM node:22-alpine AS production
 
-WORKDIR /app
+# 🚀 Production Stage: Serve via NGINX
+FROM nginx:alpine
 
-# Install a lightweight static file server
-RUN npm install -g serve
+# Copy built React app from previous stage to NGINX default directory
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy built React files from previous stage
-COPY --from=build /app/build ./build
+# Optional: Custom NGINX config (used for React routing support)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN touch /app/build/env.js 
+# Create empty env.js file to inject runtime environment variables
+RUN touch /usr/share/nginx/html/env.js
 
-# Expose port 3000 for the React app
-EXPOSE 3000
+# Expose port 80 (default for NGINX)
+EXPOSE 80
 
-# Start the static file server on port 3000
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Run nginx in foreground
+CMD ["nginx", "-g", "daemon off;"]
