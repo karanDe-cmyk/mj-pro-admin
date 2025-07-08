@@ -1,6 +1,4 @@
-# =============================
 # 🏗️ Build Stage: React App
-# =============================
 FROM node:20-slim AS build
 
 # Set working directory
@@ -15,9 +13,7 @@ COPY . .
 RUN npm run build
 
 
-# ====================================
 # 🚀 Production Stage: Serve via NGINX
-# ====================================
 FROM nginx:alpine
 
 # Copy built React app from previous stage to NGINX default directory
