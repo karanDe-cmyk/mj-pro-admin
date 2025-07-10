@@ -68,7 +68,7 @@ const App = () => {
       const permission = await Notification.requestPermission()
       if (permission === 'granted') {
         // generate token
-        getToken(messaging, { vapidKey: "BIE_S0OKXX3rJHefoglKf7gXbLv1hdPeZkhtsFzI-gwA_ETyrse0vS7hAeXBaymROegtAUp1E_2-dXFUH-mLoFQ" }).then((currentToken) => {
+        getToken(messaging, { vapidKey: window.ENV?.FIREBASE_VAPID_KEY }).then((currentToken) => {
           if (currentToken) {
 
             console.log(currentToken)
