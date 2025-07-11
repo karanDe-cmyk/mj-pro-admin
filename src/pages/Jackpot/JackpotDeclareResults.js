@@ -238,13 +238,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   Table, Input, DatePicker, Button, Form, Row, Col,
-  Select, Pagination, Card, message
+  Select, Pagination, Card, message, Modal, Typography, TimePicker, Switch
 } from 'antd';
 import moment from 'moment';
 import axios from 'axios';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
+const { Title } = Typography;
 
 const GalidisawerDeclareResults = () => {
   const [filters, setFilters] = useState({
@@ -258,6 +259,9 @@ const GalidisawerDeclareResults = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
   const [searchText, setSearchText] = useState('');
   const [gameOptions, setGameOptions] = useState([]);
+  const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false);
+  const [editingWinner, setEditingWinner] = useState(null);
+  const [winnerForm] = Form.useForm();
 
   const getOpenTimeOptions = () => {
     if (filters.game) {
@@ -323,7 +327,7 @@ const GalidisawerDeclareResults = () => {
       const body = {
         date: filters.date.format("DD-MM-YYYY"),
         game: gameValue,
-        digit: filters.declaredDigit // ✅ Correct field used
+        digit: filters.declaredDigit
       };
 
       const token = localStorage.getItem("accessToken");
@@ -364,6 +368,44 @@ const GalidisawerDeclareResults = () => {
     }
   };
 
+  const handleEditWinner = (record) => {
+    setEditingWinner(record);
+    winnerForm.setFieldsValue({
+      userName: record.userName,
+      points: record.bidPoints,
+      winningPoints: record.winningPoints,
+      digit: record.digit
+    });
+    setIsWinnerModalOpen(true);
+  };
+
+  const handleUpdateWinner = async () => {
+    try {
+      const values = await winnerForm.validateFields();
+      const payload = {
+        points: values.points,  // Using points instead of bidPoints
+        digit: values.digit
+      };
+
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.put(
+        `http://localhost:5001/api/jackpotBid/updateBid/${editingWinner._id}`,
+        payload,
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        }
+      );
+
+      message.success("Bid updated successfully");
+      setIsWinnerModalOpen(false);
+      setEditingWinner(null);
+      handleShowWinnersClick();
+    } catch (err) {
+      console.error("Error updating bid:", err);
+      message.error(err.response?.data?.message || "Failed to update bid");
+    }
+  };
+
   const columns = [
     { title: '#', render: (_, __, index) => index + 1 },
     { title: 'Game Name', dataIndex: 'gameName' },
@@ -388,6 +430,15 @@ const GalidisawerDeclareResults = () => {
       title: 'Date',
       dataIndex: 'date',
       render: text => text ? moment(text).format('YYYY-MM-DD') : ''
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_, record) => (
+        <Button type="primary" onClick={() => handleEditWinner(record)}>
+          Edit
+        </Button>
+      )
     }
   ];
 
@@ -520,6 +571,46 @@ const GalidisawerDeclareResults = () => {
           style={{ marginTop: 16, textAlign: 'right' }}
         />
       </Card>
+
+      {/* Winner Edit Modal */}
+      <Modal
+        title="Edit Winner"
+        open={isWinnerModalOpen}
+        onOk={handleUpdateWinner}
+        onCancel={() => {
+          setIsWinnerModalOpen(false);
+          setEditingWinner(null);
+        }}
+      >
+        <Form form={winnerForm} layout="vertical">
+          <Form.Item
+            name="userName"
+            label="User Name"
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            name="points"  // Changed from bidPoints to points
+            label="Bid Points"
+            rules={[{ required: true, message: 'Please enter bid points' }]}
+          >
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item
+            name="winningPoints"
+            label="Winning Points"
+          >
+            <Input type="number" disabled />
+          </Form.Item>
+          <Form.Item
+            name="digit"
+            label="Digit"
+            rules={[{ required: true, message: 'Please enter digit' }]}
+          >
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
