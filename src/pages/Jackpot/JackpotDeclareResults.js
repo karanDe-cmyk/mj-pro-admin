@@ -389,7 +389,7 @@ const GalidisawerDeclareResults = () => {
 
       const accessToken = localStorage.getItem("accessToken");
       await axios.put(
-        `http://localhost:5001/api/jackpotBid/updateBid/${editingWinner._id}`,
+        `https://maya-api.kglame.com/api/jackpotBid/updateBid/${editingWinner._id}`,
         payload,
         {
           headers: { 'Authorization': `Bearer ${accessToken}` }
