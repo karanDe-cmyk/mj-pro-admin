@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 const instance = axios.create({
   // baseURL :'https://maya-api.kglame.com'
   // baseURL: "https://maya-api.kglame.com"
-  baseURL: window.ENV?.API_URL
+  baseURL: window.ENV?.API_URL,
   // baseURL: "http://localhost:5001"
 });
 

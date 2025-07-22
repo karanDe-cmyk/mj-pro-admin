@@ -99,7 +99,7 @@ const AutoDepositHistory = () => {
       title: "Txn Date",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => moment.utc(date).local().format("DD-MM-YYYY"), // ✅ Convert UTC to Local Time
+      render: (date) => moment.utc(date).local().format("DD-MM-YYYY hh:mm A"), // ✅ Convert UTC to Local Time
     },
   ];
 
