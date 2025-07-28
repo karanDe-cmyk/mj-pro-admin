@@ -7,6 +7,7 @@ const AllBidHistory = () => {
   const [gameTypeSearch, setGameTypeSearch] = useState("");
   const [entries, setEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [bidStatusFilter, setBidStatusFilter] = useState("all"); // New state for status filter
 
   const [bidHistoryData, setBidHistoryData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -137,7 +138,15 @@ const AllBidHistory = () => {
   };
 
   const handleShareOnWhatsApp = () => {
-    const validBids = filteredData.filter((bid) =>
+    // Filter by status (open/close) if selected
+    let statusFilteredData = filteredData;
+    if (bidStatusFilter === "open") {
+      statusFilteredData = filteredData.filter(bid => bid.open);
+    } else if (bidStatusFilter === "close") {
+      statusFilteredData = filteredData.filter(bid => bid.close);
+    }
+
+    const validBids = statusFilteredData.filter((bid) =>
       bid?.gameType && bid?.digit && !isNaN(Number(bid?.points))
     );
     if (validBids.length === 0) {
@@ -181,7 +190,11 @@ const AllBidHistory = () => {
       ...allGameTypes.filter((type) => !preferredOrder.includes(type)),
     ];
 
-    let message = `*Main Market (open)*\n`;
+    // Dynamic market/game name and status
+    const marketGameName = selectedGameName || selectedMarket || "Market";
+    const statusText = bidStatusFilter === "all" ? "" : `(${bidStatusFilter})`;
+
+    let message = `*${marketGameName} ${statusText}*\n `;
     message += `Date and Time: ${new Date().toISOString().slice(0, 19).replace("T", " ")}\n`;
     message += `${"_".repeat(35)}\n\n`;
 
@@ -211,7 +224,10 @@ const AllBidHistory = () => {
       value?.toString().toLowerCase().includes(search.toLowerCase())
     ) &&
     (!selectedGameType || bid.gameType === selectedGameType) &&
-    (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase()))
+    (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase())) &&
+    (bidStatusFilter === "all" || 
+     (bidStatusFilter === "open" && bid.open) || 
+     (bidStatusFilter === "close" && bid.close))
   );
 
   const totalPages = Math.ceil(filteredData.length / entries);
@@ -286,7 +302,7 @@ const AllBidHistory = () => {
       <div className="flex justify-between mb-4">
         <input
           type="text"
-          className="border px-3 py-2 rounded w-1/3"
+          className="border px-3 py-2 rounded w-1/4"
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -294,14 +310,25 @@ const AllBidHistory = () => {
 
         <input
           type="text"
-          className="border px-3 py-2 rounded w-1/3"
+          className="border px-3 py-2 rounded w-1/4"
           placeholder="Search Game Type..."
           value={gameTypeSearch}
           onChange={(e) => setGameTypeSearch(e.target.value)}
         />
 
+        {/* New Status Filter */}
         <select
-          className="border px-3 py-2 rounded"
+          className="border px-3 py-2 rounded w-1/4"
+          value={bidStatusFilter}
+          onChange={(e) => setBidStatusFilter(e.target.value)}
+        >
+          <option value="all">All Status</option>
+          <option value="open">Open Only</option>
+          <option value="close">Close Only</option>
+        </select>
+
+        <select
+          className="border px-3 py-2 rounded w-1/4"
           value={entries}
           onChange={(e) => setEntries(parseInt(e.target.value))}
         >
