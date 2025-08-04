@@ -80,7 +80,45 @@ const Dashboard = () => {
     dateWithdrawalAmount: 0,
   });
 
+  const [loginStats, setLoginStats] = useState({
+    todayLoginCount: 0,
+    totalActiveSessions: 0
+  });
+
+  const [registrationStats, setRegistrationStats] = useState({
+    todayRegistrations: 0,
+    totalRegistrations: 0
+  });
+
   const navigate = useNavigate();
+
+  const fetchLoginStats = async () => {
+    try {
+      const response = await instance.get('/api/session/admin/login-stats');
+      if (response.data.success) {
+        setLoginStats({
+          todayLoginCount: response.data.todayLoginCount,
+          totalActiveSessions: response.data.totalActiveSessions
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching login stats:', error);
+    }
+  };
+
+  const fetchRegistrationStats = async () => {
+    try {
+      const response = await instance.get('/api/session/admin/registration-stats');
+      if (response.data.success) {
+        setRegistrationStats({
+          todayRegistrations: response.data.todayRegistrations,
+          totalRegistrations: response.data.totalRegistrations
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching registration stats:', error);
+    }
+  };
 
   // Handler for Global Date Filter
   const handleFilterDateChange = (date) => {
@@ -144,6 +182,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDeposits();
+    fetchLoginStats();
+    fetchRegistrationStats();
   }, [selectedFilterDate]);
 
   // Handler for game selection
@@ -608,7 +648,7 @@ const Dashboard = () => {
               (withdrawal) =>
                 withdrawal.status === "pending" &&
                 moment(withdrawal.createdAt || new Date()).format("DD-MM-YYYY") ===
-                  selectedFilterDate
+                selectedFilterDate
             );
             setWithdrawalHistory(pendingWithdrawals);
           } else {
@@ -651,10 +691,10 @@ const Dashboard = () => {
         const dateAuto = Array.isArray(autoDepositHistory)
           ? selectedFilterDate
             ? autoDepositHistory
-                .filter((entry) =>
-                  dayjs(entry.date || new Date()).format("DD-MM-YYYY") === selectedFilterDate
-                )
-                .reduce((acc, curr) => acc + (curr.amount || 0), 0)
+              .filter((entry) =>
+                dayjs(entry.date || new Date()).format("DD-MM-YYYY") === selectedFilterDate
+              )
+              .reduce((acc, curr) => acc + (curr.amount || 0), 0)
             : totalAuto
           : 0;
         setTotalAutoDeposit(totalAuto);
@@ -667,10 +707,10 @@ const Dashboard = () => {
         const dateManual = Array.isArray(data)
           ? selectedFilterDate
             ? data
-                .filter((entry) =>
-                  dayjs(entry.date || new Date()).format("DD-MM-YYYY") === selectedFilterDate
-                )
-                .reduce((acc, curr) => acc + (curr.amount || 0), 0)
+              .filter((entry) =>
+                dayjs(entry.date || new Date()).format("DD-MM-YYYY") === selectedFilterDate
+              )
+              .reduce((acc, curr) => acc + (curr.amount || 0), 0)
             : totalManual
           : 0;
         setTotalManualDeposit(totalManual);
@@ -719,10 +759,10 @@ const Dashboard = () => {
         const filteredWithdrawals = Array.isArray(withdrawRes.data)
           ? selectedFilterDate
             ? withdrawRes.data.filter(
-                (w) =>
-                  w.status === "approved" &&
-                  moment(w.createdAt || new Date()).format("DD-MM-YYYY") === selectedFilterDate
-              )
+              (w) =>
+                w.status === "approved" &&
+                moment(w.createdAt || new Date()).format("DD-MM-YYYY") === selectedFilterDate
+            )
             : withdrawRes.data.filter((w) => w.status === "approved")
           : [];
         const totalWithdrawals = filteredWithdrawals.reduce(
@@ -934,8 +974,8 @@ const Dashboard = () => {
             {isProfit
               ? `Profit: ${result}`
               : isLoss
-              ? `Loss: ${Math.abs(result)}`
-              : "No Profit/Loss"}
+                ? `Loss: ${Math.abs(result)}`
+                : "No Profit/Loss"}
           </div>
         );
       },
@@ -1140,7 +1180,7 @@ const Dashboard = () => {
                     }}
                   >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Games</span>
+                      <span style={{ fontWeight: "bold" }}>Players (Today)</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {totalGames.totalGameCount ?? "Failed to fetch"}
                       </div>
@@ -1162,7 +1202,7 @@ const Dashboard = () => {
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
+                {/* <Card style={{ borderRadius: "5px" }}>
                   <div
                     onClick={() => navigate("/admin/all-bid-history")}
                     style={{
@@ -1194,10 +1234,10 @@ const Dashboard = () => {
                       <DollarOutlined style={{ color: "#fff", fontSize: "24px" }} />
                     </div>
                   </div>
-                </Card>
+                </Card> */}
               </Col>
               <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
+                {/* <Card style={{ borderRadius: "5px" }}>
                   <div
                     onClick={() => navigate("/admin/all-bid-history")}
                     style={{
@@ -1229,10 +1269,10 @@ const Dashboard = () => {
                       <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
                     </div>
                   </div>
-                </Card>
+                </Card> */}
               </Col>
               <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
+                {/* <Card style={{ borderRadius: "5px" }}>
                   <div
                     onClick={() => navigate("/admin/all-bid-history")}
                     style={{
@@ -1264,10 +1304,10 @@ const Dashboard = () => {
                       <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
                     </div>
                   </div>
-                </Card>
+                </Card> */}
               </Col>
               <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
+                {/* <Card style={{ borderRadius: "5px" }}>
                   <div
                     onClick={() => navigate("/admin/all-bid-history")}
                     style={{
@@ -1299,12 +1339,12 @@ const Dashboard = () => {
                       <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
                     </div>
                   </div>
-                </Card>
+                </Card> */}
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
                   <div
-                    onClick={() => navigate("/admin/all-bid-history")}
+                    // onClick={() => navigate("/admin/user-management")}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -1314,15 +1354,18 @@ const Dashboard = () => {
                   >
                     <div>
                       <span style={{ fontWeight: "bold" }}>
-                        Total Withdrawal ({selectedFilterDate || "All Dates"})
+                        Today's Registrations
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        ₹{adminData.dateWithdrawalAmount ?? 0}
+                        {registrationStats.todayRegistrations}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#666" }}>
+                        Total admins: {registrationStats.totalRegistrations}
                       </div>
                     </div>
                     <div
                       style={{
-                        backgroundColor: "#1890ff",
+                        backgroundColor: "#52c41a",
                         borderRadius: "50%",
                         width: "40px",
                         height: "40px",
@@ -1331,7 +1374,7 @@ const Dashboard = () => {
                         alignItems: "center",
                       }}
                     >
-                      <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                      <UserOutlined style={{ color: "#fff", fontSize: "24px" }} />
                     </div>
                   </div>
                 </Card>
@@ -1339,7 +1382,7 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
                   <div
-                    onClick={() => navigate("/admin/all-bid-history")}
+                    // onClick={() => navigate("/admin/login-activity")}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -1349,11 +1392,14 @@ const Dashboard = () => {
                   >
                     <div>
                       <span style={{ fontWeight: "bold" }}>
-                        Total Bid Amount ({selectedFilterDate || "All Dates"})
+                        Today's Logins
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {`₹${adminData.dateTotalBidAmount}`}
+                        {loginStats.todayLoginCount}
                       </div>
+                      {/* <div style={{ fontSize: "12px", color: "#666" }}>
+                        Active sessions: {loginStats.totalActiveSessions}
+                      </div> */}
                     </div>
                     <div
                       style={{
@@ -1366,7 +1412,7 @@ const Dashboard = () => {
                         alignItems: "center",
                       }}
                     >
-                      <FundOutlined style={{ color: "#fff", fontSize: "24px" }} />
+                      <UserOutlined style={{ color: "#fff", fontSize: "24px" }} />
                     </div>
                   </div>
                 </Card>
@@ -1432,7 +1478,7 @@ const Dashboard = () => {
                 const digitData = dashboardData[ank] || { totalUsers: 0, totalAmount: 0 };
                 return (
                   <div className="card" key={ank} style={{ borderColor: color }}>
-                    <p className="card-text mt-2">Total Bids {digitData.totalUsers}</p>
+                    <p className="card-text mt-2">Today Bids {digitData.totalUsers}</p>
                     <h4 className="card-title">{digitData.totalAmount}</h4>
                     <span className="font-bold">Total Bid Amount</span>
                     <button className="card-btn" style={{ backgroundColor: color }}>
