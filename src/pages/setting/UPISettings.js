@@ -89,32 +89,46 @@ const UPISettings = () => {
   };
 
   // Handle UPI form submission
-  const handleUpiUpdate = async () => {
-    const { upiName, upiPaymentId } = upiData;
+  const handleFbmUpdate = async () => {
+  const { usertoken, minAmount, maxAmount } = fbmData;
 
-    if (!upiName.trim() || !upiPaymentId.trim()) {
-      alert("UPI Name and Payment ID cannot be empty.");
-      return;
+  if (!usertoken.trim()) {
+    alert("User Token cannot be empty.");
+    return;
+  }
+
+  if (isNaN(minAmount) || isNaN(maxAmount) || parseInt(minAmount) <= 0 || parseInt(maxAmount) <= 0) {
+    alert("Please enter valid amount limits.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const payload = {
+      usertoken: fbmData.usertoken.trim(),
+      min_amount: fbmData.minAmount,
+      max_amount: fbmData.maxAmount,
+      status: fbmData.status.toLowerCase(), // Ensure consistent case
+    };
+
+    const res = await axiosInstance.get('/api/settings/fbmgateway');
+    const fbmGateway = res.data[0]; // Changed from res.data?.data?.[0] to res.data[0]
+
+    if (fbmGateway?._id) {
+      await axiosInstance.put(`/api/settings/fbmgateway/${fbmGateway._id}`, payload);
+    } else {
+      await axiosInstance.post(`/api/settings/fbmgateway`, payload);
     }
 
-    try {
-      setLoading(true);
-      await axiosInstance.put(`/api/settings/upipayment/${upiData.id}`, {
-        upi_name: upiData.upiName,
-        upi_paymentid: upiData.upiPaymentId,
-        upi_paytm_id: upiData.upiPaytmId,
-        upi_phonepay_id: upiData.upiPhonePeId,
-        upi_googlepay_id: upiData.upiGooglePayId,
-        status: upiData.status,
-      });
-      alert("UPI Details Updated Successfully!");
-      setLoading(false);
-    } catch (error) {
-      console.error("Error updating UPI data:", error);
-      alert("Failed to update UPI data");
-      setLoading(false);
-    }
-  };
+    alert("FBM Gateway Settings Updated Successfully!");
+    setLoading(false);
+  } catch (error) {
+    console.error("Error updating FBM gateway data:", error);
+    alert("Failed to update FBM gateway data");
+    setLoading(false);
+  }
+};
+
 
 
 
@@ -321,8 +335,8 @@ const UPISettings = () => {
                 className="w-full border border-gray-300 p-2 rounded-md bg-white"
                 disabled={loading}
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
               </select>
             </div>
           </div>
