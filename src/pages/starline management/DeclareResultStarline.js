@@ -201,6 +201,44 @@ const DeclareResult = () => {
     currentPage * entriesPerPage
   );
 
+  // --- New function to group panna options ---
+  const getGroupedPannaOptions = () => {
+    const pannaGroups = {};
+
+    // First, add the '000' option
+    const sum0 = (0 + 0 + 0) % 10;
+    if (!pannaGroups[sum0]) {
+      pannaGroups[sum0] = [];
+    }
+    pannaGroups[sum0].push('000');
+
+    // Generate all 3-digit numbers from 100 to 999
+    for (let i = 100; i <= 999; i++) {
+      const panna = i.toString();
+      const sum = panna.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+      const digit = sum % 10;
+
+      if (!pannaGroups[digit]) {
+        pannaGroups[digit] = [];
+      }
+      pannaGroups[digit].push(panna);
+    }
+
+    // Sort the keys (digits) from 0 to 9
+    const sortedKeys = Object.keys(pannaGroups).sort((a, b) => a - b);
+
+    return sortedKeys.map(digit => (
+      <optgroup key={digit}>
+        {pannaGroups[digit].map((pannaOption) => (
+          <option key={pannaOption} value={pannaOption}>
+            {pannaOption}
+          </option>
+        ))}
+      </optgroup>
+    ));
+  };
+
+
   return (
     <div className="p-4 w-full min-h-screen">
       <h2 className="text-2xl font-bold mb-4 text-center">Declare Result</h2>
@@ -238,12 +276,7 @@ const DeclareResult = () => {
             onChange={handlePannaChange}
           >
             <option value="">- Select Panna -</option>
-            <option value="000">000</option>
-            {Array.from({ length: 900 }, (_, i) => i + 100).map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
+            {getGroupedPannaOptions()}
           </select>
         </div>
         <div className="w-full sm:w-auto">

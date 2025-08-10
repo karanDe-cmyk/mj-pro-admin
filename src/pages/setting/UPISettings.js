@@ -1,51 +1,6 @@
 import React, { useEffect, useState } from "react";
-// Since we don't have a backend, we will mock axiosInstance for demonstration purposes.
-// In a real application, you would use a properly configured axios instance.
-const axiosInstance = {
-  get: async (url) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (url === '/api/settings/upipayment') {
-      // Mock a successful response for UPI settings
-      return {
-        data: [{
-          _id: "upi_id_123",
-          upi_name: "John Doe",
-          upi_paymentid: "johndoe@upi",
-          upi_paytm_id: "paytm_johndoe",
-          upi_phonepay_id: "phonepe_johndoe",
-          upi_googlepay_id: "gpay_johndoe",
-          status: "Active"
-        }]
-      };
-    }
-    if (url === '/api/settings/fbmgateway') {
-      // Mock a successful response for FBM settings
-      return {
-        data: [{
-          _id: "fbm_id_456",
-          usertoken: "FBM_TOKEN_12345",
-          min_amount: 100,
-          max_amount: 5000,
-          status: "Active"
-        }]
-      };
-    }
-    return { data: [] }; // Return empty data for other endpoints
-  },
-  post: async (url, payload) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log(`POST to ${url} with payload:`, payload);
-    return { data: { message: "Created successfully" } };
-  },
-  put: async (url, payload) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log(`PUT to ${url} with payload:`, payload);
-    return { data: { message: "Updated successfully" } };
-  }
-};
+import axiosInstance from '../../utils/axiosInstance';
+import XtreemGateway from '../../components/XtreemGateway';
 
 // Custom alert component to replace window.alert
 const AlertMessage = ({ message, type, onClose }) => {
@@ -148,7 +103,7 @@ const UPISettings = () => {
 
         // Fetch FBM gateway data
         const fbmResponse = await axiosInstance.get(`/api/settings/fbmgateway`);
-        const fbmDataResponse = fbmResponse.data[0];
+        const fbmDataResponse = fbmResponse.data.data[0];
 
         if (fbmDataResponse) {
           setFbmData({
@@ -159,6 +114,7 @@ const UPISettings = () => {
             status: fbmDataResponse.status || "Inactive",
           });
         }
+
       } catch (error) {
         console.error("Error fetching settings data:", error);
         setAlert({ message: "Failed to fetch settings data", type: "error" });
@@ -242,7 +198,7 @@ const UPISettings = () => {
 
       // Fetch the latest data to check for an existing ID
       const res = await axiosInstance.get('/api/settings/fbmgateway');
-      const fbmGateway = res.data[0];
+      const fbmGateway = res.data.data[0];
 
       // If we have an ID, update existing. Otherwise create new.
       if (fbmGateway?._id) {
@@ -259,6 +215,7 @@ const UPISettings = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="relative p-6 bg-gray-100 min-h-screen font-sans">
@@ -286,7 +243,14 @@ const UPISettings = () => {
             onClick={() => setActiveTab('fbm')}
             disabled={loading}
           >
-            FBM Gateway
+            IMB Gateway
+          </button>
+          <button
+            className={`px-6 py-3 -mb-px font-medium rounded-t-lg transition-colors duration-200 ease-in-out ${activeTab === 'xtreem' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('xtreem')}
+            disabled={loading}
+          >
+            Xtreem Gateway
           </button>
         </div>
 
@@ -381,7 +345,7 @@ const UPISettings = () => {
         {/* FBM Gateway Tab */}
         {activeTab === 'fbm' && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">FBM Gateway Settings</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">IMB Gateway Settings</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">User Token</label>
@@ -442,6 +406,11 @@ const UPISettings = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'xtreem' && (
+          <XtreemGateway />
+        )}
+
       </div>
     </div>
   );
