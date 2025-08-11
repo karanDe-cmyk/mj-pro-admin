@@ -38,7 +38,7 @@
 //   const fetchDeclareResults = async () => {
 //     try {
 //       const accessToken = localStorage.getItem("accessToken");
-//       const res = await axios.get('https://maya-api.kglame.com/api/JackpotDeclareResult/getResult', {
+//       const res = await axios.get('https://matkabar-api.kglame.com/api/JackpotDeclareResult/getResult', {
 //         headers: { 'Authorization': `Bearer ${accessToken}` }
 //       });
 //       setData(res.data.results);
@@ -51,7 +51,7 @@
 //   useEffect(() => {
 //     fetchDeclareResults();
 //     const accessToken = localStorage.getItem("accessToken");
-//     axios.get('https://maya-api.kglame.com/api/jackpotMarket/getAllMarket', {
+//     axios.get('https://matkabar-api.kglame.com/api/jackpotMarket/getAllMarket', {
 //       headers: { 'Authorization': `Bearer ${accessToken}` }
 //     })
 //       .then(res => setGameOptions(res.data.data || []))
@@ -62,7 +62,7 @@
 //     if (window.confirm("Delete this result?")) {
 //       try {
 //         const accessToken = localStorage.getItem("accessToken");
-//         await axios.delete(`https://maya-api.kglame.com/api/JackpotDeclareResult/delete/${record._id}`, {
+//         await axios.delete(`https://matkabar-api.kglame.com/api/JackpotDeclareResult/delete/${record._id}`, {
 //           headers: { 'Authorization': `Bearer ${accessToken}` }
 //         });
 //         message.success("Deleted successfully");
@@ -88,7 +88,7 @@
 //   //       digit: filters.declaredDigit
 //   //     };
 //   //     const token = localStorage.getItem("accessToken");
-//   //     const res = await axios.post("https://maya-api.kglame.com/api/jackpotWinners/showwinners", body, {
+//   //     const res = await axios.post("https://matkabar-api.kglame.com/api/jackpotWinners/showwinners", body, {
 //   //       headers: { 'Authorization': `Bearer ${token}` }
 //   //     });
 //   //     setWinnersData(res.data.winners);
@@ -110,7 +110,7 @@
 //     };
 
 //     const token = localStorage.getItem("accessToken");
-//     const res = await axios.post("https://maya-api.kglame.com/api/jackpotWinners/showwinners", body, {
+//     const res = await axios.post("https://matkabar-api.kglame.com/api/jackpotWinners/showwinners", body, {
 //       headers: { 'Authorization': `Bearer ${token}` }
 //     });
 
@@ -132,7 +132,7 @@
 //         declaredDigit: filters.declaredDigit
 //       };
 //       const token = localStorage.getItem("accessToken");
-//       await axios.post("https://maya-api.kglame.com/api/JackpotDeclareResult/declare", body, {
+//       await axios.post("https://matkabar-api.kglame.com/api/JackpotDeclareResult/declare", body, {
 //         headers: { 'Authorization': `Bearer ${token}` }
 //       });
 //       message.success("Result declared!");
@@ -243,6 +243,7 @@ import {
 import moment from 'moment';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import axiosInstance from '../../utils/axiosInstance'
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -278,7 +279,7 @@ const GalidisawerDeclareResults = () => {
   const fetchDeclareResults = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-      const res = await axios.get('https://maya-api.kglame.com/api/JackpotDeclareResult/getResult', {
+      const res = await axiosInstance.get('/api/JackpotDeclareResult/getResult', {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       setData(res.data.results);
@@ -291,7 +292,7 @@ const GalidisawerDeclareResults = () => {
   useEffect(() => {
     fetchDeclareResults();
     const accessToken = localStorage.getItem("accessToken");
-    axios.get('https://maya-api.kglame.com/api/jackpotMarket/getAllMarket', {
+    axiosInstance.get('/api/jackpotMarket/getAllMarket', {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     })
       .then(res => setGameOptions(res.data.data || []))
@@ -302,7 +303,7 @@ const GalidisawerDeclareResults = () => {
     if (window.confirm("Delete this result?")) {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        await axios.delete(`https://maya-api.kglame.com/api/JackpotDeclareResult/delete/${record._id}`, {
+        await axiosInstance.delete(`/api/JackpotDeclareResult/delete/${record._id}`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         message.success("Deleted successfully");
@@ -331,7 +332,7 @@ const GalidisawerDeclareResults = () => {
       };
 
       const token = localStorage.getItem("accessToken");
-      const res = await axios.post("https://maya-api.kglame.com/api/jackpotWinners/showwinners", body, {
+      const res = await axiosInstance.post("/api/jackpotWinners/showwinners", body, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -357,7 +358,7 @@ const GalidisawerDeclareResults = () => {
       };
 
       const token = localStorage.getItem("accessToken");
-      await axios.post("https://maya-api.kglame.com/api/JackpotDeclareResult/declare", body, {
+      await axiosInstance.post("/api/JackpotDeclareResult/declare", body, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -388,8 +389,8 @@ const GalidisawerDeclareResults = () => {
       };
 
       const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/jackpotBid/updateBid/${editingWinner._id}`,
+      await axiosInstance.put(
+        `/api/jackpotBid/updateBid/${editingWinner._id}`,
         payload,
         {
           headers: { 'Authorization': `Bearer ${accessToken}` }

@@ -13,6 +13,7 @@ import {
   Spin,
   message,
   Collapse,
+  TimePicker
 } from "antd";
 import {
   UserOutlined,
@@ -89,6 +90,10 @@ const Dashboard = () => {
     todayRegistrations: 0,
     totalRegistrations: 0
   });
+
+  // New state for market refresh time
+  const [marketRefreshTime, setMarketRefreshTime] = useState(null);
+  const [updatingRefreshTime, setUpdatingRefreshTime] = useState(false);
 
   const navigate = useNavigate();
 
@@ -982,6 +987,34 @@ const Dashboard = () => {
     },
   ];
 
+  // New function to handle market refresh time update
+  const handleUpdateMarketRefreshTime = async () => {
+    if (!marketRefreshTime) {
+      message.error("Please select a time first.");
+      return;
+    }
+    setUpdatingRefreshTime(true);
+    try {
+      const timeString = dayjs(marketRefreshTime).format("HH:mm");
+      // This is a placeholder API call. Replace with your actual endpoint.
+      const response = await instance.post("/api/admin/settings/updateMarketRefreshTime", {
+        refreshTime: timeString,
+      });
+
+      if (response.data.success) {
+        message.success(`Market refresh time updated to ${timeString} successfully!`);
+      } else {
+        message.error(response.data.message || "Failed to update refresh time.");
+      }
+    } catch (error) {
+      console.error("Error updating refresh time:", error);
+      message.error("An error occurred while updating the refresh time.");
+    } finally {
+      setUpdatingRefreshTime(false);
+    }
+  };
+
+
   return (
     <div style={{ padding: 5 }}>
       {/* Global Date Filter */}
@@ -1131,6 +1164,32 @@ const Dashboard = () => {
                 </Col>
               </Row>
             </Card>
+            {/* New Card for Market Refresh Time */}
+            <Card style={{ marginTop: 20 }}>
+              <Title level={5}>Update Market Refresh Time</Title>
+              <Row gutter={16} align="middle">
+                <Col span={12}>
+                  <TimePicker
+                    style={{ width: "100%" }}
+                    value={marketRefreshTime}
+                    onChange={setMarketRefreshTime}
+                    format="HH:mm"
+                    placeholder="Select Time"
+                  />
+                </Col>
+                <Col span={12}>
+                  <Button
+                    type="primary"
+                    onClick={handleUpdateMarketRefreshTime}
+                    loading={updatingRefreshTime}
+                    style={{ width: "100%", backgroundColor: "#349163", color: "white", fontWeight: "bold" }}
+                  >
+                    Update
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
+
           </Col>
           {/* Right Side */}
           <Col xs={24} md={16}>

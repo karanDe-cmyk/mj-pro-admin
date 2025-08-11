@@ -55,7 +55,7 @@ const DeclareResult = () => {
       const response = await axiosInstance.get(`/api/starline/game-result-history`);
       const formattedData = response.data.data.map(item => ({
         ...item,
-        id: item._id // Forcefully map _id to id
+        id: item.id // Forcefully map _id to id
       }));
 
       setGameResultHistory(formattedData || []);
@@ -168,9 +168,10 @@ const DeclareResult = () => {
 
   const handleDeleteGameResult = async (resultId) => {
     if (!window.confirm("Are you sure you want to delete this game result?")) return;
-
+    console.log(resultId);
     try {
       const response = await axiosInstance.delete(`/api/starline/delete-game-result/${resultId}`);
+      console.log(response.data.success)
       if (response.data.success) {
         alert("Game result deleted successfully");
         // Refresh the game result history

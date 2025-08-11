@@ -75,7 +75,7 @@ const App = () => {
             localStorage.setItem("fcmToken", currentToken);
 
             // Send the token to your server and update the UI if necessary
-            fetch('https://maya-api.kglame.com/api/notification/save-fcm-token', {
+            fetch('https://matkabar-api.kglame.com/api/notification/save-fcm-token', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'

@@ -12,7 +12,8 @@ import {
   Modal,
   Spin
 } from "antd";
-import axios from "axios";
+// import axios from "axios";
+import axiosInstance from '../../utils/axiosInstance'
 import dayjs from "dayjs";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 
@@ -31,8 +32,8 @@ const JackpotBidRevert = () => {
     const fetchGames = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const res = await axios.get(
-          "https://maya-api.kglame.com/api/jackpotMarket/getAllMarket",
+        const res = await axiosInstance.get(
+          "/api/jackpotMarket/getAllMarket",
           {
             headers: { Authorization: `Bearer ${accessToken}` }
           }
@@ -60,8 +61,8 @@ const JackpotBidRevert = () => {
       };
 
       const accessToken = localStorage.getItem("accessToken");
-      const res = await axios.post(
-        "https://maya-api.kglame.com/api/jackpotBid/filterBids",
+      const res = await axiosInstance.post(
+        "/api/jackpotBid/filterBids",
         payload,
         {
           headers: { Authorization: `Bearer ${accessToken}` }
@@ -94,8 +95,8 @@ const JackpotBidRevert = () => {
       );
 
       const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/jackpotBid/revertBid/${bidId}`,
+      await axiosInstance.put(
+        `/api/jackpotBid/revertBid/${bidId}`,
         { bidIds: [bidId] },
         {
           headers: { Authorization: `Bearer ${accessToken}` }
@@ -139,8 +140,8 @@ const JackpotBidRevert = () => {
           );
 
           const revertPromises = bids.map(bid =>
-            axios.put(
-              `https://maya-api.kglame.com/api/jackpotBid/revertBid/${bid.bidId}`,
+            axiosInstance.put(
+              `/api/jackpotBid/revertBid/${bid.bidId}`,
               {},
               {
                 headers: { Authorization: `Bearer ${accessToken}` }

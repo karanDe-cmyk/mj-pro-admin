@@ -16,8 +16,8 @@ const Index = () => {
   const [selectedType, setSelectedType] = useState('withdrawal');
   const [editingNote, setEditingNote] = useState(null);
 
-  //const baseURL = 'https://maya-api.kglame.com';
-const baseURL = 'https://maya-api.kglame.com';
+  //const baseURL = 'https://matkabar-api.kglame.com';
+const baseURL = 'https://matkabar-api.kglame.com';
   const fetchWithdrawalNotes = async () => {
     try {
       const res = await axios.get(`${baseURL}/api/withdwawnotice/getWithdrawNotice`);

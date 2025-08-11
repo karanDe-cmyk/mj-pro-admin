@@ -15,8 +15,8 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-// import axiosInstance from "../../utils/axiosInstance";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance";
+// import axios from "axios";
 
 dayjs.extend(customParseFormat);
 const { Title } = Typography;
@@ -34,7 +34,7 @@ const GameName = () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("https://maya-api.kglame.com/api/JackpotMarket/getAllMarket",
+      const response = await axiosInstance.get("/api/JackpotMarket/getAllMarket",
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`
@@ -71,7 +71,7 @@ const GameName = () => {
         is_active: true,
       };
       const accessToken = localStorage.getItem("accessToken");
-      await axios.post("https://maya-api.kglame.com/api/JackpotMarket/AddMarket", payload,
+      await axiosInstance.post("/api/JackpotMarket/AddMarket", payload,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`
@@ -103,8 +103,8 @@ const GameName = () => {
         is_active: true, // Sending is_active true by default for edit
       };
       const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${editingMarket._id}`,
+      await axiosInstance.put(
+        `/api/JackpotMarket/updateMarket/${editingMarket._id}`,
         payload,
         {
           headers: {
@@ -137,8 +137,8 @@ const GameName = () => {
         is_active: checked,
       };
       const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${record._id}`,
+      await axiosInstance.put(
+        `/api/JackpotMarket/updateMarket/${record._id}`,
         payload,
         {
           headers: {
@@ -163,7 +163,7 @@ const GameName = () => {
   const handleDelete = async (id) => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-      await axios.delete(`https://maya-api.kglame.com/api/JackpotMarket/deleteMarketById/${id}`,
+      await axiosInstance.delete(`/api/JackpotMarket/deleteMarketById/${id}`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`

@@ -23,7 +23,8 @@ import {
   DialogContentText,
   DialogTitle
 } from "@mui/material";
-import axios from "axios";
+// import axios from "axios";
+import axiosInstance from '../../utils/axiosInstance'
 import dayjs from "dayjs";
 
 const gameOptions = ["11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM", "09:00 PM", "10:00 PM"];
@@ -54,8 +55,8 @@ const StarlineRevert = () => {
     
     setLoading(true);
     try {
-      const res = await axios.post(
-        "https://maya-api.kglame.com/api/Starlinebid/filter-bids", 
+      const res = await axiosInstance.post(
+        "/api/Starlinebid/filter-bids", 
         { date, gamename: game },
         getAuthHeader()
       );
@@ -77,8 +78,8 @@ const StarlineRevert = () => {
     
     setReverting(true);
     try {
-      const res = await axios.post(
-        "https://maya-api.kglame.com/api/Starlinebid/revert-bids", 
+      const res = await axiosInstance.post(
+        "/api/Starlinebid/revert-bids", 
         { 
           date, 
           gamename: game,

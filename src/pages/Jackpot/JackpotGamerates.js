@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Row, Col, Form, Card, Typography, message } from "antd";
-// import axiosInstance from "../../utils/axiosInstance";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance";
+// import axios from "axios";
 
 const { Title } = Typography;
 
@@ -19,7 +19,7 @@ const GameRates = () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("https://maya-api.kglame.com/api/jackpotRate/getBetRates",
+      const response = await axiosInstance.get("/api/jackpotRate/getBetRates",
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`
@@ -55,7 +55,7 @@ const GameRates = () => {
         jodiDigitValue,
       };
       const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.put(`https://maya-api.kglame.com/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload,
+      const response = await axiosInstance.put(`/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`
