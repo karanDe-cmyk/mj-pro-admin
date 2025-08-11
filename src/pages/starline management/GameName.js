@@ -4,7 +4,7 @@ import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
 import EditGameModal from "./EditGameModal";
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const { Option } = Select;
