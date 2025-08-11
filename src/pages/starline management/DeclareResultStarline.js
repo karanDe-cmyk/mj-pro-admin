@@ -1,45 +1,31 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../../utils/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance"; // Import the axios instance
 
 const DeclareResult = () => {
   // States for Declare Result section
   const [date, setDate] = useState("");
   const [selectedGame, setSelectedGame] = useState("");
-  const [panna, setPanna] = useState("");
-  const [digit, setDigit] = useState("");
+  const [panna, setPanna] = useState(""); // Panna field
+  const [digit, setDigit] = useState(""); // Auto-calculated digit
   const [search, setSearch] = useState("");
-  const [gameOptions, setGameOptions] = useState([]);
-  const [bidHistoryData, setBidHistoryData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [deletingBid, setDeletingBid] = useState(null);
-  const [declaring, setDeclaring] = useState(false);
-  const [deletingResultId, setDeletingResultId] = useState(null);
-  const [pannaInputMode, setPannaInputMode] = useState(false);
+  const [gameOptions, setGameOptions] = useState([]); // Game options
+  const [bidHistoryData, setBidHistoryData] = useState([]); // Bid history
+  const [loading, setLoading] = useState(false); // Loading for fetching winner list
+  const [deletingBid, setDeletingBid] = useState(null); // Loading for deleting bid
+  const [declaring, setDeclaring] = useState(false); // Loading for declaring result
 
   // States for Game Result History section
-  const [gameResultHistory, setGameResultHistory] = useState([]);
-  const [loadingGameResult, setLoadingGameResult] = useState(false);
-  const [searchGameResult, setSearchGameResult] = useState("");
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [gameResultHistory, setGameResultHistory] = useState([]); // Game result history
+  const [loadingGameResult, setLoadingGameResult] = useState(false); // Loading state for fetching game result history
+  const [searchGameResult, setSearchGameResult] = useState(""); // Search state
+  const [entriesPerPage, setEntriesPerPage] = useState(10); // Entries per page
+  const [currentPage, setCurrentPage] = useState(1); // Current page
+
+  // New state: game result date (for filtering game result history)
   const [gameResultDate, setGameResultDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().substr(0, 10);
+    return today.toISOString().substr(0, 10); // Format: YYYY-MM-DD for the datepicker
   });
-
-  // Panna options data
-  const pannaOptions = {
-    0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "550"],
-    1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
-    2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
-    3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
-    4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
-    5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
-    6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
-    7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
-    8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
-    9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
-  };
 
   // Fetch game list
   useEffect(() => {
@@ -63,17 +49,12 @@ const DeclareResult = () => {
     fetchGameList();
   }, []);
 
-  // Fetch game result history with proper ID mapping
+  // Define fetchGameResultHistory so it can be reused
   const fetchGameResultHistory = async () => {
     setLoadingGameResult(true);
     try {
       const response = await axiosInstance.get(`/api/starline/game-result-history`);
-      const formattedData = response.data.data.map(item => ({
-        ...item,
-        id: item.id // Forcefully map _id to id
-      }));
-
-      setGameResultHistory(formattedData || []);
+      setGameResultHistory(response.data.data || []);
     } catch (error) {
       console.error("Error fetching game result history:", error);
     } finally {
@@ -81,11 +62,12 @@ const DeclareResult = () => {
     }
   };
 
+  // Fetch game result history on component mount
   useEffect(() => {
     fetchGameResultHistory();
   }, []);
 
-  // Format date
+  // Format date in "DD-MM-YYYY" format
   const formatDate = (date) => {
     const d = new Date(date);
     const day = String(d.getDate()).padStart(2, "0");
@@ -94,46 +76,38 @@ const DeclareResult = () => {
     return `${day}-${month}-${year}`;
   };
 
-  // Handle panna change
+  // Generate all panna values
+  const pannaOptionsList = Array.from({ length: 900 }, (_, i) => {
+    const num = i + 100; // start from 100
+    const digits = String(num).split("").map(Number);
+    const sum = digits.reduce((a, b) => a + b, 0) % 10; // sum % 10
+    return { num, sum };
+  });
+
+  // Sort first by sum, then numerically inside each sum group
+  pannaOptionsList.sort((a, b) => {
+    if (a.sum === b.sum) return a.num - b.num;
+    return a.sum - b.sum;
+  });
+
+
+  // Handle panna selection and auto-calculate digit
   const handlePannaChange = (e) => {
-    const value = e.target.value;
+    const selectedPanna = e.target.value;
+    setPanna(selectedPanna);
 
-    // If selecting from dropdown
-    if (Object.values(pannaOptions).flat().includes(value)) {
-      setPanna(value);
-      // Calculate digit
-      const sum = value.split('').reduce((acc, num) => acc + parseInt(num, 10), 0);
-      setDigit(sum % 10);
-      setPannaInputMode(false);
-    }
-    // If typing manually
-    else if (/^\d{0,3}$/.test(value)) {
-      setPanna(value);
-      if (value.length === 3) {
-        const sum = value.split('').reduce((acc, num) => acc + parseInt(num, 10), 0);
-        setDigit(sum % 10);
-      } else {
-        setDigit("");
-      }
+    if (selectedPanna.length === 3) {
+      const sum = selectedPanna
+        .split("")
+        .reduce((acc, num) => acc + parseInt(num, 10), 0);
+      setDigit(sum % 10); // Get last digit
+    } else {
+      setDigit(""); // Reset digit if panna is invalid
     }
   };
 
-  // Toggle between input and select mode
-  const togglePannaInputMode = () => {
-    setPannaInputMode(!pannaInputMode);
-    if (!pannaInputMode) {
-      setPanna(""); // Clear when switching to input mode
-      setDigit("");
-    }
-  };
-
-  // Show winners
+  // Fetch bid history (Show Winners button)
   const handleDeclareResult = async () => {
-    if (!date || !selectedGame || !panna || !digit) {
-      alert("Please fill all fields before showing winners.");
-      return;
-    }
-
     setLoading(true);
     try {
       const payload = { date: formatDate(date), gamename: selectedGame, panna, digit };
@@ -141,27 +115,23 @@ const DeclareResult = () => {
       setBidHistoryData(response.data.results || []);
     } catch (error) {
       console.error("Error fetching bid history:", error);
-      alert("Error fetching bid history. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Declare result
+  // Declare result and then refresh game result history immediately
   const handleSubmitResult = async () => {
-    if (!date || !selectedGame || !panna || !digit) {
+    if (!date || !selectedGame || !panna || digit === "" || digit === null || typeof digit === "undefined") {
       alert("Please fill all fields before declaring the result.");
-      return;
-    }
-
-    if (panna.length !== 3) {
-      alert("Panna must be 3 digits");
       return;
     }
 
     setDeclaring(true);
     try {
       const formattedDate = formatDate(date);
+
+      // API call to declare the winner
       const response = await axiosInstance.post(
         `/api/starlinebid/declare-winners`,
         { date: formattedDate, gamename: selectedGame, panna, digit }
@@ -169,6 +139,7 @@ const DeclareResult = () => {
 
       if (response.data.success) {
         alert("Result declared successfully");
+        // Refresh game result history immediately without refresh
         fetchGameResultHistory();
       } else {
         if (response.data.message.includes("already declared")) {
@@ -179,7 +150,7 @@ const DeclareResult = () => {
       }
     } catch (error) {
       console.error("Error declaring result:", error);
-      if (error.response?.data?.message) {
+      if (error.response && error.response.data && error.response.data.message) {
         alert(error.response.data.message);
       } else {
         alert("Error occurred while declaring result");
@@ -189,7 +160,6 @@ const DeclareResult = () => {
     }
   };
 
-  // Delete bid
   const handleDeleteBid = async (bidId) => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
 
@@ -212,11 +182,12 @@ const DeclareResult = () => {
 
   const handleDeleteGameResult = async (resultId) => {
     if (!window.confirm("Are you sure you want to delete this game result?")) return;
-    setDeletingResultId(resultId);
+
     try {
       const response = await axiosInstance.delete(`/api/starline/delete-game-result/${resultId}`);
       if (response.data.success) {
         alert("Game result deleted successfully");
+        // Refresh the game result history
         fetchGameResultHistory();
       } else {
         alert("Failed to delete game result");
@@ -224,13 +195,12 @@ const DeclareResult = () => {
     } catch (error) {
       console.error("Error deleting game result:", error);
       alert("Error occurred while deleting game result");
-    } finally {
-      setDeletingResultId(null);
     }
   };
 
+
   // Filter game result history by the selected gameResultDate and search text
-  const formattedGameResultDate = formatDate(gameResultDate);
+  const formattedGameResultDate = formatDate(gameResultDate); // "DD-MM-YYYY"
   const filteredGameResults = gameResultHistory.filter((result) =>
     result.date === formattedGameResultDate &&
     (
@@ -238,19 +208,18 @@ const DeclareResult = () => {
       (result.panna && result.panna.toLowerCase().includes(searchGameResult.toLowerCase())) ||
       result.digit.toString().includes(searchGameResult) ||
       result.date.includes(searchGameResult)
-    ));
+    )
+  );
 
   const paginatedResults = filteredGameResults.slice(
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage
   );
 
-
   return (
     <div className="p-4 w-full min-h-screen">
       <h2 className="text-2xl font-bold mb-4 text-center">Declare Result</h2>
 
-      {/* Declare Result Form */}
       <div className="bg-white p-4 shadow-md rounded-lg flex flex-wrap gap-4 items-center justify-between">
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Result Date</label>
@@ -270,47 +239,24 @@ const DeclareResult = () => {
           >
             <option value="">- Please Select Game -</option>
             {gameOptions.map((game, index) => (
-              <option key={index} value={game}>{game}</option>
+              <option key={index} value={game}>
+                {game}
+              </option>
             ))}
           </select>
         </div>
-        <div className="w-full sm:w-auto">
-          <label className="font-semibold block">Panna</label>
-          <div className="flex items-center gap-2">
-            {pannaInputMode ? (
-              <input
-                type="text"
-                className="border px-3 py-2 rounded w-full"
-                value={panna}
-                onChange={handlePannaChange}
-                maxLength={3}
-                placeholder="Enter 3-digit panna"
-              />
-            ) : (
-              <select
-                className="border px-3 py-2 rounded w-full"
-                value={panna}
-                onChange={handlePannaChange}
-              >
-                <option value="">- Select Panna -</option>
-                {Object.entries(pannaOptions).map(([digit, pannas]) => (
-                  <optgroup key={digit} label={`Digit ${digit}`}>
-                    {pannas.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            )}
-            <button
-              onClick={togglePannaInputMode}
-              className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm"
-              title={pannaInputMode ? "Switch to dropdown" : "Switch to manual input"}
-            >
-              {pannaInputMode ? "▼" : "⌨"}
-            </button>
-          </div>
-        </div>
+        <select
+          className="border px-3 py-2 rounded w-full sm:w-auto"
+          value={panna}
+          onChange={handlePannaChange}
+        >
+          <option value="">- Select Panna -</option>
+          {pannaOptionsList.map((p, index) => (
+            <option key={index} value={p.num}>
+              {p.num}
+            </option>
+          ))}
+        </select>
 
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Digit</label>
@@ -323,7 +269,7 @@ const DeclareResult = () => {
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Show Winners & Declare Result Buttons */}
       <div className="mt-6 flex gap-4">
         <button
           onClick={handleDeclareResult}
@@ -340,20 +286,18 @@ const DeclareResult = () => {
         </button>
       </div>
 
-      {/* Winning History Section */}
+
+
+      {/* Bid History Section */}
       <div className="mt-6 bg-white p-4 shadow-md rounded-lg">
         <h3 className="text-lg font-semibold mb-3">Winning History</h3>
         <div className="flex justify-between mb-2">
           <div>
             Show
-            <select
-              className="border px-2 py-1 mx-2 rounded"
-              value={entriesPerPage}
-              onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-            >
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
+            <select className="border px-2 py-1 mx-2 rounded">
+              <option>10</option>
+              <option>25</option>
+              <option>50</option>
             </select>
             entries
           </div>
@@ -382,7 +326,9 @@ const DeclareResult = () => {
             <tbody>
               {bidHistoryData.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="text-center py-4">No data available in table</td>
+                  <td colSpan="6" className="text-center py-4">
+                    No data available in table
+                  </td>
                 </tr>
               ) : (
                 bidHistoryData.map((bid, index) => (
@@ -425,7 +371,7 @@ const DeclareResult = () => {
             value={gameResultDate}
             onChange={(e) => {
               setGameResultDate(e.target.value);
-              setCurrentPage(1);
+              setCurrentPage(1); // Reset pagination when date changes
             }}
           />
         </div>
@@ -457,7 +403,7 @@ const DeclareResult = () => {
           />
         </div>
 
-        {/* Game Result Table */}
+        {/* Game Result History Table */}
         {loadingGameResult ? (
           <p className="text-center">Loading game results...</p>
         ) : (
@@ -477,11 +423,11 @@ const DeclareResult = () => {
               <tbody>
                 {paginatedResults.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-4">No game results found.</td>
+                    <td colSpan="6" className="text-center py-4">No game results found.</td>
                   </tr>
                 ) : (
                   paginatedResults.map((result, index) => (
-                    <tr key={result.id || index} className="border-b">
+                    <tr key={index} className="border-b">
                       <td className="py-2 px-4 border">
                         {(currentPage - 1) * entriesPerPage + index + 1}
                       </td>
