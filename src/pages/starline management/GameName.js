@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Switch, message, Spin, Input, Select } from "antd";
+import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
 import EditGameModal from "./EditGameModal";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import moment from "moment";
 
 const { Option } = Select;
 
@@ -19,13 +20,24 @@ const GameName = () => {
   const [filterStatus, setFilterStatus] = useState("all"); // Filter state
   const [pageSize, setPageSize] = useState(5); // Entries state
 
+  // Function to sort games by close_time
+  const sortGamesByTime = (gamesList) => {
+    return [...gamesList].sort((a, b) => {
+      const timeA = moment(a.close_time, "hh:mm A");
+      const timeB = moment(b.close_time, "hh:mm A");
+      return timeA.diff(timeB);
+    });
+  };
+
   // Fetch game list
   const fetchGameList = async () => {
     try {
       const response = await instance.get(`/api/starline/getGameList`);
       if (response.data.success) {
-        setGames(response.data.data);
-        setFilteredGames(response.data.data); // Initialize filtered list
+        // Sort the games by close time immediately after fetching
+        const sortedGames = sortGamesByTime(response.data.data);
+        setGames(sortedGames);
+        setFilteredGames(sortedGames); // Initialize filtered list with sorted data
       } else {
         throw new Error("Failed to fetch game list");
       }
@@ -53,7 +65,6 @@ const GameName = () => {
   };
 
   // Function to filter games based on search and status.
-  // Accept an optional gamesData parameter (defaulting to the current games state)
   const filterGames = (search, status, gamesData = games) => {
     let updatedGames = gamesData;
 
@@ -111,6 +122,8 @@ const GameName = () => {
         setGames(updatedGames);
         filterGames(searchTerm, filterStatus, updatedGames);
         toast.success("Game deleted successfully.");
+      } else {
+        toast.error(response.data.message || "Failed to delete game.");
       }
     } catch (error) {
       toast.error("Error deleting game.");
@@ -119,19 +132,25 @@ const GameName = () => {
     }
   };
 
+  // Handler for adding a new game
+  const handleGameAdded = (newGame) => {
+    // Create a new array with the new game
+    const updatedGames = [...games, newGame];
+    // Sort the new array by time
+    const sortedGames = sortGamesByTime(updatedGames);
+    setGames(sortedGames);
+    // Re-apply filters to the newly sorted list
+    filterGames(searchTerm, filterStatus, sortedGames);
+    // toast.success("Game added successfully!");
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-md rounded-md">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Game Schedule
       </h2>
       {/* Add Game Component */}
-      <AddGame
-        onGameAdded={(newGame) => {
-          const newGames = [...games, newGame];
-          setGames(newGames);
-          filterGames(searchTerm, filterStatus, newGames);
-        }}
-      />
+      <AddGame onGameAdded={handleGameAdded} />
 
       {/* Search, Filter & Entries Options */}
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 mb-4">
@@ -215,15 +234,21 @@ const GameName = () => {
                 >
                   Edit
                 </Button>
-                <Button
-                  type="primary"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => deleteGame(record._id)}
-                  loading={loadingAction === `delete-${record._id}`}
+                <Popconfirm
+                  title="Are you sure to delete this game?"
+                  onConfirm={() => deleteGame(record._id)}
+                  okText="Yes"
+                  cancelText="No"
                 >
-                  Delete
-                </Button>
+                  <Button
+                    type="primary"
+                    danger
+                    icon={<DeleteOutlined />}
+                    loading={loadingAction === `delete-${record._id}`}
+                  >
+                    Delete
+                  </Button>
+                </Popconfirm>
               </div>
               
               ),
