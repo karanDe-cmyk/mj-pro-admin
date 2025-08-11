@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { TimePicker, Switch, Button, message } from "antd";
+import { TimePicker, Switch, Button } from "antd";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import instance from "../utils/axiosInstance";
 
 const AddGame = ({ onGameAdded }) => {
@@ -26,16 +28,21 @@ const AddGame = ({ onGameAdded }) => {
   const handleAddMarket = async () => {
     try {
       if (!formData.marketOpenTime || !formData.marketCloseTime) {
-        message.error("Please select both open and close times.");
+        toast.error("Please select both open and close times.");
         return;
       }
 
-      const formattedOpenTime = formData.marketOpenTime.format("hh:mm A");
-      const formattedCloseTime = formData.marketCloseTime.format("hh:mm A");
+      // Check if `format` method is available on the Antd TimePicker value
+      const formattedOpenTime = formData.marketOpenTime?.format("hh:mm A");
+      const formattedCloseTime = formData.marketCloseTime?.format("hh:mm A");
+
+      if (!formattedOpenTime || !formattedCloseTime) {
+        toast.error("Invalid time format. Please select a valid time.");
+        return;
+      }
 
       const url = `/api/starline/addGameList`;
-      // console.log("Sending POST request to:", url);
-
+      
       const response = await instance.post(url, {
         game_name: formattedOpenTime,
         close_time: formattedCloseTime,
@@ -43,7 +50,7 @@ const AddGame = ({ onGameAdded }) => {
       });
 
       if (response.data.success) {
-        message.success("Game added successfully!");
+        toast.success("Game added successfully!");
 
         // Send the new game data to parent component (GameSchedule)
         onGameAdded({
@@ -60,16 +67,17 @@ const AddGame = ({ onGameAdded }) => {
           isMarketActive: false,
         });
       } else {
-        message.error("Failed to add game.");
+        toast.error(response.data.message || "Failed to add game.");
       }
     } catch (error) {
       console.error("Error adding game:", error);
-      message.error("Error adding game. Please try again.");
+      toast.error("Error adding game. Please try again.");
     }
   };
 
   return (
     <div className="mb-6 p-4 bg-white rounded-md shadow-md">
+      <ToastContainer />
       <h2 className="text-lg font-bold mb-4">Add Game</h2>
       <div className="flex flex-wrap items-center gap-4">
         {/* Game Name (Open Time) */}
@@ -79,7 +87,7 @@ const AddGame = ({ onGameAdded }) => {
             use12Hours
             format="hh:mm A"
             value={formData.marketOpenTime}
-            onChange={(time, timeString) => handleTimeChange(time, timeString, "marketOpenTime")}
+            onChange={(time) => handleTimeChange(time, null, "marketOpenTime")}
             className="w-full"
           />
         </div>
@@ -91,7 +99,7 @@ const AddGame = ({ onGameAdded }) => {
             use12Hours
             format="hh:mm A"
             value={formData.marketCloseTime}
-            onChange={(time, timeString) => handleTimeChange(time, timeString, "marketCloseTime")}
+            onChange={(time) => handleTimeChange(time, null, "marketCloseTime")}
             className="w-full"
           />
         </div>

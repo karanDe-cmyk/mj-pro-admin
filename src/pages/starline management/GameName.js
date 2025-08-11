@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm } from "antd";
+import { Table, Button, Switch, message, Spin, Input, Select } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
 import EditGameModal from "./EditGameModal";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const { Option } = Select;
 
@@ -108,10 +110,10 @@ const GameName = () => {
         const updatedGames = games.filter((game) => game._id !== gameId);
         setGames(updatedGames);
         filterGames(searchTerm, filterStatus, updatedGames);
-        message.success("Game deleted successfully.");
+        toast.success("Game deleted successfully.");
       }
     } catch (error) {
-      message.error("Error deleting game.");
+      toast.error("Error deleting game.");
     } finally {
       setLoadingAction(null);
     }
@@ -122,7 +124,6 @@ const GameName = () => {
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Game Schedule
       </h2>
-
       {/* Add Game Component */}
       <AddGame
         onGameAdded={(newGame) => {
