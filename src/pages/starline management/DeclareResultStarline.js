@@ -14,6 +14,7 @@ const DeclareResult = () => {
   const [deletingBid, setDeletingBid] = useState(null);
   const [declaring, setDeclaring] = useState(false);
   const [deletingResultId, setDeletingResultId] = useState(null);
+  const [pannaInputMode, setPannaInputMode] = useState(false);
 
   // States for Game Result History section
   const [gameResultHistory, setGameResultHistory] = useState([]);
@@ -25,6 +26,20 @@ const DeclareResult = () => {
     const today = new Date();
     return today.toISOString().substr(0, 10);
   });
+
+  // Panna options data
+  const pannaOptions = {
+    0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "550"],
+    1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
+    2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
+    3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
+    4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
+    5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
+    6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
+    7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
+    8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
+    9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
+  };
 
   // Fetch game list
   useEffect(() => {
@@ -81,21 +96,44 @@ const DeclareResult = () => {
 
   // Handle panna change
   const handlePannaChange = (e) => {
-    const selectedPanna = e.target.value;
-    setPanna(selectedPanna);
+    const value = e.target.value;
 
-    if (selectedPanna.length === 3) {
-      const sum = selectedPanna
-        .split("")
-        .reduce((acc, num) => acc + parseInt(num, 10), 0);
+    // If selecting from dropdown
+    if (Object.values(pannaOptions).flat().includes(value)) {
+      setPanna(value);
+      // Calculate digit
+      const sum = value.split('').reduce((acc, num) => acc + parseInt(num, 10), 0);
       setDigit(sum % 10);
-    } else {
+      setPannaInputMode(false);
+    }
+    // If typing manually
+    else if (/^\d{0,3}$/.test(value)) {
+      setPanna(value);
+      if (value.length === 3) {
+        const sum = value.split('').reduce((acc, num) => acc + parseInt(num, 10), 0);
+        setDigit(sum % 10);
+      } else {
+        setDigit("");
+      }
+    }
+  };
+
+  // Toggle between input and select mode
+  const togglePannaInputMode = () => {
+    setPannaInputMode(!pannaInputMode);
+    if (!pannaInputMode) {
+      setPanna(""); // Clear when switching to input mode
       setDigit("");
     }
   };
 
   // Show winners
   const handleDeclareResult = async () => {
+    if (!date || !selectedGame || !panna || !digit) {
+      alert("Please fill all fields before showing winners.");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = { date: formatDate(date), gamename: selectedGame, panna, digit };
@@ -103,6 +141,7 @@ const DeclareResult = () => {
       setBidHistoryData(response.data.results || []);
     } catch (error) {
       console.error("Error fetching bid history:", error);
+      alert("Error fetching bid history. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -112,6 +151,11 @@ const DeclareResult = () => {
   const handleSubmitResult = async () => {
     if (!date || !selectedGame || !panna || !digit) {
       alert("Please fill all fields before declaring the result.");
+      return;
+    }
+
+    if (panna.length !== 3) {
+      alert("Panna must be 3 digits");
       return;
     }
 
@@ -168,13 +212,11 @@ const DeclareResult = () => {
 
   const handleDeleteGameResult = async (resultId) => {
     if (!window.confirm("Are you sure you want to delete this game result?")) return;
-    console.log(resultId);
+    setDeletingResultId(resultId);
     try {
       const response = await axiosInstance.delete(`/api/starline/delete-game-result/${resultId}`);
-      console.log(response.data.success)
       if (response.data.success) {
         alert("Game result deleted successfully");
-        // Refresh the game result history
         fetchGameResultHistory();
       } else {
         alert("Failed to delete game result");
@@ -182,12 +224,13 @@ const DeclareResult = () => {
     } catch (error) {
       console.error("Error deleting game result:", error);
       alert("Error occurred while deleting game result");
+    } finally {
+      setDeletingResultId(null);
     }
   };
 
-
   // Filter game result history by the selected gameResultDate and search text
-  const formattedGameResultDate = formatDate(gameResultDate); // "DD-MM-YYYY"
+  const formattedGameResultDate = formatDate(gameResultDate);
   const filteredGameResults = gameResultHistory.filter((result) =>
     result.date === formattedGameResultDate &&
     (
@@ -195,13 +238,13 @@ const DeclareResult = () => {
       (result.panna && result.panna.toLowerCase().includes(searchGameResult.toLowerCase())) ||
       result.digit.toString().includes(searchGameResult) ||
       result.date.includes(searchGameResult)
-    )
-  );
+    ));
 
   const paginatedResults = filteredGameResults.slice(
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage
   );
+
 
   return (
     <div className="p-4 w-full min-h-screen">
@@ -231,48 +274,43 @@ const DeclareResult = () => {
             ))}
           </select>
         </div>
-       <div className="w-full sm:w-auto">
-  <label className="font-semibold block">Panna</label>
-  <select
-    className="border px-3 py-2 rounded w-full sm:w-auto"
-    value={panna}
-    onChange={handlePannaChange}
-    onInput={(e) => {
-      const value = e.target.value;
-      if (/^\d{0,3}$/.test(value)) {
-        setPanna(value);
-        if (value.length === 3) {
-          const sum = value.split('').reduce((acc, num) => acc + parseInt(num, 10), 0);
-          setDigit(sum % 10);
-        } else {
-          setDigit("");
-        }
-      }
-    }}
-  >
-    <option value="">- Select or Type Panna -</option>
-    <option value="000">000</option>
-    {Object.entries({
-      0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "550"],
-      1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
-      2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
-      3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
-      4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
-      5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
-      6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
-      7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
-      8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
-      9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
-    }).map(([digit, pannas]) => (
-      <optgroup key={digit} label={`Digit ${digit}`}>
-        {pannas.map(panna => (
-          <option key={panna} value={panna}>{panna}</option>
-        ))}
-      </optgroup>
-    ))}
-  </select>
-</div>
-       
+        <div className="w-full sm:w-auto">
+          <label className="font-semibold block">Panna</label>
+          <div className="flex items-center gap-2">
+            {pannaInputMode ? (
+              <input
+                type="text"
+                className="border px-3 py-2 rounded w-full"
+                value={panna}
+                onChange={handlePannaChange}
+                maxLength={3}
+                placeholder="Enter 3-digit panna"
+              />
+            ) : (
+              <select
+                className="border px-3 py-2 rounded w-full"
+                value={panna}
+                onChange={handlePannaChange}
+              >
+                <option value="">- Select Panna -</option>
+                {Object.entries(pannaOptions).map(([digit, pannas]) => (
+                  <optgroup key={digit} label={`Digit ${digit}`}>
+                    {pannas.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={togglePannaInputMode}
+              className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm"
+              title={pannaInputMode ? "Switch to dropdown" : "Switch to manual input"}
+            >
+              {pannaInputMode ? "▼" : "⌨"}
+            </button>
+          </div>
+        </div>
 
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Digit</label>
