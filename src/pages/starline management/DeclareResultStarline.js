@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../../utils/axiosInstance"; // Import the axios instance
+import axiosInstance from "../../utils/axiosInstance";
 
 const DeclareResult = () => {
   // States for Declare Result section
@@ -75,21 +75,6 @@ const DeclareResult = () => {
     const year = d.getFullYear();
     return `${day}-${month}-${year}`;
   };
-
-  // Generate all panna values
-  const pannaOptionsList = Array.from({ length: 900 }, (_, i) => {
-    const num = i + 100; // start from 100
-    const digits = String(num).split("").map(Number);
-    const sum = digits.reduce((a, b) => a + b, 0) % 10; // sum % 10
-    return { num, sum };
-  });
-
-  // Sort first by sum, then numerically inside each sum group
-  pannaOptionsList.sort((a, b) => {
-    if (a.sum === b.sum) return a.num - b.num;
-    return a.sum - b.sum;
-  });
-
 
   // Handle panna selection and auto-calculate digit
   const handlePannaChange = (e) => {
@@ -245,18 +230,19 @@ const DeclareResult = () => {
             ))}
           </select>
         </div>
-        <select
-          className="border px-3 py-2 rounded w-full sm:w-auto"
-          value={panna}
-          onChange={handlePannaChange}
-        >
-          <option value="">- Select Panna -</option>
-          {pannaOptionsList.map((p, index) => (
-            <option key={index} value={p.num}>
-              {p.num}
-            </option>
-          ))}
-        </select>
+
+        {/* Manual Panna Input Field */}
+        <div className="w-full sm:w-auto">
+          <label className="font-semibold block">Panna</label>
+          <input
+            type="text"
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            placeholder="Enter Panna"
+            value={panna}
+            onChange={handlePannaChange}
+            maxLength="3" // Limit to 3 digits for panna
+          />
+        </div>
 
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Digit</label>
@@ -438,7 +424,7 @@ const DeclareResult = () => {
                       <td className="py-2 px-4 border">{result.date}</td>
                       <td className="py-2 px-4 border">
                         <button
-                          onClick={() => handleDeleteGameResult(result.id)} // Assuming result has an 'id' field
+                          onClick={() => handleDeleteGameResult(result.id)}
                           className="bg-red-500 text-white px-3 py-1 rounded"
                         >
                           Delete
