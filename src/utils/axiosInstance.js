@@ -6,8 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 const instance = axios.create({
   // baseURL :'https://maya-api.kglame.com'
   // baseURL: "https://matkabar-api.kglame.com"
-  baseURL: window.ENV?.API_URL,
-  // baseURL: "http://localhost:5002"
+  // baseURL: window.ENV?.API_URL,
+  baseURL: "http://localhost:5002"
 });
 
 let isRedirecting = false;
