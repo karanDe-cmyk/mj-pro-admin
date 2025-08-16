@@ -11,7 +11,7 @@ firebase.initializeApp({
   messagingSenderId: "737983359377",
   appId: "1:737983359377:web:826deb3067781500fc1230",
   measurementId: "G-YZJ4FBPDB0",
-  databaseURL: "https://matka-notification-default-rtdb.firebaseio.com/"
+  databaseURL: "https://matka-notification-default-rtdb.firebaseio.com",
 });
 
 const messaging = firebase.messaging();
