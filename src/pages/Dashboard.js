@@ -1129,9 +1129,9 @@ const Dashboard = () => {
                           Rs {dashboardData2.totalBidAmount || 0}
                         </span>
                       </Col>
-                      <Col>
+                      {/* <Col>
                         <Button type="primary">View</Button>
-                      </Col>
+                      </Col> */}
                     </Row>
                   </div>
                 </Col>
@@ -1144,9 +1144,9 @@ const Dashboard = () => {
                           Rs {dashboardData2.totalWinAmount || 0}
                         </span>
                       </Col>
-                      <Col>
+                      {/* <Col>
                         <Button type="primary">View</Button>
-                      </Col>
+                      </Col> */}
                     </Row>
                   </div>
                 </Col>
@@ -1534,11 +1534,17 @@ const Dashboard = () => {
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
                 const hue = 36 * ank;
                 const color = `hsl(${hue}, 60%, 50%)`;
-                const digitData = dashboardData[ank] || { totalUsers: 0, totalAmount: 0 };
+
+                // Check if dashboardData exists and has the digit data
+                const digitData = dashboardData[ank] || {
+                  totalUsers: 0,
+                  totalAmount: 0
+                };
+
                 return (
                   <div className="card" key={ank} style={{ borderColor: color }}>
-                    <p className="card-text mt-2">Today Bids {digitData.totalUsers}</p>
-                    <h4 className="card-title">{digitData.totalAmount}</h4>
+                    <p className="card-text mt-2">Today Bids: {digitData.totalUsers || 0}</p>
+                    <h4 className="card-title">₹{digitData.totalAmount || 0}</h4>
                     <span className="font-bold">Total Bid Amount</span>
                     <button className="card-btn" style={{ backgroundColor: color }}>
                       Ank {ank}
