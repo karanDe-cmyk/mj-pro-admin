@@ -58,6 +58,7 @@ import JackpotBidRevert from './pages/Jackpot/Jackpotbidrevert';
 import GaliDisawarBidRevert from './pages/GalidisawerGames/Galidisawarbidrevert';
 import StarlineRevert from './pages/starline management/Starlinebidrevert';
 import FCM from './pages/setting/FCM';
+import AutoWithdrawalHistory from './pages/AutoWithdrawalHistory'
 import axiosInstance from './utils/axiosInstance'
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -185,6 +186,7 @@ const App = () => {
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
+            <Route path="auto-withdrawal-history" element={<AutoWithdrawalHistory />} />
             <Route path="bidrevert" element={<Bidrevert />} />
 
           </Route>

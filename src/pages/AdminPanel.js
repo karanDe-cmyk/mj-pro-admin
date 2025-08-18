@@ -115,6 +115,12 @@ const AdminPanel = () => {
       icon: <i className="fa fa-history" />,
     },
     {
+      key: "auto-withdrawal-history",
+      label: "Auto Withdrawal History",
+      path: "/admin/auto-withdrawal-history",
+      icon: <i className="fa fa-exchange" />,
+    },
+    {
       key: "wallet-management",
       label: "Wallet Management",
       icon: <i className="fa fa-wallet" />,
