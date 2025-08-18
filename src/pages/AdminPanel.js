@@ -225,18 +225,18 @@ const AdminPanel = () => {
         { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
       ],
     },
-    {
-      key: "Jackpot-games",
-      label: "Jackpot Games",
-      icon: <i className="fa fa-dice" />,
-      children: [
-        { key: "jackpot-game-name", label: "Game Name", path: "/admin/jackpot-games/jackpot-game-list" },
-        { key: "jackpot-bid-history", label: "Bid History", path: "/admin/jackpot-games/jackpot-bid-history" },
-        { key: "jackpot-declare-results", label: "Declare Results", path: "/admin/jackpot-games/jackpot-declare-result" },
-        { key: "jackpot-game-rates", label: "Game Rates", path: "/admin/jackpot-games/jackpot-game-rates" },
-        { key: "jackpot-bid-revert", label: " Jackpot Bid Revert", path: "/admin/jackpot-games/jackpot-bid-revert" },
-      ],
-    },
+    // {
+    //   key: "Jackpot-games",
+    //   label: "Jackpot Games",
+    //   icon: <i className="fa fa-dice" />,
+    //   children: [
+    //     { key: "jackpot-game-name", label: "Game Name", path: "/admin/jackpot-games/jackpot-game-list" },
+    //     { key: "jackpot-bid-history", label: "Bid History", path: "/admin/jackpot-games/jackpot-bid-history" },
+    //     { key: "jackpot-declare-results", label: "Declare Results", path: "/admin/jackpot-games/jackpot-declare-result" },
+    //     { key: "jackpot-game-rates", label: "Game Rates", path: "/admin/jackpot-games/jackpot-game-rates" },
+    //     { key: "jackpot-bid-revert", label: " Jackpot Bid Revert", path: "/admin/jackpot-games/jackpot-bid-revert" },
+    //   ],
+    // },
     {
       key: "notice-management",
       label: "Notice Management",
