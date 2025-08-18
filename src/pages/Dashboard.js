@@ -1239,7 +1239,7 @@ const Dashboard = () => {
                     }}
                   >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Players (Today)</span>
+                      <span style={{ fontWeight: "bold" }}>Games (Today)</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         {totalGames.totalGameCount ?? "Failed to fetch"}
                       </div>

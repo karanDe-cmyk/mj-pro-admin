@@ -8,8 +8,8 @@ const firebaseConfig = {
     projectId: "matka-notification",
     storageBucket: "matka-notification.firebasestorage.app",
     messagingSenderId: "737983359377",
-    appId: "1:737983359377:web:c73c3d7c4d91d0c8fc1230",
-    measurementId: "G-SSYR918K19"
+    appId: "1:737983359377:web:9c1599fe814ec4affc1230",
+    measurementId: "G-EVVVDGB5CC"
 };
 
 export const app = initializeApp(firebaseConfig);
