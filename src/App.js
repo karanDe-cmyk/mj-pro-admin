@@ -59,6 +59,8 @@ import GaliDisawarBidRevert from './pages/GalidisawerGames/Galidisawarbidrevert'
 import StarlineRevert from './pages/starline management/Starlinebidrevert';
 import FCM from './pages/setting/FCM';
 import axiosInstance from './utils/axiosInstance'
+import NotificationSender from './pages/Custom-Notification'
+
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
@@ -185,6 +187,7 @@ const App = () => {
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
+            <Route path="custom-notification" element={<NotificationSender />} />
             <Route path="bidrevert" element={<Bidrevert />} />
 
           </Route>

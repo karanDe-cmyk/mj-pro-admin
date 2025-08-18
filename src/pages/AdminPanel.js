@@ -258,6 +258,12 @@ const AdminPanel = () => {
       path: "/admin/bidrevert",
       icon: <i className="fa fa-history" />,
     },
+    {
+      key: "custom-notification",
+      label: "Custom Notification",
+      path: "/admin/custom-notification",
+      icon: <i className="fa fa-history" />,
+    },
   ];
 
   // Determine selected keys based on the location
