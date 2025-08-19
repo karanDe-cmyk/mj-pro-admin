@@ -6,11 +6,11 @@ import { Spin, message } from "antd";
 const groups = [
   {
     groupLabel: "Single Digit",
-    subKeys: ["singleDigits", "singleDigitsBulk", "spMotor", "oddEven"],
+    subKeys: ["singleDigits", "singleDigitsBulk", "oddEven"],
   },
   {
     groupLabel: "Single Pana",
-    subKeys: ["singlePana", "choicePannaSpDp", "singlePanaBulk"],
+    subKeys: ["singlePana", "choicePannaSpDp", "singlePanaBulk", "spMotor"],
   },
   {
     groupLabel: "Double Pana",
