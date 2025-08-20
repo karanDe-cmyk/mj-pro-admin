@@ -23,6 +23,7 @@ const AllBidHistory = () => {
 
   const gameTypeList = [
     "singleDigits",
+    "singleDigitsBulk",
     "jodi",
     "halfSangamA",
     "singlePana",
@@ -168,7 +169,7 @@ const AllBidHistory = () => {
 
     // Categorize game types
     const categories = {
-      "Single Ank": ["singleDigits", "oddEven"],
+      "Single Ank": ["singleDigits", "oddEven", "singleDigitsBulk"],
       "Jodi": ["jodi", "digitBasedJodi", "groupJodi"],
       "Single Pana": ["singlePana", "singlePanaBulk", "spMotor"],
       "Double Pana": ["doublePanaBulk", "dpMotor", "doublePana"],
