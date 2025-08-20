@@ -51,17 +51,7 @@ const GameRate = () => {
       if (response.data) {
         const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
         setRates(filteredData);
-
-        // Prepare displayRates (value fields * 10)
-        const transformed = {};
-        for (const key in filteredData) {
-          if (key.endsWith("Value")) {
-            transformed[key] = filteredData[key] * 10;
-          } else {
-            transformed[key] = filteredData[key];
-          }
-        }
-        setDisplayRates(transformed);
+        setDisplayRates(filteredData); // Use the same data for display
       }
     } catch (error) {
       console.error("Error fetching bet rates:", error);
@@ -73,16 +63,20 @@ const GameRate = () => {
 
   const handleGroupInputChange = (group, field, e) => {
     const { value } = e.target;
+    // Convert to number, but handle empty strings
+    const numericValue = value === "" ? "" : Number(value);
+    
     const updatedRates = { ...rates };
     const updatedDisplayRates = { ...displayRates };
 
     group.subKeys.forEach((key) => {
       if (field === "rate") {
-        updatedRates[key] = value;
-        updatedDisplayRates[key] = value;
+        updatedRates[key] = numericValue;
+        updatedDisplayRates[key] = numericValue;
       } else if (field === "value") {
-        updatedRates[key + "Value"] = value / 10;
-        updatedDisplayRates[key + "Value"] = value;
+        const valueKey = key + "Value";
+        updatedRates[valueKey] = numericValue;
+        updatedDisplayRates[valueKey] = numericValue;
       }
     });
 
@@ -93,16 +87,20 @@ const GameRate = () => {
   const handleUpdate = async () => {
     try {
       setUpdating(true);
-      const transformedRates = { ...rates };
-      for (const key in transformedRates) {
-        if (key.endsWith("Value")) {
-          transformedRates[key] = transformedRates[key];
+      
+      // Convert all values to numbers before sending
+      const transformedRates = {};
+      for (const key in rates) {
+        if (rates[key] === "" || rates[key] === null || rates[key] === undefined) {
+          transformedRates[key] = 0; // Set default value if empty
+        } else {
+          transformedRates[key] = Number(rates[key]);
         }
       }
+      
       await axios.put(`/api/rates/updateBetRates`, transformedRates);
       fetchBetRates();
       message.success("Rates updated successfully!");
-      alert("Rates updated successfully!");
     } catch (error) {
       console.error("Error updating bet rates:", error);
       alert("Failed to update rates!");
@@ -130,8 +128,9 @@ const GameRate = () => {
                   </label>
                   <input
                     type="number"
+                    step="0.01"
                     name={group.subKeys[0]}
-                    value={displayRates[group.subKeys[0]] || ""}
+                    value={displayRates[group.subKeys[0]] ?? ""}
                     onChange={(e) => handleGroupInputChange(group, "rate", e)}
                     className="border border-gray-300 rounded-md p-2 text-sm"
                   />
@@ -145,8 +144,9 @@ const GameRate = () => {
                     <span className="px-2 text-lg">₹</span>
                     <input
                       type="number"
+                      step="0.01"
                       name={group.subKeys[0] + "Value"}
-                      value={displayRates[group.subKeys[0] + "Value"] || ""}
+                      value={displayRates[group.subKeys[0] + "Value"] ?? ""}
                       onChange={(e) => handleGroupInputChange(group, "value", e)}
                       className="p-2 text-sm flex-1 outline-none"
                     />
