@@ -2,12 +2,30 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { Pagination } from "antd";
 
+// --- Helper functions to categorize panna ---
+const isSinglePana = (digit) => {
+  const s = digit.toString().split('').sort();
+  return new Set(s).size === 3;
+};
+
+const isDoublePana = (digit) => {
+  const s = digit.toString().split('').sort();
+  // Check if exactly two digits are the same.
+  return (s[0] === s[1] && s[1] !== s[2]) || (s[1] === s[2] && s[1] !== s[0]);
+};
+
+const isTriplePana = (digit) => {
+  const s = digit.toString().split('');
+  // Check if all three digits are the same.
+  return new Set(s).size === 1;
+};
+
 const AllBidHistory = () => {
   const [search, setSearch] = useState("");
   const [gameTypeSearch, setGameTypeSearch] = useState("");
   const [entries, setEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [bidStatusFilter, setBidStatusFilter] = useState("all"); // New state for status filter
+  const [bidStatusFilter, setBidStatusFilter] = useState("all");
 
   const [bidHistoryData, setBidHistoryData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -139,7 +157,6 @@ const AllBidHistory = () => {
   };
 
   const handleShareOnWhatsApp = () => {
-    // Filter by status (open/close) if selected
     let statusFilteredData = filteredData;
     if (bidStatusFilter === "open") {
       statusFilteredData = filteredData.filter(bid => bid.open);
@@ -156,9 +173,24 @@ const AllBidHistory = () => {
       return;
     }
 
-    // Group bids by their game type
+    // Group bids by their game type, with special handling for spDpTp
     const groupedBids = validBids.reduce((acc, bid) => {
-      const type = bid.gameType.trim();
+      let type = bid.gameType.trim();
+
+      // Special logic for spDpTp to categorize it
+      if (type === "spDpTp") {
+        if (isSinglePana(bid.digit)) {
+          type = "Single Pana"; // Change gameType to the category name
+        } else if (isDoublePana(bid.digit)) {
+          type = "Double Pana"; // Change gameType to the category name
+        } else if (isTriplePana(bid.digit)) {
+          type = "Triple Pana";
+        } else {
+          // Fallback to "Other" if it doesn't match any panna type
+          type = "Other";
+        }
+      }
+
       if (!acc[type]) acc[type] = [];
       acc[type].push({
         digit: bid.digit.toString().trim(),
@@ -171,12 +203,13 @@ const AllBidHistory = () => {
     const categories = {
       "Single Ank": ["singleDigits", "oddEven", "singleDigitsBulk"],
       "Jodi": ["jodi", "digitBasedJodi", "groupJodi"],
-      "Single Pana": ["singlePana", "singlePanaBulk", "spMotor"],
-      "Double Pana": ["doublePanaBulk", "dpMotor", "doublePana"],
+      "Single Pana": ["singlePana", "singlePanaBulk", "spMotor", "Single Pana"],
+      "Double Pana": ["doublePanaBulk", "dpMotor", "doublePana", "Double Pana"],
+      "Triple Pana": ["Triple Pana"],
       "Half Sangam": ["halfSangamA"],
       "Full Sangam": ["fullSangam"],
       "Panel Group": ["panelGroup", "twoDigitsPanel", "twoDigitsPane"],
-      "Other": ["redBracket", "spDpTp"]
+      "Other": ["redBracket", "Other"]
     };
 
     // Calculate totals for each category
