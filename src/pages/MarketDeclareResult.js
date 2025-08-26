@@ -355,9 +355,9 @@ const MarketDeclareResult = () => {
           const storedToken = localStorage.getItem("fcmToken");
 
           if (storedToken) {
-            console.log("Using FCM token:", storedToken);
+            // console.log("Using FCM token:", storedToken);
 
-            const notificationResponse = await instance.post('https://maya-api.kglame.com/api/notification', {
+            const notificationResponse = await instance.post('/api/notification', {
               token: storedToken, // send to backend
               market: values.marketGame,
               gameType: values.gameType,
