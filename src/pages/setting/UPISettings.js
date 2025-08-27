@@ -66,7 +66,7 @@ const UPISettings = () => {
     usertoken: "",
     minAmount: "",
     maxAmount: "",
-    status: "Inactive",
+    status: "Active",
   });
 
   const [loading, setLoading] = useState(false);
@@ -77,6 +77,11 @@ const UPISettings = () => {
   // Handle alert closure
   const handleAlertClose = () => {
     setAlert({ message: '', type: '' });
+  };
+
+  const normalizeStatus = (status) => {
+    if (!status) return "Active";
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   // Fetch all settings data on mount
@@ -97,7 +102,7 @@ const UPISettings = () => {
             upiPaytmId: upiDataResponse.upi_paytm_id || "",
             upiPhonePeId: upiDataResponse.upi_phonepay_id || "",
             upiGooglePayId: upiDataResponse.upi_googlepay_id || "",
-            status: upiDataResponse.status || "Active",
+            status: normalizeStatus(upiDataResponse.status),
           });
         }
 
@@ -111,7 +116,7 @@ const UPISettings = () => {
             usertoken: fbmDataResponse.usertoken || "",
             minAmount: fbmDataResponse.min_amount || "",
             maxAmount: fbmDataResponse.max_amount || "",
-            status: fbmDataResponse.status || "Inactive",
+            status: normalizeStatus(fbmDataResponse.status),
           });
         }
 
