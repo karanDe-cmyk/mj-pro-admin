@@ -61,6 +61,9 @@ import FCM from './pages/setting/FCM';
 import AutoWithdrawalHistory from './pages/AutoWithdrawalHistory'
 import axiosInstance from './utils/axiosInstance'
 import NotificationSender from './pages/Custom-Notification'
+import ManualDepositsHistory from "./pages/ManualDepositsHistory";
+import FundRequestsHistory from "./pages/FundRequestsHistory";
+import WithdrawalsHistory from "./pages/WithdrawalsHistory";
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -189,6 +192,9 @@ const App = () => {
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
             <Route path="auto-withdrawal-history" element={<AutoWithdrawalHistory />} />
+            <Route path="manual-deposits-history" element={<ManualDepositsHistory />} />
+            <Route path="fund-requests-history" element={<FundRequestsHistory />} />
+            <Route path="withdrawals-history" element={<WithdrawalsHistory />} />
             <Route path="custom-notification" element={<NotificationSender />} />
             <Route path="bidrevert" element={<Bidrevert />} />
 
