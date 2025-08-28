@@ -276,7 +276,7 @@ const MarketDeclareResult = () => {
 
   // const sendNotification = async () => {
   //   try {
-  //     const response = await axios.post("https://matkabar-api.kglame.com/api/notification/send-notification", {
+  //     const response = await axios.post("https://maya-api.kglame.com/api/notification/send-notification", {
   //       token: tokenform.token,
   //       title: tokenform.title,
   //       body: tokenform.body,
@@ -355,9 +355,9 @@ const MarketDeclareResult = () => {
           const storedToken = localStorage.getItem("fcmToken");
 
           if (storedToken) {
-            console.log("Using FCM token:", storedToken);
+            // console.log("Using FCM token:", storedToken);
 
-            const notificationResponse = await instance.post('https://matkabar-api.kglame.com/api/notification', {
+            const notificationResponse = await instance.post('/api/notification', {
               token: storedToken, // send to backend
               market: values.marketGame,
               gameType: values.gameType,
@@ -878,7 +878,10 @@ const MarketDeclareResult = () => {
                       ),
                     },
                   ]}
-                  dataSource={winners.jodiWinners.filter(w => !["twoDigitsPanel"].includes(w.gameType))}
+                  dataSource={winners.jodiWinners.filter(w =>
+                    ["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket",
+                      "halfSangamA", "halfSangamB", "fullSangam", "twoDigitsPanel"].includes(w.gameType)
+                  )}
                   rowKey="_id"
                 />
               </>
