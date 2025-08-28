@@ -19,6 +19,7 @@ import {
   AppstoreOutlined,
   DollarOutlined,
   FundOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
@@ -65,10 +66,10 @@ const Dashboard = () => {
   const [totalFundRequests, setTotalFundRequests] = useState(0);
   const [selectedGameType, setSelectedGameType] = useState("");
   const [loadingButton4, setLoadingButton4] = useState(false);
+  const [totalWalletBalance, setTotalWalletBalance] = useState(0); // New state variable
 
   const navigate = useNavigate();
 
-  // Handlers and Fetch functions (keep these as they are)
   const fetchLoginStats = async () => {
     try {
       const response = await instance.get("/api/session/admin/login-stats");
@@ -130,12 +131,33 @@ const Dashboard = () => {
 
   const fetchTotalUsers = async () => {
     try {
-      const response = await instance.get(`/api/app/users`);
-      setTotalUsers({ totalUsers: response.data.totalUsers || 0 });
-      setApprovedUsers({ approvedUsers: response.data.approvedUsers || 0 });
-      setUnApprovedUsers({ unapprovedUsers: response.data.unapprovedUsers || 0 });
+      // Fetch approved and unapproved users
+      const [approvedResponse, unapprovedResponse] = await Promise.all([
+        instance.get(`/api/auth/userStatus?status=true`),
+        instance.get(`/api/auth/userStatus?status=false`),
+      ]);
+
+      const approvedUsersList = approvedResponse.data || [];
+      const unapprovedUsersList = unapprovedResponse.data || [];
+
+      // Combine user lists
+      const allUsers = [...approvedUsersList, ...unapprovedUsersList];
+
+      // Calculate total wallet balance
+      const totalBalance = allUsers.reduce((sum, user) => sum + (user.walletBalance || 0), 0);
+      setTotalWalletBalance(totalBalance);
+
+      // Calculate and set user counts
+      setTotalUsers({ totalUsers: allUsers.length });
+      setApprovedUsers({ approvedUsers: approvedUsersList.length });
+      setUnApprovedUsers({ unapprovedUsers: unapprovedUsersList.length });
+
     } catch (error) {
       console.error("Error fetching user stats:", error);
+      setTotalUsers({ totalUsers: 0 });
+      setApprovedUsers({ approvedUsers: 0 });
+      setUnApprovedUsers({ unapprovedUsers: 0 });
+      setTotalWalletBalance(0);
     }
   };
 
@@ -478,7 +500,19 @@ const Dashboard = () => {
                   </div>
                 </Card>
               </Col>
-              {/* New Cards for counts with navigation */}
+              {/* New Card for Total Wallet Balance */}
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Wallet Balance</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalWalletBalance.toFixed(2)}</div>
+                    </div>
+                    <div><WalletOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#722ed1", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
+              {/* Other Cards for counts with navigation */}
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
                   <div onClick={() => navigate("/admin/auto-deposit-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
