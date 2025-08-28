@@ -20,6 +20,9 @@ import {
   DollarOutlined,
   FundOutlined,
   WalletOutlined,
+  DollarCircleOutlined,
+  TrophyOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
@@ -66,7 +69,7 @@ const Dashboard = () => {
   const [totalFundRequests, setTotalFundRequests] = useState(0);
   const [selectedGameType, setSelectedGameType] = useState("");
   const [loadingButton4, setLoadingButton4] = useState(false);
-  const [totalWalletBalance, setTotalWalletBalance] = useState(0); // New state variable
+  const [totalWalletBalance, setTotalWalletBalance] = useState(0);
 
   const navigate = useNavigate();
 
@@ -131,7 +134,6 @@ const Dashboard = () => {
 
   const fetchTotalUsers = async () => {
     try {
-      // Fetch approved and unapproved users
       const [approvedResponse, unapprovedResponse] = await Promise.all([
         instance.get(`/api/auth/userStatus?status=true`),
         instance.get(`/api/auth/userStatus?status=false`),
@@ -140,14 +142,11 @@ const Dashboard = () => {
       const approvedUsersList = approvedResponse.data || [];
       const unapprovedUsersList = unapprovedResponse.data || [];
 
-      // Combine user lists
       const allUsers = [...approvedUsersList, ...unapprovedUsersList];
 
-      // Calculate total wallet balance
       const totalBalance = allUsers.reduce((sum, user) => sum + (user.walletBalance || 0), 0);
       setTotalWalletBalance(totalBalance);
 
-      // Calculate and set user counts
       setTotalUsers({ totalUsers: allUsers.length });
       setApprovedUsers({ approvedUsers: approvedUsersList.length });
       setUnApprovedUsers({ unapprovedUsers: unapprovedUsersList.length });
@@ -411,45 +410,27 @@ const Dashboard = () => {
                   </Button>
                 </Col>
               </Row>
-              <Row>
-                <Col style={{ marginTop: "55px" }} span={24}>
-                  <div className="dashboard-card-inner">
-                    <Row className="dashboard-card-row">
-                      <Col className="dashboard-card-col">Total Bid Amount</Col>
-                      <Col>
-                        <span className="dashboard-card-value">
-                          Rs {dashboardData2.totalBidAmount || 0}
-                        </span>
-                      </Col>
-                    </Row>
-                  </div>
-                </Col>
-                <Col span={24}>
-                  <div className="dashboard-card-inner">
-                    <Row className="dashboard-card-row">
-                      <Col className="dashboard-card-col">Total Win Amount</Col>
-                      <Col>
-                        <span className="dashboard-card-value">
-                          Rs {dashboardData2.totalWinAmount || 0}
-                        </span>
-                      </Col>
-                    </Row>
-                  </div>
-                </Col>
-                <Col span={24}>
-                  <div className="dashboard-card-inner profit-card">
-                    <Row className="dashboard-card-row">
-                      <Col className="dashboard-card-col">Total Profit Amount</Col>
-                      <Col>
-                        <span className="dashboard-card-value">
-                          Rs {dashboardData2.totalProfitAmount || 0}
-                        </span>
-                      </Col>
-                    </Row>
-                  </div>
-                </Col>
-              </Row>
             </Card>
+            <Row style={{ marginTop: "20px" }} gutter={[16, 16]}>
+              <Col xs={24} sm={8}>
+                <Card bordered={false} style={{ textAlign: "center", backgroundColor: "#e6f7ff" }}>
+                  <Title level={4}>Total Bid Amount</Title>
+                  <Text strong>Rs {dashboardData2.totalBidAmount || 0}</Text>
+                </Card>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Card bordered={false} style={{ textAlign: "center", backgroundColor: "#f6ffed" }}>
+                  <Title level={4}>Total Win Amount</Title>
+                  <Text strong>Rs {dashboardData2.totalWinAmount || 0}</Text>
+                </Card>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Card bordered={false} style={{ textAlign: "center", backgroundColor: "#fff1e6" }}>
+                  <Title level={4}>Total Profit Amount</Title>
+                  <Text strong>Rs {dashboardData2.totalProfitAmount || 0}</Text>
+                </Card>
+              </Col>
+            </Row>
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>Update Market Refresh Time</Title>
               <Row gutter={16} align="middle">
