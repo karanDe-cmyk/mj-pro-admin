@@ -23,6 +23,7 @@ import {
   DollarCircleOutlined,
   TrophyOutlined,
   LineChartOutlined,
+  RiseOutlined
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
@@ -41,7 +42,6 @@ const Dashboard = () => {
   const [totalGames, setTotalGames] = useState({ totalGameCount: 0 });
   const [mainMarketGamesList, setMainMarketGamesList] = useState([]);
   const [selectedDate, setSelectedDate] = useState(dayjs().format("DD-MM-YYYY"));
-  const [selectedGame2, setSelectedGame2] = useState("");
   const [loadingButton, setLoadingButton] = useState(false);
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [loadingButton3, setLoadingButton3] = useState(false);
@@ -105,19 +105,16 @@ const Dashboard = () => {
     setSelectedDate(formattedDate);
   };
 
-  const handleGameChange2 = (value) => {
-    setSelectedGame2(value);
-  };
-
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedGame2) {
+    if (!selectedDate) {
       message.error("Please select both a date and a game name.");
       return;
     }
     try {
       setLoadingButton(true);
-      const requestBody = { gameName: selectedGame2, date: selectedDate };
+      const requestBody = { date: selectedDate };
       const response = await instance.post(`/api/mainmarketdeclareResult/get-total-winnings`, requestBody);
+      console.log("Total Winnings Response:", response.data);
       const { totalPoints, totalWinningPoints } = response.data;
       setDashboardData2({
         totalBidAmount: totalPoints,
@@ -388,17 +385,6 @@ const Dashboard = () => {
                     allowClear
                   />
                 </Col>
-                <Col span={24} style={{ marginTop: 10 }}>
-                  <Select
-                    placeholder="Select Game Name"
-                    style={{ width: "100%" }}
-                    onChange={handleGameChange2}
-                  >
-                    {mainMarketGamesList.map((game) => (
-                      <Option key={game._id} value={game.gameName}>{game.gameName}</Option>
-                    ))}
-                  </Select>
-                </Col>
                 <Col span={24} style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
                   <Button
                     type="primary"
@@ -411,26 +397,6 @@ const Dashboard = () => {
                 </Col>
               </Row>
             </Card>
-            <Row style={{ marginTop: "20px" }} gutter={[16, 16]}>
-              <Col xs={24} sm={8}>
-                <Card bordered={false} style={{ textAlign: "center", backgroundColor: "#e6f7ff" }}>
-                  <Title level={4}>Total Bid Amount</Title>
-                  <Text strong>Rs {dashboardData2.totalBidAmount || 0}</Text>
-                </Card>
-              </Col>
-              <Col xs={24} sm={8}>
-                <Card bordered={false} style={{ textAlign: "center", backgroundColor: "#f6ffed" }}>
-                  <Title level={4}>Total Win Amount</Title>
-                  <Text strong>Rs {dashboardData2.totalWinAmount || 0}</Text>
-                </Card>
-              </Col>
-              <Col xs={24} sm={8}>
-                <Card bordered={false} style={{ textAlign: "center", backgroundColor: "#fff1e6" }}>
-                  <Title level={4}>Total Profit Amount</Title>
-                  <Text strong>Rs {dashboardData2.totalProfitAmount || 0}</Text>
-                </Card>
-              </Col>
-            </Row>
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>Update Market Refresh Time</Title>
               <Row gutter={16} align="middle">
@@ -524,6 +490,39 @@ const Dashboard = () => {
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalWithdrawals}</div>
                     </div>
                     <div><FundOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{dashboardData2.totalBidAmount || 0}</div>
+                    </div>
+                    <div><DollarCircleOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#df4d8f", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{dashboardData2.totalWinAmount || 0}</div>
+                    </div>
+                    <div><TrophyOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#dd4d6d", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Profit Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{dashboardData2.totalProfitAmount || 0}</div>
+                    </div>
+                    <div><RiseOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
                   </div>
                 </Card>
               </Col>
