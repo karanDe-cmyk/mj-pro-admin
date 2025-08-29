@@ -23,7 +23,7 @@ import {
   DollarCircleOutlined,
   TrophyOutlined,
   LineChartOutlined,
-  RiseOutlined
+  RiseOutlined,
 } from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
@@ -34,7 +34,9 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Dashboard = () => {
-  const [selectedFilterDate, setSelectedFilterDate] = useState(dayjs().format("DD-MM-YYYY"));
+  const [selectedFilterDate, setSelectedFilterDate] = useState(
+    dayjs().format("DD-MM-YYYY")
+  );
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState({ totalUsers: 0 });
@@ -88,9 +90,13 @@ const Dashboard = () => {
 
   const fetchRegistrationStats = async () => {
     try {
-      const response = await instance.get("/api/session/admin/registration-stats");
+      const response = await instance.get(
+        "/api/session/admin/registration-stats"
+      );
       if (response.data.success) {
-        setRegistrationStats({ todayRegistrations: response.data.todayRegistrations });
+        setRegistrationStats({
+          todayRegistrations: response.data.todayRegistrations,
+        });
       }
     } catch (error) {
       console.error("Error fetching registration stats:", error);
@@ -115,7 +121,10 @@ const Dashboard = () => {
     try {
       setLoadingButton(true);
       const requestBody = { date: selectedDate };
-      const response = await instance.post(`/api/mainmarketdeclareResult/get-total-winnings`, requestBody);
+      const response = await instance.post(
+        `/api/mainmarketdeclareResult/get-total-winnings`,
+        requestBody
+      );
       console.log("Total Winnings Response:", response.data);
       const { totalPoints, totalWinningPoints } = response.data;
       setDashboardData2({
@@ -143,13 +152,15 @@ const Dashboard = () => {
 
       const allUsers = [...approvedUsersList, ...unapprovedUsersList];
 
-      const totalBalance = allUsers.reduce((sum, user) => sum + (user.walletBalance || 0), 0);
+      const totalBalance = allUsers.reduce(
+        (sum, user) => sum + (user.walletBalance || 0),
+        0
+      );
       setTotalWalletBalance(totalBalance);
 
       setTotalUsers({ totalUsers: allUsers.length });
       setApprovedUsers({ approvedUsers: approvedUsersList.length });
       setUnApprovedUsers({ unapprovedUsers: unapprovedUsersList.length });
-
     } catch (error) {
       console.error("Error fetching user stats:", error);
       setTotalUsers({ totalUsers: 0 });
@@ -161,7 +172,9 @@ const Dashboard = () => {
 
   const fetchTotalGames = async () => {
     try {
-      const response = await instance.get(`/api/marketManagement/games/totalCount`);
+      const response = await instance.get(
+        `/api/marketManagement/games/totalCount`
+      );
       setTotalGames({ totalGameCount: response.data.totalGameCount || 0 });
     } catch (error) {
       console.error("Error fetching total games:", error);
@@ -201,9 +214,13 @@ const Dashboard = () => {
 
   const fetchMainMarketGames = async () => {
     try {
-      const response = await instance.get(`/api/marketManagement/getMarketGames`);
+      const response = await instance.get(
+        `/api/marketManagement/getMarketGames`
+      );
       if (Array.isArray(response.data)) {
-        setMainMarketGamesList(response.data.filter((game) => game.marketName === "Main Market"));
+        setMainMarketGamesList(
+          response.data.filter((game) => game.marketName === "Main Market")
+        );
       }
     } catch (error) {
       console.error("Error fetching market games:", error);
@@ -214,7 +231,8 @@ const Dashboard = () => {
     try {
       const response = await instance.get("api/rates/getBetRates");
       if (response.data && typeof response.data === "object") {
-        const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
+        const { _id, createdAt, updatedAt, __v, ...filteredData } =
+          response.data;
         const cleanedData = Object.keys(filteredData)
           .filter((key) => !key.includes("Value"))
           .reduce((acc, key) => ({ ...acc, [key]: filteredData[key] }), {});
@@ -224,46 +242,80 @@ const Dashboard = () => {
       console.error("Error fetching bet rates:", error);
     }
   };
-  
 
-  const fetchCounts = async () => {
+  const fetchCounts = async (date) => {
     setLoading(true);
-    
-    
+
     try {
-      const autoDepositRes = await instance.get("/api/userPayment/getpaymentResponse");
-      const autoDepositTotalAmount = (autoDepositRes.data.data || []).reduce(
-        (sum, item) => sum + (item.amount || 0), 0
-      );
-      setTotalAutoDeposit(autoDepositTotalAmount);
+      const [
+        autoDepositRes,
+        manualDepositRes,
+        withdrawalRes,
+        adminDepositsRes,
+        fundRequestsRes,
+      ] = await Promise.allSettled([
+        instance.get(`/api/userPayment/getpaymentResponse?date=${date}`),
+        instance.get(`/api/manualDeposit/bydate?date=${date}`),
+        instance.get(`/api/users/todaywithdrawals?date=${date}`),
+        instance.get(`/api/deposit/all-deposite/bydate?date=${date}`),
+        instance.get(`/api/admin/fundRequests?date=${date}`),
+      ]);
 
-      const manualDepositRes = await instance.get("/api/manualDeposit");
-      const manualDepositTotalAmount = (manualDepositRes.data || []).reduce(
-        (sum, item) => sum + (item.amount || 0), 0
-      );
-      setTotalManualDeposit(manualDepositTotalAmount);
+      // Handle each response individually to avoid a single failure stopping the process
+      if (autoDepositRes.status === "fulfilled") {
+        const autoDepositTotalAmount = (autoDepositRes.value.data.data || []).reduce(
+          (sum, item) => sum + (item.amount || 0),
+          0
+        );
+        setTotalAutoDeposit(autoDepositTotalAmount);
+      } else {
+        console.error("Failed to fetch auto deposits:", autoDepositRes.reason);
+        setTotalAutoDeposit(0); // Set to 0 or handle as needed
+      }
 
-      const withdrawalRes = await instance.get("/api/users/todaywithdrawals");
-      const withdrawalTotalAmount = (withdrawalRes.data || []).reduce(
-        (sum, item) => sum + (item.amount || 0), 0
-      );
-      setTotalWithdrawals(withdrawalTotalAmount);
+      if (manualDepositRes.status === "fulfilled") {
+        const manualDepositTotalAmount = (manualDepositRes.value.data.data || []).reduce(
+          (sum, item) => sum + (item.amount || 0),
+          0
+        );
+        setTotalManualDeposit(manualDepositTotalAmount);
+      } else {
+        console.error("Failed to fetch manual deposits:", manualDepositRes.reason);
+        setTotalManualDeposit(0);
+      }
 
-      // Fetch admin deposits total amount (assuming an endpoint exists)
-      const adminDepositsRes = await instance.get("/api/deposit/all-deposite");
-      // console.log("Admin Deposits Response:", adminDepositsRes);
-      const adminDepositsTotalAmount = (adminDepositsRes.data.data || []).reduce(
-        (sum, item) => sum + (item.amount || 0), 0
-      );
-      setTotalAdminDeposits(adminDepositsTotalAmount);
+      if (withdrawalRes.status === "fulfilled") {
+        const withdrawalTotalAmount = (withdrawalRes.value.data || []).reduce(
+          (sum, item) => sum + (item.amount || 0),
+          0
+        );
+        setTotalWithdrawals(withdrawalTotalAmount);
+      } else {
+        console.error("Failed to fetch withdrawals:", withdrawalRes.reason);
+        setTotalWithdrawals(0);
+      }
 
-      const fundRequestsRes = await instance.get("/api/admin/fundRequests");
-      setTotalFundRequests(fundRequestsRes.data.length || 0);
+      if (adminDepositsRes.status === "fulfilled") {
+        const adminDepositsTotalAmount = (adminDepositsRes.value.data.data || []).reduce(
+          (sum, item) => sum + (item.amount || 0),
+          0
+        );
+        setTotalAdminDeposits(adminDepositsTotalAmount);
+      } else {
+        console.error("Failed to fetch admin deposits:", adminDepositsRes.reason);
+        setTotalAdminDeposits(0);
+      }
 
+      if (fundRequestsRes.status === "fulfilled") {
+        setTotalFundRequests(fundRequestsRes.value.data.length || 0);
+      } else {
+        console.error("Failed to fetch fund requests:", fundRequestsRes.reason);
+        setTotalFundRequests(0);
+      }
 
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching counts:", err);
+      console.error("An unexpected error occurred during API calls:", err);
       setLoading(false);
     }
   };
@@ -272,12 +324,22 @@ const Dashboard = () => {
     try {
       setLoadingButton3(true);
       setError(null);
-      const url = selectedFilterDate ? `/api/users/total-profit-loss?date=${selectedFilterDate}` : `/api/users/total-profit-loss`;
+      const url = selectedFilterDate
+        ? `/api/users/total-profit-loss?date=${selectedFilterDate}`
+        : `/api/users/total-profit-loss`;
       const response = await instance.get(url);
       if (response.data?.success) {
         const { totalDeposit = 0, totalWithdraw = 0 } = response.data;
         const total = totalDeposit - totalWithdraw;
-        setProfitLossData([{ key: 1, deposit: totalDeposit, withdraw: totalWithdraw, total: total, result: total }]);
+        setProfitLossData([
+          {
+            key: 1,
+            deposit: totalDeposit,
+            withdraw: totalWithdraw,
+            total: total,
+            result: total,
+          },
+        ]);
       } else {
         setError("Error: Could not fetch profit/loss data.");
       }
@@ -296,9 +358,15 @@ const Dashboard = () => {
     fetchBetRates();
     fetchLoginStats();
     fetchRegistrationStats();
-    fetchCounts();
-    fetchProfitLossData();
   }, []);
+
+  // Use a separate useEffect to handle date-specific data fetching
+  useEffect(() => {
+    if (selectedDate) {
+      fetchCounts(selectedDate);
+      handleSubmit(); // Call the function to update bid/win/profit amounts as well
+    }
+  }, [selectedDate]);
 
   const handleUpdateMarketRefreshTime = async () => {
     if (!marketRefreshTime) {
@@ -308,11 +376,16 @@ const Dashboard = () => {
     setUpdatingRefreshTime(true);
     try {
       const timeString = dayjs(marketRefreshTime).format("HH:mm");
-      const response = await instance.post("/api/admin/settings/updateMarketRefreshTime", {
-        refreshTime: timeString,
-      });
+      const response = await instance.post(
+        "/api/admin/settings/updateMarketRefreshTime",
+        {
+          refreshTime: timeString,
+        }
+      );
       if (response.data.success) {
-        message.success(`Market refresh time updated to ${timeString} successfully!`);
+        message.success(
+          `Market refresh time updated to ${timeString} successfully!`
+        );
       } else {
         message.error(response.data.message || "Failed to update refresh time.");
       }
@@ -338,8 +411,20 @@ const Dashboard = () => {
         const bgColor = isProfit ? "#7f56c7" : isLoss ? "#ed583e" : "inherit";
         const textColor = isLoss ? "white" : "black";
         return (
-          <div style={{ backgroundColor: bgColor, color: textColor, padding: "5px", borderRadius: "4px", textAlign: "center" }}>
-            {isProfit ? `Profit: ${result}` : isLoss ? `Loss: ${Math.abs(result)}` : "No Profit/Loss"}
+          <div
+            style={{
+              backgroundColor: bgColor,
+              color: textColor,
+              padding: "5px",
+              borderRadius: "4px",
+              textAlign: "center",
+            }}
+          >
+            {isProfit
+              ? `Profit: ${result}`
+              : isLoss
+                ? `Loss: ${Math.abs(result)}`
+                : "No Profit/Loss"}
           </div>
         );
       },
@@ -357,7 +442,11 @@ const Dashboard = () => {
             <DatePicker
               style={{ width: 200 }}
               placeholder="Select Date"
-              value={selectedFilterDate ? dayjs(selectedFilterDate, "DD-MM-YYYY") : null}
+              value={
+                selectedFilterDate
+                  ? dayjs(selectedFilterDate, "DD-MM-YYYY")
+                  : null
+              }
               onChange={handleFilterDateChange}
               format="DD-MM-YYYY"
               allowClear
@@ -375,22 +464,37 @@ const Dashboard = () => {
           <Col xs={24} md={8}>
             <div className="admin-dashboard-card">
               <div className="welcome-card">
-                <Title level={3} className="admin-dashboard-title">Welcome Back!</Title>
+                <Title level={3} className="admin-dashboard-title">
+                  Welcome Back!
+                </Title>
                 <p className="admin-dashboard-subtitle">Admin Dashboard</p>
               </div>
               <div className="admin-dashboard-avatar-section">
                 <div className="avtr-admin">
-                  <Avatar className="admin-dashboard-avatar" src="https://img.icons8.com/?size=256w&id=110479&format=png" />
-                  <Title level={3} className="admin-dashboard-name">Admin</Title>
+                  <Avatar
+                    className="admin-dashboard-avatar"
+                    src="https://img.icons8.com/?size=256w&id=110479&format=png"
+                  />
+                  <Title level={3} className="admin-dashboard-name">
+                    Admin
+                  </Title>
                 </div>
                 <div className="admin-dashboard-stats">
-                  <Text className="admin-dashboard-stats-text" onClick={() => navigate("/admin/user-management/unapproved")}>
-                    Unapproved Users: {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
+                  <Text
+                    className="admin-dashboard-stats-text"
+                    onClick={() => navigate("/admin/user-management/unapproved")}
+                  >
+                    Unapproved Users:{" "}
+                    {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
                   </Text>
                 </div>
                 <div className="admin-dashboard-stats">
-                  <Text className="admin-dashboard-stats-text" onClick={() => navigate("/admin/user-management/approved")}>
-                    Approved Users: {approvedUsers.approvedUsers ?? "Failed to fetch"}
+                  <Text
+                    className="admin-dashboard-stats-text"
+                    onClick={() => navigate("/admin/user-management/approved")}
+                  >
+                    Approved Users:{" "}
+                    {approvedUsers.approvedUsers ?? "Failed to fetch"}
                   </Text>
                 </div>
               </div>
@@ -402,18 +506,27 @@ const Dashboard = () => {
                   <DatePicker
                     style={{ width: "100%" }}
                     placeholder="Select Date"
-                    value={selectedDate ? dayjs(selectedDate, "DD-MM-YYYY") : null}
+                    value={
+                      selectedDate ? dayjs(selectedDate, "DD-MM-YYYY") : null
+                    }
                     onChange={handleDateChange2}
                     format="DD-MM-YYYY"
                     allowClear
                   />
                 </Col>
-                <Col span={24} style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
+                <Col
+                  span={24}
+                  style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}
+                >
                   <Button
                     type="primary"
                     onClick={handleSubmit}
                     loading={loadingButton}
-                    style={{ backgroundColor: "#349163", color: "white", fontWeight: "bold" }}
+                    style={{
+                      backgroundColor: "#349163",
+                      color: "white",
+                      fontWeight: "bold",
+                    }}
                   >
                     Submit
                   </Button>
@@ -437,7 +550,12 @@ const Dashboard = () => {
                     type="primary"
                     onClick={handleUpdateMarketRefreshTime}
                     loading={updatingRefreshTime}
-                    style={{ width: "100%", backgroundColor: "#349163", color: "white", fontWeight: "bold" }}
+                    style={{
+                      width: "100%",
+                      backgroundColor: "#349163",
+                      color: "white",
+                      fontWeight: "bold",
+                    }}
                   >
                     Update
                   </Button>
@@ -450,125 +568,351 @@ const Dashboard = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/user-management/approved")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    onClick={() => navigate("/admin/user-management/approved")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Users</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalUsers.totalUsers ?? "Failed to fetch"}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        {totalUsers.totalUsers ?? "Failed to fetch"}
+                      </div>
                     </div>
-                    <div><UserOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#1890ff", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <UserOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#1890ff",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/game-management/game-name")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    onClick={() => navigate("/admin/game-management/game-name")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Games (Today)</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalGames.totalGameCount ?? "Failed to fetch"}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        {totalGames.totalGameCount ?? "Failed to fetch"}
+                      </div>
                     </div>
-                    <div><AppstoreOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#1890ff", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <AppstoreOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#1890ff",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               {/* New Card for Total Wallet Balance */}
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Total Wallet Balance</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalWalletBalance.toFixed(2)}</div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Total Wallet Balance
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {totalWalletBalance.toFixed(2)}
+                      </div>
                     </div>
-                    <div><WalletOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#722ed1", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <WalletOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#722ed1",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               {/* Other Cards for counts with navigation */}
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/auto-deposit-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    onClick={() => navigate("/admin/auto-deposit-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Auto Deposits</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalAutoDeposit}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {totalAutoDeposit}
+                      </div>
                     </div>
-                    <div><DollarOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#52c41a", borderRadius: "50%", padding: "8px" }} /></div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/manual-deposits-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Manual Deposits</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalManualDeposit}</div>
+                      <DollarOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#52c41a",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
                     </div>
-                    <div><DollarOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#f5a623", borderRadius: "50%", padding: "8px" }} /></div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/withdrawals-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    onClick={() => navigate("/admin/manual-deposits-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Manual Deposits
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {totalManualDeposit}
+                      </div>
+                    </div>
+                    <div>
+                      <DollarOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#f5a623",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/withdrawals-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Withdrawals</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalWithdrawals}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {totalWithdrawals}
+                      </div>
                     </div>
-                    <div><FundOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <FundOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#ff4d4f",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/wallet-management/all-deposit-by-admin")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    onClick={() =>
+                      navigate("/admin/wallet-management/all-deposit-by-admin")
+                    }
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Deposite By Admin</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalAdminDeposits}</div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Deposite By Admin
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {totalAdminDeposits}
+                      </div>
                     </div>
-                    <div><FundOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <FundOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#ff4d4f",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               {/* <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div onClick={() => navigate("/admin/fund-requests-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    onClick={() => navigate("/admin/fund-requests-history")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Fund Requests</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalFundRequests}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        {totalFundRequests}
+                      </div>
                     </div>
-                    <div><FundOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#722ed1", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <FundOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#722ed1",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col> */}
               {/* Add the new cards for Bid, Win, and Profit amounts here */}
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {dashboardData2.totalBidAmount || 0}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {dashboardData2.totalBidAmount || 0}
+                      </div>
                     </div>
-                    <div><DollarCircleOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#df4d8f", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <DollarCircleOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#df4d8f",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
                       <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {dashboardData2.totalWinAmount || 0}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {dashboardData2.totalWinAmount || 0}
+                      </div>
                     </div>
-                    <div><TrophyOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#dd4d6d", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <TrophyOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#dd4d6d",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Total Profit Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {dashboardData2.totalProfitAmount || 0}</div>
+                      <span style={{ fontWeight: "bold" }}>
+                        Total Profit Amount
+                      </span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {dashboardData2.totalProfitAmount || 0}
+                      </div>
                     </div>
-                    <div><RiseOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div>
+                      <RiseOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#ff4d4f",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
                   </div>
                 </Card>
               </Col>
@@ -579,23 +923,48 @@ const Dashboard = () => {
               </Title>
               <Row gutter={16} align="middle">
                 <Col span={6}>
-                  <Select placeholder="Select Game Name" style={{ width: "100%" }} onChange={handleGameChange}>
-                    {mainMarketGamesList.map((game) => (<Option key={game._id} value={game.gameName}>{game.gameName}</Option>))}
+                  <Select
+                    placeholder="Select Game Name"
+                    style={{ width: "100%" }}
+                    onChange={handleGameChange}
+                  >
+                    {mainMarketGamesList.map((game) => (
+                      <Option key={game._id} value={game.gameName}>
+                        {game.gameName}
+                      </Option>
+                    ))}
                   </Select>
                 </Col>
                 <Col span={6}>
-                  <Select placeholder="Select Session" style={{ width: "100%" }} onChange={handleSessionChange}>
+                  <Select
+                    placeholder="Select Session"
+                    style={{ width: "100%" }}
+                    onChange={handleSessionChange}
+                  >
                     <Option value="open">Open</Option>
                     <Option value="close">Close</Option>
                   </Select>
                 </Col>
                 <Col span={6}>
-                  <Select placeholder="Game Type" style={{ width: "100%" }} onChange={(value) => setSelectedGameType(value)}>
-                    {betRates.map((gameType, index) => (<Option key={index} value={gameType}>{gameType}</Option>))}
+                  <Select
+                    placeholder="Game Type"
+                    style={{ width: "100%" }}
+                    onChange={(value) => setSelectedGameType(value)}
+                  >
+                    {betRates.map((gameType, index) => (
+                      <Option key={index} value={gameType}>
+                        {gameType}
+                      </Option>
+                    ))}
                   </Select>
                 </Col>
                 <Col span={4}>
-                  <Button className="min-w-full" type="primary" onClick={handleGetClick} loading={loadingButton2}>
+                  <Button
+                    className="min-w-full"
+                    type="primary"
+                    onClick={handleGetClick}
+                    loading={loadingButton2}
+                  >
                     Get
                   </Button>
                 </Col>
@@ -605,19 +974,28 @@ const Dashboard = () => {
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
                 const hue = 36 * ank;
                 const color = `hsl(${hue}, 60%, 50%)`;
-                const digitData = dashboardData[ank] || { totalUsers: 0, totalAmount: 0 };
+                const digitData = dashboardData[ank] || {
+                  totalUsers: 0,
+                  totalAmount: 0,
+                };
                 return (
                   <div className="card" key={ank} style={{ borderColor: color }}>
-                    <p className="card-text mt-2">Today Bids: {digitData.totalUsers || 0}</p>
+                    <p className="card-text mt-2">
+                      Today Bids: {digitData.totalUsers || 0}
+                    </p>
                     <h4 className="card-title">₹{digitData.totalAmount || 0}</h4>
                     <span className="font-bold">Total Bid Amount</span>
-                    <button className="card-btn" style={{ backgroundColor: color }}>Ank {ank}</button>
+                    <button className="card-btn" style={{ backgroundColor: color }}>
+                      Ank {ank}
+                    </button>
                   </div>
                 );
               })}
             </div>
             <Card style={{ marginTop: 20, width: "100%" }}>
-              <Title level={5}>Profit/Loss Report for {selectedFilterDate || "All Dates"}</Title>
+              <Title level={5}>
+                Profit/Loss Report for {selectedFilterDate || "All Dates"}
+              </Title>
               {loadingButton3 ? (
                 <Spin />
               ) : error ? (
