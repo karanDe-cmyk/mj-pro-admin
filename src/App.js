@@ -64,6 +64,7 @@ import NotificationSender from './pages/Custom-Notification'
 import ManualDepositsHistory from "./pages/ManualDepositsHistory";
 import FundRequestsHistory from "./pages/FundRequestsHistory";
 import WithdrawalsHistory from "./pages/WithdrawalsHistory";
+import AllDepositebyAdmin from './pages/wallet_management/DepositeByAdmin';
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -152,6 +153,7 @@ const App = () => {
               <Route path="withdraw-request" element={<WithDrawRequest />} />
               <Route path="add-fund" element={<AddFund />} />
               <Route path="remove-money" element={<RemoveMoney />} />
+              <Route path="all-deposit-by-admin" element={<AllDepositebyAdmin />} />
             </Route>
             <Route path="starline-management">
               <Route path="game-name" element={<GameName />} />

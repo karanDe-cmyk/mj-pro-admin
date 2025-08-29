@@ -28,6 +28,7 @@ import {
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -70,6 +71,7 @@ const Dashboard = () => {
   const [selectedGameType, setSelectedGameType] = useState("");
   const [loadingButton4, setLoadingButton4] = useState(false);
   const [totalWalletBalance, setTotalWalletBalance] = useState(0);
+  const [totalAdminDeposits, setTotalAdminDeposits] = useState(0); // New state for admin deposits
 
   const navigate = useNavigate();
 
@@ -107,7 +109,7 @@ const Dashboard = () => {
 
   const handleSubmit = async () => {
     if (!selectedDate) {
-      message.error("Please select both a date and a game name.");
+      message.error("Please select a date.");
       return;
     }
     try {
@@ -222,21 +224,42 @@ const Dashboard = () => {
       console.error("Error fetching bet rates:", error);
     }
   };
+  
 
   const fetchCounts = async () => {
     setLoading(true);
+    
+    
     try {
       const autoDepositRes = await instance.get("/api/userPayment/getpaymentResponse");
-      setTotalAutoDeposit(autoDepositRes.data.data.length || 0);
+      const autoDepositTotalAmount = (autoDepositRes.data.data || []).reduce(
+        (sum, item) => sum + (item.amount || 0), 0
+      );
+      setTotalAutoDeposit(autoDepositTotalAmount);
 
       const manualDepositRes = await instance.get("/api/manualDeposit");
-      setTotalManualDeposit(manualDepositRes.data.length || 0);
+      const manualDepositTotalAmount = (manualDepositRes.data || []).reduce(
+        (sum, item) => sum + (item.amount || 0), 0
+      );
+      setTotalManualDeposit(manualDepositTotalAmount);
 
       const withdrawalRes = await instance.get("/api/users/todaywithdrawals");
-      setTotalWithdrawals(withdrawalRes.data.length || 0);
+      const withdrawalTotalAmount = (withdrawalRes.data || []).reduce(
+        (sum, item) => sum + (item.amount || 0), 0
+      );
+      setTotalWithdrawals(withdrawalTotalAmount);
+
+      // Fetch admin deposits total amount (assuming an endpoint exists)
+      const adminDepositsRes = await instance.get("/api/deposit/all-deposite");
+      // console.log("Admin Deposits Response:", adminDepositsRes);
+      const adminDepositsTotalAmount = (adminDepositsRes.data.data || []).reduce(
+        (sum, item) => sum + (item.amount || 0), 0
+      );
+      setTotalAdminDeposits(adminDepositsTotalAmount);
 
       const fundRequestsRes = await instance.get("/api/admin/fundRequests");
       setTotalFundRequests(fundRequestsRes.data.length || 0);
+
 
       setLoading(false);
     } catch (err) {
@@ -465,7 +488,7 @@ const Dashboard = () => {
                   <div onClick={() => navigate("/admin/auto-deposit-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Auto Deposits</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalAutoDeposit}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalAutoDeposit}</div>
                     </div>
                     <div><DollarOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#52c41a", borderRadius: "50%", padding: "8px" }} /></div>
                   </div>
@@ -476,7 +499,7 @@ const Dashboard = () => {
                   <div onClick={() => navigate("/admin/manual-deposits-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Manual Deposits</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalManualDeposit}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalManualDeposit}</div>
                     </div>
                     <div><DollarOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#f5a623", borderRadius: "50%", padding: "8px" }} /></div>
                   </div>
@@ -487,7 +510,7 @@ const Dashboard = () => {
                   <div onClick={() => navigate("/admin/withdrawals-history")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Withdrawals</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{totalWithdrawals}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalWithdrawals}</div>
                     </div>
                     <div><FundOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
                   </div>
@@ -495,34 +518,12 @@ const Dashboard = () => {
               </Col>
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div onClick={() => navigate("/admin/wallet-management/all-deposit-by-admin")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{dashboardData2.totalBidAmount || 0}</div>
+                      <span style={{ fontWeight: "bold" }}>Deposite By Admin</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {totalAdminDeposits}</div>
                     </div>
-                    <div><DollarCircleOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#df4d8f", borderRadius: "50%", padding: "8px" }} /></div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{dashboardData2.totalWinAmount || 0}</div>
-                    </div>
-                    <div><TrophyOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#dd4d6d", borderRadius: "50%", padding: "8px" }} /></div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Total Profit Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>{dashboardData2.totalProfitAmount || 0}</div>
-                    </div>
-                    <div><RiseOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
+                    <div><FundOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
                   </div>
                 </Card>
               </Col>
@@ -537,6 +538,40 @@ const Dashboard = () => {
                   </div>
                 </Card>
               </Col> */}
+              {/* Add the new cards for Bid, Win, and Profit amounts here */}
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {dashboardData2.totalBidAmount || 0}</div>
+                    </div>
+                    <div><DollarCircleOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#df4d8f", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {dashboardData2.totalWinAmount || 0}</div>
+                    </div>
+                    <div><TrophyOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#dd4d6d", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Total Profit Amount</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>Rs {dashboardData2.totalProfitAmount || 0}</div>
+                    </div>
+                    <div><RiseOutlined style={{ color: "#fff", fontSize: "24px", backgroundColor: "#ff4d4f", borderRadius: "50%", padding: "8px" }} /></div>
+                  </div>
+                </Card>
+              </Col>
             </Row>
             <Card style={{ marginTop: 20 }}>
               <Title level={5}>

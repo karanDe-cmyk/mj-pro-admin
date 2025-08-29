@@ -131,6 +131,11 @@ const AdminPanel = () => {
           path: "/admin/wallet-management/all-deposit-history",
         },
         {
+          key: "all-deposit-by-admin",
+          label: "All Deposit By Admin",
+          path: "/admin/wallet-management/all-deposit-by-admin",
+        },
+        {
           key: "withdraw-request",
           label: "Withdraw Request",
           path: "/admin/wallet-management/withdraw-request",
