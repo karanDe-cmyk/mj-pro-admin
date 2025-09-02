@@ -10,7 +10,7 @@ const SettingsForm = () => {
     email: "",
     mobile: "",
     whatsappnumber: "",
-    telegram_link: "", // Added new field
+    telegram_link: "",
     upi_id: "",
     merchant_id: "",
     min_batting_rate: "",
@@ -24,6 +24,7 @@ const SettingsForm = () => {
     min_bid_amount: "",
     max_bid_amount: "",
     welcome_bonus: "",
+    min_withdrawals_per_day: "", // New field added
     openTime: "",
     closeTime: "",
     closeWeek: "Sunday",
@@ -49,7 +50,7 @@ const SettingsForm = () => {
           email: data.email || "",
           mobile: data.mobile || "",
           whatsappnumber: data.whatsappnumber || "",
-          telegram_link: data.telegram_link || "", // Set telegram_link from API
+          telegram_link: data.telegram_link || "",
           upi_id: data.upi_id || "",
           merchant_id: data.merchant_id || "",
           min_batting_rate: data.min_batting_rate || "",
@@ -63,6 +64,7 @@ const SettingsForm = () => {
           min_bid_amount: data.min_bid_amount || "",
           max_bid_amount: data.max_bid_amount || "",
           welcome_bonus: data.welcome_bonus || "",
+          min_withdrawals_per_day: data.min_withdrawals_per_day || "", // Set new field from API
           openTime: data.withdraw_timings?.split(" - ")[0] || "",
           closeTime: data.withdraw_timings?.split(" - ")[1] || "",
           closeWeek: data.closeWeek || 'Sunday',
@@ -150,7 +152,7 @@ const SettingsForm = () => {
       <div className="grid grid-cols-3 gap-4">
         {Object.keys(formData).map(
           (key) =>
-            !["id", "global_betting", "openTime", "closeTime", "openWeek", "closeWeek", "withdraw_option", "whatsapp_deposit_option", "telegram_link"].includes(key) && (
+            !["id", "global_betting", "openTime", "closeTime", "openWeek", "closeWeek", "withdraw_option", "whatsapp_deposit_option", "telegram_link", "min_withdrawals_per_day"].includes(key) && (
               <div key={key} className="flex flex-col">
                 <label className="text-sm font-semibold capitalize">
                   {key.replace(/_/g, " ")}
@@ -166,6 +168,20 @@ const SettingsForm = () => {
               </div>
             )
         )}
+        {/* New input for minimum withdrawals */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold capitalize">
+            Min withdrawals per day
+          </label>
+          <input
+            type="number"
+            name="min_withdrawals_per_day"
+            value={formData.min_withdrawals_per_day}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mt-4">
