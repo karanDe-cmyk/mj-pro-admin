@@ -43,7 +43,9 @@ const AllBidHistory = () => {
     "singleDigits",
     "singleDigitsBulk",
     "jodi",
+    "jodiBulk",
     "halfSangamA",
+    "halfSangamB",
     "singlePana",
     "singlePanaBulk",
     "doublePanaBulk",
@@ -52,8 +54,9 @@ const AllBidHistory = () => {
     "redBracket",
     "groupJodi",
     "spMotor",
+    "dpMotor",
     "dpBoss",
-    "twoDigitsPane",
+    "twoDigitsPanel",
     "spDpTp",
     "panelGroup",
     "oddEven",
@@ -157,14 +160,9 @@ const AllBidHistory = () => {
   };
 
   const handleShareOnWhatsApp = () => {
-    let statusFilteredData = filteredData;
-    if (bidStatusFilter === "open") {
-      statusFilteredData = filteredData.filter(bid => bid.open);
-    } else if (bidStatusFilter === "close") {
-      statusFilteredData = filteredData.filter(bid => bid.close);
-    }
-
-    const validBids = statusFilteredData.filter((bid) =>
+    // filteredData variable mein pehle se hi sahi data hai.
+    // Ab hamein bas is data ko aage process karna hai.
+    const validBids = filteredData.filter((bid) =>
       bid?.gameType && bid?.digit && !isNaN(Number(bid?.points))
     );
 
@@ -180,13 +178,12 @@ const AllBidHistory = () => {
       // Special logic for spDpTp to categorize it
       if (type === "spDpTp") {
         if (isSinglePana(bid.digit)) {
-          type = "Single Pana"; // Change gameType to the category name
+          type = "Single Pana";
         } else if (isDoublePana(bid.digit)) {
-          type = "Double Pana"; // Change gameType to the category name
+          type = "Double Pana";
         } else if (isTriplePana(bid.digit)) {
           type = "Triple Pana";
         } else {
-          // Fallback to "Other" if it doesn't match any panna type
           type = "Other";
         }
       }
@@ -202,14 +199,13 @@ const AllBidHistory = () => {
     // Categorize game types
     const categories = {
       "Single Ank": ["singleDigits", "oddEven", "singleDigitsBulk"],
-      "Jodi": ["jodi", "digitBasedJodi", "groupJodi"],
+      "Jodi": ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk"],
       "Single Pana": ["singlePana", "singlePanaBulk", "spMotor", "Single Pana"],
       "Double Pana": ["doublePanaBulk", "dpMotor", "doublePana", "Double Pana"],
       "Triple Pana": ["Triple Pana"],
-      "Half Sangam": ["halfSangamA"],
-      "Full Sangam": ["fullSangam"],
-      "Panel Group": ["panelGroup", "twoDigitsPanel", "twoDigitsPane"],
-      "Other": ["redBracket", "Other"]
+      "Sangam": ["halfSangamA", "halfSangamB", "fullSangam"],
+      "Panel Group": ["panelGroup", "twoDigitsPanel", "twoDigitsPanel"],
+      "Other": ["Other"]
     };
 
     // Calculate totals for each category
@@ -291,17 +287,25 @@ const AllBidHistory = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  const filteredData = bidHistoryData.filter((bid) =>
-    !bid.reverted &&
-    Object.values(bid).some((value) =>
+  const jodiGameTypes = ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk"];
+  const filteredData = bidHistoryData.filter((bid) => {
+    // Basic filtering conditions
+    const matchesSearch = Object.values(bid).some((value) =>
       value?.toString().toLowerCase().includes(search.toLowerCase())
-    ) &&
-    (!selectedGameType || bid.gameType === selectedGameType) &&
-    (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase())) &&
-    (bidStatusFilter === "all" ||
-      (bidStatusFilter === "open" && bid.open) ||
-      (bidStatusFilter === "close" && bid.close))
-  );
+    );
+    const matchesGameTypeSearch = !gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase());
+    const matchesSelectedGameType = !selectedGameType || bid.gameType === selectedGameType;
+    const isJodi = jodiGameTypes.includes(bid.gameType);
+
+    // Status filter ke liye naya logic
+    const matchesStatus =
+      bidStatusFilter === "all" ||
+      (bidStatusFilter === "open" && (bid.open || isJodi)) ||
+      (bidStatusFilter === "close" && bid.close);
+
+    return !bid.reverted && matchesSearch && matchesGameTypeSearch && matchesSelectedGameType && matchesStatus;
+  });
+
 
   const totalPages = Math.ceil(filteredData.length / entries);
   const paginatedData = filteredData.slice(

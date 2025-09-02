@@ -4,11 +4,11 @@ import "react-toastify/dist/ReactToastify.css";
 
 // ✅ Use runtime-configured API URL
 const instance = axios.create({
-  // baseURL :'https://mjprogames-api.kglame.com'
+  baseURL :'https://mjprogames-api.kglame.com'
   // baseURL :'https://bfbb2062000a.ngrok-free.app'
   // baseURL: "https://matkabar-api.kglame.com"
   // baseURL: window.ENV?.API_URL,
-  baseURL: "http://localhost:5002"
+  // baseURL: "http://localhost:5002"
 });
 
 let isRedirecting = false;
