@@ -77,6 +77,15 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
+  const handleViewBids = () => {
+    navigate(`/admin/bids-list?date=${selectedDate}`);
+  };
+
+  // New function to handle navigation for wins
+  const handleViewWins = () => {
+    navigate(`/admin/wins-list?date=${selectedDate}`);
+  };
+
   const fetchLoginStats = async () => {
     try {
       const response = await instance.get("/api/session/admin/login-stats");
@@ -827,6 +836,7 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
                   <div
+                    onClick={handleViewBids}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -857,6 +867,7 @@ const Dashboard = () => {
               <Col xs={24} sm={12}>
                 <Card style={{ borderRadius: "5px" }}>
                   <div
+                    onClick={handleViewWins}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -899,7 +910,7 @@ const Dashboard = () => {
                         Total Profit Amount
                       </span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {dashboardData2.totalProfitAmount || 0}
+                        Rs {dashboardData2.totalProfitAmount.toFixed(2) || 0}
                       </div>
                     </div>
                     <div>

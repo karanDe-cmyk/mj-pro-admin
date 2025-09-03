@@ -65,6 +65,8 @@ import ManualDepositsHistory from "./pages/ManualDepositsHistory";
 import FundRequestsHistory from "./pages/FundRequestsHistory";
 import WithdrawalsHistory from "./pages/WithdrawalsHistory";
 import AllDepositebyAdmin from './pages/wallet_management/DepositeByAdmin';
+import TotalBidsList from "./pages/TotalBidsList";
+import TotalWinsList from "./pages/TotalWinsList";
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -199,6 +201,8 @@ const App = () => {
             <Route path="withdrawals-history" element={<WithdrawalsHistory />} />
             <Route path="custom-notification" element={<NotificationSender />} />
             <Route path="bidrevert" element={<Bidrevert />} />
+            <Route path="bids-list" element={<TotalBidsList />} />
+            <Route path="wins-list" element={<TotalWinsList />} />
 
           </Route>
 

@@ -7,6 +7,7 @@ const { Option } = Select;
 
 const WalletAllDepositeHistory = () => {
   const [searchText, setSearchText] = useState("");
+  const [phoneFilter, setPhoneFilter] = useState(""); // New state for phone filter
   const [statusFilter, setStatusFilter] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [data, setData] = useState([]);
@@ -177,14 +178,13 @@ const WalletAllDepositeHistory = () => {
           return null;
         },
       }
-      
-      
   ];
 
   // Filter and search
   const filteredData = data.filter(
     (item) =>
       item.userName.toLowerCase().includes(searchText.toLowerCase()) &&
+      (!phoneFilter || item.phone.includes(phoneFilter)) && // Added phone filter
       (!statusFilter || item.status === statusFilter)
   );
 
@@ -196,35 +196,45 @@ const WalletAllDepositeHistory = () => {
           marginBottom: 16,
           display: "flex",
           justifyContent: "space-between",
+          flexWrap: "wrap", // Allow wrapping on smaller screens
         }}
       >
-        <Input
-          placeholder="Search Member Name"
-          onChange={(e) => setSearchText(e.target.value)}
-          style={{ width: 200 }}
-        />
-        <Select
-          placeholder="Filter Status"
-          allowClear
-          onChange={(value) => setStatusFilter(value)}
-          style={{ width: 150 }}
-        >
-          <Option value="">All</Option>
-          <Option value="Pending">Pending</Option>
-          <Option value="Accepted">Accepted</Option>
-          <Option value="Canceled">Canceled</Option>
-        </Select>
-        <Select
-          defaultValue={10}
-          onChange={(value) => setPageSize(value)}
-          style={{ width: 100 }}
-        >
-          <Option value={10}>10</Option>
-          <Option value={20}>20</Option>
-          <Option value={30}>30</Option>
-          <Option value={40}>40</Option>
-          <Option value={50}>50</Option>
-        </Select>
+        <Space>
+          <Input
+            placeholder="Search Member Name"
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ width: 200 }}
+          />
+          <Input
+            placeholder="Filter by Phone"
+            onChange={(e) => setPhoneFilter(e.target.value)}
+            style={{ width: 200 }}
+          />
+        </Space>
+        <Space>
+          <Select
+            placeholder="Filter Status"
+            allowClear
+            onChange={(value) => setStatusFilter(value)}
+            style={{ width: 150 }}
+          >
+            <Option value="">All</Option>
+            <Option value="Pending">Pending</Option>
+            <Option value="Accepted">Accepted</Option>
+            <Option value="Canceled">Canceled</Option>
+          </Select>
+          <Select
+            defaultValue={10}
+            onChange={(value) => setPageSize(value)}
+            style={{ width: 100 }}
+          >
+            <Option value={10}>10</Option>
+            <Option value={20}>20</Option>
+            <Option value={30}>30</Option>
+            <Option value={40}>40</Option>
+            <Option value={50}>50</Option>
+          </Select>
+        </Space>
       </Space>
 
       {/* Table */}

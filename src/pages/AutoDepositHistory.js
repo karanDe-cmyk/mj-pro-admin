@@ -110,21 +110,21 @@ const AutoDepositHistory = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-4">
           {/* ✅ Date Picker with Fix */}
-        
+
 
           <DatePicker
-  value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null} // ✅ Ensure correct format
-  onChange={(date) => {
-    // console.log("🟢 DatePicker Selected:", date ? date.format("YYYY-MM-DD") : "None");
-    handleDateChange(date ? date.format("YYYY-MM-DD") : null); // ✅ Pass only formatted date
-  }}
-  format="DD-MM-YYYY"
-  style={{ width: 180, padding: "10px" }} // ✅ Improved UI
-  allowClear={false} // ✅ Prevents clearing the default date
-  defaultPickerValue={dayjs()} // ✅ Opens calendar in current month/year
-  placeholder="Select Date"
-  //suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />} // ✅ Adds a calendar icon
-/>
+            value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null} // ✅ Ensure correct format
+            onChange={(date) => {
+              // console.log("🟢 DatePicker Selected:", date ? date.format("YYYY-MM-DD") : "None");
+              handleDateChange(date ? date.format("YYYY-MM-DD") : null); // ✅ Pass only formatted date
+            }}
+            format="DD-MM-YYYY"
+            style={{ width: 180, padding: "10px" }} // ✅ Improved UI
+            allowClear={false} // ✅ Prevents clearing the default date
+            defaultPickerValue={dayjs()} // ✅ Opens calendar in current month/year
+            placeholder="Select Date"
+          //suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />} // ✅ Adds a calendar icon
+          />
 
           {/* ✅ Search Bar for Filtering */}
           <Search
