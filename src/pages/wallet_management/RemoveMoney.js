@@ -29,10 +29,10 @@ const RemoveMoney = () => {
     fetchUsers();
   }, []);
 
-  // Prepare options for Ant Design's Select component
+  // Prepare options for Ant Design's Select component using phone
   const options = users.map((user) => ({
     value: user.email,
-    label: `${user.userName} - ${user.email}`,
+    label: user.phone || "No phone number", // Use phone number as label
   }));
 
   // Handle user selection change

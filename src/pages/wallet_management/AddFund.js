@@ -33,7 +33,7 @@ const AddFund = () => {
   // Prepare options for the Select component
   const options = users.map((user) => ({
     value: user.email,
-    label: `${user.userName} - ${user.email}`,
+    label: user.phone || "No phone number",
   }));
 
   // Handle user selection change
