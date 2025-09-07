@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import axiosInstance from "../../utils/axiosInstance";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
 
 const SettingsForm = () => {
   const navigate = useNavigate();
@@ -10,6 +10,7 @@ const SettingsForm = () => {
     email: "",
     mobile: "",
     whatsappnumber: "",
+    telegram_link: "",
     upi_id: "",
     merchant_id: "",
     min_batting_rate: "",
@@ -23,16 +24,17 @@ const SettingsForm = () => {
     min_bid_amount: "",
     max_bid_amount: "",
     welcome_bonus: "",
+    min_withdrawals_per_day: "", // New field added
     openTime: "",
     closeTime: "",
     closeWeek: "Sunday",
-    whatsapp_deposit_option: "active", // Keep existing
-    withdraw_option: "active", // Add new
+    whatsapp_deposit_option: "active",
+    withdraw_option: "active",
     global_betting: false,
   });
 
   const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(true); // Track fetching state for loading indicator
+  const [fetchingData, setFetchingData] = useState(true);
 
   // Fetch settings from API on mount
   useEffect(() => {
@@ -40,15 +42,15 @@ const SettingsForm = () => {
       try {
         setLoading(true);
         const response = await axiosInstance.get(`/api/settings/general`);
-        const data = response.data[0]; // Extract the first object from array response
-
+        const data = response.data[0];
 
         setFormData({
-          id: data._id, // Correctly set ID
+          id: data._id,
           name: data.name || "",
           email: data.email || "",
           mobile: data.mobile || "",
           whatsappnumber: data.whatsappnumber || "",
+          telegram_link: data.telegram_link || "",
           upi_id: data.upi_id || "",
           merchant_id: data.merchant_id || "",
           min_batting_rate: data.min_batting_rate || "",
@@ -62,17 +64,16 @@ const SettingsForm = () => {
           min_bid_amount: data.min_bid_amount || "",
           max_bid_amount: data.max_bid_amount || "",
           welcome_bonus: data.welcome_bonus || "",
-          openTime: data.withdraw_timings?.split(" - ")[0] || "", // Extract open time
-          closeTime: data.withdraw_timings?.split(" - ")[1] || "", // Extract close time
+          min_withdrawals_per_day: data.min_withdrawals_per_day || "", // Set new field from API
+          openTime: data.withdraw_timings?.split(" - ")[0] || "",
+          closeTime: data.withdraw_timings?.split(" - ")[1] || "",
+          closeWeek: data.closeWeek || 'Sunday',
           whatsapp_deposit_option: data.whatsapp_deposit_option || "active",
+          withdraw_option: data.withdraw_option || "active",
           global_betting: data.global_betting || false,
-          whatsapp_deposit_option: data.whatsapp_deposit_option || "active", // Keep
-          withdraw_option: data.withdraw_option || "active", // Add new
-          global_betting: data.global_betting || false,
-          closeWeek: data.closeWeek || 'Friday'
         });
 
-        setFetchingData(false); // Done fetching data
+        setFetchingData(false);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching settings:", error);
@@ -132,7 +133,6 @@ const SettingsForm = () => {
 
   return (
     <div className="relative">
-      {/* Fullscreen loading overlay */}
       {(loading || fetchingData) && (
         <div className="absolute top-0 left-0 w-full h-full bg-gray-500 opacity-50 flex items-center justify-center z-10">
           <div className="text-white text-xl">Loading...</div>
@@ -143,7 +143,7 @@ const SettingsForm = () => {
 
       {fetchingData && (
         <div className="flex justify-center items-center py-4">
-          <div className="spinner"></div> {/* Loading spinner */}
+          <div className="spinner"></div>
           <p className="ml-2">Loading settings...</p>
         </div>
       )}
@@ -152,14 +152,7 @@ const SettingsForm = () => {
       <div className="grid grid-cols-3 gap-4">
         {Object.keys(formData).map(
           (key) =>
-            key !== "id" &&
-            key !== "global_betting" &&
-            key !== "openTime" &&
-            key !== "closeTime" &&
-            key !== "openWeek" &&
-            key !== "closeWeek" &&
-            key !== "withdraw_option" &&
-            key !== "whatsapp_deposit_option" && (
+            !["id", "global_betting", "openTime", "closeTime", "openWeek", "closeWeek", "withdraw_option", "whatsapp_deposit_option", "telegram_link", "min_withdrawals_per_day"].includes(key) && (
               <div key={key} className="flex flex-col">
                 <label className="text-sm font-semibold capitalize">
                   {key.replace(/_/g, " ")}
@@ -170,14 +163,27 @@ const SettingsForm = () => {
                   value={formData[key]}
                   onChange={handleChange}
                   className="border border-gray-300 p-2 rounded-md mt-1"
-                  disabled={loading} // Disable input when loading
+                  disabled={loading}
                 />
               </div>
             )
         )}
+        {/* New input for minimum withdrawals */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold capitalize">
+            Min withdrawals per day
+          </label>
+          <input
+            type="number"
+            name="min_withdrawals_per_day"
+            value={formData.min_withdrawals_per_day}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-md mt-1"
+            disabled={loading}
+          />
+        </div>
       </div>
 
-      {/* New row for Time and WhatsApp Deposit Option */}
       <div className="grid grid-cols-3 gap-4 mt-4">
         {/* Open Time Selection */}
         <div className="flex flex-col">
@@ -232,8 +238,8 @@ const SettingsForm = () => {
           </select>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-4 mt-4">
 
+      <div className="grid grid-cols-3 gap-4 mt-4">
         {/* Close Week Selection */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold">Withdraw Close Week</label>
@@ -244,16 +250,15 @@ const SettingsForm = () => {
             className="border border-gray-300 p-2 rounded-md mt-1"
             disabled={loading}
           >
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-            <option value="Saturday">Saturday</option>
-            <option value="Sunday">Sunday</option>
+            {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => (
+              <option key={day} value={day}>
+                {day}
+              </option>
+            ))}
           </select>
         </div>
 
+        {/* Withdraw Option */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold">
             Withdraw Option
@@ -268,6 +273,23 @@ const SettingsForm = () => {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
+        </div>
+      </div>
+      
+      {/* New row for Telegram Link */}
+      <div className="grid grid-cols-3 gap-4 mt-4">
+        <div className="flex flex-col col-span-3">
+            <label className="text-sm font-semibold">
+                Telegram Channel Link
+            </label>
+            <input
+                type="text"
+                name="telegram_link"
+                value={formData.telegram_link}
+                onChange={handleChange}
+                className="border border-gray-300 p-2 rounded-md mt-1"
+                disabled={loading}
+            />
         </div>
       </div>
 
