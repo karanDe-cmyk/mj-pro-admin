@@ -67,6 +67,7 @@ import WithdrawalsHistory from "./pages/WithdrawalsHistory";
 import AllDepositebyAdmin from './pages/wallet_management/DepositeByAdmin';
 import TotalBidsList from "./pages/TotalBidsList";
 import TotalWinsList from "./pages/TotalWinsList";
+import GatewayPayment from './pages/XtreemPyament'
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -204,6 +205,7 @@ const App = () => {
             <Route path="bids-list" element={<TotalBidsList />} />
             <Route path="wins-list" element={<TotalWinsList />} />
 
+            <Route path="gateway-payment" element={<GatewayPayment />} />
           </Route>
 
           <Route path="/user-details/:userId" element={<UserDetails />} />

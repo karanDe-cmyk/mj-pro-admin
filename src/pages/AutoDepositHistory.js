@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, DatePicker, Spin, Alert, Input } from "antd";
+import { Table, DatePicker, Spin, Alert, Input, Tag, Statistic, Card, Row, Col } from "antd";
 import axios from "../utils/axiosInstance";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -7,25 +7,50 @@ import dayjs from "dayjs";
 const { Search } = Input;
 
 const AutoDepositHistory = () => {
-  const [data, setData] = useState([]); // Full Data from API
-  const [filteredData, setFilteredData] = useState([]); // Filtered Data
+  const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(moment().format("YYYY-MM-DD")); // Default: Today
-  const [searchText, setSearchText] = useState(""); // Search Input
+  const [selectedDate, setSelectedDate] = useState(moment().format("YYYY-MM-DD"));
+  const [searchText, setSearchText] = useState("");
+  const [successTotal, setSuccessTotal] = useState(0);
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [failedTotal, setFailedTotal] = useState(0);
 
-  // ✅ Fetch Deposit History on Component Mount
+  // Calculate totals whenever filteredData changes
+  useEffect(() => {
+    let successSum = 0;
+    let pendingSum = 0;
+    let failedSum = 0;
+
+    filteredData.forEach(item => {
+      const amount = parseFloat(item.amount) || 0;
+      const status = item.status ? item.status.toLowerCase() : "";
+
+      if (status.includes("success") || status.includes("completed")) {
+        successSum += amount;
+      } else if (status.includes("pending")) {
+        pendingSum += amount;
+      } else if (status.includes("fail") || status.includes("reject")) {
+        failedSum += amount;
+      }
+    });
+
+    setSuccessTotal(successSum);
+    setPendingTotal(pendingSum);
+    setFailedTotal(failedSum);
+  }, [filteredData]);
+
+  // Fetch Deposit History
   useEffect(() => {
     const fetchDepositHistory = async () => {
       try {
         setLoading(true);
         const response = await axios.get(`/api/userPayment/getpaymentResponse`);
-        // console.log("API Response:", response.data); // ✅ Debug: Check API data
-
         const allTransactions = response.data.data || [];
         setData(allTransactions);
 
-        // ✅ Filter transactions only for today on load
+        // Filter transactions only for today on load
         const todayStr = moment().utc().format("YYYY-MM-DD");
         const todayData = allTransactions.filter((item) =>
           moment.utc(item.createdAt).format("YYYY-MM-DD") === todayStr
@@ -41,10 +66,9 @@ const AutoDepositHistory = () => {
     fetchDepositHistory();
   }, []);
 
-  // ✅ Handle Date Change (Fix Timezone Issue)
+  // Handle Date Change
   const handleDateChange = (date) => {
     if (!date) {
-      console.warn("🚨 No date selected! Defaulting to today.");
       const todayStr = moment().utc().format("YYYY-MM-DD");
       setSelectedDate(todayStr);
       const todayData = data.filter(
@@ -54,24 +78,18 @@ const AutoDepositHistory = () => {
       return;
     }
 
-    // ✅ Convert selected date properly
     const selectedDateStr = moment(date).format("YYYY-MM-DD");
-    // console.log("📅 Selected Date:", selectedDateStr);
-
     setSelectedDate(selectedDateStr);
 
-    // ✅ Convert and filter transactions
     const filtered = data.filter((item) => {
       const itemDateStr = moment.utc(item.createdAt).format("YYYY-MM-DD");
-      // console.log(`📝 Checking ${itemDateStr} vs ${selectedDateStr}`);
       return itemDateStr === selectedDateStr;
     });
 
-    // console.log("✅ Filtered Data:", filtered);
     setFilteredData(filtered);
   };
 
-  // ✅ Search Functionality (Now includes Mobile Number)
+  // Search Functionality
   const handleSearch = (value) => {
     setSearchText(value);
     const lowercasedValue = value.toLowerCase();
@@ -84,13 +102,25 @@ const AutoDepositHistory = () => {
       (item) =>
         item.username?.toLowerCase().includes(lowercasedValue) ||
         item.txnId?.toLowerCase().includes(lowercasedValue) ||
-        item.number?.toString().includes(value) // ✅ Added mobile number filtering
+        item.number?.toString().includes(value) ||
+        item.status?.toLowerCase().includes(lowercasedValue)
     );
 
     setFilteredData(filtered);
   };
 
-  // ✅ Table Columns
+  // Status Tag Color Mapping
+  const getStatusColor = (status) => {
+    if (!status) return "default";
+
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes("success") || statusLower.includes("completed")) return "green";
+    if (statusLower.includes("fail") || statusLower.includes("reject")) return "red";
+    if (statusLower.includes("pending")) return "orange";
+    return "blue";
+  };
+
+  // Table Columns
   const columns = [
     { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
     { title: "User Name", dataIndex: "username", key: "username", render: (username) => username || "N/A" },
@@ -98,10 +128,20 @@ const AutoDepositHistory = () => {
     { title: "Amount", dataIndex: "amount", key: "amount", render: (amount) => `₹ ${amount}` },
     { title: "Txn ID", dataIndex: "txnId", key: "txnId", render: (txnId) => txnId || "N/A" },
     {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={getStatusColor(status)}>
+          {status || "N/A"}
+        </Tag>
+      ),
+    },
+    {
       title: "Txn Date",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => moment.utc(date).local().format("DD-MM-YYYY hh:mm A"), // ✅ Convert UTC to Local Time
+      render: (date) => moment.utc(date).local().format("DD-MM-YYYY hh:mm A"),
     },
   ];
 
@@ -110,26 +150,85 @@ const AutoDepositHistory = () => {
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md">
         <h2 className="text-xl font-bold mb-4">Auto Deposit History</h2>
 
+        {/* Summary Cards */}
+        <Row gutter={16} className="mb-4">
+          <Col span={8}>
+            <Card>
+              <Statistic
+                title="Successful Transactions"
+                value={successTotal}
+                precision={2}
+                prefix="₹"
+                valueStyle={{ color: '#52c41a' }}
+                suffix={
+                  <div className="text-xs text-gray-500 mt-1">
+                    {filteredData.filter(item =>
+                      item.status && item.status.toLowerCase().includes("success") ||
+                      item.status && item.status.toLowerCase().includes("completed")
+                    ).length} transactions
+                  </div>
+                }
+              />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card>
+              <Statistic
+                title="Pending Transactions"
+                value={pendingTotal}
+                precision={2}
+                prefix="₹"
+                valueStyle={{ color: '#fa8c16' }}
+                suffix={
+                  <div className="text-xs text-gray-500 mt-1">
+                    {filteredData.filter(item =>
+                      item.status && item.status.toLowerCase().includes("pending")
+                    ).length} transactions
+                  </div>
+                }
+              />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card>
+              <Statistic
+                title="Failed Transactions"
+                value={failedTotal}
+                precision={2}
+                prefix="₹"
+                valueStyle={{ color: '#f5222d' }}
+                suffix={
+                  <div className="text-xs text-gray-500 mt-1">
+                    {filteredData.filter(item =>
+                      item.status && (
+                        item.status.toLowerCase().includes("fail") ||
+                        item.status.toLowerCase().includes("reject")
+                      )
+                    ).length} transactions
+                  </div>
+                }
+              />
+            </Card>
+          </Col>
+        </Row>
+
         <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-          {/* ✅ Date Picker with Fix */}
+          {/* Date Picker */}
           <DatePicker
-            value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null} // ✅ Ensure correct format
+            value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null}
             onChange={(date) => {
-              // console.log("🟢 DatePicker Selected:", date ? date.format("YYYY-MM-DD") : "None");
-              handleDateChange(date ? date.format("YYYY-MM-DD") : null); // ✅ Pass only formatted date
+              handleDateChange(date ? date.format("YYYY-MM-DD") : null);
             }}
             format="DD-MM-YYYY"
-            style={{ width: 180, padding: "10px" }} // ✅ Improved UI
-            allowClear={false} // ✅ Prevents clearing the default date
-            defaultPickerValue={dayjs()} // ✅ Opens calendar in current month/year
+            style={{ width: 180, padding: "10px" }}
+            allowClear={false}
+            defaultPickerValue={dayjs()}
             placeholder="Select Date"
-          //suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />} // ✅ Adds a calendar icon
           />
 
-          {/* ✅ Search Bar for Filtering - Updated placeholder */}
-          
+          {/* Search Bar */}
           <Search
-            placeholder="Search by Mobile, Txn ID, or Username"
+            placeholder="Search by Mobile, Txn ID, Username or Status"
             onSearch={handleSearch}
             enterButton
             value={searchText}
@@ -138,7 +237,7 @@ const AutoDepositHistory = () => {
           />
         </div>
 
-        {/* ✅ Display Loading, Error, or Table */}
+        {/* Display Loading, Error, or Table */}
         {loading ? (
           <div className="flex justify-center items-center py-10">
             <Spin size="large" />
@@ -149,9 +248,22 @@ const AutoDepositHistory = () => {
           <Table
             dataSource={filteredData.map((item, index) => ({ ...item, key: index }))}
             columns={columns}
-            pagination={false} // ✅ Removed pagination
+            pagination={false}
             bordered
-            scroll={{ x: 700 }} // ✅ Enables horizontal scrolling
+            scroll={{ x: 800 }}
+            summary={() => (
+              <Table.Summary fixed>
+                <Table.Summary.Row>
+                  <Table.Summary.Cell index={0} colSpan={4} align="right">
+                    <strong>Grand Total (All Status):</strong>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={1}>
+                    <strong>₹ {(successTotal + pendingTotal + failedTotal).toFixed(2)}</strong>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={2} colSpan={2}></Table.Summary.Cell>
+                </Table.Summary.Row>
+              </Table.Summary>
+            )}
           />
         )}
       </div>

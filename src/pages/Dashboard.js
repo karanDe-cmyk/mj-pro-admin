@@ -74,6 +74,7 @@ const Dashboard = () => {
   const [loadingButton4, setLoadingButton4] = useState(false);
   const [totalWalletBalance, setTotalWalletBalance] = useState(0);
   const [totalAdminDeposits, setTotalAdminDeposits] = useState(0); // New state for admin deposits
+  const [totalXtreemGateway, setTotalXtreemGateway] = useState(0);
 
   const navigate = useNavigate();
 
@@ -286,10 +287,25 @@ const Dashboard = () => {
           autoDepositData = autoDepositRes.value.data.data;
         }
 
-        const autoDepositTotalAmount = autoDepositData.reduce(
-          (sum, item) => sum + (item.amount || 0),
-          0
-        );
+        const xtreemGatewayTotal = autoDepositData
+          .filter(item =>
+            item.status === "Success" &&
+            item.comments &&
+            item.comments.includes("Xtreem Gateway")
+          )
+          .reduce(
+            (sum, item) => sum + (item.amount || 0),
+            0
+          );
+
+        setTotalXtreemGateway(xtreemGatewayTotal);
+
+        const autoDepositTotalAmount = autoDepositData
+          .filter(item => item.status === "Success")
+          .reduce(
+            (sum, item) => sum + (item.amount || 0),
+            0
+          );
         setTotalAutoDeposit(autoDepositTotalAmount);
       } else {
         console.error("Failed to fetch auto deposits:", autoDepositRes.reason);
@@ -711,7 +727,7 @@ const Dashboard = () => {
                     }}
                   >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Auto Deposits</span>
+                      <span style={{ fontWeight: "bold" }}>Auto Deposits (Success)</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         Rs {totalAutoDeposit}
                       </div>
@@ -722,6 +738,37 @@ const Dashboard = () => {
                           color: "#fff",
                           fontSize: "24px",
                           backgroundColor: "#52c41a",
+                          borderRadius: "50%",
+                          padding: "8px",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Card style={{ borderRadius: "5px" }}>
+                  <div
+                    onClick={() => navigate("/admin/gateway-payment")}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Xtreem Gateway(Success)</span>
+                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        Rs {totalXtreemGateway}
+                      </div>
+                    </div>
+                    <div>
+                      <DollarOutlined
+                        style={{
+                          color: "#fff",
+                          fontSize: "24px",
+                          backgroundColor: "#13c2c2", // आप अपनी पसंद का कोई भी रंग चुन सकते हैं
                           borderRadius: "50%",
                           padding: "8px",
                         }}
