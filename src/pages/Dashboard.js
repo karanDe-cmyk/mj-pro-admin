@@ -727,7 +727,7 @@ const Dashboard = () => {
                     }}
                   >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Auto Deposits (Success)</span>
+                      <span style={{ fontWeight: "bold" }}>All Deposit (Success)</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         Rs {totalAutoDeposit}
                       </div>
@@ -758,7 +758,7 @@ const Dashboard = () => {
                     }}
                   >
                     <div>
-                      <span style={{ fontWeight: "bold" }}>Xtreem Gateway(Success)</span>
+                      <span style={{ fontWeight: "bold" }}>Auto Deposit</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                         Rs {totalXtreemGateway}
                       </div>

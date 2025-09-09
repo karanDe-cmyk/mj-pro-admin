@@ -1,6 +1,6 @@
 // export default AutoDepositHistory;
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Table, Select, DatePicker, Input, Row, Col, Button, Spin, Tag, message } from 'antd';
+import { Card, Typography, Table, Select, DatePicker, Input, Row, Col, Button, Spin, Tag, message, Statistic } from 'antd';
 import dayjs from 'dayjs';
 import axios from "../utils/axiosInstance";
 
@@ -16,6 +16,11 @@ const XtreemPaymentHistory = () => {
     const [selectedStatus, setSelectedStatus] = useState('All');
     const [searchText, setSearchText] = useState('');
     const [totalSuccessAmount, setTotalSuccessAmount] = useState(0);
+    const [totalPendingAmount, setTotalPendingAmount] = useState(0);
+    const [totalFailedAmount, setTotalFailedAmount] = useState(0);
+    const [successCount, setSuccessCount] = useState(0);
+    const [pendingCount, setPendingCount] = useState(0);
+    const [failedCount, setFailedCount] = useState(0);
 
     const fetchTransactions = async (date) => {
         setLoading(true);
@@ -30,19 +35,47 @@ const XtreemPaymentHistory = () => {
             const xtreemGatewayData = data.filter(item => item.comments && item.comments.includes('Xtreem Gateway'));
             setTransactions(xtreemGatewayData);
 
-            const totalAmount = xtreemGatewayData.reduce((sum, item) => {
-                if (item.status === 'Success') {
-                    return sum + (item.amount || 0);
+            // Calculate totals by status
+            let successAmt = 0;
+            let pendingAmt = 0;
+            let failedAmt = 0;
+            let successCnt = 0;
+            let pendingCnt = 0;
+            let failedCnt = 0;
+
+            xtreemGatewayData.forEach(item => {
+                const amount = item.amount || 0;
+                const status = item.status || '';
+
+                if (status === 'Success') {
+                    successAmt += amount;
+                    successCnt++;
+                } else if (status === 'Pending') {
+                    pendingAmt += amount;
+                    pendingCnt++;
+                } else if (status === 'Failed') {
+                    failedAmt += amount;
+                    failedCnt++;
                 }
-                return sum;
-            }, 0);
-            setTotalSuccessAmount(totalAmount);
+            });
+
+            setTotalSuccessAmount(successAmt);
+            setTotalPendingAmount(pendingAmt);
+            setTotalFailedAmount(failedAmt);
+            setSuccessCount(successCnt);
+            setPendingCount(pendingCnt);
+            setFailedCount(failedCnt);
 
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
             message.error('Failed to load transaction data. Please check the API.');
             setTransactions([]);
             setTotalSuccessAmount(0);
+            setTotalPendingAmount(0);
+            setTotalFailedAmount(0);
+            setSuccessCount(0);
+            setPendingCount(0);
+            setFailedCount(0);
         } finally {
             setLoading(false);
         }
@@ -144,6 +177,59 @@ const XtreemPaymentHistory = () => {
     return (
         <div style={{ padding: 20 }}>
             <Title level={4}>Xtreem Gateway Transaction History</Title>
+
+            {/* Status Summary Cards */}
+            <Row gutter={16} style={{ marginBottom: 20 }}>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Successful Transactions"
+                            value={totalSuccessAmount}
+                            precision={2}
+                            prefix="₹"
+                            valueStyle={{ color: '#52c41a' }}
+                            suffix={
+                                <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                                    {successCount} transactions
+                                </div>
+                            }
+                        />
+                    </Card>
+                </Col>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Pending Transactions"
+                            value={totalPendingAmount}
+                            precision={2}
+                            prefix="₹"
+                            valueStyle={{ color: '#faad14' }}
+                            suffix={
+                                <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                                    {pendingCount} transactions
+                                </div>
+                            }
+                        />
+                    </Card>
+                </Col>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Failed Transactions"
+                            value={totalFailedAmount}
+                            precision={2}
+                            prefix="₹"
+                            valueStyle={{ color: '#f5222d' }}
+                            suffix={
+                                <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                                    {failedCount} transactions
+                                </div>
+                            }
+                        />
+                    </Card>
+                </Col>
+            </Row>
+
             <Card style={{ marginBottom: 20, borderRadius: '8px' }}>
                 <Row gutter={[16, 16]} align="middle">
                     <Col xs={24} md={8}>
