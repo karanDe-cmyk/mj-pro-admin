@@ -3,36 +3,26 @@ import axiosInstance from "../../utils/axiosInstance";
 
 const DepositTransactionsTable = () => {
     const [transactions, setTransactions] = useState([]);
+    const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortField, setSortField] = useState('date');
     const [sortOrder, setSortOrder] = useState('desc');
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Fetch transactions from API
+    // Fetch all transactions from API
     const fetchTransactions = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            const params = new URLSearchParams({
-                page: page,
-                limit: 10,
-                sortField,
-                sortOrder,
-                status: filterStatus === 'all' ? '' : filterStatus
-            });
-            
-            const response = await axiosInstance.get(`/api/deposit/all-transactions?${params}`);
+            const response = await axiosInstance.get('/api/deposit/all-transactions');
 
             if (response.data.status) {
-                // Use transactionsWithUser instead of transactions to get user names
-                setTransactions(response.data.data.transactionsWithUser || response.data.data.transactions);
-                setTotalPages(response.data.data.pagination.totalPages);
-                setTotalItems(response.data.data.pagination.totalItems);
+                const allTransactions = response.data.data.transactionsWithUser || response.data.data.transactions;
+                setTransactions(allTransactions);
+                setFilteredTransactions(allTransactions);
             } else {
                 throw new Error(response.data.message || 'Failed to fetch transactions');
             }
@@ -46,11 +36,57 @@ const DepositTransactionsTable = () => {
 
     useEffect(() => {
         fetchTransactions();
-    }, [page, filterStatus, sortField, sortOrder]);
+    }, []);
+
+    // Filter and sort transactions whenever filters, sort, or search changes
+    useEffect(() => {
+        let result = [...transactions];
+
+        // Apply status filter
+        if (filterStatus !== 'all') {
+            result = result.filter(transaction =>
+                transaction.status?.toLowerCase() === filterStatus.toLowerCase()
+            );
+        }
+
+        // Apply search filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(transaction =>
+                transaction.userName?.toLowerCase().includes(term) ||
+                transaction.email?.toLowerCase().includes(term) ||
+                transaction.requestNumber?.toLowerCase().includes(term) ||
+                transaction.amount?.toString().includes(term)
+            );
+        }
+
+        // Apply sorting
+        result.sort((a, b) => {
+            let aValue = a[sortField];
+            let bValue = b[sortField];
+
+            // Handle date sorting
+            if (sortField === 'date') {
+                aValue = new Date(aValue).getTime();
+                bValue = new Date(bValue).getTime();
+            }
+
+            // Handle string comparison
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'asc'
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            }
+
+            // Handle number comparison
+            return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        });
+
+        setFilteredTransactions(result);
+    }, [transactions, filterStatus, sortField, sortOrder, searchTerm]);
 
     const handleFilterChange = (status) => {
         setFilterStatus(status);
-        setPage(1);
     };
 
     const handleSort = (field) => {
@@ -78,6 +114,13 @@ const DepositTransactionsTable = () => {
         return sortOrder === 'asc' ? '↑' : '↓';
     };
 
+    const statusCounts = {
+        all: transactions.length,
+        success: transactions.filter(t => t.status?.toLowerCase() === 'success').length,
+        pending: transactions.filter(t => t.status?.toLowerCase() === 'pending').length,
+        failed: transactions.filter(t => t.status?.toLowerCase() === 'failed').length,
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -103,31 +146,73 @@ const DepositTransactionsTable = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Deposit Transactions</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Deposit by Admin</h1>
 
-            {/* Filters */}
-            <div className="mb-6 flex flex-wrap items-center gap-4">
-                <div>
-                    <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                        Filter by Status
-                    </label>
-                    <div className="flex space-x-2">
-                        {['all', 'success', 'pending', 'failed'].map(status => (
-                            <button
-                                key={status}
-                                onClick={() => handleFilterChange(status)}
-                                className={`px-3 py-1 rounded-full text-sm font-medium ${filterStatus === status
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                    }`}
-                            >
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </button>
-                        ))}
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                    <h3 className="text-sm font-medium text-gray-600">Total Transactions</h3>
+                    <p className="text-2xl font-bold">{statusCounts.all}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                    <h3 className="text-sm font-medium text-gray-600">Successful</h3>
+                    <p className="text-2xl font-bold">{statusCounts.success}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
+                    <h3 className="text-sm font-medium text-gray-600">Pending</h3>
+                    <p className="text-2xl font-bold">{statusCounts.pending}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
+                    <h3 className="text-sm font-medium text-gray-600">Failed</h3>
+                    <p className="text-2xl font-bold">{statusCounts.failed}</p>
+                </div>
+            </div>
+
+            {/* Filters and Search */}
+            <div className="bg-white p-4 rounded-lg shadow mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Filter by Status
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {['all', 'success', 'pending', 'failed'].map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => handleFilterChange(status)}
+                                        className={`px-3 py-1 rounded-full text-sm font-medium ${filterStatus === status
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                            }`}
+                                    >
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        <span className="ml-1 bg-gray-100 text-gray-800 rounded-full px-2 py-0.5 text-xs">
+                                            {statusCounts[status]}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-sm text-gray-600 mt-3">
-                        Showing {transactions.length} of {totalItems} transactions
+
+                    <div className="w-full md:w-auto">
+                        <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+                            Search
+                        </label>
+                        <input
+                            type="text"
+                            id="search"
+                            placeholder="Search by name, email, amount..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
                     </div>
+                </div>
+
+                <div className="mt-4 text-sm text-gray-600">
+                    Showing {filteredTransactions.length} of {transactions.length} transactions
                 </div>
             </div>
 
@@ -173,8 +258,8 @@ const DepositTransactionsTable = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {transactions.length > 0 ? (
-                                transactions.map((transaction) => (
+                            {filteredTransactions.length > 0 ? (
+                                filteredTransactions.map((transaction) => (
                                     <tr key={transaction._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {formatDate(transaction.date)}
@@ -213,43 +298,6 @@ const DepositTransactionsTable = () => {
                     </table>
                 </div>
             </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="mt-6 flex justify-between items-center">
-                    <button
-                        onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                        disabled={page === 1}
-                        className={`px-4 py-2 bg-gray-200 rounded-md ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
-                    >
-                        Previous
-                    </button>
-
-                    <div className="flex space-x-2">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            const pageNum = i + 1;
-                            return (
-                                <button
-                                    key={pageNum}
-                                    onClick={() => setPage(pageNum)}
-                                    className={`px-3 py-1 rounded-md ${page === pageNum ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                                >
-                                    {pageNum}
-                                </button>
-                            );
-                        })}
-                        {totalPages > 5 && <span className="px-2 py-1">...</span>}
-                    </div>
-
-                    <button
-                        onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={page === totalPages}
-                        className={`px-4 py-2 bg-gray-200 rounded-md ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
         </div>
     );
 };

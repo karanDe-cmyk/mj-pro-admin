@@ -256,6 +256,9 @@ const Dashboard = () => {
     setLoading(true);
 
     try {
+      // Convert date from DD-MM-YYYY to YYYY-MM-DD format for API
+      const apiDate = date ? dayjs(date, "DD-MM-YYYY").format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD");
+
       const [
         autoDepositRes,
         manualDepositRes,
@@ -263,27 +266,40 @@ const Dashboard = () => {
         adminDepositsRes,
         fundRequestsRes,
       ] = await Promise.allSettled([
-        instance.get(`/api/userPayment/getpaymentResponse?date=${date}`),
+        instance.get(`/api/userPayment/transactions?date=${date}`),
         instance.get(`/api/manualDeposit/bydate?date=${date}`),
         instance.get(`/api/users/todaywithdrawals?date=${date}`),
         instance.get(`/api/deposit/all-deposite/bydate?date=${date}`),
         instance.get(`/api/admin/fundRequests?date=${date}`),
       ]);
 
-      // Handle each response individually to avoid a single failure stopping the process
+      // Handle auto deposits response
       if (autoDepositRes.status === "fulfilled") {
-        const autoDepositTotalAmount = (autoDepositRes.value.data.data || []).reduce(
+        // Check the actual structure of the response
+        console.log("Auto deposit response:", autoDepositRes.value.data);
+
+        // Handle different possible response structures
+        let autoDepositData = [];
+        if (autoDepositRes.value.data && Array.isArray(autoDepositRes.value.data)) {
+          autoDepositData = autoDepositRes.value.data;
+        } else if (autoDepositRes.value.data && autoDepositRes.value.data.data) {
+          autoDepositData = autoDepositRes.value.data.data;
+        }
+
+        const autoDepositTotalAmount = autoDepositData.reduce(
           (sum, item) => sum + (item.amount || 0),
           0
         );
         setTotalAutoDeposit(autoDepositTotalAmount);
       } else {
         console.error("Failed to fetch auto deposits:", autoDepositRes.reason);
-        setTotalAutoDeposit(0); // Set to 0 or handle as needed
+        setTotalAutoDeposit(0);
       }
 
+      // Handle other responses...
       if (manualDepositRes.status === "fulfilled") {
-        const manualDepositTotalAmount = (manualDepositRes.value.data.data || []).reduce(
+        const manualDepositData = manualDepositRes.value.data.data || [];
+        const manualDepositTotalAmount = manualDepositData.reduce(
           (sum, item) => sum + (item.amount || 0),
           0
         );
@@ -294,7 +310,8 @@ const Dashboard = () => {
       }
 
       if (withdrawalRes.status === "fulfilled") {
-        const withdrawalTotalAmount = (withdrawalRes.value.data || []).reduce(
+        const withdrawalData = withdrawalRes.value.data || [];
+        const withdrawalTotalAmount = withdrawalData.reduce(
           (sum, item) => sum + (item.amount || 0),
           0
         );
@@ -305,7 +322,8 @@ const Dashboard = () => {
       }
 
       if (adminDepositsRes.status === "fulfilled") {
-        const adminDepositsTotalAmount = (adminDepositsRes.value.data.data || []).reduce(
+        const adminDepositsData = adminDepositsRes.value.data.data || [];
+        const adminDepositsTotalAmount = adminDepositsData.reduce(
           (sum, item) => sum + (item.amount || 0),
           0
         );
@@ -367,6 +385,12 @@ const Dashboard = () => {
     fetchBetRates();
     fetchLoginStats();
     fetchRegistrationStats();
+  }, []);
+
+  useEffect(() => {
+    const today = dayjs().format("DD-MM-YYYY");
+    setSelectedDate(today);
+    fetchCounts(today);
   }, []);
 
   // Use a separate useEffect to handle date-specific data fetching
@@ -515,10 +539,14 @@ const Dashboard = () => {
                   <DatePicker
                     style={{ width: "100%" }}
                     placeholder="Select Date"
-                    value={
-                      selectedDate ? dayjs(selectedDate, "DD-MM-YYYY") : null
-                    }
-                    onChange={handleDateChange2}
+                    value={selectedDate ? dayjs(selectedDate, "DD-MM-YYYY") : null}
+                    onChange={(date) => {
+                      const formattedDate = date ? dayjs(date).format("DD-MM-YYYY") : null;
+                      setSelectedDate(formattedDate);
+                      if (formattedDate) {
+                        fetchCounts(formattedDate);
+                      }
+                    }}
                     format="DD-MM-YYYY"
                     allowClear
                   />

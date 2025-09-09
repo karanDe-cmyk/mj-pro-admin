@@ -71,7 +71,7 @@ const AutoDepositHistory = () => {
     setFilteredData(filtered);
   };
 
-  // ✅ Search Functionality (Only for Selected Date)
+  // ✅ Search Functionality (Now includes Mobile Number)
   const handleSearch = (value) => {
     setSearchText(value);
     const lowercasedValue = value.toLowerCase();
@@ -83,7 +83,8 @@ const AutoDepositHistory = () => {
     const filtered = baseData.filter(
       (item) =>
         item.username?.toLowerCase().includes(lowercasedValue) ||
-        item.txnId?.toLowerCase().includes(lowercasedValue)
+        item.txnId?.toLowerCase().includes(lowercasedValue) ||
+        item.number?.toString().includes(value) // ✅ Added mobile number filtering
     );
 
     setFilteredData(filtered);
@@ -93,6 +94,7 @@ const AutoDepositHistory = () => {
   const columns = [
     { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
     { title: "User Name", dataIndex: "username", key: "username", render: (username) => username || "N/A" },
+    { title: "Mobile Number", dataIndex: "number", key: "number", render: (number) => number || "N/A" },
     { title: "Amount", dataIndex: "amount", key: "amount", render: (amount) => `₹ ${amount}` },
     { title: "Txn ID", dataIndex: "txnId", key: "txnId", render: (txnId) => txnId || "N/A" },
     {
@@ -110,8 +112,6 @@ const AutoDepositHistory = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-4">
           {/* ✅ Date Picker with Fix */}
-
-
           <DatePicker
             value={selectedDate ? dayjs(selectedDate, "YYYY-MM-DD") : null} // ✅ Ensure correct format
             onChange={(date) => {
@@ -126,9 +126,10 @@ const AutoDepositHistory = () => {
           //suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />} // ✅ Adds a calendar icon
           />
 
-          {/* ✅ Search Bar for Filtering */}
+          {/* ✅ Search Bar for Filtering - Updated placeholder */}
+          
           <Search
-            placeholder="Search by Username or Txn ID"
+            placeholder="Search by Mobile, Txn ID, or Username"
             onSearch={handleSearch}
             enterButton
             value={searchText}
@@ -148,7 +149,7 @@ const AutoDepositHistory = () => {
           <Table
             dataSource={filteredData.map((item, index) => ({ ...item, key: index }))}
             columns={columns}
-            pagination={{ pageSize: 10 }}
+            pagination={false} // ✅ Removed pagination
             bordered
             scroll={{ x: 700 }} // ✅ Enables horizontal scrolling
           />
