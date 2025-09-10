@@ -178,7 +178,8 @@ const ApprovedUsers = () => {
       </span>
     ),
   },
-  { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance" },
+  { title: "Wallet Balance", dataIndex: "walletBalance", key: "walletBalance", render: (value) =>
+    `₹${(Math.floor(value * 100) / 100).toFixed(2)}`,},
   {
     title: "Betting",
     dataIndex: "betting",
