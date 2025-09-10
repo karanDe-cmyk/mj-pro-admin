@@ -1141,7 +1141,9 @@ const UserDetails = () => {
           : "N/A",
     },
   ];
-
+const formatBalance = (balance) => {
+  return Math.floor(balance * 100) / 100;
+};
   return (
     <div style={{ padding: "20px" }}>
       {/* USER DETAILS Header */}
@@ -1231,10 +1233,10 @@ const UserDetails = () => {
                     </div>
                   </div>
                 </Row>
-                <div style={{ marginTop: "20px" }}>
-                  <Text>Available Balance: </Text>
-                  <Title level={3}>₹{userData.walletBalance}</Title>
-                </div>
+                 <div style={{ marginTop: "20px" }}>
+  <Text>Available Balance: </Text>
+  <Title level={3}>₹{formatBalance(userData.walletBalance)}</Title>
+</div>
                 <Row
                   gutter={16}
                   justify="space-evenly"
