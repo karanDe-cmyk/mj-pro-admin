@@ -922,7 +922,7 @@ const Dashboard = () => {
                     <div>
                       <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {dashboardData2.totalBidAmount || 0}
+                        Rs {dashboardData2.totalBidAmount.toFixed(2) || 0}
                       </div>
                     </div>
                     <div>
@@ -953,7 +953,7 @@ const Dashboard = () => {
                     <div>
                       <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
                       <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {dashboardData2.totalWinAmount || 0}
+                        Rs {dashboardData2.totalWinAmount.toFixed(2) || 0}
                       </div>
                     </div>
                     <div>
