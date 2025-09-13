@@ -88,7 +88,7 @@ const DeclareResult = () => {
       const sum = selectedPanna
         .split("")
         .reduce((acc, num) => acc + parseInt(num, 10), 0);
-      setDigit(sum % 10);
+      setDigit(String(sum % 10)); // Ensure digit is a string
     } else {
       setDigit("");
     }
@@ -96,6 +96,12 @@ const DeclareResult = () => {
 
   // Show winners
   const handleDeclareResult = async () => {
+    // Validate fields before making the API call
+    if (!date || !selectedGame || !panna) {
+      alert("Please fill all required fields before showing winners.");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = { date: formatDate(date), gamename: selectedGame, panna, digit };
@@ -103,6 +109,7 @@ const DeclareResult = () => {
       setBidHistoryData(response.data.results || []);
     } catch (error) {
       console.error("Error fetching bid history:", error);
+      alert("Error fetching bid history. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -120,12 +127,15 @@ const DeclareResult = () => {
       const formattedDate = formatDate(date);
       const response = await axiosInstance.post(
         `/api/starlinebid/declare-winners`,
-        { date: formattedDate, gamename: selectedGame, panna, digit }
+        { date: formattedDate, gamename: selectedGame, panna, digit: parseInt(digit) } // Ensure digit is a number
       );
 
       if (response.data.success) {
         alert("Result declared successfully");
         fetchGameResultHistory();
+        // Reset form
+        setPanna("");
+        setDigit("");
       } else {
         if (response.data.message.includes("already declared")) {
           alert(response.data.message);
@@ -230,48 +240,36 @@ const DeclareResult = () => {
             ))}
           </select>
         </div>
-       <div className="w-full sm:w-auto">
-  <label className="font-semibold block">Panna</label>
-  <select
-    className="border px-3 py-2 rounded w-full sm:w-auto"
-    value={panna}
-    onChange={handlePannaChange}
-    onInput={(e) => {
-      const value = e.target.value;
-      if (/^\d{0,3}$/.test(value)) {
-        setPanna(value);
-        if (value.length === 3) {
-          const sum = value.split('').reduce((acc, num) => acc + parseInt(num, 10), 0);
-          setDigit(sum % 10);
-        } else {
-          setDigit("");
-        }
-      }
-    }}
-  >
-    <option value="">- Select or Type Panna -</option>
-    <option value="000">000</option>
-    {Object.entries({
-      0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "550"],
-      1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
-      2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
-      3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
-      4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
-      5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
-      6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
-      7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
-      8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
-      9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
-    }).map(([digit, pannas]) => (
-      <optgroup key={digit} label={`Digit ${digit}`}>
-        {pannas.map(panna => (
-          <option key={panna} value={panna}>{panna}</option>
-        ))}
-      </optgroup>
-    ))}
-  </select>
-</div>
-       
+        <div className="w-full sm:w-auto">
+          <label className="font-semibold block">Panna</label>
+          <select
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            value={panna}
+            onChange={handlePannaChange}
+          >
+            <option value="">- Select or Type Panna -</option>
+            <option value="000">000</option>
+            {Object.entries({
+              0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "550"],
+              1: ["137", "128", "146", "236", "245", "290", "380", "470", "489", "560", "678", "579", "119", "155", "227", "335", "344", "399", "588", "669", "777", "100"],
+              2: ["129", "138", "147", "156", "237", "246", "345", "390", "480", "570", "589", "679", "110", "228", "255", "336", "499", "660", "688", "778", "200", "444"],
+              3: ["120", "139", "148", "157", "238", "247", "256", "346", "490", "580", "670", "689", "166", "229", "337", "355", "445", "599", "779", "788", "300", "111"],
+              4: ["130", "149", "158", "167", "239", "248", "257", "347", "356", "590", "680", "789", "112", "220", "266", "338", "446", "455", "699", "770", "400", "888"],
+              5: ["140", "159", "168", "230", "249", "258", "267", "348", "357", "456", "690", "780", "113", "122", "177", "339", "366", "447", "799", "889", "500", "555"],
+              6: ["123", "150", "169", "178", "240", "259", "268", "349", "358", "367", "457", "790", "114", "277", "330", "448", "466", "556", "880", "899", "600", "222"],
+              7: ["124", "160", "179", "250", "269", "278", "340", "359", "368", "458", "467", "890", "115", "133", "188", "223", "377", "449", "557", "566", "700", "999"],
+              8: ["125", "134", "170", "189", "260", "279", "350", "369", "378", "459", "468", "567", "116", "224", "233", "288", "440", "477", "558", "990", "800", "666"],
+              9: ["126", "135", "180", "234", "270", "289", "360", "379", "450", "469", "478", "568", "117", "144", "199", "225", "388", "559", "577", "667", "900", "333"],
+            }).map(([digit, pannas]) => (
+              <optgroup key={digit} label={`Digit ${digit}`}>
+                {pannas.map(panna => (
+                  <option key={panna} value={panna}>{panna}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
 
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Digit</label>
@@ -289,6 +287,7 @@ const DeclareResult = () => {
         <button
           onClick={handleDeclareResult}
           className="bg-[#EEA529] text-white px-6 py-2 w-1/2 rounded text-center"
+          disabled={loading}
         >
           {loading ? "Loading..." : "Show Winners"}
         </button>
@@ -296,6 +295,7 @@ const DeclareResult = () => {
         <button
           onClick={handleSubmitResult}
           className="bg-[#556EE6] text-white px-6 py-2 w-1/2 rounded text-center"
+          disabled={declaring || !date || !selectedGame || !panna || !digit}
         >
           {declaring ? "Declaring..." : "Declare Result"}
         </button>
