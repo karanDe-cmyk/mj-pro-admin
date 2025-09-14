@@ -740,6 +740,7 @@ const BidHistory = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingBid, setEditingBid] = useState(null);
   const [pageSize, setPageSize] = useState(5);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchGameMarkets = async () => {
@@ -748,30 +749,47 @@ const BidHistory = () => {
         const response = await axios.get("https://maya-api.kglame.com/api/jackpotMarket/getAllMarket", {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+
         if (response.data && Array.isArray(response.data.data)) {
-          setGameOptions(response.data.data);
+          // Unique key banaye har option ke liye
+          const optionsWithUniqueKeys = response.data.data.map((game, index) => ({
+            ...game,
+            uniqueKey: `${game.game_name}_${game.open_time}_${index}`
+          }));
+          setGameOptions(optionsWithUniqueKeys);
         }
       } catch (error) {
+        console.error("Error fetching game markets:", error);
         message.error("Error fetching game markets");
       }
     };
+
     fetchGameMarkets();
     form.setFieldsValue({ date: dayjs() });
   }, [form]);
 
   const handleFilterBids = async () => {
     try {
+      setLoading(true);
       const values = await form.validateFields();
+
+      if (!values.gameName) {
+        message.error("Please select a game");
+        setLoading(false);
+        return;
+      }
+
+      // Extract game name and time from the selected value
+      const [gameName, gameTime] = values.gameName.split('|');
+
       const payload = {
-  date: dayjs(values.date).format("DD-MM-YYYY"),
-  gamename: values.gameName.split(" [")[0].trim(), // ✅ Fix here
-  gametype: "jodi_digit",
-  market: "Jackpot",
-};
+        date: dayjs(values.date).format("DD-MM-YYYY"),
+        gamename: gameName.trim(),
+        gametype: "jodi_digit",
+        market: "Jackpot",
+      };
 
-
-
-      console.log("Payload sent to API:", payload); // debug
+      console.log("Filter payload:", payload);
 
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.post(
@@ -794,7 +812,10 @@ const BidHistory = () => {
         setBidData([]);
       }
     } catch (error) {
+      console.error("Filter error:", error);
       message.error("Error filtering bids");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -802,7 +823,7 @@ const BidHistory = () => {
     setEditingBid(record);
     editForm.setFieldsValue({
       points: record.points,
-      newDigit: record.digit,
+      newDigit: record.number,
     });
     setIsEditModalOpen(true);
   };
@@ -847,64 +868,45 @@ const BidHistory = () => {
     }
   };
 
-  // const columns = [
-  //   {
-  //     title: "#",
-  //     render: (_, __, index) => index + 1,
-  //   },
-  //   { title: "User Name", dataIndex: "userName" },
-  //   { title: "Email", dataIndex: "email" },
-  //   { title: "Bid TXID", dataIndex: "bidId" },
-  //   { title: "Game Name", dataIndex: "gamename" },
-  //   { title: "Game Type", render: () => "Jodi" },
-  //   { title: "Digit", dataIndex: "digit" },
-  //   { title: "Points", dataIndex: "points" },
-  //   {
-  //     title: "Action",
-  //     render: (_, record) => (
-  //       <>
-  //         <Button onClick={() => openEditModal(record)} style={{ marginRight: 8 }}>
-  //           Edit
-  //         </Button>
-  //         <Button danger onClick={() => handleDeleteBid(record.bidId)}>
-  //           Delete
-  //         </Button>
-  //       </>
-  //     ),
-  //   },
-  // ];
-const columns = [
-  {
-    title: "#",
-    render: (_, __, index) => index + 1,
-  },
-  { title: "User Name", dataIndex: "username" }, // ✅ fixed
-  { title: "Email", dataIndex: "email" },
-  { title: "Bid TXID", dataIndex: "bidId" },
-  { title: "Game Name", dataIndex: "gamename" },
-  { title: "Game Type", render: () => "Jodi" },
-  { title: "Digit", dataIndex: "number" }, // ✅ fixed
-  { title: "Points", dataIndex: "points" },
-  {
-    title: "Action",
-    render: (_, record) => (
-      <>
-        <Button onClick={() => openEditModal(record)} style={{ marginRight: 8 }}>
-          Edit
-        </Button>
-        <Button danger onClick={() => handleDeleteBid(record.bidId)}>
-          Delete
-        </Button>
-      </>
-    ),
-  },
-];
+  const resetForm = () => {
+    form.resetFields();
+    form.setFieldsValue({ date: dayjs() });
+    setBidData([]);
+    setSearchText("");
+  };
+
+  const columns = [
+    {
+      title: "#",
+      render: (_, __, index) => index + 1,
+    },
+    { title: "User Name", dataIndex: "username" },
+    { title: "Email", dataIndex: "email" },
+    { title: "Bid TXID", dataIndex: "bidId" },
+    { title: "Game Name", dataIndex: "gamename" },
+    { title: "Game Type", render: () => "Jodi" },
+    { title: "Digit", dataIndex: "number" },
+    { title: "Points", dataIndex: "points" },
+    {
+      title: "Action",
+      render: (_, record) => (
+        <>
+          <Button onClick={() => openEditModal(record)} style={{ marginRight: 8 }}>
+            Edit
+          </Button>
+          <Button danger onClick={() => handleDeleteBid(record.bidId)}>
+            Delete
+          </Button>
+        </>
+      ),
+    },
+  ];
 
   const filteredBidData = bidData.filter(
-  (item) =>
-    item.username?.toLowerCase().includes(searchText.toLowerCase()) || 
-    item.bidId?.toLowerCase().includes(searchText.toLowerCase())
-);
+    (item) =>
+      item.username?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.bidId?.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
     <div style={{ padding: 20 }}>
@@ -919,48 +921,53 @@ const columns = [
               </Form.Item>
             </Col>
             <Col xs={24} sm={12} md={6}>
-             <Form.Item label="Game Name" name="gameName" rules={[{ required: true }]}>
-  <Select
-    placeholder="Select Game"
-    showSearch
-    optionLabelProp="label"
-  >
-    {gameOptions.map((game) => (
-      <Option
-        key={game._id}
-        value={game.game_name} // ✅ submits only the correct value
-        label={`${game.game_name} [ ${dayjs(game.open_time, "hh:mm:ssA").format("hh:mm A")} ]`}
-      >
-        {`${game.game_name} [ ${dayjs(game.open_time, "hh:mm:ssA").format("hh:mm A")} ]`}
-      </Option>
-    ))}
-  </Select>
-</Form.Item>
+              <Form.Item label="Game Name" name="gameName" rules={[{ required: true }]}>
+                <Select
+                  placeholder="Select Game"
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
+                  allowClear
+                >
+                  {gameOptions.map((game) => {
+                    const formattedTime = dayjs(game.open_time, "hh:mm:ssA").format("hh:mm A");
+                    const displayText = `${game.game_name} [${formattedTime}]`;
+                    const uniqueValue = `${game.game_name}|${game.open_time}`;
 
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Form.Item label="Game Type" name="gameType" initialValue="Jodi">
-                <Select disabled>
-                  <Option value="Jodi">Jodi</Option>
+                    return (
+                      <Option key={game.uniqueKey} value={uniqueValue}>
+                        {displayText}
+                      </Option>
+                    );
+                  })}
                 </Select>
               </Form.Item>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Form.Item>
-                <Button type="primary" onClick={handleFilterBids} style={{ marginTop: 30 }}>
-                  Submit
-                </Button>
+              <Form.Item label="Game Type">
+                <Input value="Jodi" disabled />
               </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={6} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+              <Button type="primary" onClick={handleFilterBids} loading={loading}>
+                Submit
+              </Button>
+              <Button onClick={resetForm}>
+                Reset
+              </Button>
             </Col>
           </Row>
         </Form>
       </Card>
 
+      {/* Always show the table card, even when there's no data */}
       <Card style={{ marginBottom: 20 }}>
         <Row justify="space-between" style={{ marginBottom: 16 }}>
           <Col>
             <span>Show </span>
-            <Select defaultValue={pageSize} style={{ width: 70 }} onChange={setPageSize}>
+            <Select value={pageSize} style={{ width: 70 }} onChange={setPageSize}>
               <Option value={5}>5</Option>
               <Option value={10}>10</Option>
               <Option value={20}>20</Option>
@@ -968,13 +975,12 @@ const columns = [
             <span> entries</span>
           </Col>
           <Col>
-            <Form.Item label="Search" colon={false} style={{ marginBottom: 0 }}>
-              <Input
-                placeholder="Search by User Name or TXID"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-            </Form.Item>
+            <Input
+              placeholder="Search by User Name or TXID"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: 250 }}
+            />
           </Col>
         </Row>
 
@@ -984,6 +990,10 @@ const columns = [
           pagination={{ pageSize }}
           rowKey="bidId"
           scroll={{ x: true }}
+          loading={loading}
+          locale={{
+            emptyText: "No data available. Please filter to see bid history."
+          }}
         />
       </Card>
 
