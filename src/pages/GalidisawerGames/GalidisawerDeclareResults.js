@@ -15,6 +15,8 @@ import {
 import moment from 'moment';
 import axiosInstance from "../../utils/axiosInstance";
 import dayjs from "dayjs";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const { Option } = Select;
 
@@ -91,7 +93,7 @@ const GalidisawerDeclareResults = () => {
     if (window.confirm("Are you sure you want to delete this declare result?")) {
       try {
         await axiosInstance.delete(`/api/GaliDisawarDeclareResult/delete/${record._id}`);
-        alert("Declare result deleted successfully. The winning amount has been deducted from the user's wallet.");
+        toast.success("Declare result deleted successfully. The winning amount has been deducted from the user's wallet.");
         fetchDeclareResults();
       } catch (error) {
         console.error("Error deleting declare result:", error);
@@ -182,7 +184,7 @@ const GalidisawerDeclareResults = () => {
         "/api/GaliDisawarDeclareResult/declare",
         reqBody
       );
-      alert("Result Declared successfully!");
+      toast.success("Result Declared successfully!");
       setTimeout(() => {
         fetchDeclareResults();
       }, 100);

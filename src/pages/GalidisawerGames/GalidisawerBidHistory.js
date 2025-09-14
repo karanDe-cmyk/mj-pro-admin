@@ -15,6 +15,8 @@ import {
 } from "antd";
 import axiosInstance from "../../utils/axiosInstance";
 import dayjs from "dayjs";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -86,7 +88,7 @@ const BidHistory = () => {
         payload
       );
       if (response.data.success) {
-        message.success("Bids filtered successfully");
+        toast.success("Bids filtered successfully");
         // Add a key to each bid record (using bidId if available, else index)
         const bidsWithKey = response.data.bids.map((bid, index) => ({
           ...bid,
@@ -141,7 +143,7 @@ const BidHistory = () => {
         `/api/GaliDisawarbid/updateBid/${editingBid.bidId}`,
         payload
       );
-      message.success("Bid updated successfully");
+      toast.success("Bid updated successfully");
       setIsEditModalOpen(false);
       setEditingBid(null);
       // Refresh the bid data after update
@@ -156,7 +158,7 @@ const BidHistory = () => {
   const handleDeleteBid = async (bidId) => {
     try {
       await axiosInstance.delete(`/api/GaliDisawarbid/deleteBid/${bidId}`);
-      message.success("Bid deleted successfully");
+      toast.success("Bid deleted successfully");
       // Refresh bid data
       handleFilterBids();
     } catch (error) {

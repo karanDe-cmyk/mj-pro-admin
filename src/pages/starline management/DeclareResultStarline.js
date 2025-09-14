@@ -3,7 +3,10 @@ import axiosInstance from "../../utils/axiosInstance";
 
 const DeclareResult = () => {
   // States for Declare Result section
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD for input[type="date"]
+  });
   const [selectedGame, setSelectedGame] = useState("");
   const [panna, setPanna] = useState("");
   const [digit, setDigit] = useState("");
@@ -55,7 +58,7 @@ const DeclareResult = () => {
       const response = await axiosInstance.get(`/api/starline/game-result-history`);
       const formattedData = response.data.data.map(item => ({
         ...item,
-        id: item._id // Forcefully map _id to id
+        id: item._id || item.id // Forcefully map _id to id
       }));
 
       setGameResultHistory(formattedData || []);

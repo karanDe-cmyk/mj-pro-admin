@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Input, Select, DatePicker, Modal, Form, Spin, message } from "antd";
 import axiosInstance from "../../utils/axiosInstance";
-import {  } from "../../utils/config";
 import moment from "moment";
 
 const { Option } = Select;
 
 const BidHistory = () => {
-  // Store both the raw moment object and the formatted date string
-  const [date, setDate] = useState(null); // moment object from DatePicker
-  const [formattedDate, setFormattedDate] = useState(""); // formatted date string
+  // Initialize with today's date
+  const [date, setDate] = useState(moment()); // moment object from DatePicker
+  const [formattedDate, setFormattedDate] = useState(moment().format("DD-MM-YYYY")); // formatted date string
   const [selectedGame, setSelectedGame] = useState("");
   const [gameOptions, setGameOptions] = useState([]);
   const [bidHistoryData, setBidHistoryData] = useState([]);
@@ -213,7 +212,7 @@ const BidHistory = () => {
           <Table
             columns={columns}
             dataSource={bidHistoryData.map((item, index) => ({ ...item, key: index }))}
-            pagination={{ pageSize: 10 }} 
+            pagination={{ pageSize: 10 }}
             scroll={{ x: 1000 }}
           />
         )}

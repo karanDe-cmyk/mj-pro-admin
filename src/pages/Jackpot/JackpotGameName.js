@@ -14,9 +14,10 @@ import {
   Switch,
 } from "antd";
 import dayjs from "dayjs";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import customParseFormat from "dayjs/plugin/customParseFormat";
-// import axiosInstance from "../../utils/axiosInstance";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance";
 
 dayjs.extend(customParseFormat);
 const { Title } = Typography;
@@ -33,18 +34,17 @@ const GameName = () => {
   const fetchMarkets = async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("https://maya-api.kglame.com/api/JackpotMarket/getAllMarket",
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
+      const response = await axiosInstance.get("/api/JackpotMarket/getAllMarket");
 
-      // The actual array of markets is in response.data.data
       if (response.data && Array.isArray(response.data.data)) {
-        setMarkets(response.data.data);
+        // Sort markets by time in ascending order
+        const sortedMarkets = response.data.data.sort((a, b) => {
+          const timeA = dayjs(a.open_time, "hh:mm:ssA");
+          const timeB = dayjs(b.open_time, "hh:mm:ssA");
+          return timeA - timeB;
+        });
+        
+        setMarkets(sortedMarkets);
       } else {
         setMarkets([]);
         message.warning("No valid market data found.");
@@ -70,18 +70,11 @@ const GameName = () => {
         open_time: values.time.format("hh:mm:ssA"),
         is_active: true,
       };
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.post("https://maya-api.kglame.com/api/JackpotMarket/AddMarket", payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
+      await axiosInstance.post("/api/JackpotMarket/AddMarket", payload);
       message.success("Market added successfully");
       form.resetFields();
       setIsModalOpen(false);
-      fetchMarkets();
+      fetchMarkets(); // This will re-fetch and sort the markets
     } catch (error) {
       console.error("Error adding market", error);
       const errMsg =
@@ -100,23 +93,17 @@ const GameName = () => {
       const payload = {
         game_name: values.name,
         open_time: values.time.format("hh:mm:ssA"),
-        is_active: true, // Sending is_active true by default for edit
+        is_active: true,
       };
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${editingMarket._id}`,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
+      await axiosInstance.put(
+        `/api/JackpotMarket/updateMarket/${editingMarket._id}`,
+        payload
       );
-      message.success("Market updated successfully");
+      toast.success("Market updated successfully");
       setEditingMarket(null);
       form.resetFields();
       setIsModalOpen(false);
-      fetchMarkets();
+      fetchMarkets(); // This will re-fetch and sort the markets
     } catch (error) {
       console.error("Error updating market", error);
       const errMsg =
@@ -136,18 +123,12 @@ const GameName = () => {
         open_time: record.open_time,
         is_active: checked,
       };
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/JackpotMarket/updateMarket/${record._id}`,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
+      await axiosInstance.put(
+        `/api/JackpotMarket/updateMarket/${record._id}`,
+        payload
       );
-      message.success("Market status updated");
-      fetchMarkets();
+      toast.success("Market status updated");
+      fetchMarkets(); // This will re-fetch and sort the markets
     } catch (error) {
       console.error("Error updating market status", error);
       const errMsg =
@@ -162,16 +143,9 @@ const GameName = () => {
   // Handler for deleting a market (DELETE API)
   const handleDelete = async (id) => {
     try {
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.delete(`https://maya-api.kglame.com/api/JackpotMarket/deleteMarketById/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
-      message.success("Market deleted successfully");
-      fetchMarkets();
+      await axiosInstance.delete(`/api/JackpotMarket/deleteMarketById/${id}`);
+      toast.success("Market deleted successfully");
+      fetchMarkets(); // This will re-fetch and sort the markets
     } catch (error) {
       console.error("Error deleting market", error);
       message.error("Failed to delete market");
@@ -188,7 +162,7 @@ const GameName = () => {
     setIsModalOpen(true);
   };
 
-  // Table columns definition with added "Status" column
+  // Table columns definition
   const columns = [
     {
       title: "#",
@@ -206,7 +180,11 @@ const GameName = () => {
       title: "Open Time",
       dataIndex: "open_time",
       key: "open_time",
-      sorter: (a, b) => a.open_time.localeCompare(b.open_time),
+      sorter: (a, b) => {
+        const timeA = dayjs(a.open_time, "hh:mm:ssA");
+        const timeB = dayjs(b.open_time, "hh:mm:ssA");
+        return timeA - timeB;
+      },
     },
     {
       title: "Status",

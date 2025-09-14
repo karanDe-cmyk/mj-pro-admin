@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm } from "antd";
+import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm, Modal } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
 import EditGameModal from "./EditGameModal";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import moment from "moment";
 
 const { Option } = Select;
 
@@ -15,15 +18,25 @@ const GameName = () => {
   const [editingGame, setEditingGame] = useState(null);
   const [searchTerm, setSearchTerm] = useState(""); // Search state
   const [filterStatus, setFilterStatus] = useState("all"); // Filter state
-  const [pageSize, setPageSize] = useState(5); // Entries state
+
+  // Function to sort games by close_time
+  const sortGamesByTime = (gamesList) => {
+    return [...gamesList].sort((a, b) => {
+      const timeA = moment(a.close_time, "hh:mm A");
+      const timeB = moment(b.close_time, "hh:mm A");
+      return timeA.diff(timeB);
+    });
+  };
 
   // Fetch game list
   const fetchGameList = async () => {
     try {
       const response = await instance.get(`/api/starline/getGameList`);
       if (response.data.success) {
-        setGames(response.data.data);
-        setFilteredGames(response.data.data); // Initialize filtered list
+        // Sort the games by close time immediately after fetching
+        const sortedGames = sortGamesByTime(response.data.data);
+        setGames(sortedGames);
+        setFilteredGames(sortedGames); // Initialize filtered list with sorted data
       } else {
         throw new Error("Failed to fetch game list");
       }
@@ -51,7 +64,6 @@ const GameName = () => {
   };
 
   // Function to filter games based on search and status.
-  // Accept an optional gamesData parameter (defaulting to the current games state)
   const filterGames = (search, status, gamesData = games) => {
     let updatedGames = gamesData;
 
@@ -108,31 +120,67 @@ const GameName = () => {
         const updatedGames = games.filter((game) => game._id !== gameId);
         setGames(updatedGames);
         filterGames(searchTerm, filterStatus, updatedGames);
-        message.success("Game deleted successfully.");
+        toast.success("Game deleted successfully.");
+      } else {
+        toast.error(response.data.message || "Failed to delete game.");
       }
     } catch (error) {
-      message.error("Error deleting game.");
+      toast.error("Error deleting game.");
     } finally {
       setLoadingAction(null);
     }
   };
+
+  // Handler for adding a new game
+  const handleGameAdded = (newGame) => {
+    // Create a new array with the new game
+    const updatedGames = [...games, newGame];
+    // Sort the new array by time
+    const sortedGames = sortGamesByTime(updatedGames);
+    setGames(sortedGames);
+    // Re-apply filters to the newly sorted list
+    filterGames(searchTerm, filterStatus, sortedGames);
+    toast.success("Game added successfully!");
+  };
+
+  const handleUpdateGame = async () => {
+    setLoadingAction(`update-${editingGame._id}`);
+    try {
+      const response = await instance.patch(
+        `/api/starline/updateGameById/${editingGame._id}`,
+        {
+          game_name: editingGame.game_name,
+          close_time: editingGame.close_time,
+          is_active: editingGame.is_active,
+          week_selection: editingGame.week_selection,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Game updated successfully!");
+        fetchGameList(); // Re-fetch the entire list to ensure data consistency
+        setEditingGame(null); // Close the modal
+      } else {
+        toast.error(response.data.message || "Failed to update game.");
+      }
+    } catch (error) {
+      console.error("Error updating game:", error);
+      toast.error("An error occurred while updating the game.");
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white shadow-md rounded-md">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Game Schedule
       </h2>
-
       {/* Add Game Component */}
-      <AddGame
-        onGameAdded={(newGame) => {
-          const newGames = [...games, newGame];
-          setGames(newGames);
-          filterGames(searchTerm, filterStatus, newGames);
-        }}
-      />
+      <AddGame onGameAdded={handleGameAdded} />
 
-      {/* Search, Filter & Entries Options */}
+      {/* Search, Filter Options */}
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 mb-4">
         {/* Search Input */}
         <Input
@@ -151,18 +199,6 @@ const GameName = () => {
           <Option value="all">All Games</Option>
           <Option value="active">Active Games</Option>
           <Option value="inactive">Inactive Games</Option>
-        </Select>
-
-        {/* Entries Dropdown */}
-        <Select
-          value={pageSize}
-          onChange={(value) => setPageSize(value)}
-          className="w-24"
-        >
-          <Option value={5}>5</Option>
-          <Option value={10}>10</Option>
-          <Option value={20}>20</Option>
-          <Option value={50}>50</Option>
         </Select>
       </div>
 
@@ -207,24 +243,30 @@ const GameName = () => {
               key: "actions",
               render: (_, record) => (
                 <div className="flex space-x-2">
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  onClick={() => setEditingGame(record)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  type="primary"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => deleteGame(record._id)}
-                  loading={loadingAction === `delete-${record._id}`}
-                >
-                  Delete
-                </Button>
-              </div>
-              
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={() => setEditingGame(record)}
+                  >
+                    Edit
+                  </Button>
+                  <Popconfirm
+                    title="Are you sure to delete this game?"
+                    onConfirm={() => deleteGame(record._id)}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button
+                      type="primary"
+                      danger
+                      icon={<DeleteOutlined />}
+                      loading={loadingAction === `delete-${record._id}`}
+                    >
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </div>
+
               ),
             },
           ]}
@@ -232,23 +274,31 @@ const GameName = () => {
             ...game,
             key: index,
           }))}
-          pagination={{ pageSize }}
+          pagination={false} // Disable pagination
           className="mt-6"
         />
       )}
 
-      {/* Edit Game Modal */}
-      {editingGame && (
-        <EditGameModal
-          editingGame={editingGame}
-          setEditingGame={setEditingGame}
-          handleUpdateGame={() => {
-            fetchGameList(); // Refresh game list after update
-            setEditingGame(null);
-          }}
-          closeEditPopup={() => setEditingGame(null)}
-        />
-      )}
+      {/* Edit Game Modal - Full Screen */}
+      <Modal
+        title=""
+        open={!!editingGame}
+        onCancel={() => setEditingGame(null)}
+        footer={null}
+        width="100%"
+        style={{ top: 0 }}
+        bodyStyle={{ height: "90vh" }}
+        className="full-screen-modal"
+      >
+        {editingGame && (
+          <EditGameModal
+            editingGame={editingGame}
+            setEditingGame={setEditingGame}
+            handleUpdateGame={handleUpdateGame}
+            closeEditPopup={() => setEditingGame(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

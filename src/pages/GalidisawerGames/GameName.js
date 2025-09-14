@@ -16,6 +16,8 @@ import {
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import axiosInstance from "../../utils/axiosInstance";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 dayjs.extend(customParseFormat);
 const { Title } = Typography;
@@ -28,15 +30,34 @@ const GameName = () => {
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
 
-  // Fetch markets from API
+  const timeToMinutes = (timeStr) => {
+    const [time, modifier] = timeStr.split(/(?=[AP]M)/);
+    let [hours, minutes] = time.split(':').map(Number);
+
+    // Check if seconds exist before mapping
+    if (time.split(':').length > 2) {
+      [, , minutes] = time.split(':').map(Number);
+    }
+
+    if (modifier === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (modifier === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    return hours * 60 + minutes;
+  };
+
   const fetchMarkets = async () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/api/GaliDisawar/getAllMarket");
 
-      // The actual array of markets is in response.data.data
       if (response.data && Array.isArray(response.data.data)) {
-        setMarkets(response.data.data);
+        const sortedMarkets = [...response.data.data].sort((a, b) => {
+          return timeToMinutes(a.open_time) - timeToMinutes(b.open_time);
+        });
+        setMarkets(sortedMarkets);
       } else {
         setMarkets([]);
         message.warning("No valid market data found.");
@@ -53,7 +74,6 @@ const GameName = () => {
     fetchMarkets();
   }, []);
 
-  // Handler for adding a new market (POST API)
   const handleAddMarket = async () => {
     try {
       const values = await form.validateFields();
@@ -63,7 +83,7 @@ const GameName = () => {
         is_active: true,
       };
       await axiosInstance.post("/api/GaliDisawar/AddMarket", payload);
-      message.success("Market added successfully");
+      toast.success("Market added successfully");
       form.resetFields();
       setIsModalOpen(false);
       fetchMarkets();
@@ -78,20 +98,19 @@ const GameName = () => {
     }
   };
 
-  // Handler for updating an existing market (PUT API)
   const handleUpdateMarket = async () => {
     try {
       const values = await form.validateFields();
       const payload = {
         game_name: values.name,
         open_time: values.time.format("hh:mm:ssA"),
-        is_active: true, // Sending is_active true by default for edit
+        is_active: true,
       };
       await axiosInstance.put(
         `/api/GaliDisawar/updateMarket/${editingMarket._id}`,
         payload
       );
-      message.success("Market updated successfully");
+      toast.success("Market updated successfully");
       setEditingMarket(null);
       form.resetFields();
       setIsModalOpen(false);
@@ -107,7 +126,6 @@ const GameName = () => {
     }
   };
 
-  // Handler for updating is_active using the toggle switch
   const handleToggleStatus = async (record, checked) => {
     try {
       const payload = {
@@ -119,7 +137,7 @@ const GameName = () => {
         `/api/GaliDisawar/updateMarket/${record._id}`,
         payload
       );
-      message.success("Market status updated");
+      toast.success("Market status updated");
       fetchMarkets();
     } catch (error) {
       console.error("Error updating market status", error);
@@ -132,11 +150,10 @@ const GameName = () => {
     }
   };
 
-  // Handler for deleting a market (DELETE API)
   const handleDelete = async (id) => {
     try {
       await axiosInstance.delete(`/api/GaliDisawar/deleteMarketById/${id}`);
-      message.success("Market deleted successfully");
+      toast.success("Market deleted successfully");
       fetchMarkets();
     } catch (error) {
       console.error("Error deleting market", error);
@@ -144,7 +161,6 @@ const GameName = () => {
     }
   };
 
-  // Open modal for editing a market
   const handleEdit = (record) => {
     setEditingMarket(record);
     form.setFieldsValue({
@@ -154,7 +170,6 @@ const GameName = () => {
     setIsModalOpen(true);
   };
 
-  // Table columns definition with added "Status" column
   const columns = [
     {
       title: "#",
@@ -172,7 +187,7 @@ const GameName = () => {
       title: "Open Time",
       dataIndex: "open_time",
       key: "open_time",
-      sorter: (a, b) => a.open_time.localeCompare(b.open_time),
+      sorter: (a, b) => timeToMinutes(a.open_time) - timeToMinutes(b.open_time),
     },
     {
       title: "Status",
@@ -206,7 +221,6 @@ const GameName = () => {
     },
   ];
 
-  // Filter markets by search text (game_name or open_time)
   const filteredData = markets.filter(
     (item) =>
       item.game_name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -246,7 +260,7 @@ const GameName = () => {
         <Table
           columns={columns}
           dataSource={filteredData}
-          pagination={{ pageSize: 5 }}
+          pagination={false}
           rowKey="_id"
           loading={loading}
           scroll={{ x: true }}

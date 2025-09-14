@@ -3,9 +3,7 @@ import { Modal, Table, Button, Form, Select, DatePicker, Input, message, Typogra
 import instance from "../utils/axiosInstance";
 import moment from "moment";
 import dayjs from "dayjs";
-import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
-import { Tabs } from "antd";
 
 const { Title } = Typography;
 
@@ -886,7 +884,7 @@ const MarketDeclareResult = () => {
           </>
         ) : (
           <p style={{ textAlign: "center", fontSize: "16px", padding: "20px", color: "#ff4d4f" }}>
-            {winners.closeWinners?.length == 0 ? "Open result not declared for that game." : "No Winners Found"}
+            {winners.closeWinners?.length == 0 ? "No Winners Found" : "No Winners Found"}
           </p>
         )}
       </Modal>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Form,
@@ -10,11 +9,14 @@ import {
   Card,
   message,
   Modal,
-  Spin
+  Spin,
+  Space
 } from "antd";
-import axios from "axios";
+import axios from "../../utils/axiosInstance";
 import dayjs from "dayjs";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -30,134 +32,111 @@ const JackpotBidRevert = () => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const accessToken = localStorage.getItem("accessToken");
-        const res = await axios.get(
-          "https://maya-api.kglame.com/api/jackpotMarket/getAllMarket",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          }
-        );
+        const res = await axios.get("/api/jackpotMarket/getAllMarket");
         setGameOptions(res.data.data || []);
       } catch (err) {
         message.error("Error loading game list");
       }
     };
     fetchGames();
-  }, []);
+
+    // Set default date to today
+    form.setFieldsValue({
+      date: dayjs()
+    });
+  }, [form]);
 
   const handleSearch = async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
 
+      // Parse gamename and open_time from the selected value
+      const [gamename, open_time] = values.gamename.split("|");
+
       const payload = {
         date: dayjs(values.date).format("DD-MM-YYYY"),
-        gamename: values.gamename.split(" [")[0].trim(),
+        gamename: gamename.trim(),
         gametype: "jodi_digit",
         market: "Jackpot",
-        reverted: false, // Explicitly request only non-reverted bids
-        _fresh: Date.now() // Prevent caching
+        reverted: false,
+        open_time: open_time.trim(),
+        _fresh: Date.now()
       };
 
-      const accessToken = localStorage.getItem("accessToken");
-      const res = await axios.post(
-        "https://maya-api.kglame.com/api/jackpotBid/filterBids",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
-      );
+      console.log("Sending payload:", payload);
+
+      const res = await axios.post("/api/jackpotBid/filterBids", payload);
 
       if (res.data.success) {
-        // No need for client-side filtering since API handles it
         setBids(res.data.bids || []);
+        if (res.data.bids.length === 0) {
+          message.info("No active bids found for the selected criteria");
+        }
       } else {
         setBids([]);
-        message.warning("No active bids found");
+        message.warning(res.data.message || "No active bids found");
       }
     } catch (err) {
-      message.error("Error filtering bids");
+      console.error("Filter error:", err);
+      message.error(err.response?.data?.message || "Error filtering bids");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRevert = async (bidId) => {
+  const handleRevertAndDelete = async (bidId) => {
     try {
       setReverting(prev => ({ ...prev, [bidId]: true }));
 
-      // Optimistic UI update
-      setBids(prev =>
-        prev.map(bid =>
-          bid.bidId === bidId ? { ...bid, reverted: true } : bid
-        )
-      );
+      // First revert the bid (refund amount)
+      await axios.put(`/api/jackpotBid/revertBid/${bidId}`, { bidIds: [bidId] });
 
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.put(
-        `https://maya-api.kglame.com/api/jackpotBid/revertBid/${bidId}`,
-        { bidIds: [bidId] },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
-      );
+      // Then delete the bid
+      await axios.delete(`/api/jackpotBid/deleteBid/${bidId}`);
 
-      message.success("Bid reverted and amount refunded");
+      // Remove the bid from the UI immediately
+      setBids(prev => prev.filter(bid => bid.bidId !== bidId));
 
-      // Refresh data after 1 second to confirm
-      setTimeout(() => {
-        handleSearch();
-      }, 1000);
+      toast.success("Bid reverted, amount refunded, and bid deleted successfully");
     } catch (err) {
-      // Rollback UI if API fails
-      setBids(prev =>
-        prev.map(bid =>
-          bid.bidId === bidId ? { ...bid, reverted: false } : bid
-        )
-      );
-      message.error(err.response?.data?.message || "Error reverting bid");
+      console.error("Error in revert and delete:", err);
+      message.error(err.response?.data?.message || "Error processing bid");
     } finally {
       setReverting(prev => ({ ...prev, [bidId]: false }));
     }
   };
 
   const handleRevertAll = () => {
+    if (bids.length === 0) {
+      message.warning("No bids to revert");
+      return;
+    }
+
     Modal.confirm({
-      title: "Revert All Bids?",
+      title: "Revert and Delete All Bids?",
       icon: <ExclamationCircleOutlined />,
-      content: "Are you sure you want to revert all visible bids? This action cannot be undone.",
-      okText: "Yes, Revert All",
+      content: "Are you sure you want to revert and delete all visible bids? This action cannot be undone.",
+      okText: "Yes, Revert & Delete All",
       cancelText: "Cancel",
       onOk: async () => {
         try {
           setRevertingAll(true);
-          const accessToken = localStorage.getItem("accessToken");
 
-          // Optimistic update
-          setBids(prev =>
-            prev.map(bid => ({ ...bid, reverted: true }))
+          const revertAndDeletePromises = bids.map(bid =>
+            axios.put(`/api/jackpotBid/revertBid/${bid.bidId}`)
+              .then(() => axios.delete(`/api/jackpotBid/deleteBid/${bid.bidId}`))
           );
 
-          const revertPromises = bids.map(bid =>
-            axios.put(
-              `https://maya-api.kglame.com/api/jackpotBid/revertBid/${bid.bidId}`,
-              {},
-              {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              }
-            )
-          );
+          await Promise.all(revertAndDeletePromises);
 
-          await Promise.all(revertPromises);
+          // Clear all bids from UI
+          setBids([]);
 
-          message.success("All bids reverted successfully!");
-          handleSearch();
+          message.success("All bids reverted and deleted successfully!");
         } catch (err) {
-          // Rollback UI if API fails
-          setBids(prev =>
-            prev.map(bid => ({ ...bid, reverted: false }))
-          );
-          message.error("Error reverting all bids");
+          console.error("Error in revert all:", err);
+          message.error("Error reverting and deleting all bids");
         } finally {
           setRevertingAll(false);
         }
@@ -166,32 +145,50 @@ const JackpotBidRevert = () => {
   };
 
   const columns = [
-    { title: "#", render: (_, __, i) => i + 1 },
-    { title: "User", dataIndex: "username" },
-    { title: "Email", dataIndex: "email" },
-    { title: "Digit", dataIndex: "number" },
-    { title: "Points", dataIndex: "points" },
-    { title: "Bid ID", dataIndex: "bidId" },
     {
-      title: "Status",
-      render: (_, record) =>
-        record.reverted ? (
-          <span style={{ color: "red" }}>Reverted</span>
-        ) : (
-          <span style={{ color: "green" }}>Active</span>
-        )
+      title: "#",
+      render: (_, __, i) => i + 1,
+      width: 50
+    },
+    {
+      title: "User",
+      dataIndex: "username",
+      width: 100
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      width: 150,
+      ellipsis: true
+    },
+    {
+      title: "Digit",
+      dataIndex: "number",
+      width: 80
+    },
+    {
+      title: "Points",
+      dataIndex: "points",
+      width: 80
+    },
+    {
+      title: "Bid ID",
+      dataIndex: "bidId",
+      width: 200,
+      ellipsis: true
     },
     {
       title: "Action",
+      width: 120,
       render: (_, record) => (
         <Button
           type="dashed"
           danger
+          size="small"
           loading={reverting[record.bidId]}
-          disabled={record.reverted || reverting[record.bidId]}
-          onClick={() => handleRevert(record.bidId)}
+          onClick={() => handleRevertAndDelete(record.bidId)}
         >
-          {record.reverted ? "Reverted" : "Revert"}
+          Revert & Delete
         </Button>
       )
     }
@@ -207,7 +204,14 @@ const JackpotBidRevert = () => {
             name="date"
             rules={[{ required: true, message: "Select date" }]}
           >
-            <DatePicker format="DD-MM-YYYY" style={{ width: 150 }} />
+            <DatePicker
+              format="DD-MM-YYYY"
+              style={{ width: 150 }}
+              disabledDate={(current) => {
+                // Can not select days after today
+                return current && current > dayjs().endOf('day');
+              }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -224,17 +228,17 @@ const JackpotBidRevert = () => {
                 option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
               }
             >
-              {gameOptions.map((g) => (
-                <Option
-                  key={g._id}
-                  value={`${g.game_name} [ ${dayjs(
-                    g.open_time,
-                    "hh:mm:ssA"
-                  ).format("hh:mm A")} ]`}
-                >
-                  {g.game_name} [ {dayjs(g.open_time, "hh:mm:ssA").format("hh:mm A")} ]
-                </Option>
-              ))}
+              {gameOptions.map((g) => {
+                const openTimeFormatted = dayjs(g.open_time, "hh:mm:ssA").format("hh:mm A");
+                return (
+                  <Option
+                    key={g._id}
+                    value={`${g.game_name}|${g.open_time}`}
+                  >
+                    {g.game_name} [ {openTimeFormatted} ]
+                  </Option>
+                );
+              })}
             </Select>
           </Form.Item>
 
@@ -247,20 +251,22 @@ const JackpotBidRevert = () => {
       </Card>
 
       <Card style={{ marginTop: 20 }}>
-        {/* <div style={{ marginBottom: 16 }}>
-          <Button
-            type="primary"
-            danger
-            onClick={handleRevertAll}
-            disabled={bids.length === 0 || revertingAll}
-            loading={revertingAll}
-          >
-            Revert All Bids
-          </Button>
-          <span style={{ marginLeft: 8 }}>
-            {bids.length > 0 && `Showing ${bids.length} active bids`}
-          </span>
-        </div> */}
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Space>
+            <Button
+              type="primary"
+              danger
+              onClick={handleRevertAll}
+              disabled={bids.length === 0 || revertingAll}
+              loading={revertingAll}
+            >
+              Revert & Delete All Bids
+            </Button>
+            <span>
+              {bids.length > 0 ? `Showing ${bids.length} active bids` : 'No bids found'}
+            </span>
+          </Space>
+        </div>
 
         <Table
           dataSource={bids}
@@ -268,9 +274,10 @@ const JackpotBidRevert = () => {
           loading={loading}
           pagination={{ pageSize: 10 }}
           rowKey="bidId"
+          scroll={{ x: 800 }}
           locale={{
             emptyText: (
-              <div style={{ padding: 20 }}>
+              <div style={{ padding: 20, textAlign: 'center' }}>
                 {loading ? (
                   <Spin tip="Loading bids..." />
                 ) : (
