@@ -26,6 +26,7 @@ import instance from "../utils/axiosInstance";
 import moment from "moment";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import BidHistory from "./BidHistory";
 
 const { Search } = Input;
 
@@ -66,27 +67,27 @@ const UserDetails = () => {
   );
 
 
-    // New function to fetch the user password.
-    const fetchUserPassword = async () => {
-      try {
-        const response = await instance.get(`/api/auth/getuserpassword/${userId}`);
-        if (
-          response.data &&
-          response.data.data &&
-          response.data.data.password
-        ) {
-          setUserPassword(response.data.data.password);
-        }
-      } catch (error) {
-        console.error("Error fetching user password:", error);
+  // New function to fetch the user password.
+  const fetchUserPassword = async () => {
+    try {
+      const response = await instance.get(`/api/auth/getuserpassword/${userId}`);
+      if (
+        response.data &&
+        response.data.data &&
+        response.data.data.password
+      ) {
+        setUserPassword(response.data.data.password);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user password:", error);
+    }
+  };
 
-    useEffect(() => {
-        if (userId) {
-          fetchUserPassword();
-        }
-      }, [userId]);
+  useEffect(() => {
+    if (userId) {
+      fetchUserPassword();
+    }
+  }, [userId]);
 
   // Fetch today's deposit transactions from the new API
   const fetchManualTransactionsAll = async () => {
@@ -584,25 +585,25 @@ const UserDetails = () => {
       };
     });
 
-   // Format auto deposit transactions
-   const formattedAutoDeposits = autoDeposits.map((txn, index) => {
-    // Try parsing with both formats
-    const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
-  
-    // Extract txnRef from comments string
-    const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
-    const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
-  
-    return {
-      key: `auto-${index}`,
-      requestNumber: txnRef, // Show txnRef only
-      amount: txn.amount,
-      transactionType: "Money Added",
-      date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
-      sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
-      type: "auto",
-    };
-  });
+    // Format auto deposit transactions
+    const formattedAutoDeposits = autoDeposits.map((txn, index) => {
+      // Try parsing with both formats
+      const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
+
+      // Extract txnRef from comments string
+      const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
+      const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
+
+      return {
+        key: `auto-${index}`,
+        requestNumber: txnRef, // Show txnRef only
+        amount: txn.amount,
+        transactionType: "Money Added",
+        date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
+        sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
+        type: "auto",
+      };
+    });
 
     // Merge all transactions
     const allTransactions = [
@@ -1054,8 +1055,8 @@ const UserDetails = () => {
   const getFilteredData = () => {
     return activeTab === "winning"
       ? walletHistoryData.filter(
-          (item) => item.transactionType === "Money Added"
-        )
+        (item) => item.transactionType === "Money Added"
+      )
       : walletHistoryData;
   };
 
@@ -1150,7 +1151,7 @@ const UserDetails = () => {
           <ArrowLeftOutlined
             style={{ fontSize: "20px", cursor: "pointer", marginRight: "10px" }}
             onClick={() => window.history.back()}
-            // Go back to the previous page
+          // Go back to the previous page
           />
         </Col>
         <Col>
@@ -1309,8 +1310,8 @@ const UserDetails = () => {
                     <Text>{userData.securityPin}</Text>
                   </Col>
                   <Col span={12}>
-                  <Text strong>Password:</Text>{" "}
-                  <Text>{userPassword || "******"}</Text>
+                    <Text strong>Password:</Text>{" "}
+                    <Text>{userPassword || "******"}</Text>
                     {/* Password is typically not sent back from the API */}
                   </Col>
                 </Row>
@@ -1323,7 +1324,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.bank_name &&
-                        userData.bank_details.bank_name !== "Null"
+                          userData.bank_details.bank_name !== "Null"
                           ? userData.bank_details.bank_name
                           : "N/A"}
                       </Text>
@@ -1340,7 +1341,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.account_number &&
-                        userData.bank_details.account_number !== "Null"
+                          userData.bank_details.account_number !== "Null"
                           ? userData.bank_details.account_number
                           : "N/A"}
                       </Text>
@@ -1351,7 +1352,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.bank_details?.ifsc_code &&
-                        userData.bank_details.ifsc_code !== "Null"
+                          userData.bank_details.ifsc_code !== "Null"
                           ? userData.bank_details.ifsc_code
                           : "N/A"}
                       </Text>
@@ -1362,7 +1363,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.upi_id?.phonepeUpi &&
-                        userData.upi_id.phonepeUpi !== "Null"
+                          userData.upi_id.phonepeUpi !== "Null"
                           ? userData.upi_id.phonepeUpi
                           : "N/A"}
                       </Text>
@@ -1373,7 +1374,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.upi_id?.gpayUpi &&
-                        userData.upi_id.gpayUpi !== "Null"
+                          userData.upi_id.gpayUpi !== "Null"
                           ? userData.upi_id.gpayUpi
                           : "N/A"}
                       </Text>
@@ -1384,7 +1385,7 @@ const UserDetails = () => {
                     <span style={{ marginLeft: "20px" }}>
                       <Text>
                         {userData.upi_id?.paytmUpi &&
-                        userData.upi_id.paytmUpi !== "Null"
+                          userData.upi_id.paytmUpi !== "Null"
                           ? userData.upi_id.paytmUpi
                           : "N/A"}
                       </Text>
@@ -1482,42 +1483,7 @@ const UserDetails = () => {
 
         {/* Bid History */}
 
-        <Card style={{ marginBottom: "20px" }}>
-          <Row justify="space-between" align="middle">
-            <Title level={5}>Bid History</Title>
-            <div>
-              Show{" "}
-              <Select
-                value={entries.toString()}
-                style={{ width: 80 }}
-                onChange={(value) => setEntries(parseInt(value))}
-              >
-                <Option value="10">10</Option>
-                <Option value="25">25</Option>
-                <Option value="50">50</Option>
-              </Select>{" "}
-              entries
-            </div>
-          </Row>
-
-          {/* 🔍 Search Box */}
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border px-3 py-2 rounded w-1/3 mb-4"
-          />
-
-          {/* 📝 Table with filtered data */}
-          <Table
-            columns={allbidHistoryColumns}
-            dataSource={filteredData}
-            pagination={{ pageSize: entries }}
-            loading={loading}
-            rowKey="_id"
-            scroll={{ x: 1000 }}
-          />
-        </Card>
+        <BidHistory userId={userId} />
 
         <div style={{ padding: "20px" }}>
           <Card style={{ marginBottom: "20px" }}>
@@ -1589,9 +1555,8 @@ const UserDetails = () => {
                   }}
                 />
                 <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex} to ${endIndex} of ${
-                    getTodaysWinningData().length
-                  }  of ${getTodaysWinningData.length} entries`}
+                  {`Showing ${startIndex} to ${endIndex} of ${getTodaysWinningData().length
+                    }  of ${getTodaysWinningData.length} entries`}
                 </div>
               </TabPane>
             </Tabs>
