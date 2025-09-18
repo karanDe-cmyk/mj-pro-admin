@@ -155,7 +155,7 @@ const XtreemGateway = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Xtreem Payment Gateway Settings</h2>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">X Api Key</label>
                         <input
                             type="text"
                             name="username"
@@ -166,7 +166,7 @@ const XtreemGateway = () => {
                         />
                     </div>
                     <div className="relative">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">X Secret Key</label>
                         <div className="relative">
                             <input
                                 type={xtreemData.showPassword ? "text" : "password"}
