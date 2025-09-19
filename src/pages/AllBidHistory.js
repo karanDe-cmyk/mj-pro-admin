@@ -2,12 +2,30 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { Pagination } from "antd";
 
+// --- Helper functions to categorize panna ---
+const isSinglePana = (digit) => {
+  const s = digit.toString().split('').sort();
+  return new Set(s).size === 3;
+};
+
+const isDoublePana = (digit) => {
+  const s = digit.toString().split('').sort();
+  // Check if exactly two digits are the same.
+  return (s[0] === s[1] && s[1] !== s[2]) || (s[1] === s[2] && s[1] !== s[0]);
+};
+
+const isTriplePana = (digit) => {
+  const s = digit.toString().split('');
+  // Check if all three digits are the same.
+  return new Set(s).size === 1;
+};
+
 const AllBidHistory = () => {
   const [search, setSearch] = useState("");
   const [gameTypeSearch, setGameTypeSearch] = useState("");
   const [entries, setEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [bidStatusFilter, setBidStatusFilter] = useState("all"); // New state for status filter
+  const [bidStatusFilter, setBidStatusFilter] = useState("all");
 
   const [bidHistoryData, setBidHistoryData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,8 +41,11 @@ const AllBidHistory = () => {
 
   const gameTypeList = [
     "singleDigits",
+    "singleDigitsBulk",
     "jodi",
+    "jodiBulk",
     "halfSangamA",
+    "halfSangamB",
     "singlePana",
     "singlePanaBulk",
     "doublePanaBulk",
@@ -33,8 +54,9 @@ const AllBidHistory = () => {
     "redBracket",
     "groupJodi",
     "spMotor",
+    "dpMotor",
     "dpBoss",
-    "twoDigitsPane",
+    "twoDigitsPanel",
     "spDpTp",
     "panelGroup",
     "oddEven",
@@ -138,24 +160,34 @@ const AllBidHistory = () => {
   };
 
   const handleShareOnWhatsApp = () => {
-    // Filter by status (open/close) if selected
-    let statusFilteredData = filteredData;
-    if (bidStatusFilter === "open") {
-      statusFilteredData = filteredData.filter(bid => bid.open);
-    } else if (bidStatusFilter === "close") {
-      statusFilteredData = filteredData.filter(bid => bid.close);
-    }
-
-    const validBids = statusFilteredData.filter((bid) =>
+    // filteredData variable mein pehle se hi sahi data hai.
+    // Ab hamein bas is data ko aage process karna hai.
+    const validBids = filteredData.filter((bid) =>
       bid?.gameType && bid?.digit && !isNaN(Number(bid?.points))
     );
+
     if (validBids.length === 0) {
       alert("No valid betting data to share!");
       return;
     }
 
+    // Group bids by their game type, with special handling for spDpTp
     const groupedBids = validBids.reduce((acc, bid) => {
-      const type = bid.gameType.trim();
+      let type = bid.gameType.trim();
+
+      // Special logic for spDpTp to categorize it
+      if (type === "spDpTp") {
+        if (isSinglePana(bid.digit)) {
+          type = "Single Pana";
+        } else if (isDoublePana(bid.digit)) {
+          type = "Double Pana";
+        } else if (isTriplePana(bid.digit)) {
+          type = "Triple Pana";
+        } else {
+          type = "Other";
+        }
+      }
+
       if (!acc[type]) acc[type] = [];
       acc[type].push({
         digit: bid.digit.toString().trim(),
@@ -164,71 +196,116 @@ const AllBidHistory = () => {
       return acc;
     }, {});
 
-    const allGameTypes = Object.keys(groupedBids);
-    const preferredOrder = [
-      "singleDigits",
-      "jodi",
-      "halfSangamA",
-      "singlePana",
-      "singlePanaBulk",
-      "doublePanaBulk",
-      "fullSangam",
-      "digitBasedJodi",
-      "redBracket",
-      "groupJodi",
-      "spMotor",
-      "dpBoss",
-      "twoDigitsPane",
-      "spDpTp",
-      "panelGroup",
-      "oddEven",
-      "twoDigitsPanel",
-    ];
+    // Categorize game types
+    const categories = {
+      "Single Ank": ["singleDigits", "oddEven", "singleDigitsBulk"],
+      "Jodi": ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk"],
+      "Single Pana": ["singlePana", "singlePanaBulk", "spMotor", "Single Pana"],
+      "Double Pana": ["doublePanaBulk", "dpMotor", "doublePana", "Double Pana"],
+      "Triple Pana": ["triplePana"],
+      "Sangam": ["halfSangamA", "halfSangamB", "fullSangam"],
+      "Panel Group": ["panelGroup", "twoDigitsPanel", "twoDigitsPanel"],
+      "Other": ["Other"]
+    };
 
-    const displayOrder = [
-      ...preferredOrder.filter((type) => allGameTypes.includes(type)),
-      ...allGameTypes.filter((type) => !preferredOrder.includes(type)),
-    ];
+    // Calculate totals for each category
+    const categoryTotals = {};
+    Object.keys(categories).forEach(category => {
+      categoryTotals[category] = 0;
+      categories[category].forEach(gameType => {
+        if (groupedBids[gameType]) {
+          categoryTotals[category] += groupedBids[gameType].reduce(
+            (sum, bid) => sum + bid.points, 0
+          );
+        }
+      });
+    });
 
     // Dynamic market/game name and status
     const marketGameName = selectedGameName || selectedMarket || "Market";
-    const statusText = bidStatusFilter === "all" ? "" : `(${bidStatusFilter})`;
-
-    let message = `*${marketGameName} ${statusText}*\n `;
-    message += `Date and Time: ${new Date().toISOString().slice(0, 19).replace("T", " ")}\n`;
-    message += `${"_".repeat(35)}\n\n`;
-
-    displayOrder.forEach((gameType) => {
-      message += `*${gameType}*\n`;
-      const bids = groupedBids[gameType];
-      if (bids?.length > 0) {
-        bids.forEach((bid) => {
-          message += `${bid.digit}->${bid.points}\n`;
-        });
-      }
-      message += `${"_".repeat(35)}\n`;
+    const statusText = bidStatusFilter === "all" ? "" : ` ${bidStatusFilter.toUpperCase()}`;
+    const dateText = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
 
-    const totalAmount = validBids.reduce(
-      (sum, bid) => sum + (parseInt(bid.points) || 0),
-      0
-    );
-    message += `\n*Total amount: ${totalAmount}Rs*`;
+    let message = `*${marketGameName}${statusText} ${dateText}*\n`;
+    message += `Total Amount : ${validBids.reduce((sum, bid) => sum + (parseInt(bid.points) || 0), 0)}\n\n`;
+
+    // Generate message for each category
+    Object.keys(categories).forEach(category => {
+      const categoryBids = {};
+      let categoryTotal = 0;
+
+      // Collect all bids for this category
+      categories[category].forEach(gameType => {
+        if (groupedBids[gameType]) {
+          groupedBids[gameType].forEach(bid => {
+            if (!categoryBids[bid.digit]) {
+              categoryBids[bid.digit] = 0;
+            }
+            categoryBids[bid.digit] += bid.points;
+            categoryTotal += bid.points;
+          });
+        }
+      });
+
+      // Only add category to message if it has bids
+      if (categoryTotal > 0) {
+        message += `*${category}*\n`;
+        message += `Total Amount: ${categoryTotal}\n`;
+
+        // For Single Ank, sort digits 0-9
+        if (category === "Single Ank") {
+          for (let i = 0; i <= 9; i++) {
+            const digit = i.toString();
+            if (categoryBids[digit]) {
+              message += `${digit} - ${categoryBids[digit]}\n`;
+            }
+          }
+        }
+        // For Jodi, sort numerically
+        else if (category === "Jodi") {
+          Object.keys(categoryBids)
+            .sort((a, b) => parseInt(a) - parseInt(b))
+            .forEach(digit => {
+              message += `${digit} - ${categoryBids[digit]}\n`;
+            });
+        }
+        // For other categories, just list all
+        else {
+          Object.keys(categoryBids).forEach(digit => {
+            message += `${digit} - ${categoryBids[digit]}\n`;
+          });
+        }
+
+        message += "\n";
+      }
+    });
 
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  const filteredData = bidHistoryData.filter((bid) =>
-    !bid.reverted &&
-    Object.values(bid).some((value) =>
+  const jodiGameTypes = ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk", "halfSangamA", "halfSangamB", "fullSangam"];
+  const filteredData = bidHistoryData.filter((bid) => {
+    // Basic filtering conditions
+    const matchesSearch = Object.values(bid).some((value) =>
       value?.toString().toLowerCase().includes(search.toLowerCase())
-    ) &&
-    (!selectedGameType || bid.gameType === selectedGameType) &&
-    (!gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase())) &&
-    (bidStatusFilter === "all" || 
-     (bidStatusFilter === "open" && bid.open) || 
-     (bidStatusFilter === "close" && bid.close))
-  );
+    );
+    const matchesGameTypeSearch = !gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase());
+    const matchesSelectedGameType = !selectedGameType || bid.gameType === selectedGameType;
+    const isJodi = jodiGameTypes.includes(bid.gameType);
+
+    // Status filter ke liye naya logic
+    const matchesStatus =
+      bidStatusFilter === "all" ||
+      (bidStatusFilter === "open" && (bid.open || isJodi)) ||
+      (bidStatusFilter === "close" && bid.close);
+
+    return !bid.reverted && matchesSearch && matchesGameTypeSearch && matchesSelectedGameType && matchesStatus;
+  });
+
 
   const totalPages = Math.ceil(filteredData.length / entries);
   const paginatedData = filteredData.slice(

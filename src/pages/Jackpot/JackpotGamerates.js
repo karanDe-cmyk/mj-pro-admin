@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Row, Col, Form, Card, Typography, message } from "antd";
-// import axiosInstance from "../../utils/axiosInstance";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance";
+// import axios from "axios";
 
 const { Title } = Typography;
 
@@ -18,14 +18,7 @@ const GameRates = () => {
   const fetchBetRates = async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("https://maya-api.kglame.com/api/jackpotRate/getBetRates",
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
+      const response = await axiosInstance.get("/api/jackpotRate/getBetRates");
       // Assuming response.data includes _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue
       const { _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue } = response.data;
       setRateId(_id);
@@ -54,14 +47,7 @@ const GameRates = () => {
         jodiDigit,
         jodiDigitValue,
       };
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.put(`https://maya-api.kglame.com/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
+      const response = await axiosInstance.put(`/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload);
       if (response.data.message === "Bet rates updated successfully!") {
         message.success("Rates updated successfully");
         alert("Rates updated successfully");
@@ -84,7 +70,7 @@ const GameRates = () => {
   //       jodiDigitValue,
   //     };
   
-  //     const response = await axiosInstance.post("/api/jackpotRate/jackpotaddrate", payload);
+  //     const response = await axiosInstanceInstance.post("/api/jackpotRate/jackpotaddrate", payload);
 
   
   //     if (response.data.message === "Bet rates added successfully!") {
