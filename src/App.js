@@ -58,47 +58,49 @@ import JackpotBidRevert from './pages/Jackpot/Jackpotbidrevert';
 import GaliDisawarBidRevert from './pages/GalidisawerGames/Galidisawarbidrevert';
 import StarlineRevert from './pages/starline management/Starlinebidrevert';
 import FCM from './pages/setting/FCM';
+import axiosInstance from './utils/axiosInstance'
+
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
 
   useEffect(() => {
-    // get permission to user for notification
     const requestPermission = async () => {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted') {
-        // generate token
-        getToken(messaging, { vapidKey: window.ENV?.FIREBASE_VAPID_KEY }).then((currentToken) => {
-          if (currentToken) {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          // ✅ generate token
+          const currentToken = await getToken(messaging, {
+            vapidKey: "BDKlzoO-ytAZqzBtWO1hqaER-_MFbjVQZM4mlxnQLfsiHlStI9_dlDfICJUIneMHZa-S8GSwP1xRB6USOsZU_NY",
+          });
 
-            console.log(currentToken)
+          if (currentToken) {
+            console.log("FCM Token:", currentToken);
+
             localStorage.setItem("fcmToken", currentToken);
 
-            // Send the token to your server and update the UI if necessary
-            fetch('https://maya-api.kglame.com/api/notification/save-fcm-token', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ token: currentToken })
+            // ✅ axios call
+            await axiosInstance.post("/api/notification/save-fcm-token", {
+              token: currentToken,
             });
-            // console.log("Sending FCM token to backend:", currentToken)
-          } else {
-            // Show permission request UI
-            console.log('No registration token available. Request permission to generate one.');
 
+            console.log("Token saved to backend");
+          } else {
+            console.log(
+              "No registration token available. Request permission to generate one."
+            );
           }
-        }).catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-        })
-      } else {
-        // you dined for the notification
-        alert("you deined for notification")
+        } else {
+          alert("You denied notifications.");
+        }
+      } catch (err) {
+        console.error("Error while requesting notification permission:", err);
       }
-    }
+    };
 
     requestPermission();
-  }, [])
+  }, []);
+
 
   return (
     <Router>
@@ -156,7 +158,7 @@ const App = () => {
             <Route path="winning-prediction" element={<WinningPrediction />} />
             <Route path="auto-deposit-history" element={<AutoDepositHistory />} />
             <Route path="notice-management" element={<NoticeManagement />} />
- <Route path="notes" element={<Note />} />
+            <Route path="notes" element={<Note />} />
             {/* Settings Section */}
             <Route path="settings">
               <Route path="main" element={<MainSetting />} />
