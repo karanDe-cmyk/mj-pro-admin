@@ -71,7 +71,7 @@ const App = () => {
         if (permission === "granted") {
           // ✅ generate token
           const currentToken = await getToken(messaging, {
-            vapidKey: "BDKlzoO-ytAZqzBtWO1hqaER-_MFbjVQZM4mlxnQLfsiHlStI9_dlDfICJUIneMHZa-S8GSwP1xRB6USOsZU_NY",
+            vapidKey: "BC55lpy1-sSj8cVYFcLL0n-cIAsSzP-69kB0I-GaRFr49A6EHfRXB9OJ4o0ZaROvIAgZ21M8LJuiN1zErsFd6k8",
           });
 
           if (currentToken) {
