@@ -202,7 +202,7 @@ const AllBidHistory = () => {
       "Jodi": ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk"],
       "Single Pana": ["singlePana", "singlePanaBulk", "spMotor", "Single Pana"],
       "Double Pana": ["doublePanaBulk", "dpMotor", "doublePana", "Double Pana"],
-      "Triple Pana": ["Triple Pana"],
+      "Triple Pana": ["triplePana"],
       "Sangam": ["halfSangamA", "halfSangamB", "fullSangam"],
       "Panel Group": ["panelGroup", "twoDigitsPanel", "twoDigitsPanel"],
       "Other": ["Other"]
@@ -287,7 +287,7 @@ const AllBidHistory = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  const jodiGameTypes = ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk"];
+  const jodiGameTypes = ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk", "halfSangamA", "halfSangamB", "fullSangam"];
   const filteredData = bidHistoryData.filter((bid) => {
     // Basic filtering conditions
     const matchesSearch = Object.values(bid).some((value) =>
