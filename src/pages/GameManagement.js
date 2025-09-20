@@ -195,12 +195,16 @@ const GameManagement = () => {
         openTime: values.openTime ? values.openTime.format("hh:mm A") : null,
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null,
         weekends: values.weekends
-          ? values.weekends.map((day) => ({
-            ...day,
-            openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
-            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-            is_on: day.is_on, // pass the is_on flag to the backend
-          }))
+          ? values.weekends.map((day, index) => {
+            const originalDay = editingGame.weekends[index];
+            return {
+              ...originalDay, // Keep all original properties
+              openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
+              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+              is_on: day.is_on, // Update the is_on field
+              is_open: day.is_on, // Also update is_open to match is_on
+            };
+          })
           : [],
       };
 
@@ -291,17 +295,23 @@ const GameManagement = () => {
   const handleEdit = (record) => {
     setEditingGame(record);
     setIsModalOpen(true);
+
+    // Sort weekends by day order (Sunday to Saturday)
+    const sortedWeekends = [...record.weekends].sort((a, b) => {
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return days.indexOf(a.day) - days.indexOf(b.day);
+    });
+
+    // Set the form values
     editForm.setFieldsValue({
       gameName: record.gameName,
       gameType: record.gameType || [],
       openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null,
       closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null,
-      weekends: record.weekends.map((day) => ({
-        ...day,
+      weekends: sortedWeekends.map((day) => ({
         openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null,
         closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null,
-        is_open: day.is_open,
-        is_on: day.is_on, // include the new flag for editing
+        is_on: day.is_on, // Use is_on for the switch
       })),
     });
   };
@@ -651,7 +661,10 @@ const GameManagement = () => {
           <Row gutter={[16, 16]}>
             {editingGame &&
               [...editingGame.weekends]
-                .sort((a, b) => dayjs(a.openTime, "hh:mm A").valueOf() - dayjs(b.openTime, "hh:mm A").valueOf())
+                .sort((a, b) => {
+                  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                  return days.indexOf(a.day) - days.indexOf(b.day);
+                })
                 .map((day, index) => (
                   <Col span={12} key={day.day}>
                     <Card size="small" title={day.day} style={{ textAlign: "center" }}>
