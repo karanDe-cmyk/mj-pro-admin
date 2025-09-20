@@ -213,18 +213,18 @@ const AdminPanel = () => {
         },
       ],
     },
-    {
-      key: "galidisawar-games",
-      label: "Galidisawar Games",
-      icon: <i className="fa fa-dice" />,
-      children: [
-        { key: "galidi-game-name", label: "Game Name", path: "/admin/galidisawer-games/game-list" },
-        { key: "galidi-bid-history", label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
-        { key: "galidi-declare-results", label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
-        { key: "galidi-game-rates", label: "Game Rates", path: "/admin/galidisawer-games/game-rates" },
-        { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
-      ],
-    },
+    // {
+    //   key: "galidisawar-games",
+    //   label: "Galidisawar Games",
+    //   icon: <i className="fa fa-dice" />,
+    //   children: [
+    //     { key: "galidi-game-name", label: "Game Name", path: "/admin/galidisawer-games/game-list" },
+    //     { key: "galidi-bid-history", label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
+    //     { key: "galidi-declare-results", label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
+    //     { key: "galidi-game-rates", label: "Game Rates", path: "/admin/galidisawer-games/game-rates" },
+    //     { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
+    //   ],
+    // },
     {
       key: "Jackpot-games",
       label: "Jackpot Games",
