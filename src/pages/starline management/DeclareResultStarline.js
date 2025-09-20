@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { DatePicker } from 'antd'; // Ant Design DatePicker
+import 'antd/dist/reset.css'; // Ant Design CSS
+import moment from 'moment'; // Required for DatePicker state and formatting
 
 const DeclareResult = () => {
   // States for Declare Result section
-  const [date, setDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD for input[type="date"]
-  });
+  const [date, setDate] = useState(() => moment()); // Using moment object for state
   const [selectedGame, setSelectedGame] = useState("");
   const [panna, setPanna] = useState("");
   const [digit, setDigit] = useState("");
@@ -18,7 +18,6 @@ const DeclareResult = () => {
   const [loading, setLoading] = useState(false);
   const [deletingBid, setDeletingBid] = useState(null);
   const [declaring, setDeclaring] = useState(false);
-  const [deletingResultId, setDeletingResultId] = useState(null);
 
   // States for Game Result History section
   const [gameResultHistory, setGameResultHistory] = useState([]);
@@ -26,10 +25,9 @@ const DeclareResult = () => {
   const [searchGameResult, setSearchGameResult] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [gameResultDate, setGameResultDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().substr(0, 10);
-  });
+  const [gameResultDate, setGameResultDate] = useState(() => moment()); // Using moment object for state
+  const [deletingResultId, setDeletingResultId] = useState(null);
+
 
   // Fetch game list
   useEffect(() => {
@@ -41,15 +39,12 @@ const DeclareResult = () => {
           response.data.data.forEach((game) => {
             uniqueGameNames.add(game.game_name);
           });
-        } else {
-          console.error("Expected an array at response.data.data");
         }
         setGameOptions([...uniqueGameNames]);
       } catch (error) {
         console.error("Error fetching game list:", error);
       }
     };
-
     fetchGameList();
   }, []);
 
@@ -60,9 +55,8 @@ const DeclareResult = () => {
       const response = await axiosInstance.get(`/api/starline/game-result-history`);
       const formattedData = response.data.data.map(item => ({
         ...item,
-        id: item._id || item.id // Forcefully map _id to id
+        id: item._id || item.id
       }));
-
       setGameResultHistory(formattedData || []);
     } catch (error) {
       console.error("Error fetching game result history:", error);
@@ -75,25 +69,21 @@ const DeclareResult = () => {
     fetchGameResultHistory();
   }, []);
 
-  // Format date
-  const formatDate = (date) => {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
+  // Format date using moment.js
+  const formatDate = (momentObject) => {
+    if (!momentObject || !moment.isMoment(momentObject)) return '';
+    return momentObject.format("DD-MM-YYYY");
   };
 
   // Handle panna change
   const handlePannaChange = (e) => {
     const selectedPanna = e.target.value;
     setPanna(selectedPanna);
-
     if (selectedPanna.length === 3) {
       const sum = selectedPanna
         .split("")
         .reduce((acc, num) => acc + parseInt(num, 10), 0);
-      setDigit(String(sum % 10)); // Ensure digit is a string
+      setDigit(String(sum % 10));
     } else {
       setDigit("");
     }
@@ -101,12 +91,10 @@ const DeclareResult = () => {
 
   // Show winners
   const handleDeclareResult = async () => {
-    // Validate fields before making the API call
     if (!date || !selectedGame || !panna) {
       toast.error("Please fill all required fields before showing winners.");
       return;
     }
-
     setLoading(true);
     try {
       const payload = { date: formatDate(date), gamename: selectedGame, panna, digit };
@@ -126,21 +114,19 @@ const DeclareResult = () => {
       toast.error("Please fill all fields before declaring the result.");
       return;
     }
-
     setDeclaring(true);
     try {
       const formattedDate = formatDate(date);
       const response = await axiosInstance.post(
         `/api/starlinebid/declare-winners`,
-        { date: formattedDate, gamename: selectedGame, panna, digit: parseInt(digit) } // Ensure digit is a number
+        { date: formattedDate, gamename: selectedGame, panna, digit: parseInt(digit) }
       );
-
       if (response.data.success) {
         toast.success("Result declared successfully");
         fetchGameResultHistory();
-        // Reset form
         setPanna("");
         setDigit("");
+        setBidHistoryData([]);
       } else {
         if (response.data.message.includes("already declared")) {
           toast.error(response.data.message);
@@ -163,15 +149,12 @@ const DeclareResult = () => {
   // Delete bid
   const handleDeleteBid = async (bidId) => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
-
     setDeletingBid(bidId);
     try {
       const response = await axiosInstance.delete(`/api/starlinebid/deletebid/${bidId}`);
       if (response.data.status === "success") {
         toast.success("Bid deleted successfully!");
-
-        // Refresh the whole page
-        window.location.reload();
+        setBidHistoryData(prevData => prevData.filter(bid => bid.bidId !== bidId));
       } else {
         toast.error("Failed to delete bid");
       }
@@ -183,28 +166,30 @@ const DeclareResult = () => {
     }
   };
 
-
   const handleDeleteGameResult = async (resultId) => {
     if (!window.confirm("Are you sure you want to delete this game result?")) return;
-
+    setDeletingResultId(resultId);
     try {
       const response = await axiosInstance.delete(`/api/starline/delete-game-result/${resultId}`);
       if (response.data.success) {
-        alert("Game result deleted successfully");
-        // Refresh the game result history
-        fetchGameResultHistory();
+        toast.success("Game result deleted successfully!");
+        setGameResultHistory(prevResults =>
+          prevResults.filter(result => result.id !== resultId)
+        );
       } else {
-        alert("Failed to delete game result");
+        toast.error("Failed to delete game result");
       }
     } catch (error) {
       console.error("Error deleting game result:", error);
-      alert("Error occurred while deleting game result");
+      toast.error("Error occurred while deleting game result");
+    } finally {
+      setDeletingResultId(null);
     }
   };
 
 
-  // Filter game result history by the selected gameResultDate and search text
-  const formattedGameResultDate = formatDate(gameResultDate); // "DD-MM-YYYY"
+  // Filter game result history
+  const formattedGameResultDate = formatDate(gameResultDate);
   const filteredGameResults = gameResultHistory.filter((result) =>
     result.date === formattedGameResultDate &&
     (
@@ -223,16 +208,14 @@ const DeclareResult = () => {
   return (
     <div className="p-4 w-full min-h-screen">
       <h2 className="text-2xl font-bold mb-4 text-center">Declare Result</h2>
-
-      {/* Declare Result Form */}
       <div className="bg-white p-4 shadow-md rounded-lg flex flex-wrap gap-4 items-center justify-between">
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Result Date</label>
-          <input
-            type="date"
-            className="border px-3 py-2 rounded w-full sm:w-auto"
+          <DatePicker
+            className="w-full sm:w-auto"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(newDate) => setDate(newDate)}
+            format="YYYY-MM-DD"
           />
         </div>
         <div className="w-full sm:w-auto">
@@ -277,8 +260,6 @@ const DeclareResult = () => {
             ))}
           </select>
         </div>
-
-
         <div className="w-full sm:w-auto">
           <label className="font-semibold block">Digit</label>
           <input
@@ -289,8 +270,6 @@ const DeclareResult = () => {
           />
         </div>
       </div>
-
-      {/* Action Buttons */}
       <div className="mt-6 flex gap-4">
         <button
           onClick={handleDeclareResult}
@@ -299,7 +278,6 @@ const DeclareResult = () => {
         >
           {loading ? "Loading..." : "Show Winners"}
         </button>
-
         <button
           onClick={handleSubmitResult}
           className="bg-[#556EE6] text-white px-6 py-2 w-1/2 rounded text-center"
@@ -308,8 +286,6 @@ const DeclareResult = () => {
           {declaring ? "Declaring..." : "Declare Result"}
         </button>
       </div>
-
-      {/* Winning History Section */}
       <div className="mt-6 bg-white p-4 shadow-md rounded-lg">
         <h3 className="text-lg font-semibold mb-3">Winning History</h3>
         <div className="flex justify-between mb-2">
@@ -355,7 +331,7 @@ const DeclareResult = () => {
                 </tr>
               ) : (
                 bidHistoryData.map((bid, index) => (
-                  <tr key={index} className="border-b">
+                  <tr key={bid.bidId || index} className="border-b">
                     <td className="py-2 px-4 border">{index + 1}</td>
                     <td className="py-2 px-4 border">{bid.userName}</td>
                     <td className="py-2 px-4 border">{bid.gametype}</td>
@@ -380,26 +356,20 @@ const DeclareResult = () => {
           </table>
         </div>
       </div>
-
-      {/* Game Result History Section */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-3">Game Result History</h3>
-
-        {/* Datepicker for Game Result History */}
         <div className="mb-4">
           <label className="font-semibold block mb-2">Select Game Result Date</label>
-          <input
-            type="date"
-            className="border px-3 py-2 rounded"
+          <DatePicker
+            className="w-full sm:w-auto"
             value={gameResultDate}
-            onChange={(e) => {
-              setGameResultDate(e.target.value);
+            onChange={(newDate) => {
+              setGameResultDate(newDate);
               setCurrentPage(1);
             }}
+            format="YYYY-MM-DD"
           />
         </div>
-
-        {/* Search and Entries Filter */}
         <div className="flex justify-between mb-4">
           <div>
             Show
@@ -425,8 +395,6 @@ const DeclareResult = () => {
             onChange={(e) => setSearchGameResult(e.target.value)}
           />
         </div>
-
-        {/* Game Result Table */}
         {loadingGameResult ? (
           <p className="text-center">Loading game results...</p>
         ) : (
@@ -461,10 +429,11 @@ const DeclareResult = () => {
                       <td className="py-2 px-4 border">{result.date}</td>
                       <td className="py-2 px-4 border">
                         <button
-                          onClick={() => handleDeleteGameResult(result.id)} // Assuming result has an 'id' field
-                          className="bg-red-500 text-white px-3 py-1 rounded"
+                          onClick={() => handleDeleteGameResult(result.id)}
+                          className={`bg-red-500 text-white px-3 py-1 rounded ${deletingResultId === result.id ? "opacity-50 cursor-not-allowed" : ""}`}
+                          disabled={deletingResultId === result.id}
                         >
-                          Delete
+                          {deletingResultId === result.id ? "Deleting..." : "Delete"}
                         </button>
                       </td>
                     </tr>
@@ -472,8 +441,6 @@ const DeclareResult = () => {
                 )}
               </tbody>
             </table>
-
-            {/* Pagination */}
             {filteredGameResults.length > entriesPerPage && (
               <div className="flex justify-between items-center mt-4">
                 <button

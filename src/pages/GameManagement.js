@@ -15,8 +15,6 @@ import {
   Spin,
   Select,
   Tabs,
-  Checkbox,
-  Divider,
 } from "antd";
 import {
   EditOutlined,
@@ -69,34 +67,17 @@ const GameManagement = () => {
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc"); // "asc" = Old to New, "desc" = New to Old
   const [marketStatus, setMarketStatus] = useState("active"); // "active" or "inactive"
-  const [applyToAllDays, setApplyToAllDays] = useState(false);
 
   // Create a sorted copy of gameTypeOptions in ascending order.
   const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
     a.localeCompare(b)
   );
 
-  const getTodayDayName = () => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[new Date().getDay()];
-  };
-
-  const getTodaysSchedule = (game) => {
-    const today = getTodayDayName();
-    const todaysSchedule = game.weekends.find(day => day.day === today);
-
-    return {
-      openTime: todaysSchedule?.openTime || game.openTime || 'N/A',
-      closeTime: todaysSchedule?.closeTime || game.closeTime || 'N/A',
-      isActive: todaysSchedule?.is_on !== undefined ? todaysSchedule.is_on : game.isActive
-    };
-  };
-
   // Compute sortedGames dynamically whenever fetchedGames or sortOrder changes.
   const sortedGames = useMemo(() => {
     return [...fetchedGames].sort((a, b) => {
-      const timeA = dayjs(getTodaysSchedule(a).openTime, "hh:mm A").valueOf();
-      const timeB = dayjs(getTodaysSchedule(b).openTime, "hh:mm A").valueOf();
+      const timeA = dayjs(a.openTime, "hh:mm A").valueOf();
+      const timeB = dayjs(b.openTime, "hh:mm A").valueOf();
       return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
     });
   }, [fetchedGames, sortOrder]);
@@ -105,15 +86,16 @@ const GameManagement = () => {
   // Filter the sorted games by the search term.
   const filteredGames = sortedGames
     .filter((game) => {
-      const todaysSchedule = getTodaysSchedule(game);
       if (marketStatus === "active") {
-        return todaysSchedule.isActive === true;
+        return game.isActive === true;
       } else if (marketStatus === "inactive") {
-        return todaysSchedule.isActive === false;
+        return game.isActive === false;
       }
       return true;
     })
-
+    .filter((game) =>
+      game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   useEffect(() => {
     fetchGames();
@@ -169,8 +151,6 @@ const GameManagement = () => {
     }
   };
 
-
-
   const handleAddGame = async (values) => {
     try {
       const newGame = {
@@ -194,29 +174,10 @@ const GameManagement = () => {
 
   const handleToggle = async (id, isActive) => {
     try {
-      const game = fetchedGames.find(g => g._id === id);
-      const today = getTodayDayName();
-      const todaysSchedule = game.weekends.find(day => day.day === today);
-
-      // If today has a specific schedule, update just that day
-      if (todaysSchedule) {
-        const updatedWeekends = game.weekends.map(day =>
-          day.day === today ? { ...day, is_on: !isActive } : day
-        );
-
-        await axios.put(`/api/marketManagement/updateMarketGame/${id}`, {
-          weekends: updatedWeekends
-        });
-      } else {
-        // Otherwise update the universal status
-        await axios.put(`/api/marketManagement/updateMarketGame/${id}`, {
-          isActive: !isActive
-        });
-      }
-
+      await axios.put(`/api/marketManagement/updateMarketGame/${id}`, {
+        isActive: !isActive,
+      });
       message.success("Market status updated!");
-
-      // Force a re-render by updating the fetched games
       fetchGames();
     } catch (error) {
       console.error("Error updating market status:", error);
@@ -224,39 +185,23 @@ const GameManagement = () => {
     }
   };
 
-
   const handleUpdate = async () => {
     try {
       const values = await editForm.validateFields();
-
-      // Prepare weekend data
-      let weekendsData = values.weekends || [];
-
-      // If "Apply to all days" is checked, use universal times for all days
-      if (applyToAllDays && values.openTime && values.closeTime) {
-        const universalOpenTime = values.openTime.format("hh:mm A");
-        const universalCloseTime = values.closeTime.format("hh:mm A");
-
-        weekendsData = weekendsData.map(day => ({
-          ...day,
-          openTime: universalOpenTime,
-          closeTime: universalCloseTime,
-        }));
-      } else {
-        // Format the times for individual days
-        weekendsData = weekendsData.map(day => ({
-          ...day,
-          openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
-          closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-        }));
-      }
 
       const updatedGame = {
         gameName: values.gameName,
         gameType: values.gameType,
         openTime: values.openTime ? values.openTime.format("hh:mm A") : null,
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null,
-        weekends: weekendsData,
+        weekends: values.weekends
+          ? values.weekends.map((day) => ({
+            ...day,
+            openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
+            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+            is_on: day.is_on, // pass the is_on flag to the backend
+          }))
+          : [],
       };
 
       await axios.put(
@@ -265,15 +210,12 @@ const GameManagement = () => {
       );
       message.success("Game updated successfully!");
       setIsModalOpen(false);
-      setApplyToAllDays(false);
       fetchGames();
     } catch (error) {
       console.error("Error updating game:", error);
       message.error("Failed to update game.");
     }
   };
-
-
 
   const columns = [
     {
@@ -291,28 +233,26 @@ const GameManagement = () => {
     },
     {
       title: "Open Time",
+      dataIndex: "openTime",
       key: "openTime",
-      render: (_, record) => getTodaysSchedule(record).openTime,
       width: 180,
     },
     {
       title: "Close Time",
+      dataIndex: "closeTime",
       key: "closeTime",
-      render: (_, record) => getTodaysSchedule(record).closeTime,
       width: 180,
     },
     {
       title: "Active",
+      dataIndex: "isActive",
       key: "isActive",
-      render: (_, record) => {
-        const todaysSchedule = getTodaysSchedule(record);
-        return (
-          <Switch
-            checked={todaysSchedule.isActive}
-            onChange={() => handleToggle(record._id, todaysSchedule.isActive)}
-          />
-        );
-      },
+      render: (isActive, record) => (
+        <Switch
+          checked={isActive}
+          onChange={() => handleToggle(record._id, isActive)}
+        />
+      ),
       width: 120,
     },
     {
@@ -348,41 +288,22 @@ const GameManagement = () => {
     },
   ];
 
-
   const handleEdit = (record) => {
     setEditingGame(record);
     setIsModalOpen(true);
-    setApplyToAllDays(false);
-
-    // Sort weekends by day order (Sunday to Saturday)
-    const sortedWeekends = [...record.weekends].sort((a, b) => {
-      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      return days.indexOf(a.day) - days.indexOf(b.day);
-    });
-
-    // Set the form values
     editForm.setFieldsValue({
       gameName: record.gameName,
       gameType: record.gameType || [],
       openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null,
       closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null,
-      weekends: sortedWeekends.map((day) => ({
+      weekends: record.weekends.map((day) => ({
+        ...day,
         openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null,
         closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null,
-        is_on: day.is_on,
+        is_open: day.is_open,
+        is_on: day.is_on, // include the new flag for editing
       })),
     });
-  };
-
-  const handleUniversalTimeChange = (field, time) => {
-    if (applyToAllDays) {
-      const currentValues = editForm.getFieldsValue();
-      const updatedWeekends = currentValues.weekends.map(day => ({
-        ...day,
-        [field]: time,
-      }));
-      editForm.setFieldsValue({ weekends: updatedWeekends });
-    }
   };
 
   const handleDelete = async (id) => {
@@ -675,12 +596,9 @@ const GameManagement = () => {
       <Modal
         title="Edit Game"
         open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setApplyToAllDays(false);
-        }}
+        onCancel={() => setIsModalOpen(false)}
         onOk={handleUpdate}
-        width={800}
+        width={700}
       >
         <Form form={editForm} layout="vertical">
           <Form.Item
@@ -710,99 +628,61 @@ const GameManagement = () => {
               ))}
             </Select>
           </Form.Item>
-
-          <Card title="Universal Times" style={{ marginBottom: 16 }}>
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Form.Item
-                  label="Universal Open Time"
-                  name="openTime"
-                  rules={[{ required: true, message: "Enter open time" }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    use12Hours
-                    style={{ width: "100%" }}
-                    onChange={(time) => handleUniversalTimeChange('openTime', time)}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  label="Universal Close Time"
-                  name="closeTime"
-                  rules={[{ required: true, message: "Enter close time" }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    use12Hours
-                    style={{ width: "100%" }}
-                    onChange={(time) => handleUniversalTimeChange('closeTime', time)}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item>
-              <Checkbox
-                checked={applyToAllDays}
-                onChange={(e) => setApplyToAllDays(e.target.checked)}
+          <Row gutter={[16, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label="Open Time"
+                name="openTime"
+                rules={[{ required: true, message: "Enter open time" }]}
               >
-                Apply these times to all days of the week
-              </Checkbox>
-            </Form.Item>
-          </Card>
+                <TimePicker format="hh:mm A" use12Hours />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Close Time"
+                name="closeTime"
+                rules={[{ required: true, message: "Enter close time" }]}
+              >
+                <TimePicker format="hh:mm A" use12Hours />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={[16, 16]}>
+            {editingGame &&
+              [...editingGame.weekends]
+                .sort((a, b) => dayjs(a.openTime, "hh:mm A").valueOf() - dayjs(b.openTime, "hh:mm A").valueOf())
+                .map((day, index) => (
+                  <Col span={12} key={day.day}>
+                    <Card size="small" title={day.day} style={{ textAlign: "center" }}>
+                      <Form.Item
+                        name={["weekends", index, "openTime"]}
+                        label="Open Time"
+                        rules={[{ required: true }]}
+                      >
+                        <TimePicker format="hh:mm A" use12Hours />
+                      </Form.Item>
+                      <Form.Item
+                        name={["weekends", index, "closeTime"]}
+                        label="Close Time"
+                        rules={[{ required: true }]}
+                      >
+                        <TimePicker format="hh:mm A" use12Hours />
+                      </Form.Item>
+                      <Form.Item
+                        name={["weekends", index, "is_on"]}
+                        label="Active Status"
+                        valuePropName="checked"
+                      >
+                        <Switch />
+                      </Form.Item>
+                    </Card>
+                  </Col>
+                ))}
+          </Row>
 
-          <Card title="Individual Day Settings">
-            <Row gutter={[16, 16]}>
-              {editingGame &&
-                [...editingGame.weekends]
-                  .sort((a, b) => {
-                    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                    return days.indexOf(a.day) - days.indexOf(b.day);
-                  })
-                  .map((day, index) => (
-                    <Col span={8} key={day.day}>
-                      <Card size="small" title={day.day} style={{ textAlign: "center", marginBottom: 16 }}>
-                        <Form.Item
-                          name={["weekends", index, "openTime"]}
-                          label="Open Time"
-                          rules={[{ required: true }]}
-                        >
-                          <TimePicker
-                            format="hh:mm A"
-                            use12Hours
-                            style={{ width: "100%" }}
-                            disabled={applyToAllDays}
-                          />
-                        </Form.Item>
-                        <Form.Item
-                          name={["weekends", index, "closeTime"]}
-                          label="Close Time"
-                          rules={[{ required: true }]}
-                        >
-                          <TimePicker
-                            format="hh:mm A"
-                            use12Hours
-                            style={{ width: "100%" }}
-                            disabled={applyToAllDays}
-                          />
-                        </Form.Item>
-                        <Form.Item
-                          name={["weekends", index, "is_on"]}
-                          label="Active Status"
-                          valuePropName="checked"
-                        >
-                          <Switch />
-                        </Form.Item>
-                      </Card>
-                    </Col>
-                  ))}
-            </Row>
-          </Card>
         </Form>
       </Modal>
-
     </div>
   );
 };
