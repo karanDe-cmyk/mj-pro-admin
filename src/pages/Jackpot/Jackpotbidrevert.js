@@ -251,7 +251,7 @@ const JackpotBidRevert = () => {
       </Card>
 
       <Card style={{ marginTop: 20 }}>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Space>
             <Button
               type="primary"
@@ -266,7 +266,7 @@ const JackpotBidRevert = () => {
               {bids.length > 0 ? `Showing ${bids.length} active bids` : 'No bids found'}
             </span>
           </Space>
-        </div>
+        </div> */}
 
         <Table
           dataSource={bids}
