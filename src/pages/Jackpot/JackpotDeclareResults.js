@@ -137,7 +137,8 @@ const JackpotDeclareResults = () => {
       await axios.post("/api/JackpotDeclareResult/declare", body);
       toast.success("Result declared!");
       fetchData();
-    } catch (err) {
+    } catch (error) {
+      toast.error(error)
       message.error("Failed to declare result");
     }
   };

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const DeclareResult = () => {
   // States for Declare Result section
@@ -101,7 +103,7 @@ const DeclareResult = () => {
   const handleDeclareResult = async () => {
     // Validate fields before making the API call
     if (!date || !selectedGame || !panna) {
-      alert("Please fill all required fields before showing winners.");
+      toast.error("Please fill all required fields before showing winners.");
       return;
     }
 
@@ -112,7 +114,7 @@ const DeclareResult = () => {
       setBidHistoryData(response.data.results || []);
     } catch (error) {
       console.error("Error fetching bid history:", error);
-      alert("Error fetching bid history. Please try again.");
+      toast.error("Error fetching bid history. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -121,7 +123,7 @@ const DeclareResult = () => {
   // Declare result
   const handleSubmitResult = async () => {
     if (!date || !selectedGame || !panna || !digit) {
-      alert("Please fill all fields before declaring the result.");
+      toast.error("Please fill all fields before declaring the result.");
       return;
     }
 
@@ -134,16 +136,16 @@ const DeclareResult = () => {
       );
 
       if (response.data.success) {
-        alert("Result declared successfully");
+        toast.success("Result declared successfully");
         fetchGameResultHistory();
         // Reset form
         setPanna("");
         setDigit("");
       } else {
         if (response.data.message.includes("already declared")) {
-          alert(response.data.message);
+          toast.error(response.data.message);
         } else {
-          alert("Failed to declare result");
+          toast.error("Failed to declare result");
         }
       }
     } catch (error) {
@@ -166,18 +168,21 @@ const DeclareResult = () => {
     try {
       const response = await axiosInstance.delete(`/api/starlinebid/deletebid/${bidId}`);
       if (response.data.status === "success") {
-        setBidHistoryData((prevBids) => prevBids.filter((bid) => bid.bidId !== bidId));
-        alert("Bid deleted successfully!");
+        toast.success("Bid deleted successfully!");
+
+        // Refresh the whole page
+        window.location.reload();
       } else {
-        alert("Failed to delete bid");
+        toast.error("Failed to delete bid");
       }
     } catch (error) {
       console.error("Error deleting bid:", error);
-      alert("Error occurred while deleting bid");
+      toast.error("Error occurred while deleting bid");
     } finally {
       setDeletingBid(null);
     }
   };
+
 
   const handleDeleteGameResult = async (resultId) => {
     if (!window.confirm("Are you sure you want to delete this game result?")) return;
