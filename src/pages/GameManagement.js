@@ -105,16 +105,15 @@ const GameManagement = () => {
   // Filter the sorted games by the search term.
   const filteredGames = sortedGames
     .filter((game) => {
+      const todaysSchedule = getTodaysSchedule(game);
       if (marketStatus === "active") {
-        return game.isActive === true;
+        return todaysSchedule.isActive === true;
       } else if (marketStatus === "inactive") {
-        return game.isActive === false;
+        return todaysSchedule.isActive === false;
       }
       return true;
     })
-    .filter((game) =>
-      game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
 
   useEffect(() => {
     fetchGames();
@@ -216,6 +215,8 @@ const GameManagement = () => {
       }
 
       message.success("Market status updated!");
+
+      // Force a re-render by updating the fetched games
       fetchGames();
     } catch (error) {
       console.error("Error updating market status:", error);
