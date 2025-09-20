@@ -93,7 +93,7 @@ const JackpotBidRevert = () => {
       await axios.put(`/api/jackpotBid/revertBid/${bidId}`, { bidIds: [bidId] });
 
       // Then delete the bid
-      await axios.delete(`/api/jackpotBid/deleteBid/${bidId}`);
+      // await axios.delete(`/api/jackpotBid/deleteBid/${bidId}`);
 
       // Remove the bid from the UI immediately
       setBids(prev => prev.filter(bid => bid.bidId !== bidId));
