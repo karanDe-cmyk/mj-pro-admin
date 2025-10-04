@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 import { Plus } from 'lucide-react';
 import {
   Box, Button, Card, CardContent, CardHeader,
@@ -16,11 +16,9 @@ const Index = () => {
   const [selectedType, setSelectedType] = useState('withdrawal');
   const [editingNote, setEditingNote] = useState(null);
 
-  //const baseURL = 'https://maya-api.kglame.com';
-const baseURL = 'https://maya-api.kglame.com';
   const fetchWithdrawalNotes = async () => {
     try {
-      const res = await axios.get(`${baseURL}/api/withdwawnotice/getWithdrawNotice`);
+      const res = await axios.get(`/api/withdwawnotice/getWithdrawNotice`);
       const data = Array.isArray(res.data.data) ? res.data.data : [];
       const formatted = data.map(n => ({ ...n, type: 'withdrawal' }));
       setWithdrawalNotes(formatted);
@@ -31,7 +29,7 @@ const baseURL = 'https://maya-api.kglame.com';
 
   const fetchFundNotes = async () => {
     try {
-      const res = await axios.get(`${baseURL}/api/notice/getNotice`);
+      const res = await axios.get(`/api/notice/getNotice`);
       const data = Array.isArray(res.data.data) ? res.data.data : [];
       const formatted = data.map(n => ({ ...n, type: 'fund' }));
       setFundNotes(formatted);
@@ -48,8 +46,8 @@ const baseURL = 'https://maya-api.kglame.com';
   const handleAddNote = async (noteData) => {
     const isWithdrawal = selectedType === 'withdrawal';
     const apiBase = isWithdrawal
-      ? `${baseURL}/api/withdwawnotice`
-      : `${baseURL}/api/notice`;
+      ? `/api/withdwawnotice`
+      : `/api/notice`;
     const setter = isWithdrawal ? setWithdrawalNotes : setFundNotes;
 
     try {
@@ -72,8 +70,8 @@ const baseURL = 'https://maya-api.kglame.com';
   const handleDeleteNote = async (id, type) => {
     const isWithdrawal = type === 'withdrawal';
     const apiBase = isWithdrawal
-      ? `${baseURL}/api/withdwawnotice/notes`
-      : `${baseURL}/api/notice/notes`;
+      ? `/api/withdwawnotice/notes`
+      : `/api/notice/notes`;
     const setter = isWithdrawal ? setWithdrawalNotes : setFundNotes;
 
     try {
