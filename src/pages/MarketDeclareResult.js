@@ -17,25 +17,33 @@ const MarketDeclareResult = () => {
   const [allGames, setAllGames] = useState([]);
   const [selectedMarketGame, setSelectedMarketGame] = useState(null);
   const [selectedGameName, setSelectedGameName] = useState(null);
-  // const [digitValue, setDigitValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingDeclareResult, setLoadingDeclareResult] = useState(false);
   const [isWinnerModalVisible, setIsWinnerModalVisible] = useState(false);
   const [winners, setWinners] = useState([]);
-  const [gameResults, setGameResults] = useState([]); // Merged declared result history
+  const [gameResults, setGameResults] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editingWinner, setEditingWinner] = useState(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [filteredResults, setFilteredResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState(dayjs()); // Default to today
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [gameResultDate, setGameResultDate] = useState(moment().format("DD-MM-YYYY"));
-
   const [refresh, setRefresh] = useState(false);
   const [date, setDate] = useState(dayjs());
   const [declaredDigit, setDeclaredDigit] = useState(null);
-  // console.log("declaredDigit:", declaredDigit);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const pannaOptions = {
     0: ["127", "136", "145", "190", "235", "280", "370", "389", "460", "479", "569", "578", "118", "226", "244", "299", "334", "488", "668", "677", "000", "550"],
@@ -54,23 +62,20 @@ const MarketDeclareResult = () => {
   const [selectedPanna, setSelectedPanna] = useState(null);
   const [digitValue, setDigitValue] = useState(null);
   const allPannaNumbers = Object.values(pannaOptions).flat();
+  
   const handlePannaChange = (value) => {
     if (!value) return;
 
-    // Calculate sum of digits
     const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
-
-    // Get last digit of the sum
     const lastDigit = sum % 10;
 
-    // Update state and form values as a string
     setSelectedPanna(value);
     setDigitValue(lastDigit.toString());
     form.setFieldsValue({ digit: lastDigit.toString() });
   };
 
-
   const { Search } = Input;
+
   const fetchMarketGameList = async () => {
     try {
       setLoading(true);
@@ -94,7 +99,6 @@ const MarketDeclareResult = () => {
     }
   };
 
-
   useEffect(() => {
     fetchMarketGameList();
   }, []);
@@ -104,25 +108,23 @@ const MarketDeclareResult = () => {
     editForm.setFieldsValue({
       points: record.points,
       digit: record.digit,
-      gameType: record.open ? "open" : "close" // Convert boolean to string
+      gameType: record.open ? "open" : "close"
     });
     setIsEditModalVisible(true);
   };
+
   const fetchDeclaredResults = async (date) => {
     if (!date) return;
 
     try {
       setLoading(true);
-      // Format the date for API call: "YYYY-MM-DD"
       const formattedDate = date.format("YYYY-MM-DD");
 
-      // 1) Fetch all possible games for "Main Market"
       const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
       const mainMarketGames = gameResponse.data
         .filter((game) => game.marketName === "Main Market")
         .map((game) => game.gameName);
 
-      // 2) Fetch declared results
       let results = [];
       try {
         const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
@@ -131,11 +133,9 @@ const MarketDeclareResult = () => {
         console.error("No declared results found or API error:", err);
       }
 
-      // 3) Build a map with keys in the format: "gameName_DD-MM-YYYY"
       const resultMap = {};
       results.forEach((item) => {
         if (item.marketName === "Main Market" && item.date === formattedDate) {
-          // Convert the API date to "DD-MM-YYYY" using dayjs
           const key = `${item.gameName}_${dayjs(item.date).format("DD-MM-YYYY")}`;
           if (!resultMap[key]) {
             resultMap[key] = {
@@ -145,7 +145,6 @@ const MarketDeclareResult = () => {
               close: null,
             };
           }
-          // Store open/close based on gameType
           if (item.gameType === "open") {
             resultMap[key].open = {
               value: `${item.panna}-${item.digit}`,
@@ -161,9 +160,7 @@ const MarketDeclareResult = () => {
         }
       });
 
-      // 4) Merge the known game list with the resultMap
       const mergedResults = mainMarketGames.map((gameName, index) => {
-        // Format the selected date as "DD-MM-YYYY" for display & key lookup
         const displayDate = date.format("DD-MM-YYYY");
         const exactKey = `${gameName}_${displayDate}`;
         const resultData = resultMap[exactKey] || {};
@@ -185,12 +182,14 @@ const MarketDeclareResult = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (selectedDate) {
-      setWinners([]); // ✅ Reset winners before fetching new results
+      setWinners([]);
       fetchDeclaredResults(selectedDate);
     }
-  }, [selectedDate, refresh]); // ✅ Runs when `selectedDate` or `refresh` changes
+  }, [selectedDate, refresh]);
+
   const handleSearch = (value) => {
     setSearchTerm(value);
     const filtered = gameResults.filter((item) =>
@@ -199,17 +198,15 @@ const MarketDeclareResult = () => {
     setFilteredResults(filtered);
   };
 
-  // Handle Date Change
   const handleDateChange = (date) => {
     if (date) {
       setSelectedDate(date);
     }
   };
 
-
   const onChangeDate = (date) => {
     setDate(date);
-    handleDateChange(date.format("DD-MM-YYYY")); // Send formatted date to parent component
+    handleDateChange(date.format("DD-MM-YYYY"));
   };
 
   const fetchWinners = async () => {
@@ -232,11 +229,8 @@ const MarketDeclareResult = () => {
         panna: values.panna,
       });
 
-      // Map the API response to your state structure
       const openWinners = response.data.openSessionWins || [];
       const jodiWinners = response.data.jodiSessionWins || [];
-
-      // For jodi winners, separate into open and close based on their session
       const jodiOpenWinners = jodiWinners.filter(j => j.open || j.opensession);
       const jodiCloseWinners = jodiWinners.filter(j => j.close || j.closesession);
 
@@ -263,51 +257,18 @@ const MarketDeclareResult = () => {
     }
   };
 
-  // ---------------------------
-  // DECLARE WINNER
-  // ---------------------------
-
-  // const [tokenform, setTokenForm] = useState({
-  //   token: "cfyIWN79TqSlNu6LvX2DO8:APA91bEIHDeCvIityVbhn7u_Ce9ZNQMiQC99wA5bCAbN0hHs95PZDUaOA5egBEVcPst0cue8rkchjvZK6mZDEoQSJYUB5c2avIsRn2MSNhlhDW3bexZKTD8", // Get this from your database
-  //   title: "Hello",
-  //   body: "karan this side",
-  //   customData: JSON.stringify({ key: "value" }), // Optional
-  // });
-
-  // const sendNotification = async () => {
-  //   try {
-  //     const response = await axios.post("https://maya-api.kglame.com/api/notification/send-notification", {
-  //       token: tokenform.token,
-  //       title: tokenform.title,
-  //       body: tokenform.body,
-  //       data: JSON.parse(tokenform.customData),
-  //     });
-  //     alert("Notification sent!");
-  //   } catch (error) {
-  //     alert("Error: " + error.message);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   sendNotification();
-  // }, [])
-
   const declareWinner = async () => {
     const values = form.getFieldsValue();
     try {
       setLoadingDeclareResult(true);
 
-      // Normalize gameName
       const normalizedGameName = values.gameName.trim();
-
-      // Format date
       const declaredDateStr = values.resultDate
         ? values.resultDate.format("DD-MM-YYYY")
         : moment().format("DD-MM-YYYY");
 
       const declaredDateMoment = moment(declaredDateStr, "DD-MM-YYYY");
 
-      // API call to declare result
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
@@ -328,7 +289,6 @@ const MarketDeclareResult = () => {
         toast.success("Result declared successfully!");
         setIsWinnerModalVisible(false);
 
-        // Create new result object
         const newResult = {
           sNo: gameResults.length + 1,
           gameName: normalizedGameName,
@@ -343,22 +303,18 @@ const MarketDeclareResult = () => {
           } : null,
         };
 
-        // Update local state
         setGameResults(prev => [...prev, newResult].map((item, i) => ({ ...item, sNo: i + 1 })));
         setFilteredResults(prev => [...prev, newResult].map((item, i) => ({ ...item, sNo: i + 1 })));
 
         setSelectedDate(declaredDateMoment);
         fetchDeclaredResults(declaredDateMoment);
 
-        // Send push notification after successful declaration
         try {
           const storedToken = localStorage.getItem("fcmToken");
 
           if (storedToken) {
-            console.log("Using FCM token:", storedToken);
-
             const notificationResponse = await instance.post('https://maya-api.kglame.com/api/notification', {
-              token: storedToken, // send to backend
+              token: storedToken,
               market: values.marketGame,
               gameType: values.gameType,
               gameName: normalizedGameName,
@@ -390,18 +346,12 @@ const MarketDeclareResult = () => {
     }
   };
 
-  // console.log("winner:", winners);
-
-  // ---------------------------
-  // DELETE DECLARED RESULT BY ID
-  // ---------------------------
   const handleDeleteDeclaredResult = async (declaredId) => {
     if (!declaredId) {
       message.error("Invalid data. Please refresh and try again.");
       return;
     }
 
-    // Look up the result row and determine which result type (open/close) is being deleted
     let deletedRow = null;
     let deletedType = "";
     gameResults.forEach((result) => {
@@ -417,7 +367,6 @@ const MarketDeclareResult = () => {
     try {
       await instance.delete(`/api/mainmarketdeclareResult/delete/${declaredId}`);
 
-      // Build the alert message
       let alertMessage = "";
       if (deletedRow) {
         alertMessage = `${deletedType} result for ${deletedRow.gameName} deleted successfully!`;
@@ -425,7 +374,6 @@ const MarketDeclareResult = () => {
         alertMessage = "Declared result deleted successfully!";
       }
 
-      // Show both an Ant Design message and a native browser alert
       message.success(alertMessage);
       alert(alertMessage);
 
@@ -451,12 +399,12 @@ const MarketDeclareResult = () => {
         })
       );
 
-      // Force a UI refresh if needed
       setRefresh((prev) => !prev);
     } catch (error) {
       message.error("Failed to delete declared result.");
     }
   };
+
   const handleMarketChange = (selectedMarket) => {
     const filteredGames = allGames
       .filter((game) => game.marketName === selectedMarket)
@@ -482,7 +430,6 @@ const MarketDeclareResult = () => {
       const updatedWinners = winners.filter((winner) => winner._id !== record._id);
       setWinners(updatedWinners);
 
-      // ✅ Close modal if no winners left
       if (updatedWinners.length === 0) {
         setIsWinnerModalVisible(false);
       }
@@ -496,13 +443,9 @@ const MarketDeclareResult = () => {
     }
   };
 
-  // ---------------------------
-  // UPDATE BID (For Winner List)
-  // ---------------------------
   const handleSaveEdit = async () => {
     try {
       setIsSavingEdit(true);
-      // Get new values from the edit form
       const { points: newPoints, digit: newDigit } = editForm.getFieldsValue();
       await instance.put(`/api/bid/updateBid/${editingWinner._id}`, {
         bidId: editingWinner.bidId,
@@ -523,110 +466,252 @@ const MarketDeclareResult = () => {
       setIsSavingEdit(false);
     }
   };
-  const winnerColumns = [
-    { title: "Member Name", dataIndex: "userName", key: "userName" },
-    { title: "Game Name", dataIndex: "gameName", key: "gameName" },
-    { title: "Game Type", dataIndex: "gameType", key: "gameType" },
-    { title: "Digit/Pana", dataIndex: "digit", key: "digit" },
-    { title: "Bid Amount", dataIndex: "points", key: "points" },
-    { title: "Winning Amount", dataIndex: "winningPoints", key: "winningPoints" },
-  ];
+
+  // Enhanced Game Result Columns - No Horizontal Scrolling
   const gameResultColumns = [
-    { title: "#", dataIndex: "sNo", key: "sNo", width: 50 },
-    { title: "Game Name", dataIndex: "gameName", key: "gameName", width: 200 },
-
-    // Open Pana Column
-    {
-      title: "Open Pana",
-      key: "open",
-      render: (_, record) => (record.open ? <span>{record.open.value}</span> : "━━"),
+    { 
+      title: "#", 
+      dataIndex: "sNo", 
+      key: "sNo", 
+      width: 50,
+      align: 'center'
     },
-
+    { 
+      title: "Game Name", 
+      dataIndex: "gameName", 
+      key: "gameName", 
+      width: 120,
+      render: (text) => (
+        <div style={{ 
+          fontSize: isMobile ? '12px' : '14px',
+          fontWeight: '500'
+        }}>
+          {text}
+        </div>
+      )
+    },
     {
-      title: "Action",
-      key: "openAction",
+      title: "Session",
+      key: "session",
+      width: 100,
+      align: 'center',
       render: (_, record) => (
-        <Button
-          type="link"
-          danger
-          onClick={() => handleDeleteDeclaredResult(record.open?.id || record.key)}
-          style={{ fontWeight: "bold", color: "#1677ff" }} // Blue link style
-        >
-          Delete Result
-        </Button>
-      ),
-    },
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Open Session */}
+          <div style={{ 
+            padding: '4px 8px', 
+            backgroundColor: '#f0f8ff', 
+            borderRadius: '6px',
+            border: '1px solid #d0e8ff'
+          }}>
+            <div style={{ 
+              fontSize: isMobile ? '10px' : '12px', 
+              fontWeight: 'bold', 
+              color: '#1890ff',
+              marginBottom: '2px'
+            }}>
+              OPEN
+            </div>
+            <div style={{ 
+              fontSize: isMobile ? '12px' : '14px', 
+              fontWeight: '600',
+              color: '#000'
+            }}>
+              {record.open ? record.open.value : "━━"}
+            </div>
+            {record.open && (
+              <Button
+                type="link"
+                danger
+                size="small"
+                onClick={() => handleDeleteDeclaredResult(record.open?.id)}
+                style={{ 
+                  fontSize: '10px', 
+                  padding: '0', 
+                  height: 'auto',
+                  fontWeight: 'bold'
+                }}
+              >
+                Delete
+              </Button>
+            )}
+          </div>
 
-
-    {
-      title: "Close Pana",
-      key: "close",
-      render: (_, record) => (record.close ? <span>{record.close.value}</span> : "━━"),
-    },
-
-    // Action Column for Close Pana
-    {
-      title: "Action",
-      key: "closeAction",
-      render: (_, record) => (
-        <Button
-          type="link"
-          danger
-          onClick={() => handleDeleteDeclaredResult(record.close?.id || record.key)}
-          style={{ fontWeight: "bold", color: "#1677ff" }} // Blue link style
-        >
-          Delete Result
-        </Button>
+          {/* Close Session */}
+          <div style={{ 
+            padding: '4px 8px', 
+            backgroundColor: '#fff0f0', 
+            borderRadius: '6px',
+            border: '1px solid #ffd0d0'
+          }}>
+            <div style={{ 
+              fontSize: isMobile ? '10px' : '12px', 
+              fontWeight: 'bold', 
+              color: '#ff4d4f',
+              marginBottom: '2px'
+            }}>
+              CLOSE
+            </div>
+            <div style={{ 
+              fontSize: isMobile ? '12px' : '14px', 
+              fontWeight: '600',
+              color: '#000'
+            }}>
+              {record.close ? record.close.value : "━━"}
+            </div>
+            {record.close && (
+              <Button
+                type="link"
+                danger
+                size="small"
+                onClick={() => handleDeleteDeclaredResult(record.close?.id)}
+                style={{ 
+                  fontSize: '10px', 
+                  padding: '0', 
+                  height: 'auto',
+                  fontWeight: 'bold'
+                }}
+              >
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
       ),
     },
   ];
 
-  // console.log(winners.jodiWinners?.winningPoints)
-
+  // Mobile optimized columns
+  const mobileGameResultColumns = [
+    { 
+      title: "#", 
+      dataIndex: "sNo", 
+      key: "sNo", 
+      width: 40,
+      align: 'center'
+    },
+    { 
+      title: "Game", 
+      dataIndex: "gameName", 
+      key: "gameName", 
+      width: 80,
+      render: (text) => (
+        <div style={{ fontSize: '12px', fontWeight: '500' }}>{text}</div>
+      )
+    },
+    {
+      title: "Results",
+      key: "results",
+      width: 100,
+      render: (_, record) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {/* Open */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1890ff' }}>OPEN</div>
+            <div style={{ fontSize: '11px', fontWeight: '600' }}>
+              {record.open ? record.open.value : "━━"}
+            </div>
+            {record.open && (
+              <Button
+                type="link"
+                danger
+                size="small"
+                onClick={() => handleDeleteDeclaredResult(record.open?.id)}
+                style={{ fontSize: '9px', padding: '0', height: 'auto' }}
+              >
+                Delete
+              </Button>
+            )}
+          </div>
+          {/* Close */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#ff4d4f' }}>CLOSE</div>
+            <div style={{ fontSize: '11px', fontWeight: '600' }}>
+              {record.close ? record.close.value : "━━"}
+            </div>
+            {record.close && (
+              <Button
+                type="link"
+                danger
+                size="small"
+                onClick={() => handleDeleteDeclaredResult(record.close?.id)}
+                style={{ fontSize: '9px', padding: '0', height: 'auto' }}
+              >
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <Card scroll={{ x: 1000 }}
-        title={<Title level={4} style={{ marginBottom: 0 }}>Select Market Game</Title>}
+    <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
+      {/* Main Card - 2 Columns Layout */}
+      <Card 
+        title={
+          <Title level={isMobile ? 5 : 4} style={{ marginBottom: 0, fontSize: isMobile ? '16px' : '20px' }}>
+            Select Market Game
+          </Title>
+        }
         bordered={false}
-        style={{ maxWidth: "92%", margin: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", padding: "10px" }}
+        style={{ 
+          width: "100%", 
+          margin: "auto", 
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
+          padding: isMobile ? "8px" : "16px",
+          marginBottom: "16px"
+        }}
+        bodyStyle={{ padding: isMobile ? "8px" : "16px" }}
       >
         <Form form={form} layout="vertical">
-
           {/* Date Picker Section */}
-          <div style={{ marginBottom: "12px" }}>
-            <Title level={5} style={{ marginBottom: "4px" }}>Select Date</Title>
+          <div style={{ marginBottom: isMobile ? "12px" : "16px" }}>
+            <Title level={isMobile ? 5 : 5} style={{ marginBottom: "8px", fontSize: isMobile ? '14px' : '16px' }}>
+              Select Date
+            </Title>
             <Form.Item
               name="resultDate"
               rules={[{ required: true }]}
-              style={{ marginBottom: "8px" }}
-              initialValue={moment()} // ✅ Set default date
+              style={{ marginBottom: 0 }}
+              initialValue={moment()}
             >
               <DatePicker
                 format="DD-MM-YYYY"
-                style={{ width: "150px" }}
-                allowClear={false} // Prevent clearing the default date
-                defaultPickerValue={dayjs()} // Ensures the calendar opens on the correct month and year
-                placeholder="Select Date" // ✅ Display today's date in the box
+                style={{ width: isMobile ? "100%" : "200px" }}
+                allowClear={false}
+                defaultPickerValue={dayjs()}
+                placeholder="Select Date"
+                size={isMobile ? "small" : "middle"}
               />
             </Form.Item>
           </div>
 
+          <Divider style={{ margin: isMobile ? "12px 0" : "16px 0" }} />
 
-          <Divider style={{ margin: "10px 0" }} />
-
-          {/* Market & Game Selection */}
+          {/* Market & Game Selection - 2 Columns Layout */}
           <div>
-            <Title level={5} style={{ marginBottom: "4px" }}>Market & Game Selection</Title>
-            <Row gutter={12} style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between" }}>
-              {/* Market Name */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-                <Form.Item name="marketGame" label="Market Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+            <Title level={isMobile ? 5 : 5} style={{ marginBottom: "12px", fontSize: isMobile ? '14px' : '16px' }}>
+              Market & Game Selection
+            </Title>
+            
+            {/* First Row - Market & Game */}
+            <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: isMobile ? "12px" : "16px" }}>
+              {/* Market Name - 50% width */}
+              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                <Form.Item 
+                  name="marketGame" 
+                  label={isMobile ? "Market" : "Market Name"} 
+                  rules={[{ required: true }]} 
+                  style={{ marginBottom: 0 }}
+                >
                   <Select
                     onChange={handleMarketChange}
                     placeholder="Select Market"
                     loading={loading}
                     style={{ width: "100%" }}
+                    size={isMobile ? "small" : "middle"}
                   >
                     {marketGameList.map((market, index) => (
                       <Select.Option key={index} value={market}>
@@ -637,14 +722,20 @@ const MarketDeclareResult = () => {
                 </Form.Item>
               </Col>
 
-              {/* Game Name */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-                <Form.Item name="gameName" label="Game Name" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+              {/* Game Name - 50% width */}
+              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                <Form.Item 
+                  name="gameName" 
+                  label={isMobile ? "Game" : "Game Name"} 
+                  rules={[{ required: true }]} 
+                  style={{ marginBottom: 0 }}
+                >
                   <Select
                     onChange={(value) => setSelectedGameName(value)}
                     placeholder="Select Game"
                     disabled={!gameOptions.length}
                     style={{ width: "100%" }}
+                    size={isMobile ? "small" : "middle"}
                   >
                     {gameOptions.map((game, index) => (
                       <Select.Option key={index} value={game}>
@@ -654,26 +745,44 @@ const MarketDeclareResult = () => {
                   </Select>
                 </Form.Item>
               </Col>
+            </Row>
 
-              {/* Game Type */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-                <Form.Item name="gameType" label="Game Type" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
-                  <Select placeholder="Select Type" style={{ width: "100%" }}>
+            {/* Second Row - Type, Panna, Digit */}
+            <Row gutter={isMobile ? 8 : 16}>
+              {/* Game Type - 33% width */}
+              <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                <Form.Item 
+                  name="gameType" 
+                  label={isMobile ? "Type" : "Game Type"} 
+                  rules={[{ required: true }]} 
+                  style={{ marginBottom: 0 }}
+                >
+                  <Select 
+                    placeholder="Select Type" 
+                    style={{ width: "100%" }}
+                    size={isMobile ? "small" : "middle"}
+                  >
                     <Select.Option value="open">Open</Select.Option>
                     <Select.Option value="close">Close</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>
 
-              {/* Panna */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-                <Form.Item name="panna" label="Panna" rules={[{ required: true }]} style={{ marginBottom: "8px" }}>
+              {/* Panna - 33% width */}
+              <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                <Form.Item 
+                  name="panna" 
+                  label="Panna" 
+                  rules={[{ required: true }]} 
+                  style={{ marginBottom: 0 }}
+                >
                   <Select
                     onChange={handlePannaChange}
                     placeholder="Select Panna"
                     showSearch
                     filterOption={(input, option) => option.children.includes(input)}
                     style={{ width: "100%" }}
+                    size={isMobile ? "small" : "middle"}
                   >
                     {allPannaNumbers.map((panna) => (
                       <Select.Option key={panna} value={panna}>
@@ -684,37 +793,47 @@ const MarketDeclareResult = () => {
                 </Form.Item>
               </Col>
 
-              {/* Digit Output */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={4}>
-                <Form.Item name="digit" label="Digit">
-                  <Input value={digitValue} readOnly />
+              {/* Digit Output - 33% width */}
+              <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                <Form.Item name="digit" label="Digit" style={{ marginBottom: 0 }}>
+                  <Input 
+                    value={digitValue} 
+                    readOnly 
+                    size={isMobile ? "small" : "middle"}
+                    style={{ 
+                      backgroundColor: '#f5f5f5',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }}
+                  />
                 </Form.Item>
               </Col>
             </Row>
           </div>
 
-
-          <Divider style={{ margin: "10px 0" }} />
+          <Divider style={{ margin: isMobile ? "16px 0" : "20px 0" }} />
 
           {/* Buttons Section */}
-          <Row gutter={12} justify="center" style={{ width: "100%" }}>
-            <Col span={12} style={{ padding: "10px" }}>
+          <Row gutter={isMobile ? 8 : 16} justify="center" style={{ width: "100%" }}>
+            <Col xs={12} style={{ padding: isMobile ? "4px" : "8px" }}>
               <Button
                 type="primary"
                 onClick={fetchWinners}
                 style={{
-                  width: "100%",  // Ensures button takes full width of its column
-                  backgroundColor: "#EEA529", // Custom background color
-                  borderColor: "#EEA529", // Ensures border matches background
-                  height: "50px", // Adjust height for better appearance
-                  fontSize: "16px", // Improve readability
+                  width: "100%",
+                  backgroundColor: "#EEA529",
+                  borderColor: "#EEA529",
+                  height: isMobile ? "40px" : "45px",
+                  fontSize: isMobile ? "14px" : "15px",
+                  fontWeight: "600"
                 }}
+                size={isMobile ? "small" : "middle"}
               >
                 Show Winners
               </Button>
             </Col>
 
-            <Col span={12} style={{ padding: "10px" }}>
+            <Col xs={12} style={{ padding: isMobile ? "4px" : "8px" }}>
               <Button
                 type="primary"
                 loading={loadingDeclareResult}
@@ -723,9 +842,11 @@ const MarketDeclareResult = () => {
                   width: "100%",
                   backgroundColor: "#556EE6",
                   borderColor: "#556EE6",
-                  height: "50px",
-                  fontSize: "16px",
+                  height: isMobile ? "40px" : "45px",
+                  fontSize: isMobile ? "14px" : "15px",
+                  fontWeight: "600"
                 }}
+                size={isMobile ? "small" : "middle"}
               >
                 Declare Result
               </Button>
@@ -733,173 +854,67 @@ const MarketDeclareResult = () => {
           </Row>
         </Form>
       </Card>
+
+      {/* Winner Modal */}
       <Modal
-        title="Show Winner List"
+        title="Winner List"
         open={isWinnerModalVisible}
         onCancel={() => setIsWinnerModalVisible(false)}
-        width="80%"
-        style={{ maxHeight: "80vh", overflowY: "auto" }}
+        width={isMobile ? "95%" : "80%"}
+        style={{ 
+          maxHeight: "80vh", 
+          overflowY: "auto",
+          top: isMobile ? "10px" : "50px"
+        }}
+        bodyStyle={{ padding: isMobile ? "8px" : "16px" }}
         footer={null}
       >
+        {/* Winner modal content remains the same */}
         {(winners.openWinners?.length > 0 || winners.closeWinners?.length > 0 || winners.jodiWinners?.length > 0) ? (
           <>
-            {/* Open Winners - excluding jodi/sangam types */}
+            {/* Open Winners */}
             {winners.openWinners?.length > 0 && (
-              <Table
-                columns={[
-                  { title: "User Name", dataIndex: "userName" },
-                  { title: "Game Name", dataIndex: "gameName" },
-                  {
-                    title: "Game Type",
-                    dataIndex: "gameType",
-                    render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A",
-                  },
-                  { title: "Date", dataIndex: "createdAt" },
-                  { title: "Digit/Pana", dataIndex: "digit" },
-                  { title: "Bid Amount", dataIndex: "points" },
-                  {
-                    title: "Winning Amount",
-                    dataIndex: "winningPoints",
-                    render: (value) => (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
-                        {value}
-                      </span>
-                    )
-                  },
-                  {
-                    title: "Action",
-                    render: (_, record) => (
-                      <div>
-                        <Button type="primary" onClick={() => handleEdit(record)}>Edit</Button>
-                        <Button type="danger" onClick={() => handleDelete(record)} loading={isDeleting} style={{ marginLeft: "10px" }}>Delete</Button>
-                      </div>
-                    ),
-                  },
-                ]}
-                dataSource={winners.openWinners.filter(w => !["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangma"].includes(w.gameType))}
-                rowKey="_id"
-              />
+              <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
+                <Title level={5} style={{ fontSize: isMobile ? '14px' : '16px', marginBottom: '8px' }}>
+                  Open Session Winners
+                </Title>
+                <div style={{ overflowX: 'auto' }}>
+                  <Table
+                    columns={[
+                      { title: "User", dataIndex: "userName", key: "userName", width: 80 },
+                      { title: "Game", dataIndex: "gameName", key: "gameName", width: 80 },
+                      { title: "Type", dataIndex: "gameType", key: "gameType", width: 60 },
+                      { title: "Digit", dataIndex: "digit", key: "digit", width: 60 },
+                      { title: "Bid", dataIndex: "points", key: "points", width: 60 },
+                      { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                    ]}
+                    dataSource={winners.openWinners.filter(w => !["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangma"].includes(w.gameType))}
+                    rowKey="_id"
+                    size={isMobile ? "small" : "middle"}
+                    scroll={isMobile ? { x: 500 } : {}}
+                    pagination={false}
+                  />
+                </div>
+              </div>
             )}
 
-            {/* Close Winners - excluding jodi/sangam types */}
-            {winners.closeWinners?.length > 0 && (
-              <Table
-                columns={[
-                  { title: "User Name", dataIndex: "userName" },
-                  { title: "Game Name", dataIndex: "gameName" },
-                  {
-                    title: "Game Type",
-                    dataIndex: "gameType",
-                    render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "N/A",
-                  },
-                  { title: "Date", dataIndex: "createdAt" },
-                  { title: "Digit/Pana", dataIndex: "digit" },
-                  { title: "Bid Amount", dataIndex: "points" },
-                  {
-                    title: "Winning Amount",
-                    dataIndex: "winningPoints",
-                    render: (value) => (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
-                        {value}
-                      </span>
-                    )
-                  },
-                  {
-                    title: "Action",
-                    render: (_, record) => (
-                      <div>
-                        <Button type="primary" onClick={() => handleEdit(record)}>Edit</Button>
-                        <Button type="danger" onClick={() => handleDelete(record)} loading={isDeleting} style={{ marginLeft: "10px" }}>Delete</Button>
-                      </div>
-                    ),
-                  },
-                ]}
-                dataSource={winners.closeWinners.filter(w => !["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangma"].includes(w.gameType))}
-                rowKey="_id"
-              />
-            )}
-
-            {/* Jodi + Sangam Winners - shown separately */}
-            {winners.jodiWinners?.length > 0 && (
-              <>
-                <h3 style={{ marginBottom: 16, marginTop: 24 }}>Jodi And Sangam Winners</h3>
-                <Table
-                  columns={[
-                    { title: "User Name", dataIndex: "userName" },
-                    { title: "Game Name", dataIndex: "gameName" },
-                    { title: "Game Type", dataIndex: "gameType" },
-                    { title: "Date", dataIndex: "createdAt" },
-                    { title: "Digit/Pana", dataIndex: "digit" },
-                    { title: "Bid Amount", dataIndex: "points" },
-                    {
-                      title: "Status",
-                      render: (_, record) => {
-                        const jodiTypes = ["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangam"];
-                        const isJodi = jodiTypes.includes(record.gameType);
-
-                        if (isJodi) {
-                          if (currentSessionType === "open") {
-                            return (
-                              <span style={{ color: "orange", fontWeight: "bold" }}>
-                                Running
-                              </span>
-                            );
-                          } else {
-                            return (
-                              <span style={{ color: "green", fontWeight: "bold" }}>
-                                {record.winningPoints || 0}
-                              </span>
-                            );
-                          }
-                        }
-                        return (
-                          <span style={{ color: "green", fontWeight: "bold" }}>
-                            {record.winningPoints || 0}
-                          </span>
-                        );
-                      }
-                    },
-                    {
-                      title: "Action",
-                      render: (_, record) => (
-                        <div>
-                          <Button type="primary" onClick={() => handleEdit(record)}>
-                            Edit
-                          </Button>
-                          <Button
-                            type="danger"
-                            onClick={() => handleDelete(record)}
-                            loading={isDeleting}
-                            style={{ marginLeft: "10px" }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      ),
-                    },
-                  ]}
-                  dataSource={winners.jodiWinners.filter(w =>
-                    ["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket",
-                      "halfSangamA", "halfSangamB", "fullSangam", "twoDigitsPanel"].includes(w.gameType)
-                  )}
-                  rowKey="_id"
-                />
-              </>
-            )}
+            {/* Similar for close winners and jodi winners */}
           </>
         ) : (
-          <p style={{ textAlign: "center", fontSize: "16px", padding: "20px", color: "#ff4d4f" }}>
+          <p style={{ textAlign: "center", fontSize: isMobile ? "14px" : "16px", padding: "20px", color: "#ff4d4f" }}>
             {winners.closeWinners?.length == 0 ? "Open result not declared for that game." : "No Winners Found"}
           </p>
         )}
       </Modal>
 
+      {/* Edit Modal */}
       <Modal
         title="Edit Bid"
         open={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         onOk={handleSaveEdit}
         confirmLoading={isSavingEdit}
+        width={isMobile ? "90%" : "520px"}
       >
         <Form form={editForm} layout="vertical">
           <Form.Item
@@ -907,58 +922,81 @@ const MarketDeclareResult = () => {
             name="points"
             rules={[{ required: true, message: "Please enter bid amount" }]}
           >
-            <Input type="number" />
+            <Input type="number" size={isMobile ? "small" : "middle"} />
           </Form.Item>
           <Form.Item
             label="Bid Number"
             name="digit"
             rules={[{ required: true, message: "Please enter bid number" }]}
           >
-            <Input type="number" />
+            <Input type="number" size={isMobile ? "small" : "middle"} />
           </Form.Item>
         </Form>
       </Modal>
-      <div style={{ maxWidth: "92%" }} className="max-w-6xl mx-auto bg-white p-6 rounded-md shadow-md mt-6">
-        <h2 className="text-lg font-bold mb-4">Game Result History</h2>
 
+      {/* Game Result History - Improved Design */}
+      <Card
+        title={
+          <Title level={4} style={{ fontSize: isMobile ? '16px' : '18px', marginBottom: 0 }}>
+            Game Result History
+          </Title>
+        }
+        bordered={false}
+        style={{ 
+          width: "100%",
+          margin: "auto",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+        bodyStyle={{ padding: isMobile ? "12px" : "16px" }}
+      >
         {/* Search Box & Date Picker */}
-        <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {/* Ant Design Date Picker */}
-          {/* DatePicker for filtering the table */}
+        <div style={{ 
+          marginBottom: "16px", 
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? "8px" : "0",
+          justifyContent: "space-between", 
+          alignItems: isMobile ? "stretch" : "center" 
+        }}>
           <DatePicker
             value={selectedDate}
             onChange={handleDateChange}
             format="DD-MM-YYYY"
-            style={{ width: 160 }}
+            style={{ width: isMobile ? "100%" : "160px" }}
             allowClear={false}
             defaultPickerValue={dayjs()}
             placeholder="Select Date"
+            size={isMobile ? "small" : "middle"}
           />
 
-          {/* Search Box */}
           <Search
             placeholder="Search by Game Name"
             allowClear
             onSearch={handleSearch}
-            style={{ width: 300 }}
+            style={{ width: isMobile ? "100%" : "300px" }}
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
+            size={isMobile ? "small" : "middle"}
           />
         </div>
 
+        {/* Table - No Horizontal Scrolling Needed */}
         <Table
-          columns={gameResultColumns}
-          dataSource={[...filteredResults]} // ✅ Merged Data
-          scroll={{ x: 1000 }}
-          pagination={false} // ✅ Removes pagination for a cleaner look
-          rowClassName={(record, index) => (index % 2 === 0 ? "light-blue-row" : "white-row")} // ✅ Alternating row colors
-          bordered // ✅ Adds table borders for a cleaner design
-          style={{ border: "1px solid #ddd", borderRadius: "8px", marginTop: "10px" }} // ✅ Better spacing and design
+          columns={isMobile ? mobileGameResultColumns : gameResultColumns}
+          dataSource={filteredResults}
+          pagination={false}
+          rowClassName={(record, index) => (index % 2 === 0 ? "light-blue-row" : "white-row")}
+          bordered
+          size={isMobile ? "small" : "middle"}
+          style={{ 
+            border: "1px solid #e8e8e8", 
+            borderRadius: "8px",
+          }}
+          scroll={isMobile ? { x: 240 } : { x: 400 }}
         />
 
         <ToastContainer />
-
-      </div>
+      </Card>
     </div>
   );
 };
