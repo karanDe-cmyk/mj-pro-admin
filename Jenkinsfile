@@ -4,7 +4,7 @@ pipeline {
 
     environment {
         SONAR_HOME = tool "Sonar"
-        IMAGE_NAME = "maccotech/stable-matka-admin-prod"
+        IMAGE_NAME = "maccotech/mjpro-matka-admin-prod"
         K8S_REPO_URL = 'https://github.com/MaccoTechgit/aws-Kubernetes.git'
         K8S_BRANCH = 'mjprogames-matka'
         K8S_FOLDER = 'kubernetes'
@@ -103,12 +103,12 @@ pipeline {
                         echo "Before sed:"
                         cat ${YAML_FILE}
 
-                        sed -i 's#image:\\s*maccotech/stable-matka-admin-prod:.*#image: maccotech/stable-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}#' ${YAML_FILE}
+                        sed -i 's#image:\\s*maccotech/mjpro-matka-admin-prod:.*#image: maccotech/mjpro-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}#' ${YAML_FILE}
 
                         echo "After sed:"
                         cat ${YAML_FILE}
 
-                        grep "image: maccotech/stable-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}" ${YAML_FILE} || { echo "❌ Failed to update YAML file"; exit 1; }
+                        grep "image: maccotech/mjpro-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}" ${YAML_FILE} || { echo "❌ Failed to update YAML file"; exit 1; }
                     """
                 }
             }
