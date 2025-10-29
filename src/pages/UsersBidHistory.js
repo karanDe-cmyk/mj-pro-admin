@@ -153,9 +153,9 @@ const UserBidHistory = () => {
       key: "action",
       render: (record) => (
         <>
-          <Button type="primary" onClick={() => handleEdit(record)} style={{ marginRight: "10px" }}>
+          {/* <Button type="primary" onClick={() => handleEdit(record)} style={{ marginRight: "10px" }}>
             Edit
-          </Button>
+          </Button> */}
           <Button type="danger" onClick={() => handleDelete(record.bidId, record._id)} loading={deleteLoading[record.bidId]}>
             Delete
           </Button>
