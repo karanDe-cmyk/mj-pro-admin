@@ -1,32 +1,36 @@
-# 🏗️ Build Stage: React App
-FROM node:20-slim AS build
+# Use Node base image
+FROM node:22-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm install
 
-# Copy source code and build the React app
+# Install dependencies
+RUN npm ci
+
+# Copy source code
 COPY . .
+
+# Build React app
 RUN npm run build
 
+# -----------------------------
+# Stage 2: Production
+# -----------------------------
+FROM node:22-alpine AS production
 
-# 🚀 Production Stage: Serve via NGINX
-FROM nginx:alpine
+WORKDIR /app
 
-# Copy built React app from previous stage to NGINX default directory
-COPY --from=build /app/build /usr/share/nginx/html
+# Install serve globally
+RUN npm install -g serve
 
-# Optional: Custom NGINX config (used for React routing support)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy built files from build stage
+COPY --from=build /app/build ./build
 
-# Create empty env.js file to inject runtime environment variables
-RUN touch /usr/share/nginx/html/env.js
+# Expose port
+EXPOSE 3000
 
-# Expose port 80 (default for NGINX)
-EXPOSE 80
-
-# Run nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Start the app with serve
+CMD ["serve", "-s", "build", "-l", "3000"]
