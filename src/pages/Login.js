@@ -153,7 +153,7 @@ const Login = () => {
                 />
               </div>
               <Title level={4} className="mt-2.5">
-                MJ Admin Panel
+                Mjpro Admin Panel
               </Title>
             </div>
 

@@ -4,16 +4,17 @@ pipeline {
 
     environment {
         SONAR_HOME = tool "Sonar"
-        IMAGE_NAME = "maccotech/stable-matka-admin-prod"
+        IMAGE_NAME = "maccotech/mjpro-main-new-matka-admin-prod"
         K8S_REPO_URL = 'https://github.com/MaccoTechgit/aws-Kubernetes.git'
-        K8S_BRANCH = 'maya-matka'
+        K8S_BRANCH = 'mjprogames-matka'
         K8S_FOLDER = 'kubernetes'
         YAML_FILE = "${K8S_FOLDER}/frontend-admin.yaml"
         CODE_REPO_URL = 'https://github.com/MaccoTechgit/Matka-Admin.git'
-        CODE_BRANCH = 'kalyan257-maya-admin'
+        CODE_BRANCH = 'mj-pro-admin'
         ARGOCD_SERVER = 'argocd.maccotech.in'
-        ARGOCD_TOKEN = credentials('argocd-api-token')
-        APP_NAME = 'MAYA-MATKA'
+        ARGOCD_TOKEN = credentials('ARGOCD_TOKEN')
+        APP_NAME = 'mj-pro-admin'
+        
     }
 
     stages {
@@ -60,7 +61,7 @@ pipeline {
         stage("SonarQube: Code Analysis"){
             steps{
                 script{
-                    sonarqube_analysis("Sonar","Maya-matka","Maya-matka")
+                    sonarqube_analysis("Sonar","mjpro-admin-prod","mjpro-admin-prod")
                 }
             }
         }
@@ -102,12 +103,12 @@ pipeline {
                         echo "Before sed:"
                         cat ${YAML_FILE}
 
-                        sed -i 's#image:\\s*maccotech/stable-matka-admin-prod:.*#image: maccotech/stable-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}#' ${YAML_FILE}
+                        sed -i 's#image:\\s*maccotech/mjpro-main-new-matka-admin-prod:.*#image: maccotech/mjpro-main-new-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}#' ${YAML_FILE}
 
                         echo "After sed:"
                         cat ${YAML_FILE}
 
-                        grep "image: maccotech/stable-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}" ${YAML_FILE} || { echo "❌ Failed to update YAML file"; exit 1; }
+                        grep "image: maccotech/mjpro-main-new-matka-admin-prod:${env.FRONTEND_DOCKER_TAG}" ${YAML_FILE} || { echo "❌ Failed to update YAML file"; exit 1; }
                     """
                 }
             }
@@ -123,7 +124,7 @@ pipeline {
 
                             git status # Debug: Check staged changes
                             git add ${YAML_FILE}
-                            git commit -m "Updated Docker image tag to ${env.FRONTEND_DOCKER_TAG}" || echo "No changes to commit"
+                            git commit -m "Updated frontend image tag to ${env.FRONTEND_DOCKER_TAG}" || echo "No changes to commit"
                             git push origin ${K8S_BRANCH}
                         """
                     }
@@ -133,9 +134,9 @@ pipeline {
 
         stage("Sync ArgoCD") {
             steps {
-                withEnv(["ARGOCD_TOKEN=${ARGOCD_TOKEN}"]) {
+                withCredentials([string(credentialsId: 'ARGOCD_TOKEN', variable: 'ARGOCD_TOKEN')]) {
                     sh '''
-                    curl -k -X POST https://argocd.maccotech.in/api/v1/applications/MH-MATKA/sync \
+                    curl -k -X POST https://argocd.maccotech.in/api/v1/applications/PHOENIX-MATKA/sync \
                     -H "Authorization: Bearer $ARGOCD_TOKEN" \
                     -H "Content-Type: application/json" \
                     -d '{ "prune": true, "dryRun": false, "strategy": { "hook": { } } }'
@@ -168,10 +169,10 @@ pipeline {
                 env.SECURITY_SCAN_STATUS = "All Good"
                 
                 emailext attachLog: true,
-                from: 'sauravaws003@maccotech.in',
+                from: 'jenkins@maccotech.in',
                 subject: "✅ [SUCCESS] ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
-                to: 'mukultyagibackend005@maccotech.in, sauravaws003@maccotech.in, karanbackend001@maccotech.in, sumitsinghbackend006@maccotech.in, rohityadavbackend007@maccotech.in,',
+                to: 'karanbackend001@maccotech.in, sauravaws003@maccotech.in',
                 body: """
                     <html>
                         <body style="font-family: Arial, sans-serif; background-color: #f1f3f5; padding: 20px;">
@@ -232,7 +233,7 @@ pipeline {
                 from: 'sauravaws003@maccotech.in',
                 subject: "❌ [FAILURE] ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
-                to: 'mukultyagibackend005@maccotech.in, sauravaws003@maccotech.in, karanbackend001@maccotech.in, sumitsinghbackend006@maccotech.in, rohityadavbackend007@maccotech.in',
+                to: 'karanbackend001@maccotech.in, sauravaws003@maccotech.in',
                 body: """
                     <html>
                         <body style="font-family: Arial, sans-serif; background-color: #fff5f5; padding: 20px;">
@@ -270,3 +271,5 @@ pipeline {
 
     
 }
+
+
