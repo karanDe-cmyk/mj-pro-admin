@@ -10,7 +10,7 @@ pipeline {
         K8S_FOLDER = 'kubernetes'
         YAML_FILE = "${K8S_FOLDER}/frontend-admin.yaml"
         CODE_REPO_URL = 'https://github.com/MaccoTechgit/Matka-Admin.git'
-        CODE_BRANCH = 'new-admin'
+        CODE_BRANCH = 'mj-pro-admin'
         ARGOCD_SERVER = 'argocd.maccotech.in'
         ARGOCD_TOKEN = credentials('ARGOCD_TOKEN')
         APP_NAME = 'mj-pro-admin'
