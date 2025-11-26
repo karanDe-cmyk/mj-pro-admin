@@ -38,7 +38,7 @@ const AlertMessage = ({ message, type, onClose }) => {
         >
           <svg className="h-4 w-4" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
             <title>Close</title>
-            <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.697l-2.651 2.652a1.2 1.2 0 1 1-1.697-1.697L8.303 10 5.651 7.348a1.2 1.2 0 1 1 1.697-1.697L10 8.303l2.651-2.652a1.2 1.2 0 0 1 1.697 1.697L11.697 10l2.652 2.651a1.2 1.2 0 0 1 0 1.698z" />
+            <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.697l-2.651 3.152a1.2 1.2 0 1 1-1.697-1.697L8.303 10 5.651 6.848a1.2 1.2 0 1 1 1.697-1.697L10 8.303l2.651-3.152a1.2 1.2 0 1 1 1.697 1.697L11.697 10l2.651 3.152a1.2 1.2 0 0 1 0 1.698z" />
           </svg>
         </button>
       </div>
@@ -46,7 +46,6 @@ const AlertMessage = ({ message, type, onClose }) => {
     </div>
   );
 };
-
 
 const UPISettings = () => {
   // UPI Data State
@@ -67,6 +66,13 @@ const UPISettings = () => {
     minAmount: "",
     maxAmount: "",
     status: "Inactive",
+    discountAmounts: [
+      { percentage: 5, amount: "" },
+      { percentage: 10, amount: "" },
+      { percentage: 15, amount: "" },
+      { percentage: 20, amount: "" },
+      { percentage: 25, amount: "" }
+    ]
   });
 
   const [loading, setLoading] = useState(false);
@@ -106,14 +112,30 @@ const UPISettings = () => {
         const fbmDataResponse = fbmResponse.data.data[0];
 
         if (fbmDataResponse) {
+          // Ensure discountAmounts array has all 5 percentages
+          let discountAmounts = fbmDataResponse.discountAmounts || [];
+
+          // Agar koi percentage missing hai toh add karein
+          const requiredPercentages = [5, 10, 15, 20, 25];
+          requiredPercentages.forEach(percentage => {
+            if (!discountAmounts.find(item => item.percentage === percentage)) {
+              discountAmounts.push({ percentage, amount: 0 });
+            }
+          });
+
+          // Sort by percentage
+          discountAmounts.sort((a, b) => a.percentage - b.percentage);
+
           setFbmData({
             id: fbmDataResponse._id || "",
             usertoken: fbmDataResponse.usertoken || "",
             minAmount: fbmDataResponse.min_amount || "",
             maxAmount: fbmDataResponse.max_amount || "",
             status: fbmDataResponse.status || "Inactive",
+            discountAmounts: discountAmounts
           });
         }
+
 
       } catch (error) {
         console.error("Error fetching settings data:", error);
@@ -136,6 +158,16 @@ const UPISettings = () => {
   const handleFbmChange = (e) => {
     const { name, value } = e.target;
     setFbmData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle discount amount change
+  const handleDiscountAmountChange = (index, value) => {
+    setFbmData(prev => ({
+      ...prev,
+      discountAmounts: prev.discountAmounts.map((item, i) =>
+        i === index ? { ...item, amount: value } : item
+      )
+    }));
   };
 
   // Handle UPI form submission
@@ -175,7 +207,7 @@ const UPISettings = () => {
 
   // Handle FBM form submission
   const handleFbmUpdate = async () => {
-    const { usertoken, minAmount, maxAmount } = fbmData;
+    const { usertoken, minAmount, maxAmount, discountAmounts } = fbmData;
 
     if (!usertoken.trim()) {
       setAlert({ message: "User Token cannot be empty.", type: "error" });
@@ -187,6 +219,16 @@ const UPISettings = () => {
       return;
     }
 
+    // Validate discount amounts
+    const invalidDiscount = discountAmounts.find(item =>
+      item.amount && (isNaN(item.amount) || parseFloat(item.amount) < 0)
+    );
+
+    if (invalidDiscount) {
+      setAlert({ message: `Please enter valid amount for ${invalidDiscount.percentage}% discount`, type: "error" });
+      return;
+    }
+
     try {
       setLoading(true);
       const payload = {
@@ -194,6 +236,10 @@ const UPISettings = () => {
         min_amount: parseInt(fbmData.minAmount),
         max_amount: parseInt(fbmData.maxAmount),
         status: fbmData.status.toLowerCase(),
+        discountAmounts: fbmData.discountAmounts.map(item => ({
+          percentage: item.percentage,
+          amount: item.amount ? parseFloat(item.amount) : 0
+        }))
       };
 
       // Fetch the latest data to check for an existing ID
@@ -207,15 +253,14 @@ const UPISettings = () => {
         await axiosInstance.post(`/api/settings/fbmgateway`, payload);
       }
 
-      setAlert({ message: "FBM Gateway Settings Updated Successfully!", type: "success" });
+      setAlert({ message: "IMB Gateway Settings Updated Successfully!", type: "success" });
     } catch (error) {
-      console.error("Error updating FBM gateway data:", error);
-      setAlert({ message: "Failed to update FBM gateway data", type: "error" });
+      console.error("Error updating IMB gateway data:", error);
+      setAlert({ message: "Failed to update IMB gateway data", type: "error" });
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="relative p-6 bg-gray-100 min-h-screen font-sans">
@@ -228,7 +273,7 @@ const UPISettings = () => {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+      <div className="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-lg">
         {/* Tab Navigation */}
         <div className="flex border-b mb-6">
           <button
@@ -259,7 +304,7 @@ const UPISettings = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">UPI Payment Settings</h2>
             <div className="grid md:grid-cols-2 gap-6">
-              {/* UPI Fields */}
+              {/* UPI Fields - same as before */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">UPI Name</label>
                 <input
@@ -346,7 +391,9 @@ const UPISettings = () => {
         {activeTab === 'fbm' && (
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">IMB Gateway Settings</h2>
-            <div className="grid md:grid-cols-2 gap-6">
+
+            {/* Basic Settings */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">User Token</label>
                 <input
@@ -395,13 +442,41 @@ const UPISettings = () => {
               </div>
             </div>
 
+            {/* Discount Amounts Section */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Discount Amount Settings</h3>
+              <p className="text-gray-600 mb-4">Set discount amounts for different percentage values:</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                {fbmData.discountAmounts.map((discount, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {discount.percentage}% Discount Amount (₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={discount.amount}
+                      onChange={(e) => handleDiscountAmountChange(index, e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring focus:ring-blue-200 focus:border-blue-500 transition-colors"
+                      placeholder="0.00"
+                      disabled={loading}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Amount for {discount.percentage}% discount
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-8 flex justify-end">
               <button
                 onClick={handleFbmUpdate}
                 className="w-40 bg-blue-600 text-white font-semibold py-3 rounded-md shadow-md hover:bg-blue-700 transition-colors duration-200 ease-in-out disabled:bg-blue-300"
                 disabled={loading}
               >
-                {loading ? "Updating..." : "Update FBM"}
+                {loading ? "Updating..." : "Update IMB"}
               </button>
             </div>
           </div>
