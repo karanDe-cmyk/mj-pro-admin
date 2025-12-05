@@ -7,6 +7,7 @@ const instance = axios.create({
   baseURL :'https://maharanimatka-api.kglame.com'
   // baseURL: "http://localhost:5002"
   // baseURL: window.ENV?.API_URL,
+  // baseURL: "http://localhost:5002"
 });
 
 let isRedirecting = false;
