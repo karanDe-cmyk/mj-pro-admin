@@ -288,6 +288,7 @@ const AllBidHistory = () => {
   };
 
   const jodiGameTypes = ["jodi", "digitBasedJodi", "groupJodi", "redBracket", "jodiBulk", "halfSangamA", "halfSangamB", "fullSangam"];
+
   const filteredData = bidHistoryData.filter((bid) => {
     // Basic filtering conditions
     const matchesSearch = Object.values(bid).some((value) =>
@@ -295,16 +296,39 @@ const AllBidHistory = () => {
     );
     const matchesGameTypeSearch = !gameTypeSearch || bid.gameType?.toLowerCase().includes(gameTypeSearch.toLowerCase());
     const matchesSelectedGameType = !selectedGameType || bid.gameType === selectedGameType;
-    const isJodi = jodiGameTypes.includes(bid.gameType);
 
-    // Status filter ke liye naya logic
-    const matchesStatus =
-      bidStatusFilter === "all" ||
-      (bidStatusFilter === "open" && (bid.open || isJodi)) ||
-      (bidStatusFilter === "close" && bid.close);
+    // Check if it's a jodi type game
+    const isJodiType = jodiGameTypes.includes(bid.gameType);
 
-    return !bid.reverted && matchesSearch && matchesGameTypeSearch && matchesSelectedGameType && matchesStatus;
+    // IMPORTANT: Jodi को हमेशा open माना जाएगा
+    // Status filter logic update करें
+    const matchesStatus = () => {
+      if (bidStatusFilter === "all") return true;
+
+      if (bidStatusFilter === "open") {
+        // Jodi game types के लिए open ही return करें
+        if (isJodiType) return true;
+        // Non-jodi games के लिए original logic
+        return bid.open === true;
+      }
+
+      if (bidStatusFilter === "close") {
+        // Jodi game types को close से filter out करें
+        if (isJodiType) return false;
+        // Non-jodi games के लिए original logic
+        return bid.close === true;
+      }
+
+      return true;
+    };
+
+    return !bid.reverted &&
+      matchesSearch &&
+      matchesGameTypeSearch &&
+      matchesSelectedGameType &&
+      matchesStatus();
   });
+
 
 
   const totalPages = Math.ceil(filteredData.length / entries);
@@ -469,13 +493,18 @@ const AllBidHistory = () => {
                   <td className="border px-4 py-2">{bid.points}</td>
                   <td className="border px-4 py-2">{bid.digit}</td>
                   <td className="border px-4 py-2">
-                    {bid.open ? (
-                      <span className="text-green-600">Open</span>
-                    ) : bid.close ? (
-                      <span className="text-red-600">Close</span>
-                    ) : (
-                      "-"
-                    )}
+                    {(() => {
+                      if (jodiGameTypes.includes(bid.gameType)) {
+                        return <span className="text-green-600">Open</span>;
+                      }
+                      if (bid.open) {
+                        return <span className="text-green-600">Open</span>;
+                      }
+                      if (bid.close) {
+                        return <span className="text-red-600">Close</span>;
+                      }
+                      return "-";
+                    })()}
                   </td>
                   <td className="border px-4 py-2">{bid.time}</td>
                   <td className="border px-4 py-2">
