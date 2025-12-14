@@ -225,7 +225,7 @@ const AdminPanel = () => {
     //     { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
     //   ],
     // },
-    // {
+    {
       key: "Jackpot-games",
       label: "Jackpot Games",
       icon: <i className="fa fa-dice" />,
