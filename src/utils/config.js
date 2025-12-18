@@ -1,4 +1,4 @@
-export const apiUrl = "https://mjprogames-api.kglame.com"
+export const apiUrl = "https://lotus-api.phoenixappapi.com/"
 // export const apiUrl = "https://bfbb2062000a.ngrok-free.app"
 // export const dummyUrl ="https://jsonplaceholder.typicode.com/posts"
 // export const apiUrl = "http://localhost:5002";
