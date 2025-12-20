@@ -58,47 +58,54 @@ import JackpotBidRevert from './pages/Jackpot/Jackpotbidrevert';
 import GaliDisawarBidRevert from './pages/GalidisawerGames/Galidisawarbidrevert';
 import StarlineRevert from './pages/starline management/Starlinebidrevert';
 import FCM from './pages/setting/FCM';
+import axiosInstance from './utils/axiosInstance'
+
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
 
   useEffect(() => {
-    // get permission to user for notification
     const requestPermission = async () => {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted') {
-        // generate token
-        getToken(messaging, { vapidKey: window.ENV?.FIREBASE_VAPID_KEY }).then((currentToken) => {
-          if (currentToken) {
+      try {
+        const permission = await Notification.requestPermission();
 
-            console.log(currentToken)
-            localStorage.setItem("fcmToken", currentToken);
+        if (permission !== "granted") {
+          alert("You denied notification permission");
+          return;
+        }
 
-            // Send the token to your server and update the UI if necessary
-            fetch('https://maya-api.kglame.com/api/notification/save-fcm-token', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ token: currentToken })
-            });
-            // console.log("Sending FCM token to backend:", currentToken)
-          } else {
-            // Show permission request UI
-            console.log('No registration token available. Request permission to generate one.');
+        // Generate FCM token
+        const currentToken = await getToken(messaging, {
+          vapidKey:
+            "BIE_S0OKXX3rJHefoglKf7gXbLv1hdPeZkhtsFzI-gwA_ETyrse0vS7hAeXBaymROegtAUp1E_2-dXFUH-mLoFQ",
+        });
 
+        if (!currentToken) {
+          console.log("No registration token available");
+          return;
+        }
+
+        console.log("FCM Token:", currentToken);
+        localStorage.setItem("fcmToken", currentToken);
+
+        // Send token to backend
+        await axiosInstance.post(
+          "/api/notification/save-fcm-token",
+          {
+            token: currentToken,
+            platform: "web",
           }
-        }).catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-        })
-      } else {
-        // you dined for the notification
-        alert("you deined for notification")
+        );
+
+        console.log("FCM token sent to backend");
+      } catch (error) {
+        console.error("FCM error:", error);
       }
-    }
+    };
 
     requestPermission();
-  }, [])
+  }, []);
+
 
   return (
     <Router>
@@ -156,7 +163,7 @@ const App = () => {
             <Route path="winning-prediction" element={<WinningPrediction />} />
             <Route path="auto-deposit-history" element={<AutoDepositHistory />} />
             <Route path="notice-management" element={<NoticeManagement />} />
- <Route path="notes" element={<Note />} />
+            <Route path="notes" element={<Note />} />
             {/* Settings Section */}
             <Route path="settings">
               <Route path="main" element={<MainSetting />} />
