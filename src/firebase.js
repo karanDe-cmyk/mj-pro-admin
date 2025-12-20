@@ -2,14 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getMessaging } from "firebase/messaging"
 // const firebaseConfig = window.ENV?.FIREBASE_CONFIG;
 const firebaseConfig = {
-    apiKey: "AIzaSyASoDqBa9eDz3BuwGAtjeVrN98YL9DvtlI",
-    authDomain: "madhur567-1126f.firebaseapp.com",
-    projectId: "madhur567-1126f",
-    storageBucket: "madhur567-1126f.firebasestorage.app",
-    messagingSenderId: "820066901961",
-    appId: "1:820066901961:web:0690642173a84c4ddc1218",
-    measurementId: "G-PDHG6NC7GR",
-    databaseURL: "https://madhur567-1126f-default-rtdb.firebaseio.com"
+    apiKey: "AIzaSyBPyeOhmFRnpi8C6WdmC1KPNm6GAIpUiLw",
+    authDomain: "matkabar-1ec29.firebaseapp.com",
+    projectId: "matkabar-1ec29",
+    storageBucket: "matkabar-1ec29.firebasestorage.app",
+    messagingSenderId: "1076308028320",
+    appId: "1:1076308028320:web:4bef2981b6381ddbf452c5"
 };
 
 export const app = initializeApp(firebaseConfig);
