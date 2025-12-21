@@ -1,150 +1,152 @@
 import React, { useEffect, useState } from "react";
 import "../styles/styles.css";
-import {
-  Card,
-  Typography,
-  Avatar,
-  Select,
-  Button,
-  DatePicker,
-  Row,
-  Col,
-  Table,
-  Spin,
-  message,
-  TimePicker,
-} from "antd";
-import {
-  UserOutlined,
-  AppstoreOutlined,
-  DollarOutlined,
-  FundOutlined,
-  WalletOutlined,
-  DollarCircleOutlined,
-  TrophyOutlined,
-  LineChartOutlined,
-  RiseOutlined,
-} from "@ant-design/icons";
 import instance from "../utils/axiosInstance";
 import dayjs from "dayjs";
+import moment from "moment";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
-const { Title, Text } = Typography;
-const { Option } = Select;
 
 const Dashboard = () => {
-  const [selectedFilterDate, setSelectedFilterDate] = useState(
-    dayjs().format("DD-MM-YYYY")
-  );
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [fundRequests, setFundRequests] = useState([]);
+  const [autoDepositHistory, setAutoDepositHistory] = useState([]);
   const [totalUsers, setTotalUsers] = useState({ totalUsers: 0 });
   const [approvedUsers, setApprovedUsers] = useState({ approvedUsers: 0 });
-  const [unapprovedUsers, setUnApprovedUsers] = useState({ unapprovedUsers: 0 });
+  const [unapprovedUsers, setUnApprovedUsers] = useState({
+    unapprovedUsers: 0,
+  });
   const [totalGames, setTotalGames] = useState({ totalGameCount: 0 });
   const [mainMarketGamesList, setMainMarketGamesList] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(dayjs().format("DD-MM-YYYY"));
-  const [loadingButton, setLoadingButton] = useState(false);
-  const [loadingButton2, setLoadingButton2] = useState(false);
-  const [loadingButton3, setLoadingButton3] = useState(false);
-  const [betRates, setBetRates] = useState([]);
+  const [mainMarketGamesListLeft, setMainMarketGamesListLeft] = useState([]);
   const [selectedGame, setSelectedGame] = useState("");
   const [selectedSession, setSelectedSession] = useState("");
   const [error, setError] = useState(null);
-  const [profitLossData, setProfitLossData] = useState([]);
   const [dashboardData2, setDashboardData2] = useState({
     totalBidAmount: 0,
     totalWinAmount: 0,
     totalProfitAmount: 0,
   });
-  const [loginStats, setLoginStats] = useState({
-    todayLoginCount: 0,
-  });
-  const [registrationStats, setRegistrationStats] = useState({
-    todayRegistrations: 0,
-  });
-  const [marketRefreshTime, setMarketRefreshTime] = useState(null);
-  const [updatingRefreshTime, setUpdatingRefreshTime] = useState(false);
-  const [totalAutoDeposit, setTotalAutoDeposit] = useState(0);
-  const [totalManualDeposit, setTotalManualDeposit] = useState(0);
-  const [totalWithdrawals, setTotalWithdrawals] = useState(0);
-  const [totalFundRequests, setTotalFundRequests] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("DD-MM-YYYY")
+  );
+  const [selectedGame2, setSelectedGame2] = useState("");
+  const [loadingButton, setLoadingButton] = useState(false);
+  const [loadingButton2, setLoadingButton2] = useState(false);
+  const [loadingButton3, setLoadingButton3] = useState(false);
+  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [betRates, setBetRates] = useState([]);
   const [selectedGameType, setSelectedGameType] = useState("");
-  const [loadingButton4, setLoadingButton4] = useState(false);
-  const [totalWalletBalance, setTotalWalletBalance] = useState(0);
-  const [totalAdminDeposits, setTotalAdminDeposits] = useState(0); // New state for admin deposits
-  const [totalXtreemGateway, setTotalXtreemGateway] = useState(0);
 
+  const [userStats, setUserStats] = useState({
+    todayRegistrations: 0,
+    todayRegisteredUsersWhoPlayedBid: 0,
+    todayUsersWhoPlayedBid: 0,
+    totalUsersWhoPlayedBid: 0
+  });
+
+  const [amountStats, setAmountStats] = useState({
+    totalWalletBalance: 0,
+    WithdrawalRequests: 0,
+    approvedWithdrawalAmount: 0,
+    manualWithdrawalAmount: 0,
+    autoPaymentAmount: 0,
+    manualdepositAmount: 0
+  });
+
+  const today = dayjs().format("YYYY-MM-DD");
+  const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
 
-  const handleViewBids = () => {
-    navigate(`/admin/bids-list?date=${selectedDate}`);
-  };
-
-  // New function to handle navigation for wins
-  const handleViewWins = () => {
-    navigate(`/admin/wins-list?date=${selectedDate}`);
-  };
-
-  const fetchLoginStats = async () => {
+  const fetchFinancerStats = async () => {
     try {
-      const response = await instance.get("/api/session/admin/login-stats");
-      if (response.data.success) {
-        setLoginStats({ todayLoginCount: response.data.todayLoginCount });
-      }
-    } catch (error) {
-      console.error("Error fetching login stats:", error);
-    }
-  };
-
-  const fetchRegistrationStats = async () => {
-    try {
-      const response = await instance.get(
-        "/api/session/admin/registration-stats"
-      );
-      if (response.data.success) {
-        setRegistrationStats({
-          todayRegistrations: response.data.todayRegistrations,
+      const response = await instance.get(`/api/auth/dashboardStats`);
+      const data = response.data?.data;
+      if (data) {
+        setAmountStats({
+          totalWalletBalance: data.totalWalletBalance || 0,
+          withdrawalRequests: data.WithdrawalRequest || 0,
+          approvedWithdrawalAmount: data.approvedWithdrawalAmount || 0,
+          manualWithdrawalAmount: data.manualWithdrawalAmount || 0,
+          autoPaymentAmount: data.autoPaymentAmount || 0,
+          manualdepositAmount: data.manualdepositAmount || 0
         });
+      } else {
+        console.error("Error fetching financer stats:", data);
       }
     } catch (error) {
-      console.error("Error fetching registration stats:", error);
+      console.error("Error fetching financer stats:", error);
     }
   };
 
-  const handleFilterDateChange = (date) => {
-    const formattedDate = date ? dayjs(date).format("DD-MM-YYYY") : null;
-    setSelectedFilterDate(formattedDate);
+  const fetchUserStats = async () => {
+    try {
+      const response = await instance.get(`/api/auth/getUserStats`);
+      const data = response.data;
+      if (data.success) {
+        setUserStats({
+          todayRegistrations: data.todayRegistrations || 0,
+          todayRegisteredUsersWhoPlayedBid: data.todayRegisteredUsersWhoPlayedBid || 0,
+          todayUsersWhoPlayedBid: data.todayUsersWhoPlayedBid || 0,
+          totalUsersWhoPlayedBid: data.totalUsersWhoPlayedBid || 0
+        });
+      } else {
+        console.error("Error fetching user stats:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+    }
   };
 
-  const handleDateChange2 = (date) => {
-    const formattedDate = date ? dayjs(date).format("DD-MM-YYYY") : null;
-    setSelectedDate(formattedDate);
+  useEffect(() => {
+    fetchUserStats();
+    fetchFinancerStats();
+  }, []);
+
+  // Handler for DatePicker changes.
+  const handleDateChange2 = (e) => {
+    const dateValue = e.target.value;
+    if (dateValue) {
+      const formattedDate = dayjs(dateValue).format("DD-MM-YYYY");
+      setSelectedDate(formattedDate);
+    } else {
+      setSelectedDate("");
+    }
   };
 
+  // Handler for game selection.
+  const handleGameChange2 = (e) => {
+    setSelectedGame2(e.target.value);
+  };
+
+  // Submit handler that calls the API directly.
   const handleSubmit = async () => {
-    if (!selectedDate) {
-      message.error("Please select a date.");
+    if (!selectedDate || !selectedGame2) {
+      alert("Please select both a date and a game name.");
       return;
     }
     try {
       setLoadingButton(true);
-      const requestBody = { date: selectedDate };
+      const requestBody = {
+        gameName: selectedGame2,
+        date: selectedDate,
+      };
+
       const response = await instance.post(
         `/api/mainmarketdeclareResult/get-total-winnings`,
         requestBody
       );
-      console.log("Total Winnings Response:", response.data);
+
       const { totalPoints, totalWinningPoints } = response.data;
+      const totalProfitAmount = totalPoints - totalWinningPoints;
+
       setDashboardData2({
         totalBidAmount: totalPoints,
         totalWinAmount: totalWinningPoints,
-        totalProfitAmount: totalPoints - totalWinningPoints,
+        totalProfitAmount,
       });
     } catch (error) {
       console.error("Error fetching total winnings:", error);
-      message.error("Error fetching total winnings");
+      alert("Error fetching total winnings");
     } finally {
       setLoadingButton(false);
     }
@@ -152,321 +154,406 @@ const Dashboard = () => {
 
   const fetchTotalUsers = async () => {
     try {
-      const [approvedResponse, unapprovedResponse] = await Promise.all([
-        instance.get(`/api/auth/userStatus?status=true`),
-        instance.get(`/api/auth/userStatus?status=false`),
-      ]);
-
-      const approvedUsersList = approvedResponse.data || [];
-      const unapprovedUsersList = unapprovedResponse.data || [];
-
-      const allUsers = [...approvedUsersList, ...unapprovedUsersList];
-
-      const totalBalance = allUsers.reduce(
-        (sum, user) => sum + (user.walletBalance || 0),
-        0
-      );
-      setTotalWalletBalance(totalBalance);
-
-      setTotalUsers({ totalUsers: allUsers.length });
-      setApprovedUsers({ approvedUsers: approvedUsersList.length });
-      setUnApprovedUsers({ unapprovedUsers: unapprovedUsersList.length });
+      const response = await instance.get(`/api/app/users`);
+      const data = response.data;
+      if (data.totalUsers !== undefined) {
+        setTotalUsers({ totalUsers: data.totalUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
     } catch (error) {
-      console.error("Error fetching user stats:", error);
-      setTotalUsers({ totalUsers: 0 });
-      setApprovedUsers({ approvedUsers: 0 });
-      setUnApprovedUsers({ unapprovedUsers: 0 });
-      setTotalWalletBalance(0);
+      console.error("Error fetching Starline Bid Amount:", error);
     }
   };
+
+  const fetchApprovedUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users`);
+      const data = response.data;
+      if (data.approvedUsers !== undefined) {
+        setApprovedUsers({ approvedUsers: data.approvedUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
+    }
+  };
+
+  const fetchUnApprovedUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users`);
+      const data = response.data;
+      if (data.unapprovedUsers !== undefined) {
+        setUnApprovedUsers({ unapprovedUsers: data.unapprovedUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalUsers();
+    fetchApprovedUsers();
+    fetchUnApprovedUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchDepositHistory = async () => {
+      try {
+        setLoading(true);
+        const response = await instance.get(
+          `/api/userPayment/getpaymentResponse`
+        );
+        setAutoDepositHistory(response.data.data || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching deposit history:", err);
+        setError("Failed to fetch deposit history. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    fetchDepositHistory();
+  }, []);
+
+  const handleGameChange = (e) => {
+    setSelectedGame(e.target.value);
+  };
+
+  const handleSessionChange = (e) => {
+    setSelectedSession(e.target.value);
+  };
+
+  const handleGameTypeChange = (e) => {
+    setSelectedGameType(e.target.value);
+  };
+
+  const handleGetClick = async () => {
+    if (!selectedGame || !selectedSession || !selectedGameType) {
+      alert("Please select a game name, session, and game type");
+      return;
+    }
+
+    let openFlag = false;
+    let closeFlag = false;
+    if (selectedSession === "open") {
+      openFlag = true;
+      closeFlag = false;
+    } else if (selectedSession === "close") {
+      openFlag = false;
+      closeFlag = true;
+    }
+
+    const body = {
+      gameName: selectedGame,
+      open: openFlag,
+      close: closeFlag,
+      gameType: selectedGameType,
+    };
+
+    try {
+      setLoadingButton2(true);
+      const response = await instance.post(`/api/bid/todayDigitSummary`, body);
+
+      if (response.data && response.data.data) {
+        setDashboardData(response.data.data);
+      } else {
+        alert("Invalid response from server");
+      }
+    } catch (error) {
+      console.error("Error fetching bid summary:", error);
+      alert("Error fetching bid summary");
+    } finally {
+      setLoadingButton2(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        setLoadingButton2(true);
+
+        const response = await instance.get(
+          `/api/marketManagement/getMarketGames`
+        );
+        if (Array.isArray(response.data)) {
+          const filteredGames = response.data.filter(
+            (game) => game.marketName === "Main Market"
+          );
+          setMainMarketGamesList(filteredGames);
+          setMainMarketGamesListLeft(filteredGames);
+        } else {
+          console.error("Response data is not an array:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching market games:", error);
+      } finally {
+        setLoadingButton2(false);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  useEffect(() => {
+    const fetchBetRates = async () => {
+      try {
+        setLoading(true);
+        const response = await instance.get("api/rates/getBetRates");
+
+        if (response.data && typeof response.data === "object") {
+          const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
+
+          const cleanedData = Object.keys(filteredData)
+            .filter(key => !key.includes('Value'))
+            .reduce((acc, key) => {
+              acc[key] = filteredData[key];
+              return acc;
+            }, {});
+
+          setBetRates(Object.keys(cleanedData));
+        } else {
+          console.error("Invalid response format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching bet rates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBetRates();
+  }, []);
+
+
+  const mainMarketGames = mainMarketGamesList.filter(
+    (game) => game.marketName === "Main Market"
+  );
+
+  const mainMarketGamesLeft = mainMarketGamesListLeft.filter(
+    (game) => game.marketName === "Main Market"
+  );
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await instance.get(`/api/admin/dashboard`);
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+      setLoading(false);
+    };
+
+    const fetchFundRequests = async () => {
+      try {
+        const response = await instance.get(`/api/admin/fundRequests`);
+        setFundRequests(response.data || []);
+      } catch (error) {
+        console.error("Error fetching fund requests:", error);
+      }
+    };
+
+    fetchDashboardData();
+    fetchFundRequests();
+  }, []);
 
   const fetchTotalGames = async () => {
     try {
       const response = await instance.get(
         `/api/marketManagement/games/totalCount`
       );
-      setTotalGames({ totalGameCount: response.data.totalGameCount || 0 });
-    } catch (error) {
-      console.error("Error fetching total games:", error);
-    }
-  };
-
-  const handleGameChange = (value) => setSelectedGame(value);
-  const handleSessionChange = (value) => setSelectedSession(value);
-
-  const handleGetClick = async () => {
-    if (!selectedGame || !selectedSession || !selectedGameType) {
-      message.error("Please select a game name, session, and game type");
-      return;
-    }
-    const body = {
-      gameName: selectedGame,
-      open: selectedSession === "open",
-      close: selectedSession === "close",
-      gameType: selectedGameType,
-      date: selectedFilterDate || dayjs().format("DD-MM-YYYY"),
-    };
-    try {
-      setLoadingButton2(true);
-      const response = await instance.post(`/api/bid/todayDigitSummary`, body);
-      if (response.data?.data) {
-        setDashboardData(response.data.data);
+      const data = response.data;
+      if (data.totalGameCount !== undefined) {
+        setTotalGames({ totalGameCount: data.totalGameCount });
       } else {
-        message.error("Invalid response from server");
+        console.error("Error in API response:", data.message);
       }
     } catch (error) {
-      console.error("Error fetching bid summary:", error);
-      message.error("Error fetching bid summary");
-    } finally {
-      setLoadingButton2(false);
-    }
-  };
-
-  const fetchMainMarketGames = async () => {
-    try {
-      const response = await instance.get(
-        `/api/marketManagement/getMarketGames`
-      );
-      if (Array.isArray(response.data)) {
-        setMainMarketGamesList(
-          response.data.filter((game) => game.marketName === "Main Market")
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching market games:", error);
-    }
-  };
-
-  const fetchBetRates = async () => {
-    try {
-      const response = await instance.get("api/rates/getBetRates");
-      if (response.data && typeof response.data === "object") {
-        const { _id, createdAt, updatedAt, __v, ...filteredData } =
-          response.data;
-        const cleanedData = Object.keys(filteredData)
-          .filter((key) => !key.includes("Value"))
-          .reduce((acc, key) => ({ ...acc, [key]: filteredData[key] }), {});
-        setBetRates(Object.keys(cleanedData));
-      }
-    } catch (error) {
-      console.error("Error fetching bet rates:", error);
-    }
-  };
-
-  const fetchCounts = async (date) => {
-    setLoading(true);
-
-    try {
-      // Convert date from DD-MM-YYYY to YYYY-MM-DD format for API
-      const apiDate = date ? dayjs(date, "DD-MM-YYYY").format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD");
-
-      const [
-        autoDepositRes,
-        manualDepositRes,
-        withdrawalRes,
-        adminDepositsRes,
-        fundRequestsRes,
-      ] = await Promise.allSettled([
-        instance.get(`/api/userPayment/transactions?date=${date}`),
-        instance.get(`/api/manualDeposit/bydate?date=${date}`),
-        instance.get(`/api/users/todaywithdrawals?date=${date}`),
-        instance.get(`/api/deposit/all-deposite/bydate?date=${date}`),
-        instance.get(`/api/admin/fundRequests?date=${date}`),
-      ]);
-
-      // Handle auto deposits response
-      if (autoDepositRes.status === "fulfilled") {
-        // Check the actual structure of the response
-        console.log("Auto deposit response:", autoDepositRes.value.data);
-
-        // Handle different possible response structures
-        let autoDepositData = [];
-        if (autoDepositRes.value.data && Array.isArray(autoDepositRes.value.data)) {
-          autoDepositData = autoDepositRes.value.data;
-        } else if (autoDepositRes.value.data && autoDepositRes.value.data.data) {
-          autoDepositData = autoDepositRes.value.data.data;
-        }
-
-        const xtreemGatewayTotal = autoDepositData
-          .filter(item =>
-            item.status === "Success" &&
-            item.comments &&
-            item.comments.includes("Xtreem Gateway")
-          )
-          .reduce(
-            (sum, item) => sum + (item.amount || 0),
-            0
-          );
-
-        setTotalXtreemGateway(xtreemGatewayTotal);
-
-        const autoDepositTotalAmount = autoDepositData
-          .filter(item => item.status === "Success")
-          .reduce(
-            (sum, item) => sum + (item.amount || 0),
-            0
-          );
-        setTotalAutoDeposit(autoDepositTotalAmount);
-      } else {
-        console.error("Failed to fetch auto deposits:", autoDepositRes.reason);
-        setTotalAutoDeposit(0);
-      }
-
-      // Handle other responses...
-      if (manualDepositRes.status === "fulfilled") {
-        const manualDepositData = manualDepositRes.value.data.data || [];
-        const manualDepositTotalAmount = manualDepositData.reduce(
-          (sum, item) => sum + (item.amount || 0),
-          0
-        );
-        setTotalManualDeposit(manualDepositTotalAmount);
-      } else {
-        console.error("Failed to fetch manual deposits:", manualDepositRes.reason);
-        setTotalManualDeposit(0);
-      }
-
-      if (withdrawalRes.status === "fulfilled") {
-        const withdrawalData = withdrawalRes.value.data || [];
-        const withdrawalTotalAmount = withdrawalData.reduce(
-          (sum, item) => sum + (item.amount || 0),
-          0
-        );
-        setTotalWithdrawals(withdrawalTotalAmount);
-      } else {
-        console.error("Failed to fetch withdrawals:", withdrawalRes.reason);
-        setTotalWithdrawals(0);
-      }
-
-      if (adminDepositsRes.status === "fulfilled") {
-        const adminDepositsData = adminDepositsRes.value.data.data || [];
-        const adminDepositsTotalAmount = adminDepositsData.reduce(
-          (sum, item) => sum + (item.amount || 0),
-          0
-        );
-        setTotalAdminDeposits(adminDepositsTotalAmount);
-      } else {
-        console.error("Failed to fetch admin deposits:", adminDepositsRes.reason);
-        setTotalAdminDeposits(0);
-      }
-
-      if (fundRequestsRes.status === "fulfilled") {
-        setTotalFundRequests(fundRequestsRes.value.data.length || 0);
-      } else {
-        console.error("Failed to fetch fund requests:", fundRequestsRes.reason);
-        setTotalFundRequests(0);
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.error("An unexpected error occurred during API calls:", err);
-      setLoading(false);
-    }
-  };
-
-  const fetchProfitLossData = async () => {
-    try {
-      setLoadingButton3(true);
-      setError(null);
-      const url = selectedFilterDate
-        ? `/api/users/total-profit-loss?date=${selectedFilterDate}`
-        : `/api/users/total-profit-loss`;
-      const response = await instance.get(url);
-      if (response.data?.success) {
-        const { totalDeposit = 0, totalWithdraw = 0 } = response.data;
-        const total = totalDeposit - totalWithdraw;
-        setProfitLossData([
-          {
-            key: 1,
-            deposit: totalDeposit,
-            withdraw: totalWithdraw,
-            total: total,
-            result: total,
-          },
-        ]);
-      } else {
-        setError("Error: Could not fetch profit/loss data.");
-      }
-    } catch (err) {
-      console.error("Error fetching profit/loss data:", err);
-      setError("Error fetching profit/loss data");
-    } finally {
-      setLoadingButton3(false);
+      console.error("Error fetching MainMarketData Bid Amount:", error);
     }
   };
 
   useEffect(() => {
-    fetchTotalUsers();
     fetchTotalGames();
-    fetchMainMarketGames();
-    fetchBetRates();
-    fetchLoginStats();
-    fetchRegistrationStats();
   }, []);
 
   useEffect(() => {
-    const today = dayjs().format("DD-MM-YYYY");
-    setSelectedDate(today);
-    fetchCounts(today);
-  }, []);
+    const fetchProfitLossData = async () => {
+      try {
+        setLoadingButton3(true);
+        setError(null);
+        const response = await instance.get(`/api/users/total-profit-loss`);
 
-  // Use a separate useEffect to handle date-specific data fetching
-  useEffect(() => {
-    if (selectedDate) {
-      fetchCounts(selectedDate);
-      handleSubmit(); // Call the function to update bid/win/profit amounts as well
-    }
-  }, [selectedDate]);
-
-  const handleUpdateMarketRefreshTime = async () => {
-    if (!marketRefreshTime) {
-      message.error("Please select a time first.");
-      return;
-    }
-    setUpdatingRefreshTime(true);
-    try {
-      const timeString = dayjs(marketRefreshTime).format("HH:mm");
-      const response = await instance.post(
-        "/api/admin/settings/updateMarketRefreshTime",
-        {
-          refreshTime: timeString,
+        if (response.data && response.data.success) {
+          const totalDeposit = response.data.totalDeposit || 0;
+          const totalWithdraw = response.data.totalWithdraw || 0;
+          const total = totalDeposit - totalWithdraw;
+        } else {
+          setError("Error: Could not fetch profit/loss data.");
         }
-      );
-      if (response.data.success) {
-        message.success(
-          `Market refresh time updated to ${timeString} successfully!`
-        );
-      } else {
-        message.error(response.data.message || "Failed to update refresh time.");
+      } catch (err) {
+        console.error("Error fetching profit/loss data:", err);
+        setError("Error fetching profit/loss data");
+      } finally {
+        setLoadingButton3(false);
       }
+    };
+
+    fetchProfitLossData();
+  }, []);
+
+  useEffect(() => {
+    const fetchWithdrawals = async () => {
+      setLoading(true);
+      try {
+        const response = await instance.get("/api/users/todaywithdrawals");
+        const pendingWithdrawals = response.data.filter(
+          (withdrawal) => withdrawal.status === "pending"
+        );
+        setWithdrawalHistory(pendingWithdrawals);
+      } catch (err) {
+        console.error("Error fetching withdrawal requests:", err);
+        setError("Failed to fetch withdrawal requests.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWithdrawals();
+  }, []);
+
+  const handleStatusChange = async (id, status) => {
+    try {
+      await instance.patch(`api/users/withdrawals/status/${id}`, { status });
+      setWithdrawalHistory(withdrawalHistory.filter((item) => item._id !== id));
+      alert(`Withdrawal ${status} successfully!`);
     } catch (error) {
-      console.error("Error updating refresh time:", error);
-      message.error("An error occurred while updating the refresh time.");
-    } finally {
-      setUpdatingRefreshTime(false);
+      console.error(`Error updating withdrawal status to ${status}:`, error);
+      alert(`Failed to ${status} withdrawal.`);
     }
   };
+
+  const withdrawalColumns = [
+    {
+      header: "#",
+      key: "index",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      header: "Username",
+      key: "username",
+    },
+    {
+      header: "Amount",
+      key: "amount",
+    },
+    {
+      header: "Payment Method",
+      key: "payment_method",
+    },
+    {
+      header: "Status",
+      key: "status",
+      render: (status) =>
+        status.charAt(0).toUpperCase() + status.slice(1),
+    },
+    {
+      header: "Time",
+      key: "time",
+    },
+    {
+      header: "Action",
+      key: "action",
+      render: (text, record) => {
+        if (record.status === "approved" || record.status === "rejected") {
+          return <span className="font-bold">Action Taken</span>;
+        }
+        return (
+          <>
+            <button
+              onClick={() => handleStatusChange(record._id, "approved")}
+              className="mr-2 bg-blue-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-blue-700"
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => handleStatusChange(record._id, "rejected")}
+              className="bg-red-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-red-700"
+            >
+              Reject
+            </button>
+          </>
+        );
+      },
+    },
+  ];
+
+  const fundRequestColumns = [
+    {
+      header: "#",
+      key: "serial",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      header: "User Name",
+      key: "username",
+    },
+    {
+      header: "Amount",
+      key: "amount",
+    },
+    {
+      header: "Txn ID",
+      key: "txnId",
+    },
+    {
+      header: "Date",
+      key: "date",
+      render: (createdAt) => moment(createdAt).format("DD-MM-YYYY HH:mm:ss"),
+    },
+    {
+      header: "Type",
+      key: "type",
+      render: (_, record) => (
+        <button className="bg-blue-600 text-white px-3 py-1 rounded">
+          {record.status}
+        </button>
+      ),
+    },
+  ];
 
   const profitLossColumns = [
-    { title: "Deposit", dataIndex: "deposit", key: "deposit" },
-    { title: "Withdraw", dataIndex: "withdraw", key: "withdraw" },
-    { title: "Total", dataIndex: "total", key: "total" },
     {
-      title: "Result",
-      dataIndex: "result",
+      header: "Deposit",
+      key: "deposit",
+    },
+    {
+      header: "Withdraw",
+      key: "withdraw",
+    },
+    {
+      header: "Total",
+      key: "total",
+    },
+    {
+      header: "Result",
       key: "result",
       render: (result) => {
         const isProfit = result > 0;
         const isLoss = result < 0;
-        const bgColor = isProfit ? "#7f56c7" : isLoss ? "#ed583e" : "inherit";
+        const bgColor = isProfit ? "#7f56c7" : isLoss ? "#ed583e" : "#f3f4f6";
         const textColor = isLoss ? "white" : "black";
+
         return (
           <div
+            className="p-2 rounded text-center"
             style={{
               backgroundColor: bgColor,
               color: textColor,
-              padding: "5px",
-              borderRadius: "4px",
-              textAlign: "center",
             }}
           >
             {isProfit
@@ -480,625 +567,496 @@ const Dashboard = () => {
     },
   ];
 
-  return (
-    <div style={{ padding: 5 }}>
-      <Card style={{ marginBottom: 20 }}>
-        <Row gutter={16} align="middle">
-          <Col>
-            <Title level={5}>Filter Data by Date</Title>
-          </Col>
-          <Col>
-            <DatePicker
-              style={{ width: 200 }}
-              placeholder="Select Date"
-              value={
-                selectedFilterDate
-                  ? dayjs(selectedFilterDate, "DD-MM-YYYY")
-                  : null
-              }
-              onChange={handleFilterDateChange}
-              format="DD-MM-YYYY"
-              allowClear
-            />
-          </Col>
-        </Row>
-      </Card>
-      {loading ? (
-        <div style={{ textAlign: "center", marginTop: 50 }}>
-          <Spin size="small" />
-        </div>
-      ) : (
-        <Row gutter={[16, 16]}>
-          {/* Left Side */}
-          <Col xs={24} md={8}>
-            <div className="admin-dashboard-card">
-              <div className="welcome-card">
-                <Title level={3} className="admin-dashboard-title">
-                  Welcome Back!
-                </Title>
-                <p className="admin-dashboard-subtitle">Admin Dashboard</p>
-              </div>
-              <div className="admin-dashboard-avatar-section">
-                <div className="avtr-admin">
-                  <Avatar
-                    className="admin-dashboard-avatar"
-                    src="https://img.icons8.com/?size=256w&id=110479&format=png"
-                  />
-                  <Title level={3} className="admin-dashboard-name">
-                    Admin
-                  </Title>
-                </div>
-                <div className="admin-dashboard-stats">
-                  <Text
-                    className="admin-dashboard-stats-text"
-                    onClick={() => navigate("/admin/user-management/unapproved")}
-                  >
-                    Unapproved Users:{" "}
-                    {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
-                  </Text>
-                </div>
-                <div className="admin-dashboard-stats">
-                  <Text
-                    className="admin-dashboard-stats-text"
-                    onClick={() => navigate("/admin/user-management/approved")}
-                  >
-                    Approved Users:{" "}
-                    {approvedUsers.approvedUsers ?? "Failed to fetch"}
-                  </Text>
-                </div>
-              </div>
-            </div>
-            <Card style={{ marginTop: 20 }}>
-              <Title level={5}>Market Bid Details for {selectedDate}</Title>
-              <Row gutter={16}>
-                <Col span={24}>
-                  <DatePicker
-                    style={{ width: "100%" }}
-                    placeholder="Select Date"
-                    value={selectedDate ? dayjs(selectedDate, "DD-MM-YYYY") : null}
-                    onChange={(date) => {
-                      const formattedDate = date ? dayjs(date).format("DD-MM-YYYY") : null;
-                      setSelectedDate(formattedDate);
-                      if (formattedDate) {
-                        fetchCounts(formattedDate);
-                      }
-                    }}
-                    format="DD-MM-YYYY"
-                    allowClear
-                  />
-                </Col>
-                <Col
-                  span={24}
-                  style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}
+  const renderTable = (columns, data) => {
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((column, index) => (
+                <th
+                  key={index}
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"
                 >
-                  <Button
-                    type="primary"
-                    onClick={handleSubmit}
-                    loading={loadingButton}
-                    style={{
-                      backgroundColor: "#349163",
-                      color: "white",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Submit
-                  </Button>
-                </Col>
-              </Row>
-            </Card>
-            <Card style={{ marginTop: 20 }}>
-              <Title level={5}>Update Market Refresh Time</Title>
-              <Row gutter={16} align="middle">
-                <Col span={12}>
-                  <TimePicker
-                    style={{ width: "100%" }}
-                    value={marketRefreshTime}
-                    onChange={setMarketRefreshTime}
-                    format="HH:mm"
-                    placeholder="Select Time"
-                  />
-                </Col>
-                <Col span={12}>
-                  <Button
-                    type="primary"
-                    onClick={handleUpdateMarketRefreshTime}
-                    loading={updatingRefreshTime}
-                    style={{
-                      width: "100%",
-                      backgroundColor: "#349163",
-                      color: "white",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Update
-                  </Button>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
-          {/* Right Side */}
-          <Col xs={24} md={16}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/user-management/approved")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Users</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {totalUsers.totalUsers ?? "Failed to fetch"}
-                      </div>
-                    </div>
-                    <div>
-                      <UserOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#1890ff",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/game-management/game-name")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Games (Today)</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {totalGames.totalGameCount ?? "Failed to fetch"}
-                      </div>
-                    </div>
-                    <div>
-                      <AppstoreOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#1890ff",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              {/* New Card for Total Wallet Balance */}
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>
-                        Total Wallet Balance
-                      </span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {totalWalletBalance.toFixed(2)}
-                      </div>
-                    </div>
-                    <div>
-                      <WalletOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#722ed1",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              {/* Other Cards for counts with navigation */}
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/auto-deposit-history")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>All Deposit (Success)</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {totalAutoDeposit}
-                      </div>
-                    </div>
-                    <div>
-                      <DollarOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#52c41a",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/gateway-payment")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Auto Deposit</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {totalXtreemGateway}
-                      </div>
-                    </div>
-                    <div>
-                      <DollarOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#13c2c2", // आप अपनी पसंद का कोई भी रंग चुन सकते हैं
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/manual-deposits-history")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>
-                        Manual Deposits
-                      </span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {totalManualDeposit}
-                      </div>
-                    </div>
-                    <div>
-                      <DollarOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#f5a623",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/withdrawals-history")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Withdrawals</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {totalWithdrawals}
-                      </div>
-                    </div>
-                    <div>
-                      <FundOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#ff4d4f",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() =>
-                      navigate("/admin/wallet-management/all-deposit-by-admin")
-                    }
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>
-                        Deposite By Admin
-                      </span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {totalAdminDeposits}
-                      </div>
-                    </div>
-                    <div>
-                      <FundOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#ff4d4f",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              {/* <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={() => navigate("/admin/fund-requests-history")}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Fund Requests</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        {totalFundRequests}
-                      </div>
-                    </div>
-                    <div>
-                      <FundOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#722ed1",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col> */}
-              {/* Add the new cards for Bid, Win, and Profit amounts here */}
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={handleViewBids}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Total Bid Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {dashboardData2.totalBidAmount.toFixed(2) || 0}
-                      </div>
-                    </div>
-                    <div>
-                      <DollarCircleOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#df4d8f",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    onClick={handleViewWins}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>Total Win Amount</span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {dashboardData2.totalWinAmount.toFixed(2) || 0}
-                      </div>
-                    </div>
-                    <div>
-                      <TrophyOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#dd4d6d",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card style={{ borderRadius: "5px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: "bold" }}>
-                        Total Profit Amount
-                      </span>
-                      <div style={{ fontWeight: "bold", fontSize: "20px" }}>
-                        Rs {dashboardData2.totalProfitAmount.toFixed(2) || 0}
-                      </div>
-                    </div>
-                    <div>
-                      <RiseOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "24px",
-                          backgroundColor: "#ff4d4f",
-                          borderRadius: "50%",
-                          padding: "8px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            </Row>
-            <Card style={{ marginTop: 20 }}>
-              <Title level={5}>
-                Total Bids on Single Ank on {selectedFilterDate || "All Dates"}
-              </Title>
-              <Row gutter={16} align="middle">
-                <Col span={6}>
-                  <Select
-                    placeholder="Select Game Name"
-                    style={{ width: "100%" }}
-                    onChange={handleGameChange}
-                  >
-                    {mainMarketGamesList.map((game) => (
-                      <Option key={game._id} value={game.gameName}>
-                        {game.gameName}
-                      </Option>
-                    ))}
-                  </Select>
-                </Col>
-                <Col span={6}>
-                  <Select
-                    placeholder="Select Session"
-                    style={{ width: "100%" }}
-                    onChange={handleSessionChange}
-                  >
-                    <Option value="open">Open</Option>
-                    <Option value="close">Close</Option>
-                  </Select>
-                </Col>
-                <Col span={6}>
-                  <Select
-                    placeholder="Game Type"
-                    style={{ width: "100%" }}
-                    onChange={(value) => setSelectedGameType(value)}
-                  >
-                    {betRates.map((gameType, index) => (
-                      <Option key={index} value={gameType}>
-                        {gameType}
-                      </Option>
-                    ))}
-                  </Select>
-                </Col>
-                <Col span={4}>
-                  <Button
-                    className="min-w-full"
-                    type="primary"
-                    onClick={handleGetClick}
-                    loading={loadingButton2}
-                  >
-                    Get
-                  </Button>
-                </Col>
-              </Row>
-            </Card>
-            <div className="card-container">
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
-                const hue = 36 * ank;
-                const color = `hsl(${hue}, 60%, 50%)`;
-                const digitData = dashboardData[ank] || {
-                  totalUsers: 0,
-                  totalAmount: 0,
-                };
-                return (
-                  <div className="card" key={ank} style={{ borderColor: color }}>
-                    <p className="card-text mt-2">
-                      Today Bids: {digitData.totalUsers || 0}
-                    </p>
-                    <h4 className="card-title">₹{digitData.totalAmount || 0}</h4>
-                    <span className="font-bold">Total Bid Amount</span>
-                    <button className="card-btn" style={{ backgroundColor: color }}>
-                      Ank {ank}
-                    </button>
-                  </div>
-                );
-              })}
+                  {column.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex} className="hover:bg-gray-50">
+                {columns.map((column, colIndex) => (
+                  <td key={colIndex} className="px-4 py-3 whitespace-nowrap">
+                    {column.render
+                      ? column.render(row[column.key], row, rowIndex)
+                      : row[column.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
+      <div className="lg:col-span-1 space-y-6">
+        <div className="bg-white rounded-lg shadow-md">
+          <div className="flex justify-between bg-blue-300 py-3 px-3">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Welcome Back !
+              </h2>
+              <p className="text-gray-600">Admin Dashboard</p>
             </div>
-            <Card style={{ marginTop: 20, width: "100%" }}>
-              <Title level={5}>
-                Profit/Loss Report for {selectedFilterDate || "All Dates"}
-              </Title>
-              {loadingButton3 ? (
-                <Spin />
-              ) : error ? (
-                <p>{error}</p>
-              ) : (
-                <Table
-                  columns={profitLossColumns}
-                  dataSource={profitLossData}
-                  pagination={false}
-                  rowKey="key"
-                  scroll={{ x: 800 }}
-                />
-              )}
-            </Card>
-          </Col>
-        </Row>
-      )}
+            <div>
+              <img
+                src="https://img.freepik.com/premium-vector/person-working-office-girl-typing-laptop-employee-prepares-documents-freelancer-carries-out_1002658-4158.jpg?ga=GA1.1.373082081.1766324369&semt=ais_hybrid&w=740&q=80"
+                alt="Admin"
+                className="h-48 w-96 rounded-full mx-auto"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-row mb-6">
+            <div>
+              <img
+                src="https://img.icons8.com/?size=256w&id=110479&format=png"
+                alt="Admin"
+                className="w-24 h-24 rounded-full relative -top-12 left-6 border-4 border-white bg-white"
+              />
+              <h3 className="text-2xl ms-8 mt-0">Admin</h3>
+            </div>
+
+            <div className="flex flex-row mx-auto justify-around space-x-8 mt-4">
+              <div
+                className="cursor-pointer"
+                onClick={() => navigate("/admin/user-management/approved")}
+              >
+                <p className="text-gray-700 text-xl">
+                  Approved Users: {approvedUsers.approvedUsers ?? "Failed to fetch"}
+                </p>
+              </div>
+              <div
+                className="cursor-pointer"
+                onClick={() => navigate("/admin/user-management/unapproved")}
+              >
+                <p className="text-gray-700 text-xl">
+                  Unapproved Users: {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-4">
+        {/* Users Card */}
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate("/admin/user-management/approved")}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Users</p>
+              <p className="text-2xl font-bold mt-1">
+                {totalUsers.totalUsers ?? "Failed to fetch"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        {/* Main Market Bid Card */}
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate("/admin/all-bid-history")}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Today Registration</p>
+              <p className="text-2xl font-bold mt-1">
+                {userStats.todayRegistrations ?? "0"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 10a2 2 0 002-2v-4a2 2 0 00-2-2H4a2 2 0 00-2 2v4a2 2 0 002 2h12z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Games Card */}
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate("/admin/game-management/game-name")}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Games</p>
+              <p className="text-2xl font-bold mt-1">
+                {totalGames.totalGameCount ?? "Failed to fetch"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Starline Bid Card */}
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+        // onClick={() => navigate("/admin/all-bid-history")}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Players(Today)</p>
+              <p className="text-2xl font-bold mt-1">
+                {userStats.todayUsersWhoPlayedBid ?? "0"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M9.504 1.132a1 1 0 01.992 0l1.75 1a1 1 0 11-.992 1.736L10 3.152l-1.254.716a1 1 0 11-.992-1.736l1.75-1zM5.618 4.504a1 1 0 01-.372 1.364L5.016 6l.23.132a1 1 0 11-.992 1.736L4 7.723V8a1 1 0 01-2 0V6a.996.996 0 01.52-.878l1.734-.99a1 1 0 011.364.372zm8.764 0a1 1 0 011.364-.372l1.733.99A1.002 1.002 0 0118 6v2a1 1 0 11-2 0v-.277l-.254.145a1 1 0 11-.992-1.736l.23-.132-.23-.132a1 1 0 01-.372-1.364zm-7 4a1 1 0 011.364-.372L10 8.848l1.254-.716a1 1 0 11.992 1.736L11 10.58V12a1 1 0 11-2 0v-1.42l-1.246-.712a1 1 0 01-.372-1.364zM3 11a1 1 0 011 1v1.42l1.246.712a1 1 0 11-.992 1.736l-1.75-1A1 1 0 012 14v-2a1 1 0 011-1zm14 0a1 1 0 011 1v2a1 1 0 01-.504.868l-1.75 1a1 1 0 11-.992-1.736L16 13.42V12a1 1 0 011-1zm-9.618 5.504a1 1 0 011.364-.372l.254.145V16a1 1 0 112 0v.277l.254-.145a1 1 0 11.992 1.736l-1.735.99a.995.995 0 01-1.022 0l-1.735-.99a1 1 0 01-.372-1.364z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+        // onClick={() => navigate("/admin/game-management/game-name")}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Total Bet Players</p>
+              <p className="text-2xl font-bold mt-1">
+                {userStats.totalUsersWhoPlayedBid ?? "0"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+        // onClick={() => navigate("/admin/game-management/game-name")}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Today Registration Player</p>
+              <p className="text-2xl font-bold mt-1">
+                {userStats.todayRegisteredUsersWhoPlayedBid ?? "0"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="lg:col-span-2 space-y-6">
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-bold mb-4">
+            Total Bids on Single Ank of Date {new Date().toISOString().split("T")[0]}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div>
+              <select
+                className="w-full p-2 border border-gray-300 rounded"
+                onChange={handleGameChange}
+                value={selectedGame}
+              >
+                <option value="">Select Game Name</option>
+                {mainMarketGames.map((game) => (
+                  <option key={game._id} value={game.gameName}>
+                    {game.gameName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <select
+                className="w-full p-2 border border-gray-300 rounded"
+                onChange={handleSessionChange}
+                value={selectedSession}
+              >
+                <option value="">Select Session</option>
+                <option value="open">Open</option>
+                <option value="close">Close</option>
+              </select>
+            </div>
+            <div>
+              <select
+                className="w-full p-2 border border-gray-300 rounded"
+                onChange={handleGameTypeChange}
+                value={selectedGameType}
+              >
+                <option value="">Game Type</option>
+                {betRates.map((gameType, index) => (
+                  <option key={index} value={gameType}>
+                    {gameType}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <button
+                onClick={handleGetClick}
+                disabled={loadingButton2}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loadingButton2 ? "Loading..." : "Get"}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((ank) => {
+              const hue = 36 * ank;
+              const color = `hsl(${hue}, 60%, 50%)`;
+              const digitData = dashboardData[ank] || {
+                totalUsers: 0,
+                totalAmount: 0,
+              };
+
+              return (
+                <div
+                  key={ank}
+                  className="border rounded-lg p-4 text-center shadow-sm"
+                  style={{ borderColor: color }}
+                >
+                  <p className="text-sm text-gray-600">
+                    Total Bids {digitData.totalUsers}
+                  </p>
+                  <h4 className="text-xl font-bold my-2">
+                    {digitData.totalAmount}
+                  </h4>
+                  <p className="font-bold text-sm">Total Bid Amount</p>
+                  <button
+                    className="mt-3 text-white px-3 py-1 rounded text-sm w-full"
+                    style={{ backgroundColor: color }}
+                  >
+                    Ank {ank}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-bold mb-4">Market Bid Details</h3>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="date"
+                className="w-full p-2 border border-gray-300 rounded"
+                value={dayjs(selectedDate, "DD-MM-YYYY").format("YYYY-MM-DD")}
+                onChange={handleDateChange2}
+              />
+            </div>
+            <div>
+              <select
+                className="w-full p-2 border border-gray-300 rounded"
+                onChange={handleGameChange2}
+                value={selectedGame2}
+              >
+                <option value="">Select Game Name</option>
+                {mainMarketGamesLeft.map((game) => (
+                  <option key={game._id} value={game.gameName}>
+                    {game.gameName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={handleSubmit}
+                disabled={loadingButton}
+                className="bg-green-600 text-white font-bold px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 mb-3"
+              >
+                {loadingButton ? "Loading..." : "Submit"}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* LEFT COLUMN */}
+            <div className="space-y-4">
+
+              <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Bid Amount</span>
+                  <span className="font-bold ml-auto">Rs {dashboardData2.totalBidAmount || 0}</span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Winning Amount</span>
+                  <span className="font-bold ml-auto">Rs {dashboardData2.totalWinAmount || 0}</span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Profit Amount</span>
+                  <span className="font-bold ml-auto">
+                    Rs {dashboardData2.totalProfitAmount || 0}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Wallet Balance</span>
+                  <span className="font-bold ml-auto">
+                    Rs {amountStats.totalWalletBalance.toLocaleString('en-IN') || 0}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-4">
+
+              <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Withdraw Request</span>
+                  <span className="font-bold ml-auto">Rs {amountStats.withdrawalRequests.toLocaleString('en-IN') || 0}</span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Deposit (Approved)</span>
+                  <span className="font-bold ml-auto">Rs {(amountStats.autoPaymentAmount + amountStats.manualdepositAmount).toLocaleString('en-IN') || 0}</span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Add Fund (Manually)</span>
+                  <span className="font-bold ml-auto">
+                    Rs {amountStats.manualdepositAmount.toLocaleString('en-IN') || 0}
+                  </span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 h-[72px] flex items-center">
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Withdrawal</span>
+                  <span className="font-bold ml-auto">
+                     Rs {amountStats.approvedWithdrawalAmount.toLocaleString('en-IN') || 0}
+                  </span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                    View
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        {/* <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-bold mb-4">
+            Profit/Loss Report On Date {new Date().toISOString().split("T")[0]}
+          </h3>
+          {loadingButton3 ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : error ? (
+            <p className="text-red-600">{error}</p>
+          ) : (
+            renderTable(profitLossColumns, profitLossData)
+          )}
+        </div> */}
+      </div>
+
+      {/* Fund Request History */}
+      <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+        <h3 className="text-lg font-bold mb-4">
+          Fund Request Auto Deposit History {todayFormatted}
+        </h3>
+        {loading ? (
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : autoDepositHistory.filter((record) =>
+          moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+        ).length > 0 ? (
+          renderTable(
+            fundRequestColumns,
+            autoDepositHistory.filter((record) =>
+              moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
+            )
+          )
+        ) : (
+          <p className="text-gray-500 text-center py-4">No records found for today</p>
+        )}
+      </div>
+
+      {/* Withdrawal Request History */}
+      <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+        <h3 className="text-lg font-bold mb-4">
+          Withdraw Request History {today}
+        </h3>
+        {loading ? (
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : withdrawalHistory.length > 0 ? (
+          renderTable(withdrawalColumns, withdrawalHistory)
+        ) : (
+          <p className="text-gray-500 text-center py-4">No pending withdrawal requests</p>
+        )}
+      </div>
     </div>
   );
 };

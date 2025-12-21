@@ -1,119 +1,81 @@
 import React, { useState, useEffect } from "react";
-
-import {
-  Card,
-  Typography,
-  Row,
-  Col,
-  Button,
-  Badge,
-  Table,
-  Select,
-  Tabs,
-  Modal,
-  Form,
-  Input,
-  message,
-  Tag,
-} from "antd";
+import { useParams } from "react-router-dom";
 import {
   ArrowLeftOutlined,
   PhoneOutlined,
   WhatsAppOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
-import { useParams } from "react-router-dom";
 import instance from "../utils/axiosInstance";
 import moment from "moment";
-import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import BidHistory from "../components/BidHistory";
+import WinningHistory from "../components/WinningHistory";
 
-const { Search } = Input;
-
-const { Option } = Select;
-const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 const UserDetails = () => {
-  const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [withdrawData, setWithdrawData] = useState([]);
-  const [search, setSearch] = useState(""); // Search input
-  const [userPassword, setUserPassword] = useState(""); // New state for password
-
+  const [search, setSearch] = useState("");
+  const [userPassword, setUserPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  // State to track which action to perform ("add" or "withdraw")
   const [actionType, setActionType] = useState("");
-  // State to store the amount entered in the popup
   const [amount, setAmount] = useState("");
   const [depositTransactions, setDepositTransactions] = useState([]);
-  const [manualDepositTransactions, setManualDepositTransactions] = useState(
-    []
-  );
-
-  const [winningData, setWinningData] = useState([]);
+  const [manualDepositTransactions, setManualDepositTransactions] = useState([]);
   const [entries, setEntries] = useState(5);
   const { userId } = useParams();
-
-  // console.log("userId....", userId);
-
   const [userData, setUserData] = useState(null);
   const [status, setStatus] = useState(false);
-
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
-  const [transactionHistoryDataAll, setTransactionHistoryDataAll] = useState(
-    []
-  );
+  const [transactionHistoryDataAll, setTransactionHistoryDataAll] = useState([]);
+  const [financialSummary, setFinancialSummary] = useState({
+    totalBidPoints: 0,
+    manualDepositAmount: 0,
+    autoDepositAmount: 0,
+    manualWithdrawalAmount: 0,
+    autoWithdrawalAmount: 0,
+    totalWinningAmount: 0
+  });
 
 
-    // New function to fetch the user password.
-    const fetchUserPassword = async () => {
-      try {
-        const response = await instance.get(`/api/auth/getuserpassword/${userId}`);
-        if (
-          response.data &&
-          response.data.data &&
-          response.data.data.password
-        ) {
-          setUserPassword(response.data.data.password);
-        }
-      } catch (error) {
-        console.error("Error fetching user password:", error);
+  const fetchUserPassword = async () => {
+    try {
+      const response = await instance.get(`/api/auth/getuserpassword/${userId}`);
+      if (response.data?.data?.password) {
+        setUserPassword(response.data.data.password);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user password:", error);
+    }
+  };
 
-    useEffect(() => {
-        if (userId) {
-          fetchUserPassword();
-        }
-      }, [userId]);
+  useEffect(() => {
+    if (userId) {
+      fetchUserPassword();
+    }
+  }, [userId]);
 
-  // Fetch today's deposit transactions from the new API
   const fetchManualTransactionsAll = async () => {
     try {
       setLoading(true);
-      // Use the new API with userId from params
       const response = await instance.get(`/api/manualDeposit/user/${userId}`);
 
       let deposits = [];
       if (response.status === 200 && Array.isArray(response.data)) {
         deposits = response.data;
-      } else {
-        console.warn("No deposit transactions found or API failed.");
       }
 
-      // Filter to only include today's transactions.
       const today = moment().format("YYYY-MM-DD");
       deposits = deposits.filter((item) =>
         moment(item.date, "YYYY-MM-DD HH:mm").isSame(today, "day")
       );
 
-      // Further filter to only include transactions with "Pending" status.
       deposits = deposits.filter(
         (item) => item.status && item.status.toLowerCase() === "pending"
       );
 
-      // Sort the transactions in descending order (latest first)
       deposits.sort((a, b) => {
         return (
           moment(b.date, "YYYY-MM-DD HH:mm").valueOf() -
@@ -122,15 +84,8 @@ const UserDetails = () => {
       });
 
       setManualDepositTransactions(deposits);
-
-      if (deposits.length === 0) {
-        message.info("No pending transactions found for today.");
-      } else {
-        message.success("Transactions fetched successfully.");
-      }
     } catch (error) {
       console.error("Error fetching transactions:", error);
-      message.error("Error fetching wallet transaction history.");
     } finally {
       setLoading(false);
     }
@@ -140,7 +95,6 @@ const UserDetails = () => {
     fetchManualTransactionsAll();
   }, [userId]);
 
-  // Update the status using a separate state variable.
   const updateStatus = async (newStatus) => {
     try {
       const response = await instance.post(
@@ -150,10 +104,19 @@ const UserDetails = () => {
           value: newStatus,
         }
       );
-      if (response.data && response.data.user) {
-        // Update only the status state
+      if (response.data?.user) {
         setStatus(response.data.user.status);
       }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
+  const deleteAccount = async () => {
+    try {
+      const response = await instance.delete(
+        `/api/auth/deleteUser/${userId}`
+      );
+      alert(response.data.message);
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -171,36 +134,28 @@ const UserDetails = () => {
     }
   };
 
-  // Function to load transactions for the current user.
   const loadTransactions = async () => {
-    // If userData is not available, just return.
-    if (!userData || !userData.userId) return;
+    if (!userData?.userId) return;
 
     try {
       const data = await fetchTransactions(userData.userId);
       if (data.status) {
         setDepositTransactions(data.transactions);
-      } else {
-        message.error("Failed to fetch transactions");
       }
     } catch (error) {
-      message.error("Error fetching transactions");
+      console.error("Error fetching transactions:", error);
     }
   };
 
-  // Always call useEffect at the top level.
-  // Use an inner async function to handle async logic and include userData in dependencies.
   useEffect(() => {
     const fetchData = async () => {
       if (userData && userData.userId) {
         await loadTransactions();
       }
     };
-
     fetchData();
-  }, [userData]); // include userData as a dependency
+  }, [userData]);
 
-  // **Fetch Withdraw Transactions (Only Pending & Today’s)**
   const fetchWithdrawTransactions = async () => {
     try {
       const response = await instance.get(
@@ -208,8 +163,6 @@ const UserDetails = () => {
       );
       if (response.data.status) {
         const today = moment().format("YYYY-MM-DD");
-
-        // Filter transactions for today with status "pending"
         const filteredData = response.data.transactions.filter((txn) => {
           const transactionDate = moment(txn.date || txn.time, [
             "YYYY-MM-DD hh:mm:ss A",
@@ -223,12 +176,9 @@ const UserDetails = () => {
         });
 
         setWithdrawData(filteredData);
-      } else {
-        message.error("Failed to fetch withdrawal transactions");
       }
     } catch (error) {
       console.error("Error fetching withdrawal transactions:", error);
-      message.error("Error fetching withdrawal transactions");
     }
   };
 
@@ -237,49 +187,35 @@ const UserDetails = () => {
       fetchWithdrawTransactions();
     }
   }, [userId]);
-  // **Update Withdrawal Status (Accept/Reject)**
+
   const updateWithdrawStatus = async (id, status) => {
     try {
       await instance.patch(`/api/users/withdrawals/status/${id}`, {
         status: status,
       });
 
-      // Remove the transaction from UI immediately
       setWithdrawData((prevData) => prevData.filter((txn) => txn._id !== id));
-
-      message.success(
-        `Withdrawal request ${status.toLowerCase()} successfully!`
-      );
+      console.log(`Withdrawal request ${status.toLowerCase()} successfully!`);
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
-      message.error(`Failed to ${status.toLowerCase()} withdrawal request.`);
     }
   };
-
-  // Load withdrawal transactions once userData is available.
-  const loadWithdrawTransactions = async () => {
-    if (!userData || !userId) return;
-    try {
-      const data = await fetchWithdrawTransactions(userId);
-      if (data.status) {
-        setWithdrawData(data.transactions);
-      } else {
-        message.error("Failed to fetch withdrawal transactions");
-      }
-    } catch (error) {
-      message.error("Error fetching withdrawal transactions");
-    }
-  };
-
-  useEffect(() => {
-    loadWithdrawTransactions();
-  }, [userData]);
 
   const fetchUserData = async () => {
     try {
       const response = await instance.get(`/api/app/users/${userId}`);
       setUserData(response.data);
       setStatus(response.data.status);
+
+      // नया API call financial summary के लिए
+      try {
+        const financialResponse = await instance.get(`/api/auth/getUserFinancialSummary/${userId}`);
+        if (financialResponse.data?.success) {
+          setFinancialSummary(financialResponse.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching financial summary:", error);
+      }
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
@@ -291,13 +227,11 @@ const UserDetails = () => {
     fetchUserData();
   }, [userId]);
 
-  // Open the modal and set the action type
   const openModal = (type) => {
     setActionType(type);
     setModalVisible(true);
   };
 
-  // Handler for closing the modal
   const closeModal = () => {
     setModalVisible(false);
     setAmount("");
@@ -324,13 +258,7 @@ const UserDetails = () => {
         );
       }
 
-      if (
-        transactionResponse &&
-        transactionResponse.data &&
-        transactionResponse.data.status
-      ) {
-        // Determine the change amount based on the action type.
-        // For "add", the amount is added; for "withdraw", subtract the amount.
+      if (transactionResponse?.data?.status) {
         const changeAmount = transactionResponse.data.requestAmount;
         setUserData((prevData) => ({
           ...prevData,
@@ -340,102 +268,18 @@ const UserDetails = () => {
               : prevData.walletBalance - changeAmount,
         }));
 
-        message.success(transactionResponse.data.message);
-      } else {
-        message.error("Transaction completed but no updated balance returned.");
+        console.log("Transaction successful:", transactionResponse.data.message);
       }
 
       closeModal();
     } catch (error) {
       console.error("Error processing transaction:", error);
-      message.error("An error occurred during the transaction.");
     }
   };
-
-  useEffect(() => {
-    if (!userData?._id) return; // Ensure user ID is available
-    fetchWinningData();
-  }, [userData]);
-
-  const fetchWinningData = async () => {
-    try {
-      setLoading(true);
-      const response = await instance.get(
-        `/api/winning/getTotalWinningamount/${userData._id}`
-      );
-
-      if (response.data.status) {
-        formatWinningData(response.data.winningRecords);
-      } else {
-        message.error("Failed to fetch winning history.");
-      }
-    } catch (error) {
-      console.error("Error fetching winning history:", error);
-      message.error("Error fetching winning data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatWinningData = (records) => {
-    const formattedData = records.flatMap((record) =>
-      record.winners.map((winner) => ({
-        key: `${record._id}-${winner._id}`,
-        market: record.marketName || "Starline",
-        gameName: record.gameName || record.market,
-        bidAmount: winner.points,
-        gameType: winner.gameType,
-        winningAmount: winner.winningAmount || winner.winningPoints,
-        status: "Win",
-        date: moment(record.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
-      }))
-    );
-
-    // Sort by latest date (Descending)
-    const sortedData = formattedData.sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
-
-    // Assign proper sequential S.No (1,2,3,4...)
-    const finalData = sortedData.map((item, index) => ({
-      ...item,
-      sNo: index + 1, // Ensure sNo starts from 1 and increments
-    }));
-
-    setWinningData(finalData);
-  };
-
-  useEffect(() => {
-    if (!userData?._id) return; // Ensure user ID is available
-    fetchBids();
-  }, [userData]);
-
-  const fetchBids = async () => {
-    try {
-      setLoading(true);
-      const response = await instance.get(`/api/bid/bids/${userData._id}`);
-      if (response.data.status) {
-        formatData(response.data);
-      } else {
-        message.error("Failed to fetch bids.");
-      }
-    } catch (error) {
-      console.error("Error fetching bids:", error);
-      message.error("Error fetching bid history.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!userId) return; // Ensure userId is available
-    fetchTransactionsAll();
-  }, [userData]);
 
   const fetchTransactionsAll = async () => {
     try {
       setLoading(true);
-      // Fetch deposit, withdraw, manual deposit, and auto deposit transactions simultaneously
       const [depositRes, withdrawRes, manualDepositRes, autoDepositRes] =
         await Promise.allSettled([
           instance.get(`/api/deposit/transactions/${userId}`),
@@ -449,7 +293,6 @@ const UserDetails = () => {
       let manualDeposits = [];
       let autoDeposits = [];
 
-      // Handle deposit API response
       if (
         depositRes.status === "fulfilled" &&
         depositRes.value.status === 200 &&
@@ -457,11 +300,8 @@ const UserDetails = () => {
         Array.isArray(depositRes.value.data.transactions)
       ) {
         depositTransactions = depositRes.value.data.transactions;
-      } else {
-        console.warn("No deposit transactions found or API failed.");
       }
 
-      // Handle withdraw API response
       if (
         withdrawRes.status === "fulfilled" &&
         withdrawRes.value.status === 200 &&
@@ -469,22 +309,16 @@ const UserDetails = () => {
         Array.isArray(withdrawRes.value.data.transactions)
       ) {
         withdrawTransactions = withdrawRes.value.data.transactions;
-      } else {
-        console.warn("No withdrawal transactions found or API failed.");
       }
 
-      // Handle manual deposit API response
       if (
         manualDepositRes.status === "fulfilled" &&
         manualDepositRes.value.status === 200 &&
         Array.isArray(manualDepositRes.value.data)
       ) {
         manualDeposits = manualDepositRes.value.data;
-      } else {
-        console.warn("No manual deposit transactions found or API failed.");
       }
 
-      // Handle auto deposit API response
       if (
         autoDepositRes.status === "fulfilled" &&
         autoDepositRes.value.status === 200 &&
@@ -492,42 +326,30 @@ const UserDetails = () => {
         Array.isArray(autoDepositRes.value.data.data)
       ) {
         autoDeposits = autoDepositRes.value.data.data;
-      } else {
-        console.warn("No auto deposit transactions found or API failed.");
       }
 
-      // Format and merge the transactions from all sources, including auto deposits
       formatTransactionData(
         depositTransactions,
         withdrawTransactions,
         manualDeposits,
         autoDeposits
       );
-
-      if (
-        depositTransactions.length === 0 &&
-        withdrawTransactions.length === 0 &&
-        manualDeposits.length === 0 &&
-        autoDeposits.length === 0
-      ) {
-        message.info("No transactions found for this user.");
-      } else {
-        message.success("Transactions fetched successfully.");
-      }
     } catch (error) {
       console.error("Error fetching transactions:", error);
-      message.error("Error fetching wallet transaction history.");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (!userId) return;
+    fetchTransactionsAll();
+  }, [userData]);
+
   const parseDate = (dateStr) => {
-    // Check if dateStr is a valid ISO 8601 string
     if (moment(dateStr, moment.ISO_8601, true).isValid()) {
       return moment(dateStr);
     }
-    // Otherwise, attempt parsing using the native Date constructor
     return moment(new Date(dateStr));
   };
 
@@ -537,7 +359,6 @@ const UserDetails = () => {
     manualDeposits,
     autoDeposits
   ) => {
-    // Format deposit transactions
     const formattedDeposits = depositTransactions.map((txn, index) => {
       const parsedDate = parseDate(txn.date);
       return {
@@ -551,7 +372,6 @@ const UserDetails = () => {
       };
     });
 
-    // Format withdrawal transactions
     const formattedWithdrawals = withdrawTransactions.map((txn, index) => {
       const parsedDate = moment(txn.time || txn.date);
       return {
@@ -565,17 +385,15 @@ const UserDetails = () => {
       };
     });
 
-    // Filter manual deposits to only include those with status "Accepted"
     const acceptedManualDeposits = manualDeposits.filter(
       (txn) => txn.status && txn.status.toLowerCase() === "accepted"
     );
 
-    // Format manual deposit transactions (using createdAt for date)
     const formattedManualDeposits = acceptedManualDeposits.map((txn, index) => {
       const parsedDate = moment(txn.createdAt);
       return {
         key: `manual-${index}`,
-        requestNumber: txn.transactionId, // from the API response
+        requestNumber: txn.transactionId,
         amount: txn.amount,
         transactionType: "Money Added",
         date: parsedDate.format("MM/DD/YYYY, h:mm:ss A"),
@@ -584,27 +402,22 @@ const UserDetails = () => {
       };
     });
 
-   // Format auto deposit transactions
-   const formattedAutoDeposits = autoDeposits.map((txn, index) => {
-    // Try parsing with both formats
-    const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
-  
-    // Extract txnRef from comments string
-    const txnRefMatch = txn.comments.match(/txnRef:([A-Za-z0-9]+)/);
-    const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A"; // Default to "N/A" if txnRef is not found
-  
-    return {
-      key: `auto-${index}`,
-      requestNumber: txnRef, // Show txnRef only
-      amount: txn.amount,
-      transactionType: "Money Added",
-      date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
-      sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
-      type: "auto",
-    };
-  });
+    const formattedAutoDeposits = autoDeposits.map((txn, index) => {
+      const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
+      const txnRefMatch = txn.comments?.match(/txnRef:([A-Za-z0-9]+)/);
+      const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A";
 
-    // Merge all transactions
+      return {
+        key: `auto-${index}`,
+        requestNumber: txnRef,
+        amount: txn.amount,
+        transactionType: "Money Added",
+        date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
+        sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
+        type: "auto",
+      };
+    });
+
     const allTransactions = [
       ...formattedDeposits,
       ...formattedWithdrawals,
@@ -612,10 +425,7 @@ const UserDetails = () => {
       ...formattedAutoDeposits,
     ];
 
-    // Sort them by sortDate (latest first)
     allTransactions.sort((a, b) => b.sortDate - a.sortDate);
-
-    // Assign sequential serial numbers after sorting
     allTransactions.forEach((txn, index) => {
       txn.sNo = index + 1;
     });
@@ -623,1028 +433,630 @@ const UserDetails = () => {
     setTransactionHistoryDataAll(allTransactions);
   };
 
-  const formatData = (responseData) => {
-    const allBids = [
-      ...responseData.mainMarketBids,
-      ...responseData.starLineBids,
-    ];
-
-    const formattedData = allBids.map((bid, index) => {
-      const isStarline = bid.market === "Starline";
-      let digitValue = "";
-      let closeDigitValue = "";
-      let sessionValue = "";
-
-      if (isStarline) {
-        digitValue = bid.digit; // Starline: keep digit in digit column
-      } else {
-        if (bid.open) {
-          digitValue = bid.digit; // Main Market open: digit in "Digit" column
-          sessionValue = "Open";
-        }
-        if (bid.close) {
-          closeDigitValue = bid.digit; // Main Market close: digit in "Close Digits" column
-          sessionValue = "Close";
-        }
-        // If both open and close are false, assign digitValue from bid.digit
-        if (!bid.open && !bid.close) {
-          digitValue = bid.digit;
-        }
-      }
-
-      return {
-        key: index + 1,
-        sNo: index + 1,
-        gameName: bid.gameName || bid.gamename, // Handling inconsistent naming
-        market: bid.market,
-        gameType: bid.gameType || bid.gametype,
-        session: sessionValue || "  ━━━━", // New session column
-        digit: digitValue || closeDigitValue,
-        points: bid.points,
-        date: moment(bid.createdAt).format("YYYY-MM-DD hh:mm:ss A"),
-      };
-    });
-
-    setData(formattedData);
-  };
-
-  // Handle WhatsApp icon click to open WhatsApp chat
   const handleWhatsAppClick = () => {
     if (userData?.userWhatsappNumber) {
       window.open(`https://wa.me/+91${userData.userWhatsappNumber}`, "_blank");
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!userData) {
-    return <div>No user data available.</div>;
-  }
-
   const handleEntriesChange = (value) => {
     setPageSize(Number(value));
-    setCurrentPage(1); // Reset to first page when page size changes
-  };
-  const winningFilteredData = winningData.filter((record) =>
-    Object.values(record).some(
-      (value) =>
-        value && value.toString().toLowerCase().includes(search.toLowerCase())
-    )
-  );
-
-  const getTodaysWinningData = () => {
-    const today = moment().format("YYYY-MM-DD");
-    return winningData.filter(
-      (record) => moment(record.date).format("YYYY-MM-DD") === today
-    );
+    setCurrentPage(1);
   };
 
-  // Handler to update transaction status to Accepted
   const handleAccept = async (id) => {
     try {
       await instance.put(`/api/manualDeposit/${id}`, { status: "Accepted" });
-      message.success("Transaction accepted successfully.");
-      fetchManualTransactionsAll(); // Refresh data
+      console.log("Transaction accepted successfully.");
+      fetchManualTransactionsAll();
       fetchUserData();
     } catch (error) {
       console.error("Error updating transaction status:", error);
-      message.error("Error accepting transaction.");
     }
   };
 
-  // Handler to update transaction status to Canceled
   const handleCancel = async (id) => {
     try {
       await instance.put(`/api/manualDeposit/${id}`, { status: "Canceled" });
-      message.success("Transaction canceled successfully.");
-      fetchManualTransactionsAll(); // Refresh data
+      console.log("Transaction canceled successfully.");
+      fetchManualTransactionsAll();
       fetchUserData();
     } catch (error) {
       console.error("Error updating transaction status:", error);
-      message.error("Error canceling transaction.");
     }
   };
 
-  const pageStart = (currentPage - 1) * entries;
-  const pageEnd = currentPage * entries;
-
-  // Updated columns for the table
   const depositTransactionColumns = [
     {
-      title: "#",
-      key: "sno",
-      render: (text, record, index) => index + 1,
+      header: "#",
+      accessor: "sno",
+      cell: (row, index) => index + 1,
     },
     {
-      title: "Amount ₹",
-      dataIndex: "amount",
-      key: "amount",
-      render: (amount) => (
-        <div
-          style={{
-            display: "inline-block",
-            width: "80px",
-            height: "30px",
-            lineHeight: "30px",
-            textAlign: "center",
-            borderRadius: "4px",
-            backgroundColor: "#e6fffb", // Light cyan for contrast
-            color: "#000",
-            fontWeight: "bold",
-          }}
-        >
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-cyan-50 text-black font-bold">
           {amount}
         </div>
       ),
     },
     {
-      title: "Transaction Id",
-      dataIndex: "transactionId",
-      key: "transactionId",
+      header: "Transaction Id",
+      accessor: "transactionId",
     },
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date) =>
+      header: "Date",
+      accessor: "date",
+      cell: (date) =>
         moment(date, "YYYY-MM-DD HH:mm").format("YYYY-MM-DD hh:mm:ss A"),
     },
     {
-      title: "Action",
-      key: "action",
-      render: (text, record) => (
-        <>
-          <Button
-            style={{
-              backgroundColor: "#4caf50",
-              borderColor: "#4caf50",
-              color: "#fff",
-            }}
-            onClick={() => handleAccept(record._id)}
+      header: "Action",
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <button
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+            onClick={() => handleAccept(row._id)}
           >
             Accept
-          </Button>
-          <Button
-            style={{
-              backgroundColor: "#ff4d4f",
-              borderColor: "#ff4d4f",
-              color: "#fff",
-              marginLeft: 8,
-            }}
-            onClick={() => handleCancel(record._id)}
+          </button>
+          <button
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            onClick={() => handleCancel(row._id)}
           >
             Cancel
-          </Button>
-        </>
+          </button>
+        </div>
       ),
     },
   ];
 
-  const filteredData = data.filter((item) =>
-    Object.values(item).some(
-      (value) =>
-        value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
-    )
-  );
-  // ✅ Filter transaction data
   const historyFilteredData = transactionHistoryDataAll.filter((item) =>
     Object.values(item).some((value) => {
       if (value !== null && value !== undefined) {
         return value.toString().toLowerCase().includes(search.toLowerCase());
       }
-      return false; // Skip null/undefined values
+      return false;
     })
   );
 
-  const winningHistoryColumns = [
+  const withdrawColumns = [
     {
-      title: "#",
-      dataIndex: "sNo",
-      key: "sNo",
+      header: "S.No",
+      cell: (row, index) => index + 1,
     },
     {
-      title: "Market",
-      dataIndex: "market",
-      key: "market",
-    },
-    {
-      title: "Game Name",
-      dataIndex: "gameName",
-      key: "gameName",
-    },
-    {
-      title: "Game Type",
-      dataIndex: "gameType",
-      key: "gameType",
-    },
-    {
-      title: "Bid Amount",
-      dataIndex: "bidAmount",
-      key: "bidAmount",
-      render: (amount) => (
-        <span style={{ fontWeight: "bold", color: "#1890ff" }}>{amount}</span>
-      ),
-    },
-    {
-      title: "Winning Amount",
-      dataIndex: "winningAmount",
-      key: "winningAmount",
-      render: (amount) => (
-        <span style={{ fontWeight: "bold", color: "#52c41a" }}>{amount}</span>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: () => (
-        <span
-          style={{
-            padding: "4px 8px",
-            borderRadius: "4px",
-            fontWeight: "bold",
-            color: "#fff",
-            backgroundColor: "#52c41a",
-            display: "inline-block",
-            textAlign: "center",
-            minWidth: "80px",
-          }}
-        >
-          Win
+      header: "Amount",
+      accessor: "amount",
+      cell: (amount) => (
+        <span className="inline-block min-w-20 text-center px-3 py-1.5 rounded bg-red-500 text-white font-bold">
+          - {amount}
         </span>
       ),
     },
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-    },
-  ];
-
-  // Filtered transactions based on the search text
-  const filteredDepositTransactions = manualDepositTransactions.filter((item) =>
-    Object.values(item || {}).some(
-      (value) =>
-        value !== null &&
-        value !== undefined &&
-        value
-          .toString()
-          .toLowerCase()
-          .includes((search || "").toLowerCase())
-    )
-  );
-
-  // const filteredDepositTransactions = depositTransactions
-  // ? depositTransactions.filter((item) =>
-  //     Object.values(item || {}).some((value) =>
-  //       value !== null && value !== undefined &&
-  //       value.toString().toLowerCase().includes((search || "").toLowerCase()) // ✅ Safe search handling
-  //     )
-  //   )
-  // : []; // ✅ If `depositTransactions` is undefined, return an empty array
-
-  // const filteredWithdrawData = withdrawData.filter((item) =>
-  //   Object.values(item).some((value) =>
-  //     value && value.toString().toLowerCase().includes(search.toLowerCase()) // ✅ Null check added
-  //   )
-  // );
-
-  // Define the columns for the withdrawal transactions table.
-  const withdrawColumns = [
-    {
-      title: "S.No",
-      key: "sno",
-      render: (text, record, index) => index + 1,
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
     },
     {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
-      render: (amount) => {
-        const style = {
-          display: "inline-block",
-          minWidth: "80px",
-          textAlign: "center",
-          padding: "6px 10px",
-          borderRadius: "4px",
-          backgroundColor: "#ff4d4f",
-          color: "#fff",
-          fontWeight: "bold",
-        };
-        return <span style={style}>- {amount}</span>;
-      },
+      header: "Request No",
+      accessor: "requestNumber",
     },
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className="inline-block min-w-20 text-center px-3 py-1.5 rounded text-white bg-yellow-500 capitalize">
+          {status}
+        </span>
+      ),
     },
     {
-      title: "Request No",
-      dataIndex: "requestNumber",
-      key: "requestNumber",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        const style = {
-          display: "inline-block",
-          minWidth: "80px",
-          textAlign: "center",
-          padding: "6px 10px",
-          borderRadius: "4px",
-          color: "#fff",
-          textTransform: "capitalize",
-          backgroundColor: "#faad14", // Orange for pending
-        };
-
-        return <span style={style}>{status}</span>;
-      },
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Row gutter={[12, 12]} justify="center">
-          {/* Accept Button */}
-          <Button
-            type="primary"
-            icon={<CheckCircleOutlined />}
-            style={{
-              backgroundColor: "#4CAF50", // Green
-              borderColor: "#4CAF50",
-              color: "#fff",
-              fontWeight: "bold",
-              marginRight: "10px", // Added margin between buttons
-            }}
-            onClick={() => updateWithdrawStatus(record._id, "approved")}
+      header: "Action",
+      cell: (row) => (
+        <div className="flex space-x-3">
+          <button
+            className="flex items-center px-4 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600"
+            onClick={() => updateWithdrawStatus(row._id, "approved")}
           >
+            <CheckCircleOutlined className="mr-2" />
             Accept
-          </Button>
-
-          {/* Reject Button */}
-          <Button
-            type="primary"
-            icon={<CloseCircleOutlined />}
-            style={{
-              backgroundColor: "#FF4D4F", // Red
-              borderColor: "#FF4D4F",
-              color: "#fff",
-              fontWeight: "bold",
-            }}
-            onClick={() => updateWithdrawStatus(record._id, "rejected")}
+          </button>
+          <button
+            className="flex items-center px-4 py-2 bg-red-500 text-white font-bold rounded hover:bg-red-600"
+            onClick={() => updateWithdrawStatus(row._id, "rejected")}
           >
+            <CloseCircleOutlined className="mr-2" />
             Reject
-          </Button>
-        </Row>
+          </button>
+        </div>
       ),
     },
   ];
 
-  const allbidHistoryColumns = [
-    {
-      title: "#",
-      dataIndex: "sNo",
-      key: "sNo",
-    },
-    {
-      title: "Market",
-      dataIndex: "market",
-      key: "market",
-    },
-    {
-      title: "Game Name",
-      dataIndex: "gameName",
-      key: "gameName",
-    },
-
-    {
-      title: "Game Type",
-      dataIndex: "gameType",
-      key: "gameType",
-    },
-    {
-      title: "Session",
-      dataIndex: "session",
-      key: "session",
-    },
-    {
-      title: "Digit/Pana",
-      dataIndex: "digit",
-      key: "digit",
-    },
-    {
-      title: "Points ₹",
-      dataIndex: "points",
-      key: "points",
-    },
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-    },
-  ];
-
-  const walletHistoryData = [];
-  const getFilteredData = () => {
-    return activeTab === "winning"
-      ? walletHistoryData.filter(
-          (item) => item.transactionType === "Money Added"
-        )
-      : walletHistoryData;
-  };
-
-  const filteredWalletHistoryData = getFilteredData(); // Call function to get data
-
-  const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(
-    currentPage * pageSize,
-    filteredWalletHistoryData.length
-  );
-
   const transactionHistoryColumnsAll = [
     {
-      title: "#",
-      key: "sNo",
-      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
+      header: "#",
+      cell: (row, index) => (currentPage - 1) * pageSize + index + 1,
     },
     {
-      title: "Request No/Transaction ID",
-      dataIndex: "requestNumber",
-      key: "requestNumber",
-      render: (requestNumber) => requestNumber || "N/A",
+      header: "Request No/Transaction ID",
+      accessor: "requestNumber",
+      cell: (requestNumber) => requestNumber || "N/A",
     },
     {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
-      render: (amount, record) => {
-        // Treat "auto" type as deposit for styling
+      header: "Amount",
+      accessor: "amount",
+      cell: (amount, row) => {
         const isDeposit =
-          record.type === "deposit" ||
-          record.type === "manual" ||
-          record.type === "auto";
-        const style = {
-          padding: "4px 8px",
-          borderRadius: "4px",
-          display: "inline-block",
-          minWidth: "80px",
-          fontWeight: "bold",
-          textAlign: "center",
-          color: isDeposit ? "#389e0d" : "#fff",
-          backgroundColor: isDeposit ? "#d9f7be" : "#ff4d4f",
-        };
+          row.type === "deposit" ||
+          row.type === "manual" ||
+          row.type === "auto";
         return (
-          <span style={style}>
+          <span
+            className={`px-3 py-1 rounded inline-block min-w-20 font-bold text-center ${isDeposit
+              ? "text-green-700 bg-green-100"
+              : "text-white bg-red-500"
+              }`}
+          >
             {isDeposit ? `+ ${amount || 0}` : `- ${amount || 0}`}
           </span>
         );
       },
     },
     {
-      title: "Transaction Type",
-      dataIndex: "transactionType",
-      key: "transactionType",
-      render: (text, record) => {
-        // Again, treat "auto" as deposit
+      header: "Transaction Type",
+      accessor: "transactionType",
+      cell: (text, row) => {
         const isDeposit =
-          record.type === "deposit" ||
-          record.type === "manual" ||
-          record.type === "auto";
-        const style = {
-          padding: "6px 12px",
-          borderRadius: "4px",
-          fontWeight: "bold",
-          display: "inline-block",
-          minWidth: "120px",
-          textAlign: "center",
-          // Colors for "Money Added" style
-          color: isDeposit ? "#389e0d" : "#ad6800",
-          border: `2px solid ${isDeposit ? "#b7eb8f" : "#ffa940"}`,
-          backgroundColor: isDeposit ? "#f6ffed" : "#fffbe6",
-        };
-        return <span style={style}>{text || "Unknown"}</span>;
+          row.type === "deposit" ||
+          row.type === "manual" ||
+          row.type === "auto";
+        return (
+          <span
+            className={`px-4 py-2 rounded font-bold inline-block min-w-30 text-center ${isDeposit
+              ? "text-green-700 border-2 border-green-300 bg-green-50"
+              : "text-amber-800 border-2 border-amber-300 bg-amber-50"
+              }`}
+          >
+            {text || "Unknown"}
+          </span>
+        );
       },
     },
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date, record) =>
-        record.sortDate
-          ? dayjs(record.sortDate).format("M/D/YYYY, h:mm:ss A")
+      header: "Date",
+      accessor: "date",
+      cell: (date, row) =>
+        row.sortDate
+          ? dayjs(row.sortDate).format("M/D/YYYY, h:mm:ss A")
           : "N/A",
     },
   ];
-const formatBalance = (balance) => {
-  return Math.floor(balance * 100) / 100;
-};
+
+  const formatBalance = (balance) => {
+    return Math.floor(balance * 100) / 100;
+  };
+
+  const Table = ({ columns, data, pagination = true }) => {
+    const renderCell = (row, column) => {
+      if (column.cell) {
+        return column.cell(row[column.accessor], row);
+      }
+      return row[column.accessor] || "—";
+    };
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((col, index) => (
+                <th
+                  key={index}
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"
+                >
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex} className="hover:bg-gray-50">
+                {columns.map((col, colIndex) => (
+                  <td
+                    key={colIndex}
+                    className="px-4 py-3 text-sm text-gray-700 border-b"
+                  >
+                    {renderCell(row, col)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {pagination && (
+          <div className="flex justify-between items-center px-4 py-3 bg-white border-t border-gray-200">
+            <div className="text-sm text-gray-700">
+              Showing {Math.min(currentPage * pageSize, data.length)} of {data.length} entries
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={currentPage * pageSize >= data.length}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-lg text-red-500">No user data available.</div>
+      </div>
+    );
+  }
+
+  const filteredDepositTransactions = manualDepositTransactions.filter((item) =>
+    Object.values(item || {}).some(
+      (value) =>
+        value !== null &&
+        value !== undefined &&
+        value.toString().toLowerCase().includes((search || "").toLowerCase())
+    )
+  );
+
   return (
-    <div style={{ padding: "20px" }}>
-      {/* USER DETAILS Header */}
-      <Row align="middle" style={{ marginBottom: "20px" }}>
-        <Col>
-          <ArrowLeftOutlined
-            style={{ fontSize: "20px", cursor: "pointer", marginRight: "10px" }}
-            onClick={() => window.history.back()}
-            // Go back to the previous page
-          />
-        </Col>
-        <Col>
-          <Title level={3} style={{ marginBottom: 0 }}>
-            USER DETAILS
-          </Title>
-        </Col>
-      </Row>
-      {/* Main Row */}
-      <Row gutter={[16, 16]}>
+    <div className="p-5 bg-gray-50 min-h-screen w-full">
+      {/* Header */}
+      <div className="flex items-center mb-5">
+        <button
+          onClick={() => window.history.back()}
+          className="mr-3 p-2 hover:bg-gray-200 rounded-full"
+        >
+          <ArrowLeftOutlined className="text-xl" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-800 mb-0">USER DETAILS</h1>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex w-full gap-6 mb-6">
         {/* Left Column */}
-        <Col xs={24} md={10}>
-          <Card>
-            <Row>
-              <Col span={24}>
-                <Row
-                  justify="space-between"
-                  align="middle"
-                  style={{ backgroundColor: "#b7b6d9", padding: "20px" }}
+        <div className="bg-white rounded-lg shadow p-5 mb-5 w-[60%]">
+          <div className="flex flex-wrap justify-between items-center bg-purple-100 p-4 rounded-lg mb-5">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">{userData.userName}</h2>
+              <div className="flex items-center mt-2">
+                <PhoneOutlined className="text-gray-600 mr-2" />
+                <span className="mr-4">{userData.phone}</span>
+                <WhatsAppOutlined
+                  className="text-green-500 text-xl cursor-pointer hover:text-green-600"
+                  onClick={handleWhatsAppClick}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="mb-2">
+                <span className="font-bold mr-2">Delete Account</span>
+                <button
+                  onClick={() => deleteAccount}
+                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${status ? 'bg-red-500' : 'bg-red-500'}`}
                 >
-                  <Col>
-                    <Title level={5} style={{ marginBottom: "5px" }}>
-                      {userData.userName}
-                    </Title>
-                    <Text>
-                      <PhoneOutlined /> {userData.phone} &nbsp;
-                      <WhatsAppOutlined
-                        style={{ color: "green", cursor: "pointer" }}
-                        onClick={handleWhatsAppClick}
-                      />
-                    </Text>
-                  </Col>
-                  <div>
-                    {/* Active */}
-                    <div style={{ marginBottom: "8px" }}>
-                      <span style={{ marginRight: "8px", fontWeight: "bold" }}>
-                        Active:
-                      </span>
-                      <button
-                        style={{
-                          backgroundColor: status ? "#28a745" : "#dc3545",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "20px",
-                          padding: "6px 12px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          fontSize: "0.8rem",
-                          minWidth: "80px",
-                        }}
-                        onClick={() => updateStatus(!status)}
-                      >
-                        {status ? "Yes" : "No"}
-                      </button>
-                    </div>
+                  Delete
+                </button>
+              </div>
+              <div className="mb-2">
+                <span className="font-bold mr-2">Active:</span>
+                <button
+                  onClick={() => updateStatus(!status)}
+                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${status ? 'bg-green-500' : 'bg-red-500'}`}
+                >
+                  {status ? "Yes" : "No"}
+                </button>
+              </div>
+              <div>
+                <span className="font-bold mr-2">Banned:</span>
+                <button
+                  onClick={() => updateStatus(!status)}
+                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${!status ? 'bg-green-500' : 'bg-red-500'}`}
+                >
+                  {!status ? "Yes" : "No"}
+                </button>
+              </div>
+            </div>
+          </div>
 
-                    {/* Banned */}
-                    <div>
-                      <span style={{ marginRight: "8px", fontWeight: "bold" }}>
-                        Banned:
-                      </span>
-                      <button
-                        style={{
-                          backgroundColor: !status ? "#28a745" : "#dc3545",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "20px",
-                          padding: "6px 12px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          fontSize: "0.8rem",
-                          minWidth: "80px",
-                        }}
-                        onClick={() => updateStatus(!status)}
-                      >
-                        {!status ? "Yes" : "No"}
-                      </button>
-                    </div>
-                  </div>
-                </Row>
-                 <div style={{ marginTop: "20px" }}>
-  <Text>Available Balance: </Text>
-  <Title level={3}>₹{formatBalance(userData.walletBalance)}</Title>
-</div>
-                <Row
-                  gutter={16}
-                  justify="space-evenly"
-                  style={{ marginTop: "10px" }}
-                >
-                  <Col span={10}>
-                    <Button
-                      type="primary"
-                      block
-                      style={{ backgroundColor: "green", borderColor: "green" }}
-                      onClick={() => openModal("add")}
-                    >
-                      Add Fund
-                    </Button>
-                  </Col>
-                  <Col span={10}>
-                    <Button
-                      type="primary"
-                      block
-                      style={{ backgroundColor: "red", borderColor: "red" }}
-                      onClick={() => openModal("withdraw")}
-                    >
-                      Withdraw Fund
-                    </Button>
-                  </Col>
-                </Row>
+          <div className="mb-5">
+            <p className="text-gray-600">Available Balance:</p>
+            <h3 className="text-3xl font-bold text-gray-800">
+              ₹{formatBalance(userData.walletBalance)}
+            </h3>
+          </div>
 
-                {/* Modal for entering the amount */}
-                <Modal
-                  title={actionType === "add" ? "Add Fund" : "Withdraw Fund"}
-                  visible={modalVisible}
-                  onCancel={closeModal}
-                  onOk={handleSubmit}
-                  okText="Submit"
-                >
-                  <Form layout="vertical">
-                    <Form.Item label="Amount">
-                      <Input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="Enter amount"
-                      />
-                    </Form.Item>
-                  </Form>
-                </Modal>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => openModal("add")}
+              className="flex-1 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+            >
+              Add Fund
+            </button>
+            <button
+              onClick={() => openModal("withdraw")}
+              className="flex-1 py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600"
+            >
+              Withdraw Fund
+            </button>
+          </div>
+        </div>
 
         {/* Right Column */}
-        <Col xs={24} md={14}>
-          <Card>
-            <Row>
-              <Col span={24}>
-                <Title level={5}>Personal Information</Title>
-                <Row
-                  justify="space-between"
-                  gutter={[0, 10]}
-                  style={{ marginTop: "10px" }}
-                >
-                  <Col span={12}>
-                    <Text strong>Full Name:</Text>{" "}
-                    <Text>{userData.userName}</Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Mobile:</Text> <Text>{userData.phone}</Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Security Pin:</Text>{" "}
-                    <Text>{userData.securityPin}</Text>
-                  </Col>
-                  <Col span={12}>
-                  <Text strong>Password:</Text>{" "}
-                  <Text>{userPassword || "******"}</Text>
-                    {/* Password is typically not sent back from the API */}
-                  </Col>
-                </Row>
-              </Col>
-              <Col span={24} style={{ marginTop: "20px" }}>
-                <Title level={5}>Payment Information</Title>
-                <Row gutter={[0, 10]} style={{ marginTop: "10px" }}>
-                  <Col span={12}>
-                    <Text strong>Bank Name:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>
-                        {userData.bank_details?.bank_name &&
-                        userData.bank_details.bank_name !== "Null"
-                          ? userData.bank_details.bank_name
-                          : "N/A"}
-                      </Text>
-                    </span>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>A/c Holder Name:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>{userData.userName}</Text>
-                    </span>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>A/c Number:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>
-                        {userData.bank_details?.account_number &&
-                        userData.bank_details.account_number !== "Null"
-                          ? userData.bank_details.account_number
-                          : "N/A"}
-                      </Text>
-                    </span>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>IFSC Code:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>
-                        {userData.bank_details?.ifsc_code &&
-                        userData.bank_details.ifsc_code !== "Null"
-                          ? userData.bank_details.ifsc_code
-                          : "N/A"}
-                      </Text>
-                    </span>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>PhonePe No.:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>
-                        {userData.upi_id?.phonepeUpi &&
-                        userData.upi_id.phonepeUpi !== "Null"
-                          ? userData.upi_id.phonepeUpi
-                          : "N/A"}
-                      </Text>
-                    </span>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Google Pay No.:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>
-                        {userData.upi_id?.gpayUpi &&
-                        userData.upi_id.gpayUpi !== "Null"
-                          ? userData.upi_id.gpayUpi
-                          : "N/A"}
-                      </Text>
-                    </span>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Paytm No.:</Text>{" "}
-                    <span style={{ marginLeft: "20px" }}>
-                      <Text>
-                        {userData.upi_id?.paytmUpi &&
-                        userData.upi_id.paytmUpi !== "Null"
-                          ? userData.upi_id.paytmUpi
-                          : "N/A"}
-                      </Text>
-                    </span>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-      </Row>
+        <div className="w-full bg-white rounded-lg shadow p-5">
 
-      {/* Add Fund Request List */}
-      <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
-        <Col span={24}>
-          <Card>
-            <Title level={5}>
-              Add Fund Request List {moment().format("DD-MM-YYYY")}
-            </Title>
-            {/* Search & Entries Selection */}
-            <div className="flex justify-between mb-4">
-              <input
-                type="text"
-                className="border px-3 py-2 rounded w-1/3"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Select
-                defaultValue={10}
-                onChange={(value) => setEntries(value)}
-                style={{ width: 120 }}
-              >
-                <Option value={10}>10</Option>
-                <Option value={20}>20</Option>
-                <Option value={30}>30</Option>
-                <Option value={40}>40</Option>
-                <Option value={50}>50</Option>
-              </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-10 text-sm">
+
+            <div className="flex gap-2">
+              <span className="font-semibold w-32">Mobile :</span>
+              <span>{userData.phone}</span>
             </div>
 
-            {/* Table */}
-            <Table
-              columns={depositTransactionColumns}
-              dataSource={filteredDepositTransactions}
-              rowKey="_id"
-              loading={loading}
-              pagination={{ pageSize: entries }}
-              scroll={{ x: 1000 }}
-            />
-          </Card>
-        </Col>
-      </Row>
-      <div style={{ padding: "20px" }}>
-        {/* Withdraw Fund Request List */}
-        <Card style={{ marginBottom: "20px" }}>
-          <Row justify="space-between" align="middle">
-            <Title level={5}>
-              Withdraw Fund Request List {moment().format("DD-MM-YYYY")}
-            </Title>
-            <div className="flex justify-between mb-4">
-              <div>
-                Show{" "}
-                <Select
-                  value={entries.toString()} // Ensure it's a string
-                  style={{ width: 80 }}
-                  onChange={(value) => setEntries(parseInt(value))}
-                >
-                  <Option value="10">10</Option>
-                  <Option value="25">25</Option>
-                  <Option value="50">50</Option>
-                </Select>{" "}
-                entries
-              </div>
+            <div className="flex gap-2">
+              <span className="font-semibold w-32">Password :</span>
+              <span>{userPassword || "******"}</span>
             </div>
-          </Row>
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border px-3 py-2 rounded w-1/3 mb-4"
-          />
 
-          {/* 🔍 Search Box */}
-
-          {/* 📝 Table with filtered data */}
-          <Table
-            columns={withdrawColumns}
-            dataSource={withdrawData}
-            rowKey="_id"
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 1000 }}
-          />
-        </Card>
-
-        {/* Bid History */}
-
-        <Card style={{ marginBottom: "20px" }}>
-          <Row justify="space-between" align="middle">
-            <Title level={5}>Bid History</Title>
-            <div>
-              Show{" "}
-              <Select
-                value={entries.toString()}
-                style={{ width: 80 }}
-                onChange={(value) => setEntries(parseInt(value))}
-              >
-                <Option value="10">10</Option>
-                <Option value="25">25</Option>
-                <Option value="50">50</Option>
-              </Select>{" "}
-              entries
+            <div className="flex gap-2">
+              <span className="font-semibold w-32">Creation Date :</span>
+              <span>
+                {moment(userData.createdAt).format("DD MMM YYYY HH:mm:ss")}
+              </span>
             </div>
-          </Row>
 
-          {/* 🔍 Search Box */}
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border px-3 py-2 rounded w-1/3 mb-4"
-          />
+            <div className="flex gap-2">
+              <span className="font-semibold w-32">Last Login :</span>
+              <span>
+                {moment(userData.lastLogin).format("DD MMM YYYY HH:mm:ss")}
+              </span>
+            </div>
 
-          {/* 📝 Table with filtered data */}
-          <Table
-            columns={allbidHistoryColumns}
-            dataSource={filteredData}
-            pagination={{ pageSize: entries }}
-            loading={loading}
-            rowKey="_id"
-            scroll={{ x: 1000 }}
-          />
-        </Card>
+          </div>
 
-        <div style={{ padding: "20px" }}>
-          <Card style={{ marginBottom: "20px" }}>
-            <Tabs defaultActiveKey="all">
-              {/* All Winning History */}
-              <TabPane tab="All" key="all">
-                <Row
-                  justify="space-between"
-                  align="middle"
-                  style={{ marginBottom: 10 }}
-                >
-                  <Title level={5}>Winning History</Title>
-                  <div>
-                    Show{" "}
-                    <Select
-                      defaultValue="10"
-                      style={{ width: 80 }}
-                      onChange={handleEntriesChange}
-                    >
-                      <Option value={5}>5</Option>
-                      <Option value={10}>10</Option>
-                      <Option value={20}>20</Option>
-                      <Option value={50}>50</Option>
-                    </Select>{" "}
-                    entries
-                  </div>
-                </Row>
-                {/* Search Input */}
-                <Input
-                  placeholder="Search..."
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ marginBottom: "10px", width: "250px" }}
-                />
-                {/* Table */}
-                <Table
-                  columns={winningHistoryColumns}
-                  dataSource={winningFilteredData.slice(pageStart, pageEnd)}
-                  pagination={{
-                    pageSize: entries,
-                    current: currentPage,
-                    total: winningFilteredData.length,
-                    onChange: (page) => setCurrentPage(page),
-                  }}
-                  loading={loading}
-                  scroll={{ x: 1000 }}
-                />
-                <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex + 1} to ${Math.min(
-                    endIndex,
-                    winningFilteredData.length
-                  )} of ${winningFilteredData.length} entries`}
-                </div>
-              </TabPane>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
 
-              {/* Today's Winning History */}
-              <TabPane tab="Winning History" key="winning">
-                <Row justify="space-between" align="middle">
-                  <Title level={5}>Today's Winning History</Title>
-                </Row>
-                <Table
-                  columns={winningHistoryColumns}
-                  dataSource={getTodaysWinningData().slice(pageStart, pageEnd)}
-                  pagination={{
-                    pageSize: entries,
-                    current: currentPage,
-                    total: getTodaysWinningData.length,
+            {/* Total Deposit */}
+            <div className="bg-green-500 text-white text-center py-3 rounded-md font-semibold">
+              Total Deposit : {financialSummary.manualDepositAmount + financialSummary.autoDepositAmount || 0}
+            </div>
 
-                    onChange: (page) => setCurrentPage(page),
-                  }}
-                />
-                <div style={{ marginTop: "10px", textAlign: "right" }}>
-                  {`Showing ${startIndex} to ${endIndex} of ${
-                    getTodaysWinningData().length
-                  }  of ${getTodaysWinningData.length} entries`}
-                </div>
-              </TabPane>
-            </Tabs>
-          </Card>
-          {/* Wallet Transaction History */}
-          <Card>
-            <Row
-              justify="space-between"
-              align="middle"
-              style={{ marginBottom: "10px" }}
-            >
-              <Title level={5}>Wallet Transaction History</Title>
-              <div>
-                Show{" "}
-                <Select
-                  value={entries.toString()}
-                  style={{ width: 80 }}
-                  onChange={(value) => setEntries(parseInt(value))}
-                >
-                  <Option value="10">10</Option>
-                  <Option value="25">25</Option>
-                  <Option value="50">50</Option>
-                </Select>{" "}
-                entries
-              </div>
-            </Row>
-            {/* 🔍 Search Box */}
-            <Input
-              placeholder="Search Transactions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ marginBottom: "10px", width: "30%" }}
-            />
-            {/* 📝 Transaction Table */}
-            <Table
-              columns={transactionHistoryColumnsAll}
-              dataSource={historyFilteredData}
-              pagination={{
-                pageSize: entries,
-                current: currentPage,
-                onChange: (page) => setCurrentPage(page),
-              }}
-              loading={loading}
-              rowKey="key"
-              scroll={{ x: 1000 }}
-            />
-            ;{/* 📊 Showing Entries Count */}
-            <div style={{ marginTop: "10px", textAlign: "right" }}></div>
-          </Card>
+            {/* Total Withdraw */}
+            <div className="bg-red-500 text-white text-center py-3 rounded-md font-semibold">
+              Total Withdraw : {financialSummary.manualWithdrawalAmount + financialSummary.autoWithdrawalAmount || 0}
+            </div>
+
+            {/* Total Bid */}
+            <div className="bg-blue-500 text-white text-center py-3 rounded-md font-semibold">
+              Total Bid : {financialSummary.totalBidPoints || 0}
+            </div>
+
+            {/* Total Winning */}
+            <div className="bg-yellow-500 text-white text-center py-3 rounded-md font-semibold">
+              Total Winning : {financialSummary.totalWinningAmount || 0}
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+      <div className="bg-white rounded-lg shadow p-5 mb-5 w-full">
+        <h3 className="text-lg font-bold mb-4">Payment Information</h3>
+
+        {/* GRID LAYOUT */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-3 text-sm">
+
+          {/* Row 1 */}
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">Bank Name :</span>
+            <span>{userData.bank_details?.bank_name || "N/A"}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">Branch Address :</span>
+            <span>{userData.bank_details?.branch_address || "N/A"}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">IFSC Code :</span>
+            <span>{userData.bank_details?.ifsc_code || "N/A"}</span>
+          </div>
+
+          {/* Row 2 */}
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">A/c Holder Name :</span>
+            <span>{userData.userName}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">A/c Number :</span>
+            <span>{userData.bank_details?.account_number || "N/A"}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="font-semibold w-32"></span>
+            <span></span>
+          </div>
+
+          {/* Row 3 */}
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">PhonePe No. :</span>
+            <span>{userData.upi_id?.phonepeUpi || "N/A"}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">Google Pay No. :</span>
+            <span>{userData.upi_id?.gpayUpi || "N/A"}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="font-semibold w-32">Paytm No. :</span>
+            <span>{userData.upi_id?.paytmUpi || "N/A"}</span>
+          </div>
+
         </div>
       </div>
+
+      <div className="bg-white rounded-lg shadow p-5 mb-5">
+        <h3 className="text-lg font-bold mb-4">
+          Add Fund Request List {moment().format("DD-MM-YYYY")}
+        </h3>
+        <div className="flex justify-between mb-4">
+          <input
+            type="text"
+            className="border border-gray-300 px-4 py-2 rounded w-1/3"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className="border border-gray-300 px-3 py-2 rounded"
+            value={entries}
+            onChange={(e) => setEntries(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={30}>30</option>
+            <option value={40}>40</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+        <Table columns={depositTransactionColumns} data={filteredDepositTransactions} />
+      </div>
+
+      {/* Withdraw Fund Request List */}
+      <div className="bg-white rounded-lg shadow p-5 mb-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">
+            Withdraw Fund Request List {moment().format("DD-MM-YYYY")}
+          </h3>
+          <div className="flex items-center">
+            <span className="mr-2">Show</span>
+            <select
+              className="border border-gray-300 px-3 py-1 rounded"
+              value={entries}
+              onChange={(e) => setEntries(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="ml-2">entries</span>
+          </div>
+        </div>
+        <input
+          type="text"
+          className="border border-gray-300 px-4 py-2 rounded w-1/3 mb-4"
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Table columns={withdrawColumns} data={withdrawData} />
+      </div>
+
+      {/* Bid History Component */}
+      <BidHistory userId={userId} />
+
+      {/* Winning History Component */}
+      <div className="mt-6">
+        <WinningHistory userId={userId} />
+      </div>
+
+      {/* Wallet Transaction History */}
+      <div className="bg-white rounded-lg shadow p-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">Wallet Transaction History</h3>
+          <div className="flex items-center">
+            <span className="mr-2">Show</span>
+            <select
+              className="border border-gray-300 px-3 py-1 rounded"
+              value={entries}
+              onChange={(e) => setEntries(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="ml-2">entries</span>
+          </div>
+        </div>
+        <input
+          type="text"
+          className="border border-gray-300 px-4 py-2 rounded w-1/3 mb-4"
+          placeholder="Search Transactions..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Table columns={transactionHistoryColumnsAll} data={historyFilteredData} />
+      </div>
+
+      {/* Modal */}
+      {modalVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-bold mb-4">
+              {actionType === "add" ? "Add Fund" : "Withdraw Fund"}
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Amount
+              </label>
+              <input
+                type="number"
+                className="w-full border border-gray-300 px-3 py-2 rounded"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
