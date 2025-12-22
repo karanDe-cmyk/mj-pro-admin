@@ -941,7 +941,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Wallet Balance</span>
                   <span className="font-bold ml-auto">
-                    Rs {amountStats.totalWalletBalance.toLocaleString('en-IN') || 0}
+                    Rs {amountStats.totalWalletBalance || 0}
                   </span>
                 </div>
               </div>
@@ -954,7 +954,7 @@ const Dashboard = () => {
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
                 <div className="flex w-full items-center">
                   <span className="font-medium">Withdraw Request</span>
-                  <span className="font-bold ml-auto">Rs {amountStats.withdrawalRequests.toLocaleString('en-IN') || 0}</span>
+                  <span className="font-bold ml-auto">Rs {amountStats.withdrawalRequests || 0}</span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
                     View
                   </button>
@@ -964,7 +964,7 @@ const Dashboard = () => {
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Deposit (Approved)</span>
-                  <span className="font-bold ml-auto">Rs {(amountStats.autoPaymentAmount + amountStats.manualdepositAmount).toLocaleString('en-IN') || 0}</span>
+                  <span className="font-bold ml-auto">Rs {(amountStats.autoPaymentAmount + amountStats.manualdepositAmount) || 0}</span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
                     View
                   </button>
@@ -975,7 +975,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Add Fund (Manually)</span>
                   <span className="font-bold ml-auto">
-                    Rs {amountStats.manualdepositAmount.toLocaleString('en-IN') || 0}
+                    Rs {amountStats.manualdepositAmount || 0}
                   </span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
                     View
@@ -987,7 +987,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Withdrawal</span>
                   <span className="font-bold ml-auto">
-                     Rs {amountStats.approvedWithdrawalAmount.toLocaleString('en-IN') || 0}
+                     Rs {amountStats.approvedWithdrawalAmount || 0}
                   </span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
                     View

@@ -6,6 +6,7 @@ import { logout } from "../features/auth/authSlice";
 import { Layout, Menu } from "antd";
 import Header from "../components/Header";
 import "./custom.css"; // Import the custom CSS
+import instance from "../utils/axiosInstance";
 
 const { Sider, Content } = Layout;
 
@@ -14,11 +15,44 @@ const AdminPanel = () => {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1080);
   const [openKeys, setOpenKeys] = useState([]);
+  const [amountStats, setAmountStats] = useState({
+    totalWalletBalance: 0,
+    WithdrawalRequests: 0,
+    approvedWithdrawalAmount: 0,
+    manualWithdrawalAmount: 0,
+    autoPaymentAmount: 0,
+    manualdepositAmount: 0
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
 
   const username = localStorage.getItem("username") || "Admin";
+
+  const fetchFinancerStats = async () => {
+    try {
+      const response = await instance.get(`/api/auth/dashboardStats`);
+      const data = response.data?.data;
+      if (data) {
+        setAmountStats({
+          totalWalletBalance: data.totalWalletBalance || 0,
+          withdrawalRequests: data.WithdrawalRequest || 0,
+          approvedWithdrawalAmount: data.approvedWithdrawalAmount || 0,
+          manualWithdrawalAmount: data.manualWithdrawalAmount || 0,
+          autoPaymentAmount: data.autoPaymentAmount || 0,
+          manualdepositAmount: data.manualdepositAmount || 0
+        });
+      } else {
+        console.error("Error fetching financer stats:", data);
+      }
+    } catch (error) {
+      console.error("Error fetching financer stats:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFinancerStats();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -236,18 +270,18 @@ const AdminPanel = () => {
     //     { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
     //   ],
     // },
-    {
-      key: "Jackpot-games",
-      label: "Jackpot Games",
-      icon: <i className="fa fa-dice" />,
-      children: [
-        { key: "jackpot-game-name", label: "Game Name", path: "/admin/jackpot-games/jackpot-game-list" },
-        { key: "jackpot-bid-history", label: "Bid History", path: "/admin/jackpot-games/jackpot-bid-history" },
-        { key: "jackpot-declare-results", label: "Declare Results", path: "/admin/jackpot-games/jackpot-declare-result" },
-        { key: "jackpot-game-rates", label: "Game Rates", path: "/admin/jackpot-games/jackpot-game-rates" },
-        { key: "jackpot-bid-revert", label: " Jackpot Bid Revert", path: "/admin/jackpot-games/jackpot-bid-revert" },
-      ],
-    },
+    // {
+    //   key: "Jackpot-games",
+    //   label: "Jackpot Games",
+    //   icon: <i className="fa fa-dice" />,
+    //   children: [
+    //     { key: "jackpot-game-name", label: "Game Name", path: "/admin/jackpot-games/jackpot-game-list" },
+    //     { key: "jackpot-bid-history", label: "Bid History", path: "/admin/jackpot-games/jackpot-bid-history" },
+    //     { key: "jackpot-declare-results", label: "Declare Results", path: "/admin/jackpot-games/jackpot-declare-result" },
+    //     { key: "jackpot-game-rates", label: "Game Rates", path: "/admin/jackpot-games/jackpot-game-rates" },
+    //     { key: "jackpot-bid-revert", label: " Jackpot Bid Revert", path: "/admin/jackpot-games/jackpot-bid-revert" },
+    //   ],
+    // },
     {
       key: "notice-management",
       label: "Notice Management",
@@ -371,6 +405,8 @@ const AdminPanel = () => {
           >
             {renderMenu(menuItems)}
           </Menu>
+          <h2 className="text-center text-white text-xl">Total Deposit: {amountStats.manualdepositAmount}</h2>
+          <h2 className="text-center text-white text-xl">Total Withdrawal: {amountStats.approvedWithdrawalAmount}</h2>
         </Sider>
       )}
 

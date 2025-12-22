@@ -23,16 +23,26 @@ const SettingsForm = () => {
     min_bid_amount: "",
     max_bid_amount: "",
     welcome_bonus: "",
+
+    // ✅ NEW FIELDS
+    min_single_ank: "",
+    max_single_ank: "",
+    min_jodi_ank: "",
+    max_jodi_ank: "",
+    min_pana_ank: "",
+    max_pana_ank: "",
+
     openTime: "",
     closeTime: "",
     closeWeek: "Sunday",
-    whatsapp_deposit_option: "active", // Keep existing
-    withdraw_option: "active", // Add new
+    whatsapp_deposit_option: "active",
+    withdraw_option: "active",
     global_betting: false,
   });
 
+
   const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(true); // Track fetching state for loading indicator
+  const [fetchingData, setFetchingData] = useState(true);
 
   // Fetch settings from API on mount
   useEffect(() => {
@@ -40,39 +50,50 @@ const SettingsForm = () => {
       try {
         setLoading(true);
         const response = await axiosInstance.get(`/api/settings/general`);
-        const data = response.data[0]; // Extract the first object from array response
+        const data = response.data[0];
 
+        // Custom function to handle null/undefined but keep 0
+        const getValue = (value) => {
+          return value === null || value === undefined ? "" : value;
+        };
 
         setFormData({
-          id: data._id, // Correctly set ID
+          id: data._id,
           name: data.name || "",
           email: data.email || "",
           mobile: data.mobile || "",
           whatsappnumber: data.whatsappnumber || "",
           upi_id: data.upi_id || "",
           merchant_id: data.merchant_id || "",
-          min_batting_rate: data.min_batting_rate || "",
-          max_batting_rate: data.max_batting_rate || "",
-          min_withdrawal_rate: data.min_withdrawal_rate || "",
-          max_withdrawal_rate: data.max_withdrawal_rate || "",
-          min_deposite_rate: data.min_deposite_rate || "",
-          max_deposite_rate: data.max_deposite_rate || "",
-          min_transfer: data.min_transfer || "",
-          max_transfer: data.max_transfer || "",
-          min_bid_amount: data.min_bid_amount || "",
-          max_bid_amount: data.max_bid_amount || "",
-          welcome_bonus: data.welcome_bonus || "",
-          openTime: data.withdraw_timings?.split(" - ")[0] || "", // Extract open time
-          closeTime: data.withdraw_timings?.split(" - ")[1] || "", // Extract close time
+          min_batting_rate: getValue(data.min_batting_rate),
+          max_batting_rate: getValue(data.max_batting_rate),
+          min_withdrawal_rate: getValue(data.min_withdrawal_rate),
+          max_withdrawal_rate: getValue(data.max_withdrawal_rate),
+          min_deposite_rate: getValue(data.min_deposite_rate),
+          max_deposite_rate: getValue(data.max_deposite_rate),
+          min_transfer: getValue(data.min_transfer),
+          max_transfer: getValue(data.max_transfer),
+          min_bid_amount: getValue(data.min_bid_amount),
+          max_bid_amount: getValue(data.max_bid_amount),
+          welcome_bonus: getValue(data.welcome_bonus),
+
+          // ✅ NEW FIELDS - use getValue instead of ||
+          min_single_ank: getValue(data.min_single_ank),
+          max_single_ank: getValue(data.max_single_ank),
+          min_jodi_ank: getValue(data.min_jodi_ank),
+          max_jodi_ank: getValue(data.max_jodi_ank),
+          min_pana_ank: getValue(data.min_pana_ank),
+          max_pana_ank: getValue(data.max_pana_ank),
+
+          openTime: data.withdraw_timings?.split(" - ")[0] || "",
+          closeTime: data.withdraw_timings?.split(" - ")[1] || "",
           whatsapp_deposit_option: data.whatsapp_deposit_option || "active",
+          withdraw_option: data.withdraw_option || "active",
           global_betting: data.global_betting || false,
-          whatsapp_deposit_option: data.whatsapp_deposit_option || "active", // Keep
-          withdraw_option: data.withdraw_option || "active", // Add new
-          global_betting: data.global_betting || false,
-          closeWeek: data.closeWeek || 'Friday'
+          closeWeek: data.closeWeek || "Friday",
         });
 
-        setFetchingData(false); // Done fetching data
+        setFetchingData(false);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching settings:", error);
@@ -165,16 +186,21 @@ const SettingsForm = () => {
                   {key.replace(/_/g, " ")}
                 </label>
                 <input
-                  type="text"
+                  type={
+                    key.includes("min_") || key.includes("max_") || key.includes("rate") || key.includes("amount")
+                      ? "number"
+                      : "text"
+                  }
                   name={key}
-                  value={formData[key]}
+                  value={formData[key] ?? ""}
                   onChange={handleChange}
                   className="border border-gray-300 p-2 rounded-md mt-1"
-                  disabled={loading} // Disable input when loading
                 />
+
               </div>
             )
         )}
+
       </div>
 
       {/* New row for Time and WhatsApp Deposit Option */}
