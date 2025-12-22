@@ -912,7 +912,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Bid Amount</span>
                   <span className="font-bold ml-auto">Rs {dashboardData2.totalBidAmount || 0}</span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/game-management/bit-history')}>
                     View
                   </button>
                 </div>
@@ -954,8 +954,8 @@ const Dashboard = () => {
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
                 <div className="flex w-full items-center">
                   <span className="font-medium">Withdraw Request</span>
-                  <span className="font-bold ml-auto">Rs {amountStats.withdrawalRequests || 0}</span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                  <span className="font-bold ml-auto">Rs {amountStats.WithdrawalRequests || 0}</span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/wallet-management/withdraw-request')}>
                     View
                   </button>
                 </div>
@@ -965,7 +965,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Deposit (Approved)</span>
                   <span className="font-bold ml-auto">Rs {(amountStats.autoPaymentAmount + amountStats.manualdepositAmount) || 0}</span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/auto-deposit-history')}>
                     View
                   </button>
                 </div>
@@ -977,7 +977,7 @@ const Dashboard = () => {
                   <span className="font-bold ml-auto">
                     Rs {amountStats.manualdepositAmount || 0}
                   </span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/wallet-management/all-deposit-by-admin')}>
                     View
                   </button>
                 </div>
