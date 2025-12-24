@@ -964,7 +964,7 @@ const Dashboard = () => {
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Deposit (Approved)</span>
-                  <span className="font-bold ml-auto">Rs {(amountStats.autoPaymentAmount + amountStats.manualdepositAmount) || 0}</span>
+                  <span className="font-bold ml-auto">Rs {(amountStats.autoPaymentAmount) || 0}</span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/auto-deposit-history')}>
                     View
                   </button>
