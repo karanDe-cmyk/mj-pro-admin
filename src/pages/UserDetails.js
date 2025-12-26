@@ -249,6 +249,7 @@ const UserDetails = () => {
     try {
       const requestBody = {
         phone: userData.phone,
+        email: userData.email,
         amount: parseFloat(amount),
         method: "Manual Withdrawal",
         type: "manual"
@@ -269,7 +270,7 @@ const UserDetails = () => {
       }
 
       if (transactionResponse?.data?.status) {
-        const changeAmount = transactionResponse.data.amount;
+        const changeAmount = transactionResponse.data.requestAmount || transactionResponse.data.amount;
         setUserData((prevData) => ({
           ...prevData,
           walletBalance:
