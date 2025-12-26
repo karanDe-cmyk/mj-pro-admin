@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
+import { toast, ToastContainer } from 'react-toastify';
 
 const DeclareResult = () => {
   // States for Declare Result section
@@ -116,18 +117,32 @@ const DeclareResult = () => {
     try {
       const formattedDate = formatDate(date);
 
-      // API call to declare the winner
+      // 1️⃣ Declare winner API
       const response = await axiosInstance.post(
         `/api/starlinebid/declare-winners`,
         { date: formattedDate, gamename: selectedGame, panna, digit }
       );
 
       if (response.data.success) {
-        alert("Result declared successfully");
-        // Refresh game result history immediately without refresh
+        toast.success("Result declared successfully");
+
         fetchGameResultHistory();
+
+        try {
+          const notificationResponse = await axiosInstance.post("/api/notification", {
+            market: "STARLINE",
+            gameName: selectedGame,
+            gameType: "open",
+            result: `${panna}-${digit}`,
+            declaredAt: new Date().toISOString()
+          });
+          toast.success(notificationResponse.data.message);
+        } catch (notifyError) {
+          console.error("❌ Notification API failed:", notifyError);
+        }
+
       } else {
-        if (response.data.message.includes("already declared")) {
+        if (response.data.message?.includes("already declared")) {
           alert(response.data.message);
         } else {
           alert("Failed to declare result");
@@ -135,7 +150,7 @@ const DeclareResult = () => {
       }
     } catch (error) {
       console.error("Error declaring result:", error);
-      if (error.response && error.response.data && error.response.data.message) {
+      if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
         alert("Error occurred while declaring result");
@@ -144,6 +159,7 @@ const DeclareResult = () => {
       setDeclaring(false);
     }
   };
+
 
   const handleDeleteBid = async (bidId) => {
     if (!window.confirm("Are you sure you want to delete this bid?")) return;
@@ -466,6 +482,7 @@ const DeclareResult = () => {
           </>
         )}
       </div>
+      <ToastContainer />
     </div>
   );
 };

@@ -74,44 +74,27 @@ const App = () => {
   // console.log("accessToken:", localStorage.getItem('accessToken'));
 
   useEffect(() => {
-    // get permission to user for notification
     const requestPermission = async () => {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted') {
-        // generate token
-        getToken(messaging, { vapidKey: "BIE_S0OKXX3rJHefoglKf7gXbLv1hdPeZkhtsFzI-gwA_ETyrse0vS7hAeXBaymROegtAUp1E_2-dXFUH-mLoFQ" }).then((currentToken) => {
-          if (currentToken) {
+      const permission = await Notification.requestPermission();
 
-            console.log(currentToken)
-            localStorage.setItem("fcmToken", currentToken);
+      if (permission === "granted") {
+        const token = await getToken(messaging, {
+          vapidKey: "BBd9yaeCTQ4XIvUmnPmyUZmFZu9k0lcSwf43ZPRa3Ok8RMnNhbNq4Ugbmq1rQaeXLJUfJbR7paZMc8dQF8Tp9OM"
+        });
+        
+        localStorage.setItem('fcmToken', token)
 
-            // Send the token to your server and update the UI if necessary
-            axiosInstance.post(
-              "/api/notification/save-fcm-token",
-              { token: currentToken },
-              {
-                headers: {
-                  "Content-Type": "application/json"
-                }
-              }
-            )
-            // console.log("Sending FCM token to backend:", currentToken)
-          } else {
-            // Show permission request UI
-            console.log('No registration token available. Request permission to generate one.');
-
-          }
-        }).catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-        })
-      } else {
-        // you dined for the notification
-        alert("you deined for notification")
+        if (token) {
+          await axiosInstance.post("/api/notification/save-fcm-token", {
+            token
+          });
+        }
       }
-    }
+    };
 
     requestPermission();
-  }, [])
+  }, []);
+
 
   return (
     <Router>

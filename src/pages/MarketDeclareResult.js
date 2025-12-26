@@ -62,7 +62,7 @@ const MarketDeclareResult = () => {
   const [selectedPanna, setSelectedPanna] = useState(null);
   const [digitValue, setDigitValue] = useState(null);
   const allPannaNumbers = Object.values(pannaOptions).flat();
-  
+
   const handlePannaChange = (value) => {
     if (!value) return;
 
@@ -313,7 +313,15 @@ const MarketDeclareResult = () => {
           const storedToken = localStorage.getItem("fcmToken");
 
           if (storedToken) {
-            const notificationResponse = await instance.post('https://maya-api.kglame.com/api/notification', {
+            console.log("Sending notification with data:", {
+              market: values.marketGame,
+              gameType: values.gameType,
+              gameName: normalizedGameName,
+              result: values.gameType === "open"
+                ? `${values.panna}-${values.digit}`
+                : `${values.digit}-${values.panna}`
+            });
+            const notificationResponse = await instance.post('/api/notification', {
               token: storedToken,
               market: values.marketGame,
               gameType: values.gameType,
@@ -469,20 +477,20 @@ const MarketDeclareResult = () => {
 
   // Enhanced Game Result Columns - No Horizontal Scrolling
   const gameResultColumns = [
-    { 
-      title: "#", 
-      dataIndex: "sNo", 
-      key: "sNo", 
+    {
+      title: "#",
+      dataIndex: "sNo",
+      key: "sNo",
       width: 50,
       align: 'center'
     },
-    { 
-      title: "Game Name", 
-      dataIndex: "gameName", 
-      key: "gameName", 
+    {
+      title: "Game Name",
+      dataIndex: "gameName",
+      key: "gameName",
       width: 120,
       render: (text) => (
-        <div style={{ 
+        <div style={{
           fontSize: isMobile ? '12px' : '14px',
           fontWeight: '500'
         }}>
@@ -498,22 +506,22 @@ const MarketDeclareResult = () => {
       render: (_, record) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {/* Open Session */}
-          <div style={{ 
-            padding: '4px 8px', 
-            backgroundColor: '#f0f8ff', 
+          <div style={{
+            padding: '4px 8px',
+            backgroundColor: '#f0f8ff',
             borderRadius: '6px',
             border: '1px solid #d0e8ff'
           }}>
-            <div style={{ 
-              fontSize: isMobile ? '10px' : '12px', 
-              fontWeight: 'bold', 
+            <div style={{
+              fontSize: isMobile ? '10px' : '12px',
+              fontWeight: 'bold',
               color: '#1890ff',
               marginBottom: '2px'
             }}>
               OPEN
             </div>
-            <div style={{ 
-              fontSize: isMobile ? '12px' : '14px', 
+            <div style={{
+              fontSize: isMobile ? '12px' : '14px',
               fontWeight: '600',
               color: '#000'
             }}>
@@ -525,9 +533,9 @@ const MarketDeclareResult = () => {
                 danger
                 size="small"
                 onClick={() => handleDeleteDeclaredResult(record.open?.id)}
-                style={{ 
-                  fontSize: '10px', 
-                  padding: '0', 
+                style={{
+                  fontSize: '10px',
+                  padding: '0',
                   height: 'auto',
                   fontWeight: 'bold'
                 }}
@@ -538,22 +546,22 @@ const MarketDeclareResult = () => {
           </div>
 
           {/* Close Session */}
-          <div style={{ 
-            padding: '4px 8px', 
-            backgroundColor: '#fff0f0', 
+          <div style={{
+            padding: '4px 8px',
+            backgroundColor: '#fff0f0',
             borderRadius: '6px',
             border: '1px solid #ffd0d0'
           }}>
-            <div style={{ 
-              fontSize: isMobile ? '10px' : '12px', 
-              fontWeight: 'bold', 
+            <div style={{
+              fontSize: isMobile ? '10px' : '12px',
+              fontWeight: 'bold',
               color: '#ff4d4f',
               marginBottom: '2px'
             }}>
               CLOSE
             </div>
-            <div style={{ 
-              fontSize: isMobile ? '12px' : '14px', 
+            <div style={{
+              fontSize: isMobile ? '12px' : '14px',
               fontWeight: '600',
               color: '#000'
             }}>
@@ -565,9 +573,9 @@ const MarketDeclareResult = () => {
                 danger
                 size="small"
                 onClick={() => handleDeleteDeclaredResult(record.close?.id)}
-                style={{ 
-                  fontSize: '10px', 
-                  padding: '0', 
+                style={{
+                  fontSize: '10px',
+                  padding: '0',
                   height: 'auto',
                   fontWeight: 'bold'
                 }}
@@ -583,17 +591,17 @@ const MarketDeclareResult = () => {
 
   // Mobile optimized columns
   const mobileGameResultColumns = [
-    { 
-      title: "#", 
-      dataIndex: "sNo", 
-      key: "sNo", 
+    {
+      title: "#",
+      dataIndex: "sNo",
+      key: "sNo",
       width: 40,
       align: 'center'
     },
-    { 
-      title: "Game", 
-      dataIndex: "gameName", 
-      key: "gameName", 
+    {
+      title: "Game",
+      dataIndex: "gameName",
+      key: "gameName",
       width: 80,
       render: (text) => (
         <div style={{ fontSize: '12px', fontWeight: '500' }}>{text}</div>
@@ -649,17 +657,17 @@ const MarketDeclareResult = () => {
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
       {/* Main Card - 2 Columns Layout */}
-      <Card 
+      <Card
         title={
           <Title level={isMobile ? 5 : 4} style={{ marginBottom: 0, fontSize: isMobile ? '16px' : '20px' }}>
             Select Market Game
           </Title>
         }
         bordered={false}
-        style={{ 
-          width: "100%", 
-          margin: "auto", 
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
+        style={{
+          width: "100%",
+          margin: "auto",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           padding: isMobile ? "8px" : "16px",
           marginBottom: "16px"
         }}
@@ -695,15 +703,15 @@ const MarketDeclareResult = () => {
             <Title level={isMobile ? 5 : 5} style={{ marginBottom: "12px", fontSize: isMobile ? '14px' : '16px' }}>
               Market & Game Selection
             </Title>
-            
+
             {/* First Row - Market & Game */}
             <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: isMobile ? "12px" : "16px" }}>
               {/* Market Name - 50% width */}
               <Col xs={12} sm={12} md={12} lg={12} xl={12}>
-                <Form.Item 
-                  name="marketGame" 
-                  label={isMobile ? "Market" : "Market Name"} 
-                  rules={[{ required: true }]} 
+                <Form.Item
+                  name="marketGame"
+                  label={isMobile ? "Market" : "Market Name"}
+                  rules={[{ required: true }]}
                   style={{ marginBottom: 0 }}
                 >
                   <Select
@@ -724,10 +732,10 @@ const MarketDeclareResult = () => {
 
               {/* Game Name - 50% width */}
               <Col xs={12} sm={12} md={12} lg={12} xl={12}>
-                <Form.Item 
-                  name="gameName" 
-                  label={isMobile ? "Game" : "Game Name"} 
-                  rules={[{ required: true }]} 
+                <Form.Item
+                  name="gameName"
+                  label={isMobile ? "Game" : "Game Name"}
+                  rules={[{ required: true }]}
                   style={{ marginBottom: 0 }}
                 >
                   <Select
@@ -751,14 +759,14 @@ const MarketDeclareResult = () => {
             <Row gutter={isMobile ? 8 : 16}>
               {/* Game Type - 33% width */}
               <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-                <Form.Item 
-                  name="gameType" 
-                  label={isMobile ? "Type" : "Game Type"} 
-                  rules={[{ required: true }]} 
+                <Form.Item
+                  name="gameType"
+                  label={isMobile ? "Type" : "Game Type"}
+                  rules={[{ required: true }]}
                   style={{ marginBottom: 0 }}
                 >
-                  <Select 
-                    placeholder="Select Type" 
+                  <Select
+                    placeholder="Select Type"
                     style={{ width: "100%" }}
                     size={isMobile ? "small" : "middle"}
                   >
@@ -770,10 +778,10 @@ const MarketDeclareResult = () => {
 
               {/* Panna - 33% width */}
               <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-                <Form.Item 
-                  name="panna" 
-                  label="Panna" 
-                  rules={[{ required: true }]} 
+                <Form.Item
+                  name="panna"
+                  label="Panna"
+                  rules={[{ required: true }]}
                   style={{ marginBottom: 0 }}
                 >
                   <Select
@@ -796,11 +804,11 @@ const MarketDeclareResult = () => {
               {/* Digit Output - 33% width */}
               <Col xs={8} sm={8} md={8} lg={8} xl={8}>
                 <Form.Item name="digit" label="Digit" style={{ marginBottom: 0 }}>
-                  <Input 
-                    value={digitValue} 
-                    readOnly 
+                  <Input
+                    value={digitValue}
+                    readOnly
                     size={isMobile ? "small" : "middle"}
-                    style={{ 
+                    style={{
                       backgroundColor: '#f5f5f5',
                       fontWeight: 'bold',
                       textAlign: 'center'
@@ -861,8 +869,8 @@ const MarketDeclareResult = () => {
         open={isWinnerModalVisible}
         onCancel={() => setIsWinnerModalVisible(false)}
         width={isMobile ? "95%" : "80%"}
-        style={{ 
-          maxHeight: "80vh", 
+        style={{
+          maxHeight: "80vh",
           overflowY: "auto",
           top: isMobile ? "10px" : "50px"
         }}
@@ -942,7 +950,7 @@ const MarketDeclareResult = () => {
           </Title>
         }
         bordered={false}
-        style={{ 
+        style={{
           width: "100%",
           margin: "auto",
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -950,13 +958,13 @@ const MarketDeclareResult = () => {
         bodyStyle={{ padding: isMobile ? "12px" : "16px" }}
       >
         {/* Search Box & Date Picker */}
-        <div style={{ 
-          marginBottom: "16px", 
-          display: "flex", 
+        <div style={{
+          marginBottom: "16px",
+          display: "flex",
           flexDirection: isMobile ? "column" : "row",
           gap: isMobile ? "8px" : "0",
-          justifyContent: "space-between", 
-          alignItems: isMobile ? "stretch" : "center" 
+          justifyContent: "space-between",
+          alignItems: isMobile ? "stretch" : "center"
         }}>
           <DatePicker
             value={selectedDate}
@@ -988,8 +996,8 @@ const MarketDeclareResult = () => {
           rowClassName={(record, index) => (index % 2 === 0 ? "light-blue-row" : "white-row")}
           bordered
           size={isMobile ? "small" : "middle"}
-          style={{ 
-            border: "1px solid #e8e8e8", 
+          style={{
+            border: "1px solid #e8e8e8",
             borderRadius: "8px",
           }}
           scroll={isMobile ? { x: 240 } : { x: 400 }}

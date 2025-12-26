@@ -248,8 +248,10 @@ const UserDetails = () => {
 
     try {
       const requestBody = {
-        email: userData.email,
+        phone: userData.phone,
         amount: parseFloat(amount),
+        method: "Manual Withdrawal",
+        type: "manual"
       };
 
       let transactionResponse;
@@ -261,13 +263,13 @@ const UserDetails = () => {
         );
       } else if (actionType === "withdraw") {
         transactionResponse = await instance.post(
-          "/api/withdraw/withdrawalFund/",
+          "/api/withdraw/create",
           requestBody
         );
       }
 
       if (transactionResponse?.data?.status) {
-        const changeAmount = transactionResponse.data.requestAmount;
+        const changeAmount = transactionResponse.data.amount;
         setUserData((prevData) => ({
           ...prevData,
           walletBalance:
