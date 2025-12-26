@@ -196,7 +196,7 @@ const UserDetails = () => {
       });
 
       setWithdrawData((prevData) => prevData.filter((txn) => txn._id !== id));
-      console.log(`Withdrawal request ${status.toLowerCase()} successfully!`);
+      
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
     }
@@ -417,17 +417,15 @@ const UserDetails = () => {
 
     const formattedAutoDeposits = autoDeposits.map((txn, index) => {
       const parsedDate = dayjs(txn.date, ["YYYY-MM-DD hh:mm:ss A", "DD-MM-YYYY HH:mm"], true);
-      const txnRefMatch = txn.comments?.match(/txnRef:([A-Za-z0-9]+)/);
-      const txnRef = txnRefMatch ? txnRefMatch[1] : "N/A";
 
       return {
         key: `auto-${index}`,
-        requestNumber: txnRef,
+        txnId: txn.txnId,
         amount: txn.amount,
-        transactionType: "Money Added",
-        date: parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD hh:mm:ss A") : "Invalid Date",
+        transactionType: txn.method,
+        date: txn.date,
         sortDate: parsedDate.isValid() ? parsedDate.toDate() : new Date(),
-        type: "auto",
+        type: txn.method,
       };
     });
 

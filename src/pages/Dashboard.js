@@ -46,7 +46,7 @@ const Dashboard = () => {
 
   const [amountStats, setAmountStats] = useState({
     totalWalletBalance: 0,
-    WithdrawalRequests: 0,
+    withdrawalRequest: 0,
     approvedWithdrawalAmount: 0,
     manualWithdrawalAmount: 0,
     autoPaymentAmount: 0,
@@ -57,14 +57,27 @@ const Dashboard = () => {
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
 
+  // Handler for DatePicker changes
+  const handleDateChange = (e) => {
+    const dateValue = e.target.value;
+    if (dateValue) {
+      const formattedDate = dayjs(dateValue).format("DD-MM-YYYY");
+      setSelectedDate(formattedDate);
+    } else {
+      setSelectedDate("");
+    }
+  };
+
   const fetchFinancerStats = async () => {
     try {
-      const response = await instance.get(`/api/auth/dashboardStats`);
+      const response = await instance.get(`/api/auth/dashboardStats`, {
+        params: { date: selectedDate }
+      });
       const data = response.data?.data;
       if (data) {
         setAmountStats({
           totalWalletBalance: data.totalWalletBalance || 0,
-          withdrawalRequests: data.WithdrawalRequest || 0,
+          withdrawalRequest: data.WithdrawalRequest,
           approvedWithdrawalAmount: data.approvedWithdrawalAmount || 0,
           manualWithdrawalAmount: data.manualWithdrawalAmount || 0,
           autoPaymentAmount: data.autoPaymentAmount || 0,
@@ -80,7 +93,9 @@ const Dashboard = () => {
 
   const fetchUserStats = async () => {
     try {
-      const response = await instance.get(`/api/auth/getUserStats`);
+      const response = await instance.get(`/api/auth/getUserStats`, {
+        params: { date: selectedDate }
+      });
       const data = response.data;
       if (data.success) {
         setUserStats({
@@ -97,30 +112,152 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUserStats();
-    fetchFinancerStats();
-  }, []);
-
-  // Handler for DatePicker changes.
-  const handleDateChange2 = (e) => {
-    const dateValue = e.target.value;
-    if (dateValue) {
-      const formattedDate = dayjs(dateValue).format("DD-MM-YYYY");
-      setSelectedDate(formattedDate);
-    } else {
-      setSelectedDate("");
+  const fetchTotalUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users`, {
+        params: { date: selectedDate }
+      });
+      const data = response.data;
+      if (data.totalUsers !== undefined) {
+        setTotalUsers({ totalUsers: data.totalUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
     }
   };
 
-  // Handler for game selection.
+  const fetchApprovedUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users`, {
+        params: { date: selectedDate }
+      });
+      const data = response.data;
+      if (data.approvedUsers !== undefined) {
+        setApprovedUsers({ approvedUsers: data.approvedUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
+    }
+  };
+
+  const fetchUnApprovedUsers = async () => {
+    try {
+      const response = await instance.get(`/api/app/users`, {
+        params: { date: selectedDate }
+      });
+      const data = response.data;
+      if (data.unapprovedUsers !== undefined) {
+        setUnApprovedUsers({ unapprovedUsers: data.unapprovedUsers });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Starline Bid Amount:", error);
+    }
+  };
+
+  const fetchDepositHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await instance.get(
+        `/api/userPayment/getpaymentResponse`,
+        { params: { date: selectedDate } }
+      );
+      setAutoDepositHistory(response.data?.data || []);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching deposit history:", err);
+      setError("Failed to fetch deposit history. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const fetchWithdrawals = async () => {
+    setLoading(true);
+    try {
+      const response = await instance.get("/api/users/todaywithdrawals", {
+        params: { date: selectedDate }
+      });
+      const pendingWithdrawals = response.data.data.filter(
+        (withdrawal) => withdrawal.status === "Success"
+      );
+      setWithdrawalHistory(pendingWithdrawals);
+    } catch (err) {
+      console.error("Error fetching withdrawal requests:", err);
+      setError("Failed to fetch withdrawal requests.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTotalGames = async () => {
+    try {
+      const response = await instance.get(
+        `/api/marketManagement/games/totalCount`,
+        { params: { date: selectedDate } }
+      );
+      const data = response.data;
+      if (data.totalGameCount !== undefined) {
+        setTotalGames({ totalGameCount: data.totalGameCount });
+      } else {
+        console.error("Error in API response:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching MainMarketData Bid Amount:", error);
+    }
+  };
+
+  const fetchProfitLossData = async () => {
+    try {
+      setLoadingButton3(true);
+      setError(null);
+      const response = await instance.get(`/api/users/total-profit-loss`, {
+        params: { date: selectedDate }
+      });
+
+      if (response.data && response.data.success) {
+        const totalDeposit = response.data.totalDeposit || 0;
+        const totalWithdraw = response.data.totalWithdraw || 0;
+        const total = totalDeposit - totalWithdraw;
+      } else {
+        setError("Error: Could not fetch profit/loss data.");
+      }
+    } catch (err) {
+      console.error("Error fetching profit/loss data:", err);
+      setError("Error fetching profit/loss data");
+    } finally {
+      setLoadingButton3(false);
+    }
+  };
+
+  // Refresh all data when date changes
+  useEffect(() => {
+    fetchAllData();
+  }, [selectedDate]);
+
+  const fetchAllData = () => {
+    fetchUserStats();
+    fetchFinancerStats();
+    fetchTotalUsers();
+    fetchApprovedUsers();
+    fetchUnApprovedUsers();
+    fetchDepositHistory();
+    fetchWithdrawals();
+    fetchTotalGames();
+    fetchProfitLossData();
+  };
+
+  // Handler for game selection in Market Bid Details
   const handleGameChange2 = (e) => {
     setSelectedGame2(e.target.value);
   };
 
-  // Submit handler that calls the API directly.
+  // Submit handler that calls the API directly for Market Bid Details
   const handleSubmit = async () => {
-
     try {
       setLoadingButton(true);
       const requestBody = {
@@ -149,73 +286,6 @@ const Dashboard = () => {
     }
   };
 
-  const fetchTotalUsers = async () => {
-    try {
-      const response = await instance.get(`/api/app/users`);
-      const data = response.data;
-      if (data.totalUsers !== undefined) {
-        setTotalUsers({ totalUsers: data.totalUsers });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching Starline Bid Amount:", error);
-    }
-  };
-
-  const fetchApprovedUsers = async () => {
-    try {
-      const response = await instance.get(`/api/app/users`);
-      const data = response.data;
-      if (data.approvedUsers !== undefined) {
-        setApprovedUsers({ approvedUsers: data.approvedUsers });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching Starline Bid Amount:", error);
-    }
-  };
-
-  const fetchUnApprovedUsers = async () => {
-    try {
-      const response = await instance.get(`/api/app/users`);
-      const data = response.data;
-      if (data.unapprovedUsers !== undefined) {
-        setUnApprovedUsers({ unapprovedUsers: data.unapprovedUsers });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching Starline Bid Amount:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchTotalUsers();
-    fetchApprovedUsers();
-    fetchUnApprovedUsers();
-  }, []);
-
-  useEffect(() => {
-    const fetchDepositHistory = async () => {
-      try {
-        setLoading(true);
-        const response = await instance.get(
-          `/api/userPayment/getpaymentResponse`
-        );
-        setAutoDepositHistory(response.data?.data || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching deposit history:", err);
-        setError("Failed to fetch deposit history. Please try again.");
-        setLoading(false);
-      }
-    };
-
-    fetchDepositHistory();
-  }, []);
-
   const handleGameChange = (e) => {
     setSelectedGame(e.target.value);
   };
@@ -229,7 +299,6 @@ const Dashboard = () => {
   };
 
   const handleGetClick = async () => {
-    // Remove the required validation for gameType
     if (!selectedGame || !selectedSession) {
       alert("Please select a game name and session");
       return;
@@ -249,7 +318,7 @@ const Dashboard = () => {
       gameName: selectedGame,
       open: openFlag,
       close: closeFlag,
-      // Only include gameType if it's selected (not empty)
+      date: selectedDate, // Add date parameter
       ...(selectedGameType && { gameType: selectedGameType }),
     };
 
@@ -274,9 +343,9 @@ const Dashboard = () => {
     const fetchGames = async () => {
       try {
         setLoadingButton2(true);
-
         const response = await instance.get(
-          `/api/marketManagement/getMarketGames`
+          `/api/marketManagement/getMarketGames`,
+          { params: { date: selectedDate } }
         );
         if (Array.isArray(response.data)) {
           const filteredGames = response.data.filter(
@@ -295,13 +364,15 @@ const Dashboard = () => {
     };
 
     fetchGames();
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => {
     const fetchBetRates = async () => {
       try {
         setLoading(true);
-        const response = await instance.get("api/rates/getBetRates");
+        const response = await instance.get("api/rates/getBetRates", {
+          params: { date: selectedDate }
+        });
 
         if (response.data && typeof response.data === "object") {
           const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
@@ -313,7 +384,6 @@ const Dashboard = () => {
               return acc;
             }, {});
 
-          // Add "All" option at the beginning
           setBetRates(['All', ...Object.keys(cleanedData)]);
         } else {
           console.error("Invalid response format:", response.data);
@@ -326,8 +396,7 @@ const Dashboard = () => {
     };
 
     fetchBetRates();
-  }, []);
-
+  }, [selectedDate]);
 
   const mainMarketGames = mainMarketGamesList.filter(
     (game) => game.marketName === "Main Market"
@@ -336,95 +405,6 @@ const Dashboard = () => {
   const mainMarketGamesLeft = mainMarketGamesListLeft.filter(
     (game) => game.marketName === "Main Market"
   );
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await instance.get(`/api/admin/dashboard`);
-        setDashboardData(response.data);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
-      setLoading(false);
-    };
-
-    const fetchFundRequests = async () => {
-      try {
-        const response = await instance.get(`/api/admin/fundRequests`);
-        setFundRequests(response.data || []);
-      } catch (error) {
-        console.error("Error fetching fund requests:", error);
-      }
-    };
-
-    fetchDashboardData();
-    fetchFundRequests();
-  }, []);
-
-  const fetchTotalGames = async () => {
-    try {
-      const response = await instance.get(
-        `/api/marketManagement/games/totalCount`
-      );
-      const data = response.data;
-      if (data.totalGameCount !== undefined) {
-        setTotalGames({ totalGameCount: data.totalGameCount });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching MainMarketData Bid Amount:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchTotalGames();
-  }, []);
-
-  useEffect(() => {
-    const fetchProfitLossData = async () => {
-      try {
-        setLoadingButton3(true);
-        setError(null);
-        const response = await instance.get(`/api/users/total-profit-loss`);
-
-        if (response.data && response.data.success) {
-          const totalDeposit = response.data.totalDeposit || 0;
-          const totalWithdraw = response.data.totalWithdraw || 0;
-          const total = totalDeposit - totalWithdraw;
-        } else {
-          setError("Error: Could not fetch profit/loss data.");
-        }
-      } catch (err) {
-        console.error("Error fetching profit/loss data:", err);
-        setError("Error fetching profit/loss data");
-      } finally {
-        setLoadingButton3(false);
-      }
-    };
-
-    fetchProfitLossData();
-  }, []);
-
-  useEffect(() => {
-    const fetchWithdrawals = async () => {
-      setLoading(true);
-      try {
-        const response = await instance.get("/api/users/todaywithdrawals");
-        const pendingWithdrawals = response.data.filter(
-          (withdrawal) => withdrawal.status === "Success"
-        );
-        setWithdrawalHistory(pendingWithdrawals);
-      } catch (err) {
-        console.error("Error fetching withdrawal requests:", err);
-        setError("Failed to fetch withdrawal requests.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWithdrawals();
-  }, []);
 
   const handleStatusChange = async (id, status) => {
     try {
@@ -466,27 +446,6 @@ const Dashboard = () => {
     {
       header: "Transaction Id",
       key: "transaction_id",
-      // render: (text, record) => {
-      //   if (record.status === "approved" || record.status === "rejected") {
-      //     return <span className="font-bold">Action Taken</span>;
-      //   }
-      //   return (
-      //     <>
-      //       <button
-      //         onClick={() => handleStatusChange(record._id, "approved")}
-      //         className="mr-2 bg-blue-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-blue-700"
-      //       >
-      //         Accept
-      //       </button>
-      //       <button
-      //         onClick={() => handleStatusChange(record._id, "rejected")}
-      //         className="bg-red-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-red-700"
-      //       >
-      //         Reject
-      //       </button>
-      //     </>
-      //   );
-      // },
     },
     {
       header: "Payment Method",
@@ -554,7 +513,6 @@ const Dashboard = () => {
         moment(createdAt).format("DD-MM-YYYY hh:mm A"),
     },
   ];
-
 
   const profitLossColumns = [
     {
@@ -641,6 +599,36 @@ const Dashboard = () => {
 
   return (
     <div className="p-4">
+      {/* Date Selector Section */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            <svg className="w-6 h-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span className="font-bold text-gray-700">Select Date:</span>
+          </div>
+          <input
+            type="date"
+            className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={dayjs(selectedDate, "DD-MM-YYYY").format("YYYY-MM-DD")}
+            onChange={handleDateChange}
+          />
+          <button
+            onClick={fetchAllData}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Refresh
+          </button>
+          <span className="text-sm text-gray-500">
+            Selected: {selectedDate || "Today"}
+          </span>
+        </div>
+      </div>
+
       <div className="lg:col-span-1 space-y-6">
         <div className="bg-white rounded-lg shadow-md">
           <div className="flex justify-between bg-blue-300 py-3 px-3">
@@ -649,6 +637,9 @@ const Dashboard = () => {
                 Welcome Back !
               </h2>
               <p className="text-gray-600">Admin Dashboard</p>
+              <p className="text-sm text-gray-700 mt-1">
+                Data for: {selectedDate || "Today"}
+              </p>
             </div>
             <div>
               <img
@@ -753,7 +744,7 @@ const Dashboard = () => {
         {/* Starline Bid Card */}
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => navigate("/admin/all-bid-history")}
+          onClick={() => navigate("/admin/all-bid-history")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -772,7 +763,7 @@ const Dashboard = () => {
 
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => navigate("/admin/total-bet-player")}
+          onClick={() => navigate("/admin/total-bet-player")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -790,7 +781,7 @@ const Dashboard = () => {
         </div>
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => navigate("/admin/today-register-player")}
+          onClick={() => navigate("/admin/today-register-player")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -811,7 +802,7 @@ const Dashboard = () => {
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-bold mb-4">
-            Total Bids on Single Ank of Date {new Date().toISOString().split("T")[0]}
+            Total Bids on Single Ank for Date {selectedDate || "Today"}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
@@ -905,7 +896,7 @@ const Dashboard = () => {
                 type="date"
                 className="w-full p-2 border border-gray-300 rounded"
                 value={dayjs(selectedDate, "DD-MM-YYYY").format("YYYY-MM-DD")}
-                onChange={handleDateChange2}
+                onChange={handleDateChange}
               />
             </div>
             <div>
@@ -984,8 +975,8 @@ const Dashboard = () => {
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
                 <div className="flex w-full items-center">
                   <span className="font-medium">Withdraw Request</span>
-                  <span className="font-bold ml-auto">Rs {amountStats.WithdrawalRequests || 0}</span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/wallet-management/withdraw-request')}>
+                  <span className="font-bold ml-auto">Rs {amountStats.withdrawalRequest || 0}</span>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate(`/admin/wallet-management/withdraw-request?data=${selectedDate}`)}>
                     View
                   </button>
                 </div>
@@ -1029,26 +1020,12 @@ const Dashboard = () => {
           </div>
 
         </div>
-        {/* <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-bold mb-4">
-            Profit/Loss Report On Date {new Date().toISOString().split("T")[0]}
-          </h3>
-          {loadingButton3 ? (
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : error ? (
-            <p className="text-red-600">{error}</p>
-          ) : (
-            renderTable(profitLossColumns, profitLossData)
-          )}
-        </div> */}
       </div>
 
       {/* Fund Request History */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-6">
         <h3 className="text-lg font-bold mb-4">
-          Fund Request Auto Deposit History {todayFormatted}
+          Fund Request Auto Deposit History {selectedDate || todayFormatted}
         </h3>
 
         {loading ? (
@@ -1057,20 +1034,11 @@ const Dashboard = () => {
           </div>
         ) : error ? (
           <p className="text-red-600">{error}</p>
-        ) : autoDepositHistory.filter((record) =>
-          moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
-        ).length > 0 ? (
-
-          renderTable(
-            fundRequestColumns,
-            autoDepositHistory.filter((record) =>
-              moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
-            )
-          )
-
+        ) : autoDepositHistory.length > 0 ? (
+          renderTable(fundRequestColumns, autoDepositHistory)
         ) : (
           <p className="text-gray-500 text-center py-4">
-            No records found for today
+            No records found for {selectedDate || "today"}
           </p>
         )}
       </div>
@@ -1079,7 +1047,7 @@ const Dashboard = () => {
       {/* Withdrawal Request History */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-6">
         <h3 className="text-lg font-bold mb-4">
-          Withdraw Request History {today}
+          Withdraw Request History {selectedDate || today}
         </h3>
         {loading ? (
           <div className="flex justify-center">

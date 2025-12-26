@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { FaEye } from "react-icons/fa";
 import axios from '../../utils/axiosInstance';
 import WithdrawalDetailsModal from './WithdrawalDetailsModal'; // Import the modal component
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 const WithDrawRequest = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false); // Modal open state
   const [selectedRequest, setSelectedRequest] = useState(null); // Selected request details
+  const [searchParams] = useSearchParams();
+
+  const selectedDate = searchParams.get('date') || '';
 
   // Fetch withdrawal requests from the backend
   const fetchRequests = async () => {
     try {
-      const response = await axios.get(`/api/users/withdrawals`);
+      const response = await axios.get(`/api/users/withdrawals`, {
+        params: { date: selectedDate }
+      });
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching withdrawal requests:', error);
@@ -104,23 +110,22 @@ const WithDrawRequest = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {req.username}
+                        {req.userName}
                       </a>
                     </td>
                     <td className="border p-2 text-center">{req.amount}</td>
-                    <td className="border p-2 text-center">{req.payment_method}</td>
+                    <td className="border p-2 text-center">{req.method}</td>
                     <td
-                      className={`border p-2 text-center font-semibold ${
-                        req.status === "approved"
+                      className={`border p-2 text-center font-semibold ${req.status === "Success"
                           ? "text-green-500"
                           : req.status === "rejected"
-                          ? "text-red-500"
-                          : "text-yellow-500"
-                      }`}
+                            ? "text-red-500"
+                            : "text-yellow-500"
+                        }`}
                     >
                       {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
                     </td>
-                    <td className="border p-2 text-center">{req.time}</td>
+                    <td className="border p-2 text-center">{req.date}</td>
                     <td className="border p-2 text-center">
                       <button
                         onClick={() => handleView(req)}
