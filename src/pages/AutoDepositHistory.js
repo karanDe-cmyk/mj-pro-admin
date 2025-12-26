@@ -3,11 +3,13 @@ import { Table, DatePicker, Spin, Alert, Input, Tag, Statistic, Card, Row, Col }
 import axios from "../utils/axiosInstance";
 import moment from "moment";
 import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 
 const { Search } = Input;
 
 const AutoDepositHistory = () => {
   const [data, setData] = useState([]);
+  const navigate = useNavigate();
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -123,7 +125,16 @@ const AutoDepositHistory = () => {
   // Table Columns
   const columns = [
     { title: "#", dataIndex: "index", key: "index", render: (_, __, index) => index + 1 },
-    { title: "User Name", dataIndex: "username", key: "username", render: (username) => username || "N/A" },
+    {
+      title: "User Name", dataIndex: "username", key: "username", render: (text, record) => (
+        <span
+          className="text-blue-600 font-semibold cursor-pointer hover:underline"
+          onClick={() => navigate(`/admin/user-management/user-details/${record.userId}`)}
+        >
+          {record.username}
+        </span>
+      ),
+    },
     { title: "Mobile Number", dataIndex: "number", key: "number", render: (number) => number || "N/A" },
     { title: "Amount", dataIndex: "amount", key: "amount", render: (amount) => `₹ ${amount}` },
     { title: "Txn ID", dataIndex: "txnId", key: "txnId", render: (txnId) => txnId || "N/A" },

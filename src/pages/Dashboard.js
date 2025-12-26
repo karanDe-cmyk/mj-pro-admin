@@ -120,10 +120,7 @@ const Dashboard = () => {
 
   // Submit handler that calls the API directly.
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedGame2) {
-      alert("Please select both a date and a game name.");
-      return;
-    }
+
     try {
       setLoadingButton(true);
       const requestBody = {
@@ -207,7 +204,7 @@ const Dashboard = () => {
         const response = await instance.get(
           `/api/userPayment/getpaymentResponse`
         );
-        setAutoDepositHistory(response.data.data || []);
+        setAutoDepositHistory(response.data?.data || []);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching deposit history:", err);
@@ -232,8 +229,9 @@ const Dashboard = () => {
   };
 
   const handleGetClick = async () => {
-    if (!selectedGame || !selectedSession || !selectedGameType) {
-      alert("Please select a game name, session, and game type");
+    // Remove the required validation for gameType
+    if (!selectedGame || !selectedSession) {
+      alert("Please select a game name and session");
       return;
     }
 
@@ -251,7 +249,8 @@ const Dashboard = () => {
       gameName: selectedGame,
       open: openFlag,
       close: closeFlag,
-      gameType: selectedGameType,
+      // Only include gameType if it's selected (not empty)
+      ...(selectedGameType && { gameType: selectedGameType }),
     };
 
     try {
@@ -314,7 +313,8 @@ const Dashboard = () => {
               return acc;
             }, {});
 
-          setBetRates(Object.keys(cleanedData));
+          // Add "All" option at the beginning
+          setBetRates(['All', ...Object.keys(cleanedData)]);
         } else {
           console.error("Invalid response format:", response.data);
         }
@@ -412,7 +412,7 @@ const Dashboard = () => {
       try {
         const response = await instance.get("/api/users/todaywithdrawals");
         const pendingWithdrawals = response.data.filter(
-          (withdrawal) => withdrawal.status === "pending"
+          (withdrawal) => withdrawal.status === "Success"
         );
         setWithdrawalHistory(pendingWithdrawals);
       } catch (err) {
@@ -445,15 +445,52 @@ const Dashboard = () => {
     },
     {
       header: "Username",
-      key: "username",
+      key: "userName",
+      render: (text, record) => (
+        <span
+          className="text-blue-600 font-semibold cursor-pointer hover:underline"
+          onClick={() => navigate(`/admin/user-management/user-details/${record.userId}`)}
+        >
+          {record.userName}
+        </span>
+      ),
+    },
+    {
+      header: "Mobile",
+      key: "phone",
     },
     {
       header: "Amount",
       key: "amount",
     },
     {
+      header: "Transaction Id",
+      key: "transaction_id",
+      // render: (text, record) => {
+      //   if (record.status === "approved" || record.status === "rejected") {
+      //     return <span className="font-bold">Action Taken</span>;
+      //   }
+      //   return (
+      //     <>
+      //       <button
+      //         onClick={() => handleStatusChange(record._id, "approved")}
+      //         className="mr-2 bg-blue-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-blue-700"
+      //       >
+      //         Accept
+      //       </button>
+      //       <button
+      //         onClick={() => handleStatusChange(record._id, "rejected")}
+      //         className="bg-red-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-red-700"
+      //       >
+      //         Reject
+      //       </button>
+      //     </>
+      //   );
+      // },
+    },
+    {
       header: "Payment Method",
-      key: "payment_method",
+      key: "method",
     },
     {
       header: "Status",
@@ -463,32 +500,7 @@ const Dashboard = () => {
     },
     {
       header: "Time",
-      key: "time",
-    },
-    {
-      header: "Action",
-      key: "action",
-      render: (text, record) => {
-        if (record.status === "approved" || record.status === "rejected") {
-          return <span className="font-bold">Action Taken</span>;
-        }
-        return (
-          <>
-            <button
-              onClick={() => handleStatusChange(record._id, "approved")}
-              className="mr-2 bg-blue-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-blue-700"
-            >
-              Accept
-            </button>
-            <button
-              onClick={() => handleStatusChange(record._id, "rejected")}
-              className="bg-red-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-red-700"
-            >
-              Reject
-            </button>
-          </>
-        );
-      },
+      key: "date",
     },
   ];
 
@@ -499,32 +511,50 @@ const Dashboard = () => {
       render: (text, record, index) => index + 1,
     },
     {
-      header: "User Name",
+      header: "Username",
       key: "username",
+      render: (text, record) => (
+        <span
+          className="text-blue-600 font-semibold cursor-pointer hover:underline"
+          onClick={() => navigate(`/admin/user-management/user-details/${record.userId}`)}
+        >
+          {record.username}
+        </span>
+      ),
+    },
+    {
+      header: "Mobile",
+      key: "number",
     },
     {
       header: "Amount",
       key: "amount",
+      render: (amount) => `₹ ${amount}`,
     },
     {
       header: "Txn ID",
       key: "txnId",
     },
     {
-      header: "Date",
-      key: "date",
-      render: (createdAt) => moment(createdAt).format("DD-MM-YYYY HH:mm:ss"),
-    },
-    {
-      header: "Type",
-      key: "type",
-      render: (_, record) => (
-        <button className="bg-blue-600 text-white px-3 py-1 rounded">
-          {record.status}
-        </button>
+      header: "Status",
+      key: "status",
+      render: (status) => (
+        <span
+          className={`px-2 py-1 rounded text-white text-sm ${status === "Success" ? "bg-green-600" : "bg-red-600"
+            }`}
+        >
+          {status}
+        </span>
       ),
     },
+    {
+      header: "Payment Date & Time",
+      key: "createdAt",
+      render: (createdAt) =>
+        moment(createdAt).format("DD-MM-YYYY hh:mm A"),
+    },
   ];
+
 
   const profitLossColumns = [
     {
@@ -683,7 +713,7 @@ const Dashboard = () => {
         {/* Main Market Bid Card */}
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate("/admin/all-bid-history")}
+          onClick={() => navigate("/admin/today-register")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -723,7 +753,7 @@ const Dashboard = () => {
         {/* Starline Bid Card */}
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        // onClick={() => navigate("/admin/all-bid-history")}
+        onClick={() => navigate("/admin/all-bid-history")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -742,7 +772,7 @@ const Dashboard = () => {
 
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        // onClick={() => navigate("/admin/game-management/game-name")}
+        onClick={() => navigate("/admin/total-bet-player")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -760,7 +790,7 @@ const Dashboard = () => {
         </div>
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        // onClick={() => navigate("/admin/game-management/game-name")}
+        onClick={() => navigate("/admin/today-register-player")}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -815,7 +845,7 @@ const Dashboard = () => {
                 onChange={handleGameTypeChange}
                 value={selectedGameType}
               >
-                <option value="">Game Type</option>
+                <option value="">All</option>
                 {betRates.map((gameType, index) => (
                   <option key={index} value={gameType}>
                     {gameType}
@@ -987,7 +1017,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Withdrawal</span>
                   <span className="font-bold ml-auto">
-                     Rs {amountStats.approvedWithdrawalAmount || 0}
+                    Rs {amountStats.approvedWithdrawalAmount || 0}
                   </span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
                     View
@@ -1020,6 +1050,7 @@ const Dashboard = () => {
         <h3 className="text-lg font-bold mb-4">
           Fund Request Auto Deposit History {todayFormatted}
         </h3>
+
         {loading ? (
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -1029,16 +1060,21 @@ const Dashboard = () => {
         ) : autoDepositHistory.filter((record) =>
           moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
         ).length > 0 ? (
+
           renderTable(
             fundRequestColumns,
             autoDepositHistory.filter((record) =>
               moment(record.createdAt).format("DD-MM-YYYY") === todayFormatted
             )
           )
+
         ) : (
-          <p className="text-gray-500 text-center py-4">No records found for today</p>
+          <p className="text-gray-500 text-center py-4">
+            No records found for today
+          </p>
         )}
       </div>
+
 
       {/* Withdrawal Request History */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-6">
