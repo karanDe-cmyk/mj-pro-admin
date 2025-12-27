@@ -258,34 +258,43 @@ const Dashboard = () => {
   };
 
   // Submit handler that calls the API directly for Market Bid Details
-  const handleSubmit = async () => {
-    try {
-      setLoadingButton(true);
-      const requestBody = {
-        gameName: selectedGame2,
-        date: selectedDate,
-      };
+  useEffect(() => {
+    if (!selectedDate) return;
 
-      const response = await instance.post(
-        `/api/mainmarketdeclareResult/get-total-winnings`,
-        requestBody
-      );
+    const fetchTotalWinnings = async () => {
+      try {
+        setLoadingButton(true);
 
-      const { totalPoints, totalWinningPoints } = response.data;
-      const totalProfitAmount = totalPoints - totalWinningPoints;
+        const response = await instance.get(
+          `/api/mainmarketdeclareResult/get-total-winnings`,
+          {
+            params: { date: selectedDate }
+          }
+        );
 
-      setDashboardData2({
-        totalBidAmount: totalPoints,
-        totalWinAmount: totalWinningPoints,
-        totalProfitAmount,
-      });
-    } catch (error) {
-      console.error("Error fetching total winnings:", error);
-      alert("Error fetching total winnings");
-    } finally {
-      setLoadingButton(false);
-    }
-  };
+        const {
+          totalBidAmount,
+          totalWinningAmount,
+          totalProfitAmount
+        } = response.data;
+
+        setDashboardData2({
+          totalBidAmount,
+          totalWinAmount: totalWinningAmount,
+          totalProfitAmount
+        });
+
+      } catch (error) {
+        console.error("Error fetching total winnings:", error);
+        alert("Error fetching total winnings");
+      } finally {
+        setLoadingButton(false);
+      }
+    };
+
+    fetchTotalWinnings();
+  }, [selectedDate]);
+
 
   const handleGameChange = (e) => {
     setSelectedGame(e.target.value);
@@ -916,7 +925,7 @@ const Dashboard = () => {
             </div>
             <div className="flex justify-end">
               <button
-                onClick={handleSubmit}
+                // onClick={handleSubmit}
                 disabled={loadingButton}
                 className="bg-green-600 text-white font-bold px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 mb-3"
               >
@@ -950,10 +959,22 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 h-[72px] flex items-center">
+              <div
+                className={`p-4 rounded-lg border h-[72px] flex items-center
+    ${dashboardData2.totalProfitAmount < 0
+                    ? "bg-red-500 border-red-300"
+                    : "bg-purple-50 border-purple-200"
+                  }`}
+              >
                 <div className="flex w-full items-center">
                   <span className="font-medium">Total Profit Amount</span>
-                  <span className="font-bold ml-auto">
+
+                  <span
+                    className={`font-bold ml-auto ${dashboardData2.totalProfitAmount < 0
+                      ? "text-white"
+                      : "text-green-600"
+                      }`}
+                  >
                     Rs {dashboardData2.totalProfitAmount || 0}
                   </span>
                 </div>
@@ -977,7 +998,7 @@ const Dashboard = () => {
                 <div className="flex w-full items-center">
                   <span className="font-medium">Withdraw Request</span>
                   <span className="font-bold ml-auto">Rs {amountStats.WithdrawalRequest || 0}</span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate(`/admin/wallet-management/withdraw-request?data=${selectedDate}`)}>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate(`/admin/wallet-management/withdraw-request?date=${selectedDate}`)}>
                     View
                   </button>
                 </div>
