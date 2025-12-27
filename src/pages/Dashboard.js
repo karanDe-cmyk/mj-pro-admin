@@ -1082,7 +1082,7 @@ const Dashboard = () => {
                   <span className="font-bold ml-auto">
                     Rs {amountStats.approvedWithdrawalAmount || 0}
                   </span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/wallet-management/withdrawals-history')}>
                     View
                   </button>
                 </div>
