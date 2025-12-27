@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
+import { FaWhatsapp, FaPhoneAlt, FaEye } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const TodayRegisterUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   const fetchTodayUsers = async () => {
     try {
@@ -92,12 +95,39 @@ const TodayRegisterUsers = () => {
                     </span>
                   </td>
                   <td className="px-4 py-2 border">
-                    <button
-                      onClick={() => openModal(user)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                    >
-                      View
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {/* VIEW → USER DETAILS PAGE */}
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/user-management/user-details/${user._id}`)
+                        }
+                        className="text-blue-600 hover:text-blue-800"
+                        title="View Profile"
+                      >
+                        <FaEye size={18} />
+                      </button>
+
+                      {/* WHATSAPP */}
+                      <a
+                        href={`https://wa.me/91${user.phone}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-green-600 hover:text-green-800"
+                        title="WhatsApp"
+                      >
+                        <FaWhatsapp size={18} />
+                      </a>
+
+                      {/* CALL */}
+                      <a
+                        href={`tel:${user.phone}`}
+                        className="text-gray-700 hover:text-black"
+                        title="Call"
+                      >
+                        <FaPhoneAlt size={16} />
+                      </a>
+                    </div>
+
                   </td>
                 </tr>
               ))}

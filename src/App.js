@@ -71,6 +71,8 @@ import GatewayPayment from './pages/XtreemPyament';
 import TodayRegister from './pages/TodayRegister';
 import TodayRegisterPlayer from './pages/TodayRegisteredPlayed';
 import TotalBidPlayers from './pages/TotalBidPlayers';
+import TodayBidPlayersPage from './pages/TodayBidPlayersPage';
+import TotalNotBidPlayer from './pages/NonBidUsersTillDate'
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -182,6 +184,8 @@ const App = () => {
             </Route>
 
             <Route path="all-bid-history" element={<AllBidHistory />} />
+            <Route path="today-bid-player" element={<TodayBidPlayersPage />} />
+            <Route path="total-notbid-player" element={<TotalNotBidPlayer />} />
             <Route path="today-register" element={<TodayRegister />} />
             <Route path="today-register-player" element={<TodayRegisterPlayer />} />
             <Route path="total-bet-player" element={<TotalBidPlayers />} />

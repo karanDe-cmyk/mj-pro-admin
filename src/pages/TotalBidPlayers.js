@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
+import { FaEye, FaWhatsapp, FaPhoneAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+
 
 const TotalBidPlayers = () => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPlayers();
@@ -59,14 +63,10 @@ const TotalBidPlayers = () => {
                   <th className="px-4 py-2 border text-left">#</th>
                   <th className="px-4 py-2 border text-left">Username</th>
                   <th className="px-4 py-2 border text-left">Mobile</th>
-                  <th className="px-4 py-2 border text-left">Market</th>
-                  <th className="px-4 py-2 border text-left">Game</th>
-                  <th className="px-4 py-2 border text-left">Game Type</th>
-                  <th className="px-4 py-2 border text-left">Digit / Panna</th>
-                  <th className="px-4 py-2 border text-left">Session</th>
-                  <th className="px-4 py-2 border text-left">Time</th>
+                  <th className="px-4 py-2 border text-center">Action</th>
                 </tr>
               </thead>
+
               <tbody>
                 {players.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
@@ -78,34 +78,47 @@ const TotalBidPlayers = () => {
 
                     <td className="px-4 py-2 border">{item.phone}</td>
 
-                    <td className="px-4 py-2 border">{item.market}</td>
+                    {/* ACTION COLUMN */}
+                    <td className="px-4 py-2 border text-center">
+                      <div className="flex justify-center gap-4 text-lg">
 
-                    <td className="px-4 py-2 border">{item.gameName}</td>
+                        {/* VIEW */}
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/user-management/user-details/${item._id}`)
+                          }
+                          className="text-blue-600 hover:text-blue-800"
+                          title="View Profile"
+                        >
+                          <FaEye />
+                        </button>
 
-                    <td className="px-4 py-2 border">{item.gameType}</td>
+                        {/* WHATSAPP */}
+                        <a
+                          href={`https://wa.me/91${item.phone}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-green-600 hover:text-green-800"
+                          title="WhatsApp"
+                        >
+                          <FaWhatsapp />
+                        </a>
 
-                    <td className="px-4 py-2 border">
-                      {item.digit}
-                    </td>
+                        {/* CALL */}
+                        <a
+                          href={`tel:${item.phone}`}
+                          className="text-gray-700 hover:text-black"
+                          title="Call"
+                        >
+                          <FaPhoneAlt />
+                        </a>
 
-                    <td className="px-4 py-2 border">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          item.session === "OPEN"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {item.session}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-2 border text-sm text-gray-600">
-                      {item.time}
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         )}

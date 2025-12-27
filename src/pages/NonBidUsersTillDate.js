@@ -1,31 +1,33 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
-import { FaWhatsapp, FaPhoneAlt, FaEye } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { FaEye, FaWhatsapp, FaPhoneAlt } from "react-icons/fa";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
-const TodayRegisteredPlayed = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [date, setDate] = useState("");
+const NonBidUsersTillDate = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const date = searchParams.get("date"); // ?date=28-12-2025
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (date) fetchUsers();
+  }, [date]);
+
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       const res = await axiosInstance.get(
-        "/api/auth/today-register-played?status=true"
+        "/api/auth/total-not-player",
+        { params: { date } }
       );
 
-      if (res.data.success) {
-        setData(res.data.data || []);
-        setDate(res.data.date);
+      if (res.data?.success) {
+        setUsers(res.data.data || []);
       } else {
-        setError("Failed to fetch data");
+        setError("Failed to fetch users");
       }
     } catch (err) {
       console.error(err);
@@ -38,10 +40,17 @@ const TodayRegisteredPlayed = () => {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4">
-          Today Registered & Played Players
-          {date && <span className="text-gray-500 text-sm ml-2">({date})</span>}
-        </h2>
+
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            Non-Bid Users
+          </h2>
+          {date && (
+            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded">
+              Till Date: {date}
+            </span>
+          )}
+        </div>
 
         {/* LOADING */}
         {loading && (
@@ -56,7 +65,7 @@ const TodayRegisteredPlayed = () => {
         )}
 
         {/* TABLE */}
-        {!loading && !error && data.length > 0 && (
+        {!loading && !error && users.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200">
               <thead className="bg-gray-100">
@@ -64,24 +73,39 @@ const TodayRegisteredPlayed = () => {
                   <th className="px-4 py-2 border text-left">#</th>
                   <th className="px-4 py-2 border text-left">Username</th>
                   <th className="px-4 py-2 border text-left">Mobile</th>
-                  <th className="px-4 py-2 border text-left">Time</th>
+                  <th className="px-4 py-2 border text-left">Wallet</th>
+                  <th className="px-4 py-2 border text-left">Status</th>
                   <th className="px-4 py-2 border text-center">Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                {data.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50 transition">
+                {users.map((user, index) => (
+                  <tr key={user._id} className="hover:bg-gray-50">
                     <td className="px-4 py-2 border">{index + 1}</td>
 
                     <td className="px-4 py-2 border font-medium text-blue-600">
-                      {item.userName}
+                      {user.userName}
                     </td>
 
-                    <td className="px-4 py-2 border">{item.phone}</td>
+                    <td className="px-4 py-2 border">
+                      {user.phone}
+                    </td>
 
-                    <td className="px-4 py-2 border text-sm text-gray-600">
-                      {item.time}
+                    <td className="px-4 py-2 border text-green-600 font-semibold">
+                      ₹ {user.walletBalance}
+                    </td>
+
+                    <td className="px-4 py-2 border">
+                      {user.status ? (
+                        <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
+                          Inactive
+                        </span>
+                      )}
                     </td>
 
                     {/* ACTION COLUMN */}
@@ -91,7 +115,9 @@ const TodayRegisteredPlayed = () => {
                         {/* VIEW */}
                         <button
                           onClick={() =>
-                            navigate(`/admin/user-management/user-details/${item.userId}`)
+                            navigate(
+                              `/admin/user-management/user-details/${user._id}`
+                            )
                           }
                           className="text-blue-600 hover:text-blue-800"
                           title="View Profile"
@@ -101,7 +127,7 @@ const TodayRegisteredPlayed = () => {
 
                         {/* WHATSAPP */}
                         <a
-                          href={`https://wa.me/91${item.phone}`}
+                          href={`https://wa.me/91${user.phone}`}
                           target="_blank"
                           rel="noreferrer"
                           className="text-green-600 hover:text-green-800"
@@ -112,7 +138,7 @@ const TodayRegisteredPlayed = () => {
 
                         {/* CALL */}
                         <a
-                          href={`tel:${item.phone}`}
+                          href={`tel:${user.phone}`}
                           className="text-gray-700 hover:text-black"
                           title="Call"
                         >
@@ -121,24 +147,23 @@ const TodayRegisteredPlayed = () => {
 
                       </div>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
-
             </table>
           </div>
         )}
 
-        {/* EMPTY STATE */}
-        {!loading && !error && data.length === 0 && (
+        {/* EMPTY */}
+        {!loading && !error && users.length === 0 && (
           <p className="text-center text-gray-500 py-6">
-            No players found for today
+            No non-bid users found till selected date
           </p>
         )}
+
       </div>
     </div>
   );
 };
 
-export default TodayRegisteredPlayed;
+export default NonBidUsersTillDate;

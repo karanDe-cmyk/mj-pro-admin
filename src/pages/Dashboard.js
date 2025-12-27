@@ -36,7 +36,8 @@ const Dashboard = () => {
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [betRates, setBetRates] = useState([]);
   const [selectedGameType, setSelectedGameType] = useState("");
-
+  const [todayBidPlayer, setTodayBidPlayer] = useState(0)
+  const [totalNotBidPlayer, setTodayNotBidPlayer] = useState(0);
   const [userStats, setUserStats] = useState({
     todayRegistrations: 0,
     todayRegisteredUsersWhoPlayedBid: 0,
@@ -56,6 +57,37 @@ const Dashboard = () => {
   const today = dayjs().format("YYYY-MM-DD");
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
+
+  const fetchTodayBidPlayer = async () => {
+    try {
+      const response = await instance.get('/api/auth/total-not-player', {
+        params: { date: selectedDate }
+      })
+
+      const count = response.data?.count
+      setTodayNotBidPlayer(count)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const fetchTodayNotBidPlayer = async () => {
+    try {
+      const response = await instance.get('/api/auth/total-not-player', {
+        params: { date: selectedDate }
+      })
+
+      const count = response.data?.count
+      setTodayBidPlayer(count)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchTodayBidPlayer();
+    fetchTodayNotBidPlayer();
+  }, [selectedDate]);
 
   // Handler for DatePicker changes
   const handleDateChange = (e) => {
@@ -286,7 +318,7 @@ const Dashboard = () => {
 
       } catch (error) {
         console.error("Error fetching total winnings:", error);
-        alert("Error fetching total winnings");
+        // alert("Error fetching total winnings");
       } finally {
         setLoadingButton(false);
       }
@@ -754,13 +786,13 @@ const Dashboard = () => {
         {/* Starline Bid Card */}
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate("/admin/all-bid-history")}
+          onClick={() => navigate(`/admin/today-bid-player?date=${selectedDate}`)}
         >
           <div className="flex justify-between items-center">
             <div>
               <p className="font-bold text-gray-700">Players(Today)</p>
               <p className="text-2xl font-bold mt-1">
-                {userStats.todayUsersWhoPlayedBid ?? "0"}
+                {todayBidPlayer ?? "0"}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -798,6 +830,24 @@ const Dashboard = () => {
               <p className="font-bold text-gray-700">Today Registration Player</p>
               <p className="text-2xl font-bold mt-1">
                 {userStats.todayRegisteredUsersWhoPlayedBid ?? "0"}
+              </p>
+            </div>
+            <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div
+          className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate( `/admin/total-notbid-player?date=${selectedDate}`)}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-gray-700">Total Not Bid Player</p>
+              <p className="text-2xl font-bold mt-1">
+                {totalNotBidPlayer}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
