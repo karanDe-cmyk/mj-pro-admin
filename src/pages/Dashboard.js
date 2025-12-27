@@ -1097,7 +1097,7 @@ const Dashboard = () => {
       {/* Fund Request History */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-6">
         <h3 className="text-lg font-bold mb-4">
-          Fund Request Auto Deposit History {selectedDate || todayFormatted}
+          Fund Request History {selectedDate || todayFormatted}
         </h3>
 
         {loading ? (
