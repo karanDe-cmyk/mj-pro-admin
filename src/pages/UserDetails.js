@@ -24,6 +24,8 @@ const UserDetails = () => {
   const [amount, setAmount] = useState("");
   const [depositTransactions, setDepositTransactions] = useState([]);
   const [manualDepositTransactions, setManualDepositTransactions] = useState([]);
+  const [adminDepositTransactions, setAdminDepositTransactions] = useState([]);
+  const [autoDepositTransactions, setAutoDepositTransactions] = useState([]);
   const [entries, setEntries] = useState(5);
   const { userId } = useParams();
   const [userData, setUserData] = useState(null);
@@ -68,11 +70,6 @@ const UserDetails = () => {
         deposits = response.data;
       }
 
-      const today = moment().format("YYYY-MM-DD");
-      deposits = deposits.filter((item) =>
-        moment(item.date, "YYYY-MM-DD HH:mm").isSame(today, "day")
-      );
-
       deposits = deposits.filter(
         (item) => item.status && item.status.toLowerCase() === "pending"
       );
@@ -112,6 +109,7 @@ const UserDetails = () => {
       console.error("Error updating status:", error);
     }
   };
+
   const deleteAccount = async () => {
     try {
       const response = await instance.delete(
@@ -159,24 +157,17 @@ const UserDetails = () => {
 
   const fetchWithdrawTransactions = async () => {
     try {
+      // पुराने API को बदलकर नया API use करें
       const response = await instance.get(
-        `/api/withdraw/transactions/${userId}`
+        `/api/users/withdrawals/${userId}`
       );
-      if (response.data.status) {
-        const today = moment().format("YYYY-MM-DD");
-        const filteredData = response.data.transactions.filter((txn) => {
-          const transactionDate = moment(txn.date || txn.time, [
-            "YYYY-MM-DD hh:mm:ss A",
-            "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ (z)",
-            "YYYY-MM-DDTHH:mm:ss.SSSZ",
-          ]).format("YYYY-MM-DD");
 
-          return (
-            txn.status.toLowerCase() === "pending" && transactionDate === today
-          );
+      if (response.data && Array.isArray(response.data)) {
+        const filteredData = response.data.filter((txn) => {
+          return txn.status.toLowerCase() === "pending" || txn.status.toLowerCase() === 'Success';
         });
 
-        setWithdrawData(filteredData);
+        setWithdrawData(response.data);
       }
     } catch (error) {
       console.error("Error fetching withdrawal transactions:", error);
@@ -195,8 +186,9 @@ const UserDetails = () => {
         status: status,
       });
 
-      setWithdrawData((prevData) => prevData.filter((txn) => txn._id !== id));
-      
+      // Status update के बाद data refresh करें
+      fetchWithdrawTransactions();
+
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
     }
@@ -208,7 +200,6 @@ const UserDetails = () => {
       setUserData(response.data);
       setStatus(response.data.status);
 
-      // नया API call financial summary के लिए
       try {
         const financialResponse = await instance.get(`/api/auth/getUserFinancialSummary/${userId}`);
         if (financialResponse.data?.success) {
@@ -244,7 +235,7 @@ const UserDetails = () => {
       return;
     }
 
-    setIsSubmitting(true); // Button disable करने के लिए
+    setIsSubmitting(true);
 
     try {
       const requestBody = {
@@ -285,79 +276,40 @@ const UserDetails = () => {
       console.error("Error processing transaction:", error);
       alert("Transaction failed. Please try again.");
     } finally {
-      setIsSubmitting(false); // फिर से enable करने के लिए
+      setIsSubmitting(false);
       closeModal();
     }
   };
 
-  const fetchTransactionsAll = async () => {
+  const fetchAutoDepositData = async () => {
     try {
-      setLoading(true);
-      const [depositRes, withdrawRes, manualDepositRes, autoDepositRes] =
-        await Promise.allSettled([
-          instance.get(`/api/deposit/transactions/${userId}`),
-          instance.get(`/api/withdraw/transactions/${userId}`),
-          instance.get(`/api/manualDeposit/user/${userId}`),
-          instance.get(`/api/userPayment/getAutoDeposit/${userId}`),
-        ]);
+      const response = await instance.get(`/api/userPayment/getAutoDeposit/${userId}`);
 
-      let depositTransactions = [];
-      let withdrawTransactions = [];
-      let manualDeposits = [];
-      let autoDeposits = [];
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        const allDeposits = response.data.data;
 
-      if (
-        depositRes.status === "fulfilled" &&
-        depositRes.value.status === 200 &&
-        depositRes.value.data.status &&
-        Array.isArray(depositRes.value.data.transactions)
-      ) {
-        depositTransactions = depositRes.value.data.transactions;
+        // Filter for Admin Deposits
+        const adminDeposits = allDeposits.filter(item =>
+          item.method === "Admin Deposit" || item.requestType === "Admin Deposit"
+        );
+
+        // Filter for Auto Deposits (non-admin)
+        const autoDeposits = allDeposits.filter(item =>
+          !(item.method === "Admin Deposit" || item.requestType === "Admin Deposit")
+        );
+
+        setAdminDepositTransactions(adminDeposits);
+        setAutoDepositTransactions(autoDeposits);
       }
-
-      if (
-        withdrawRes.status === "fulfilled" &&
-        withdrawRes.value.status === 200 &&
-        withdrawRes.value.data.status &&
-        Array.isArray(withdrawRes.value.data.transactions)
-      ) {
-        withdrawTransactions = withdrawRes.value.data.transactions;
-      }
-
-      if (
-        manualDepositRes.status === "fulfilled" &&
-        manualDepositRes.value.status === 200 &&
-        Array.isArray(manualDepositRes.value.data)
-      ) {
-        manualDeposits = manualDepositRes.value.data;
-      }
-
-      if (
-        autoDepositRes.status === "fulfilled" &&
-        autoDepositRes.value.status === 200 &&
-        autoDepositRes.value.data.success &&
-        Array.isArray(autoDepositRes.value.data.data)
-      ) {
-        autoDeposits = autoDepositRes.value.data.data;
-      }
-
-      formatTransactionData(
-        depositTransactions,
-        withdrawTransactions,
-        manualDeposits,
-        autoDeposits
-      );
     } catch (error) {
-      console.error("Error fetching transactions:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching auto deposit data:", error);
     }
   };
 
   useEffect(() => {
     if (!userId) return;
-    fetchTransactionsAll();
-  }, [userData]);
+    fetchAutoDepositData();
+  }, [userId]);
 
   const parseDate = (dateStr) => {
     if (moment(dateStr, moment.ISO_8601, true).isValid()) {
@@ -523,6 +475,96 @@ const UserDetails = () => {
     },
   ];
 
+  const adminDepositColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-green-50 text-green-700 font-bold">
+          + {amount}
+        </div>
+      ),
+    },
+    {
+      header: "Transaction ID",
+      accessor: "txnId",
+    },
+    {
+      header: "Method",
+      accessor: "method",
+    },
+    {
+      header: "Comments",
+      accessor: "comments",
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+    },
+  ];
+
+  const autoDepositColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-blue-50 text-blue-700 font-bold">
+          + {amount}
+        </div>
+      ),
+    },
+    {
+      header: "Transaction ID",
+      accessor: "txnId",
+    },
+    {
+      header: "Request Type",
+      accessor: "requestType",
+    },
+    {
+      header: "Comments",
+      accessor: "comments",
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+    },
+  ];
+
   const historyFilteredData = transactionHistoryDataAll.filter((item) =>
     Object.values(item).some((value) => {
       if (value !== null && value !== undefined) {
@@ -535,7 +577,7 @@ const UserDetails = () => {
   const withdrawColumns = [
     {
       header: "S.No",
-      cell: (row, index) => index + 1,
+      cell: (_value, _row, index) => index + 1,
     },
     {
       header: "Amount",
@@ -553,7 +595,7 @@ const UserDetails = () => {
     },
     {
       header: "Request No",
-      accessor: "requestNumber",
+      accessor: "transaction_id",
     },
     {
       header: "Status",
@@ -652,12 +694,13 @@ const UserDetails = () => {
   };
 
   const Table = ({ columns, data, pagination = true }) => {
-    const renderCell = (row, column) => {
+    const renderCell = (row, column, rowIndex) => {
       if (column.cell) {
-        return column.cell(row[column.accessor], row);
+        return column.cell(row[column.accessor], row, rowIndex);
       }
       return row[column.accessor] || "—";
     };
+
 
     return (
       <div className="overflow-x-auto">
@@ -682,7 +725,7 @@ const UserDetails = () => {
                     key={colIndex}
                     className="px-4 py-3 text-sm text-gray-700 border-b"
                   >
-                    {renderCell(row, col)}
+                    {renderCell(row, col, rowIndex)}
                   </td>
                 ))}
               </tr>
@@ -774,8 +817,8 @@ const UserDetails = () => {
               <div className="mb-2">
                 <span className="font-bold mr-2">Delete Account</span>
                 <button
-                  onClick={() => deleteAccount}
-                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${status ? 'bg-red-500' : 'bg-red-500'}`}
+                  onClick={deleteAccount}
+                  className="px-4 py-1 rounded-full bg-red-500 text-white font-bold text-sm hover:bg-red-600"
                 >
                   Delete
                 </button>
@@ -784,7 +827,7 @@ const UserDetails = () => {
                 <span className="font-bold mr-2">Active:</span>
                 <button
                   onClick={() => updateStatus(!status)}
-                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${status ? 'bg-green-500' : 'bg-red-500'}`}
+                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${status ? 'bg-green-500' : 'bg-red-500'} hover:opacity-90`}
                 >
                   {status ? "Yes" : "No"}
                 </button>
@@ -793,7 +836,7 @@ const UserDetails = () => {
                 <span className="font-bold mr-2">Banned:</span>
                 <button
                   onClick={() => updateStatus(!status)}
-                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${!status ? 'bg-green-500' : 'bg-red-500'}`}
+                  className={`px-4 py-1 rounded-full text-white font-bold text-sm ${!status ? 'bg-green-500' : 'bg-red-500'} hover:opacity-90`}
                 >
                   {!status ? "Yes" : "No"}
                 </button>
@@ -939,9 +982,10 @@ const UserDetails = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-5 mb-5">
+      {/* Add Fund Request List */}
+      {/* <div className="bg-white rounded-lg shadow p-5 mb-5">
         <h3 className="text-lg font-bold mb-4">
-          Add Fund Request List {moment().format("DD-MM-YYYY")}
+          Add Fund Request List
         </h3>
         <div className="flex justify-between mb-4">
           <input
@@ -964,13 +1008,59 @@ const UserDetails = () => {
           </select>
         </div>
         <Table columns={depositTransactionColumns} data={filteredDepositTransactions} />
+      </div> */}
+
+      {/* Fund Credit (Admin) */}
+      <div className="bg-white rounded-lg shadow p-5 mb-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">
+            Fund Credit (Admin)
+          </h3>
+          <div className="flex items-center">
+            <span className="mr-2">Show</span>
+            <select
+              className="border border-gray-300 px-3 py-1 rounded"
+              value={entries}
+              onChange={(e) => setEntries(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="ml-2">entries</span>
+          </div>
+        </div>
+        <Table columns={adminDepositColumns} data={adminDepositTransactions} />
+      </div>
+
+      {/* Fund Credit (Auto) */}
+      <div className="bg-white rounded-lg shadow p-5 mb-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">
+            Fund Credit (Auto)
+          </h3>
+          <div className="flex items-center">
+            <span className="mr-2">Show</span>
+            <select
+              className="border border-gray-300 px-3 py-1 rounded"
+              value={entries}
+              onChange={(e) => setEntries(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="ml-2">entries</span>
+          </div>
+        </div>
+        <Table columns={autoDepositColumns} data={autoDepositTransactions} />
       </div>
 
       {/* Withdraw Fund Request List */}
       <div className="bg-white rounded-lg shadow p-5 mb-5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">
-            Withdraw Fund Request List {moment().format("DD-MM-YYYY")}
+            Withdraw Fund Request List
           </h3>
           <div className="flex items-center">
             <span className="mr-2">Show</span>
@@ -1002,34 +1092,6 @@ const UserDetails = () => {
       {/* Winning History Component */}
       <div className="mt-6">
         <WinningHistory userId={userId} />
-      </div>
-
-      {/* Wallet Transaction History */}
-      <div className="bg-white rounded-lg shadow p-5">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold">Wallet Transaction History</h3>
-          <div className="flex items-center">
-            <span className="mr-2">Show</span>
-            <select
-              className="border border-gray-300 px-3 py-1 rounded"
-              value={entries}
-              onChange={(e) => setEntries(Number(e.target.value))}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
-            <span className="ml-2">entries</span>
-          </div>
-        </div>
-        <input
-          type="text"
-          className="border border-gray-300 px-4 py-2 rounded w-1/3 mb-4"
-          placeholder="Search Transactions..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Table columns={transactionHistoryColumnsAll} data={historyFilteredData} />
       </div>
 
       {/* Modal */}
