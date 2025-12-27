@@ -12,7 +12,7 @@ const { Sider, Content } = Layout;
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1080);
   const [openKeys, setOpenKeys] = useState([]);
   const [amountStats, setAmountStats] = useState({
