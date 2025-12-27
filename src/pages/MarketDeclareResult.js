@@ -211,7 +211,7 @@ const MarketDeclareResult = () => {
 
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
-    if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
+    if (!values.gameName || !values.gameType || !values.panna) {
       message.error("Please select all required fields to show winners.");
       return;
     }
@@ -219,7 +219,7 @@ const MarketDeclareResult = () => {
       setLoading(true);
       setCurrentSessionType(values.gameType);
       const response = await instance.post(`/api/showwinners/getShowWinnerBids`, {
-        marketName: values.marketGame,
+        marketName: "Main Market",
         gameName: values.gameName,
         date: values.resultDate
           ? values.resultDate.format("DD-MM-YYYY")
@@ -272,7 +272,7 @@ const MarketDeclareResult = () => {
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
-          marketName: values.marketGame,
+          marketName: "Main Market",
           gameName: normalizedGameName,
           date: declaredDateStr,
           gameType: values.gameType,
@@ -314,7 +314,7 @@ const MarketDeclareResult = () => {
 
           if (storedToken) {
             console.log("Sending notification with data:", {
-              market: values.marketGame,
+              market: "Main Market",
               gameType: values.gameType,
               gameName: normalizedGameName,
               result: values.gameType === "open"
@@ -323,7 +323,7 @@ const MarketDeclareResult = () => {
             });
             const notificationResponse = await instance.post('/api/notification', {
               token: storedToken,
-              market: values.marketGame,
+              market: "Main Market",
               gameType: values.gameType,
               gameName: normalizedGameName,
               result: values.gameType === "open"
@@ -707,7 +707,7 @@ const MarketDeclareResult = () => {
             {/* First Row - Market & Game */}
             <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: isMobile ? "12px" : "16px" }}>
               {/* Market Name - 50% width */}
-              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+              {/* <Col xs={12} sm={12} md={12} lg={12} xl={12}>
                 <Form.Item
                   name="marketGame"
                   label={isMobile ? "Market" : "Market Name"}
@@ -728,7 +728,7 @@ const MarketDeclareResult = () => {
                     ))}
                   </Select>
                 </Form.Item>
-              </Col>
+              </Col> */}
 
               {/* Game Name - 50% width */}
               <Col xs={12} sm={12} md={12} lg={12} xl={12}>
