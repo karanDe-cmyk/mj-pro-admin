@@ -183,7 +183,7 @@ const Dashboard = () => {
         params: { date: selectedDate }
       });
       const pendingWithdrawals = response.data.data.filter(
-        (withdrawal) => withdrawal.status === "Success"
+        (withdrawal) => withdrawal.status === "Success" || withdrawal.status === "pending"
       );
       setWithdrawalHistory(pendingWithdrawals);
     } catch (err) {
