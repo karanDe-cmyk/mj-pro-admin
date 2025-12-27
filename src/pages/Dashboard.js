@@ -46,7 +46,7 @@ const Dashboard = () => {
 
   const [amountStats, setAmountStats] = useState({
     totalWalletBalance: 0,
-    withdrawalRequest: 0,
+    WithdrawalRequest: 0,
     approvedWithdrawalAmount: 0,
     manualWithdrawalAmount: 0,
     autoPaymentAmount: 0,
@@ -77,12 +77,13 @@ const Dashboard = () => {
       if (data) {
         setAmountStats({
           totalWalletBalance: data.totalWalletBalance || 0,
-          withdrawalRequest: data.WithdrawalRequest,
+          WithdrawalRequest: data.WithdrawalRequest || 0,
           approvedWithdrawalAmount: data.approvedWithdrawalAmount || 0,
           manualWithdrawalAmount: data.manualWithdrawalAmount || 0,
           autoPaymentAmount: data.autoPaymentAmount || 0,
           manualdepositAmount: data.manualdepositAmount || 0
         });
+
       } else {
         console.error("Error fetching financer stats:", data);
       }
@@ -975,7 +976,7 @@ const Dashboard = () => {
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
                 <div className="flex w-full items-center">
                   <span className="font-medium">Withdraw Request</span>
-                  <span className="font-bold ml-auto">Rs {amountStats.withdrawalRequest || 0}</span>
+                  <span className="font-bold ml-auto">Rs {amountStats.WithdrawalRequest || 0}</span>
                   <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate(`/admin/wallet-management/withdraw-request?data=${selectedDate}`)}>
                     View
                   </button>
