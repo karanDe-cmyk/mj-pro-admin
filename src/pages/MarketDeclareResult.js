@@ -64,14 +64,40 @@ const MarketDeclareResult = () => {
   const allPannaNumbers = Object.values(pannaOptions).flat();
 
   const handlePannaChange = (value) => {
-    if (!value) return;
+    if (!value || value.length !== 3) return;
+
+    // Validate panna
+    if (!allPannaNumbers.includes(value)) {
+      message.error("Invalid panna number");
+      return;
+    }
 
     const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
     const lastDigit = sum % 10;
 
     setSelectedPanna(value);
     setDigitValue(lastDigit.toString());
-    form.setFieldsValue({ digit: lastDigit.toString() });
+    form.setFieldsValue({
+      digit: lastDigit.toString(),
+      panna: value
+    });
+
+    // Optionally, show success message
+    message.success(`Digit auto-calculated: ${lastDigit}`);
+  };
+
+  const validatePanna = (value) => {
+    if (!value || value.length !== 3) return false;
+
+    const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
+    const lastDigit = sum % 10;
+
+    // Check if panna exists in our mapping
+    if (pannaOptions[lastDigit] && pannaOptions[lastDigit].includes(value)) {
+      return true;
+    }
+
+    return false;
   };
 
   const { Search } = Input;
@@ -781,23 +807,54 @@ const MarketDeclareResult = () => {
                 <Form.Item
                   name="panna"
                   label="Panna"
-                  rules={[{ required: true }]}
+                  rules={[
+                    { required: true, message: "Please enter panna" },
+                    {
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+                        if (value.length !== 3) {
+                          return Promise.reject(new Error('Panna must be 3 digits'));
+                        }
+                        if (!allPannaNumbers.includes(value)) {
+                          return Promise.reject(new Error('Invalid panna number'));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                   style={{ marginBottom: 0 }}
                 >
-                  <Select
-                    onChange={handlePannaChange}
-                    placeholder="Select Panna"
-                    showSearch
-                    filterOption={(input, option) => option.children.includes(input)}
-                    style={{ width: "100%" }}
+                  <Input
+                    placeholder="Enter 3-digit panna"
+                    maxLength={3}
+                    onKeyPress={(e) => {
+                      // केवल नंबर allow करें
+                      if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onKeyUp={(e) => {
+                      const value = e.target.value;
+                      // यदि 3 डिजिट पूरे हो गए हैं तो स्वचालित रूप से डिजिट calculate करें
+                      if (value.length === 3) {
+                        handlePannaChange(value);
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // यदि 3 डिजिट पूरे हो गए हैं तो स्वचालित रूप से डिजिट calculate करें
+                      if (value.length === 3) {
+                        handlePannaChange(value);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      fontSize: isMobile ? "14px" : "16px"
+                    }}
                     size={isMobile ? "small" : "middle"}
-                  >
-                    {allPannaNumbers.map((panna) => (
-                      <Select.Option key={panna} value={panna}>
-                        {panna}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                  />
                 </Form.Item>
               </Col>
 
