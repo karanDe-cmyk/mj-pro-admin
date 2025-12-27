@@ -64,40 +64,14 @@ const MarketDeclareResult = () => {
   const allPannaNumbers = Object.values(pannaOptions).flat();
 
   const handlePannaChange = (value) => {
-    if (!value || value.length !== 3) return;
-
-    // Validate panna
-    if (!allPannaNumbers.includes(value)) {
-      message.error("Invalid panna number");
-      return;
-    }
+    if (!value) return;
 
     const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
     const lastDigit = sum % 10;
 
     setSelectedPanna(value);
     setDigitValue(lastDigit.toString());
-    form.setFieldsValue({
-      digit: lastDigit.toString(),
-      panna: value
-    });
-
-    // Optionally, show success message
-    message.success(`Digit auto-calculated: ${lastDigit}`);
-  };
-
-  const validatePanna = (value) => {
-    if (!value || value.length !== 3) return false;
-
-    const sum = value.split("").reduce((acc, num) => acc + parseInt(num, 10), 0);
-    const lastDigit = sum % 10;
-
-    // Check if panna exists in our mapping
-    if (pannaOptions[lastDigit] && pannaOptions[lastDigit].includes(value)) {
-      return true;
-    }
-
-    return false;
+    form.setFieldsValue({ digit: lastDigit.toString() });
   };
 
   const { Search } = Input;
@@ -237,7 +211,7 @@ const MarketDeclareResult = () => {
 
   const fetchWinners = async () => {
     const values = form.getFieldsValue();
-    if (!values.gameName || !values.gameType || !values.panna) {
+    if (!values.marketGame || !values.gameName || !values.gameType || !values.panna) {
       message.error("Please select all required fields to show winners.");
       return;
     }
@@ -245,7 +219,7 @@ const MarketDeclareResult = () => {
       setLoading(true);
       setCurrentSessionType(values.gameType);
       const response = await instance.post(`/api/showwinners/getShowWinnerBids`, {
-        marketName: "Main Market",
+        marketName: values.marketGame,
         gameName: values.gameName,
         date: values.resultDate
           ? values.resultDate.format("DD-MM-YYYY")
@@ -298,7 +272,7 @@ const MarketDeclareResult = () => {
       const response = await instance.post(
         `/api/mainmarketdeclareResult/declareResult`,
         {
-          marketName: "Main Market",
+          marketName: values.marketGame,
           gameName: normalizedGameName,
           date: declaredDateStr,
           gameType: values.gameType,
@@ -340,7 +314,7 @@ const MarketDeclareResult = () => {
 
           if (storedToken) {
             console.log("Sending notification with data:", {
-              market: "Main Market",
+              market: values.marketGame,
               gameType: values.gameType,
               gameName: normalizedGameName,
               result: values.gameType === "open"
@@ -349,7 +323,7 @@ const MarketDeclareResult = () => {
             });
             const notificationResponse = await instance.post('/api/notification', {
               token: storedToken,
-              market: "Main Market",
+              market: values.marketGame,
               gameType: values.gameType,
               gameName: normalizedGameName,
               result: values.gameType === "open"
@@ -733,7 +707,7 @@ const MarketDeclareResult = () => {
             {/* First Row - Market & Game */}
             <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: isMobile ? "12px" : "16px" }}>
               {/* Market Name - 50% width */}
-              {/* <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
                 <Form.Item
                   name="marketGame"
                   label={isMobile ? "Market" : "Market Name"}
@@ -754,7 +728,7 @@ const MarketDeclareResult = () => {
                     ))}
                   </Select>
                 </Form.Item>
-              </Col> */}
+              </Col>
 
               {/* Game Name - 50% width */}
               <Col xs={12} sm={12} md={12} lg={12} xl={12}>
@@ -807,54 +781,23 @@ const MarketDeclareResult = () => {
                 <Form.Item
                   name="panna"
                   label="Panna"
-                  rules={[
-                    { required: true, message: "Please enter panna" },
-                    {
-                      validator: (_, value) => {
-                        if (!value) return Promise.resolve();
-                        if (value.length !== 3) {
-                          return Promise.reject(new Error('Panna must be 3 digits'));
-                        }
-                        if (!allPannaNumbers.includes(value)) {
-                          return Promise.reject(new Error('Invalid panna number'));
-                        }
-                        return Promise.resolve();
-                      }
-                    }
-                  ]}
+                  rules={[{ required: true }]}
                   style={{ marginBottom: 0 }}
                 >
-                  <Input
-                    placeholder="Enter 3-digit panna"
-                    maxLength={3}
-                    onKeyPress={(e) => {
-                      // केवल नंबर allow करें
-                      if (!/[0-9]/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    onKeyUp={(e) => {
-                      const value = e.target.value;
-                      // यदि 3 डिजिट पूरे हो गए हैं तो स्वचालित रूप से डिजिट calculate करें
-                      if (value.length === 3) {
-                        handlePannaChange(value);
-                      }
-                    }}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // यदि 3 डिजिट पूरे हो गए हैं तो स्वचालित रूप से डिजिट calculate करें
-                      if (value.length === 3) {
-                        handlePannaChange(value);
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      fontSize: isMobile ? "14px" : "16px"
-                    }}
+                  <Select
+                    onChange={handlePannaChange}
+                    placeholder="Select Panna"
+                    showSearch
+                    filterOption={(input, option) => option.children.includes(input)}
+                    style={{ width: "100%" }}
                     size={isMobile ? "small" : "middle"}
-                  />
+                  >
+                    {allPannaNumbers.map((panna) => (
+                      <Select.Option key={panna} value={panna}>
+                        {panna}
+                      </Select.Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
 
