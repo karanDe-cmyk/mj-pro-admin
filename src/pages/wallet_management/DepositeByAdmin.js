@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from "../../utils/axiosInstance";
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 const DepositTransactionsTable = () => {
     const [transactions, setTransactions] = useState([]);
@@ -10,6 +11,9 @@ const DepositTransactionsTable = () => {
     const [sortField, setSortField] = useState('date');
     const [sortOrder, setSortOrder] = useState('desc');
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchParams] = useSearchParams();
+
+    const selectedDate = searchParams.get('date') || '';
 
     // Fetch all transactions from API
     const fetchTransactions = async () => {
@@ -17,7 +21,7 @@ const DepositTransactionsTable = () => {
             setLoading(true);
             setError(null);
 
-            const response = await axiosInstance.get('/api/deposit/all-transactions');
+            const response = await axiosInstance.get(`/api/userPayment/getpaymentResponse?date=${selectedDate}`);
 
             if (response.data.status) {
                 const allTransactions = response.data.data.transactionsWithUser || response.data.data.transactions;
