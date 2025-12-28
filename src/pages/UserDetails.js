@@ -26,6 +26,8 @@ const UserDetails = () => {
   const [manualDepositTransactions, setManualDepositTransactions] = useState([]);
   const [adminDepositTransactions, setAdminDepositTransactions] = useState([]);
   const [autoDepositTransactions, setAutoDepositTransactions] = useState([]);
+  const [adminWithdrawalTransactions, setAdminWithdrawalTransactions] = useState([]);
+  const [autoWithdrawalTransactions, setAutoWithdrawalTransactions] = useState([]);
   const [entries, setEntries] = useState(5);
   const { userId } = useParams();
   const [userData, setUserData] = useState(null);
@@ -157,17 +159,29 @@ const UserDetails = () => {
 
   const fetchWithdrawTransactions = async () => {
     try {
-      // पुराने API को बदलकर नया API use करें
       const response = await instance.get(
         `/api/users/withdrawals/${userId}`
       );
 
       if (response.data && Array.isArray(response.data)) {
+        // Separate withdrawals by type
+        const adminWithdrawals = response.data.filter(
+          (txn) => txn.method === "Manual Withdrawal" || txn.type === "manual"
+        );
+        
+        const autoWithdrawals = response.data.filter(
+          (txn) => txn.method === "Auto Withdrawal" || txn.type === "bank"
+        );
+
+        setAdminWithdrawalTransactions(adminWithdrawals);
+        setAutoWithdrawalTransactions(autoWithdrawals);
+
+        // Keep pending/success for the original withdraw table
         const filteredData = response.data.filter((txn) => {
-          return txn.status.toLowerCase() === "pending" || txn.status.toLowerCase() === 'Success';
+          return txn.status.toLowerCase() === "pending" || txn.status.toLowerCase() === 'success';
         });
 
-        setWithdrawData(response.data);
+        setWithdrawData(filteredData);
       }
     } catch (error) {
       console.error("Error fetching withdrawal transactions:", error);
@@ -186,7 +200,6 @@ const UserDetails = () => {
         status: status,
       });
 
-      // Status update के बाद data refresh करें
       fetchWithdrawTransactions();
 
     } catch (error) {
@@ -288,12 +301,10 @@ const UserDetails = () => {
       if (response.data?.success && Array.isArray(response.data.data)) {
         const allDeposits = response.data.data;
 
-        // Filter for Admin Deposits
         const adminDeposits = allDeposits.filter(item =>
           item.method === "Admin Deposit" || item.requestType === "Admin Deposit"
         );
 
-        // Filter for Auto Deposits (non-admin)
         const autoDeposits = allDeposits.filter(item =>
           !(item.method === "Admin Deposit" || item.requestType === "Admin Deposit")
         );
@@ -550,6 +561,98 @@ const UserDetails = () => {
       header: "Date",
       accessor: "date",
       cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+    },
+  ];
+
+  // New columns for Admin Withdrawal
+  const adminWithdrawalColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+    },
+    {
+      header: "User Name",
+      accessor: "userName",
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-red-50 text-red-700 font-bold">
+          - {amount}
+        </div>
+      ),
+    },
+    {
+      header: "Transaction ID",
+      accessor: "transaction_id",
+    },
+    {
+      header: "Method",
+      accessor: "method",
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date, "YYYY-MM-DD hh:mm:ss A").format("YYYY-MM-DD hh:mm:ss A"),
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+    },
+  ];
+
+  // New columns for Auto Withdrawal
+  const autoWithdrawalColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+    },
+    {
+      header: "User Name",
+      accessor: "userName",
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-orange-50 text-orange-700 font-bold">
+          - {amount}
+        </div>
+      ),
+    },
+    {
+      header: "Transaction ID",
+      accessor: "transaction_id",
+    },
+    {
+      header: "Method",
+      accessor: "method",
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date, "YYYY-MM-DD hh:mm:ss A").format("YYYY-MM-DD hh:mm:ss A"),
     },
     {
       header: "Status",
@@ -982,34 +1085,6 @@ const UserDetails = () => {
         </div>
       </div>
 
-      {/* Add Fund Request List */}
-      {/* <div className="bg-white rounded-lg shadow p-5 mb-5">
-        <h3 className="text-lg font-bold mb-4">
-          Add Fund Request List
-        </h3>
-        <div className="flex justify-between mb-4">
-          <input
-            type="text"
-            className="border border-gray-300 px-4 py-2 rounded w-1/3"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select
-            className="border border-gray-300 px-3 py-2 rounded"
-            value={entries}
-            onChange={(e) => setEntries(Number(e.target.value))}
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={30}>30</option>
-            <option value={40}>40</option>
-            <option value={50}>50</option>
-          </select>
-        </div>
-        <Table columns={depositTransactionColumns} data={filteredDepositTransactions} />
-      </div> */}
-
       {/* Fund Credit (Admin) */}
       <div className="bg-white rounded-lg shadow p-5 mb-5">
         <div className="flex justify-between items-center mb-4">
@@ -1054,6 +1129,52 @@ const UserDetails = () => {
           </div>
         </div>
         <Table columns={autoDepositColumns} data={autoDepositTransactions} />
+      </div>
+
+      {/* Withdraw (Admin) - NEW */}
+      <div className="bg-white rounded-lg shadow p-5 mb-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">
+            Withdraw (Admin)
+          </h3>
+          <div className="flex items-center">
+            <span className="mr-2">Show</span>
+            <select
+              className="border border-gray-300 px-3 py-1 rounded"
+              value={entries}
+              onChange={(e) => setEntries(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="ml-2">entries</span>
+          </div>
+        </div>
+        <Table columns={adminWithdrawalColumns} data={adminWithdrawalTransactions} />
+      </div>
+
+      {/* Withdraw (Auto) - NEW */}
+      <div className="bg-white rounded-lg shadow p-5 mb-5">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">
+            Withdraw (Auto)
+          </h3>
+          <div className="flex items-center">
+            <span className="mr-2">Show</span>
+            <select
+              className="border border-gray-300 px-3 py-1 rounded"
+              value={entries}
+              onChange={(e) => setEntries(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="ml-2">entries</span>
+          </div>
+        </div>
+        <Table columns={autoWithdrawalColumns} data={autoWithdrawalTransactions} />
       </div>
 
       {/* Withdraw Fund Request List */}
@@ -1146,4 +1267,4 @@ const UserDetails = () => {
   );
 };
 
-export default UserDetails;
+export default UserDetails

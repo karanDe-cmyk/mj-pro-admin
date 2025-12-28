@@ -90,6 +90,18 @@ const MarketDeclareResult = () => {
         ];
         setMarketGameList(uniqueMarkets);
         setAllGames(response.data);
+        
+        // Set default market to "Main Market" if it exists
+        if (uniqueMarkets.includes("Main Market")) {
+          setSelectedMarketGame("Main Market");
+          form.setFieldsValue({ marketGame: "Main Market" });
+          
+          // Set game options for Main Market
+          const filteredGames = response.data
+            .filter((game) => game.marketName === "Main Market")
+            .map((game) => game.gameName);
+          setGameOptions([...new Set(filteredGames)]);
+        }
       }
     } catch (error) {
       console.error("Error fetching market and game list:", error);
@@ -160,18 +172,14 @@ const MarketDeclareResult = () => {
         }
       });
 
-      const mergedResults = mainMarketGames.map((gameName, index) => {
-        const displayDate = date.format("DD-MM-YYYY");
-        const exactKey = `${gameName}_${displayDate}`;
-        const resultData = resultMap[exactKey] || {};
-        return {
-          sNo: index + 1,
-          gameName,
-          date: displayDate,
-          open: resultData.open || null,
-          close: resultData.close || null,
-        };
-      });
+      // Only show games that have been declared (have open or close results)
+      const mergedResults = Object.values(resultMap).map((resultData, index) => ({
+        sNo: index + 1,
+        gameName: resultData.gameName,
+        date: resultData.date,
+        open: resultData.open || null,
+        close: resultData.close || null,
+      }));
 
       setGameResults(mergedResults);
       setFilteredResults(mergedResults);
@@ -289,23 +297,7 @@ const MarketDeclareResult = () => {
         toast.success("Result declared successfully!");
         setIsWinnerModalVisible(false);
 
-        const newResult = {
-          sNo: gameResults.length + 1,
-          gameName: normalizedGameName,
-          date: declaredDateStr,
-          open: values.gameType === "open" ? {
-            value: `${values.panna}-${values.digit}`,
-            id: response.data.resultId || new Date().getTime(),
-          } : null,
-          close: values.gameType === "close" ? {
-            value: `${values.digit}-${values.panna}`,
-            id: response.data.resultId || new Date().getTime(),
-          } : null,
-        };
-
-        setGameResults(prev => [...prev, newResult].map((item, i) => ({ ...item, sNo: i + 1 })));
-        setFilteredResults(prev => [...prev, newResult].map((item, i) => ({ ...item, sNo: i + 1 })));
-
+        // Refresh the results to show the newly declared game
         setSelectedDate(declaredDateMoment);
         fetchDeclaredResults(declaredDateMoment);
 
@@ -393,7 +385,7 @@ const MarketDeclareResult = () => {
             return { ...result, close: null };
           }
           return result;
-        })
+        }).filter(result => result.open !== null || result.close !== null) // Remove if both are null
       );
 
       setFilteredResults((prevResults) =>
@@ -404,7 +396,7 @@ const MarketDeclareResult = () => {
             return { ...result, close: null };
           }
           return result;
-        })
+        }).filter(result => result.open !== null || result.close !== null) // Remove if both are null
       );
 
       setRefresh((prev) => !prev);
@@ -704,34 +696,19 @@ const MarketDeclareResult = () => {
               Market & Game Selection
             </Title>
 
-            {/* First Row - Market & Game */}
-            <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: isMobile ? "12px" : "16px" }}>
-              {/* Market Name - 50% width */}
-              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
-                <Form.Item
-                  name="marketGame"
-                  label={isMobile ? "Market" : "Market Name"}
-                  rules={[{ required: true }]}
-                  style={{ marginBottom: 0 }}
-                >
-                  <Select
-                    onChange={handleMarketChange}
-                    placeholder="Select Market"
-                    loading={loading}
-                    style={{ width: "100%" }}
-                    size={isMobile ? "small" : "middle"}
-                  >
-                    {marketGameList.map((market, index) => (
-                      <Select.Option key={index} value={market}>
-                        {market}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
+            {/* Hidden Market Field - Set to Main Market by default */}
+            <Form.Item
+              name="marketGame"
+              hidden
+              initialValue="Main Market"
+            >
+              <Input />
+            </Form.Item>
 
-              {/* Game Name - 50% width */}
-              <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+            {/* First Row - Game Name only (full width) */}
+            <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: isMobile ? "12px" : "16px" }}>
+              {/* Game Name - 100% width */}
+              <Col xs={24} sm={24} md={24} lg={24} xl={24}>
                 <Form.Item
                   name="gameName"
                   label={isMobile ? "Game" : "Game Name"}
@@ -776,28 +753,32 @@ const MarketDeclareResult = () => {
                 </Form.Item>
               </Col>
 
-              {/* Panna - 33% width */}
+              {/* Panna - 33% width - Now accepts manual typing */}
               <Col xs={8} sm={8} md={8} lg={8} xl={8}>
                 <Form.Item
                   name="panna"
                   label="Panna"
-                  rules={[{ required: true }]}
+                  rules={[
+                    { required: true, message: "Please enter panna" },
+                    { 
+                      pattern: /^[0-9]{3}$/, 
+                      message: "Panna must be 3 digits" 
+                    }
+                  ]}
                   style={{ marginBottom: 0 }}
                 >
-                  <Select
-                    onChange={handlePannaChange}
-                    placeholder="Select Panna"
-                    showSearch
-                    filterOption={(input, option) => option.children.includes(input)}
+                  <Input
+                    placeholder="Enter Panna"
+                    maxLength={3}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value.length === 3 && /^[0-9]{3}$/.test(value)) {
+                        handlePannaChange(value);
+                      }
+                    }}
                     style={{ width: "100%" }}
                     size={isMobile ? "small" : "middle"}
-                  >
-                    {allPannaNumbers.map((panna) => (
-                      <Select.Option key={panna} value={panna}>
-                        {panna}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                  />
                 </Form.Item>
               </Col>
 
@@ -877,7 +858,6 @@ const MarketDeclareResult = () => {
         bodyStyle={{ padding: isMobile ? "8px" : "16px" }}
         footer={null}
       >
-        {/* Winner modal content remains the same */}
         {(winners.openWinners?.length > 0 || winners.closeWinners?.length > 0 || winners.jodiWinners?.length > 0) ? (
           <>
             {/* Open Winners */}
@@ -906,7 +886,55 @@ const MarketDeclareResult = () => {
               </div>
             )}
 
-            {/* Similar for close winners and jodi winners */}
+            {winners.closeWinners?.length > 0 && (
+              <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
+                <Title level={5} style={{ fontSize: isMobile ? '14px' : '16px', marginBottom: '8px' }}>
+                  Close Session Winners
+                </Title>
+                <div style={{ overflowX: 'auto' }}>
+                  <Table
+                    columns={[
+                      { title: "User", dataIndex: "userName", key: "userName", width: 80 },
+                      { title: "Game", dataIndex: "gameName", key: "gameName", width: 80 },
+                      { title: "Type", dataIndex: "gameType", key: "gameType", width: 60 },
+                      { title: "Digit", dataIndex: "digit", key: "digit", width: 60 },
+                      { title: "Bid", dataIndex: "points", key: "points", width: 60 },
+                      { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                    ]}
+                    dataSource={winners.closeWinners}
+                    rowKey="_id"
+                    size={isMobile ? "small" : "middle"}
+                    scroll={isMobile ? { x: 500 } : {}}
+                    pagination={false}
+                  />
+                </div>
+              </div>
+            )}
+
+            {winners.jodiWinners?.length > 0 && (
+              <div>
+                <Title level={5} style={{ fontSize: isMobile ? '14px' : '16px', marginBottom: '8px' }}>
+                  Jodi Winners
+                </Title>
+                <div style={{ overflowX: 'auto' }}>
+                  <Table
+                    columns={[
+                      { title: "User", dataIndex: "userName", key: "userName", width: 80 },
+                      { title: "Game", dataIndex: "gameName", key: "gameName", width: 80 },
+                      { title: "Type", dataIndex: "gameType", key: "gameType", width: 60 },
+                      { title: "Digit", dataIndex: "digit", key: "digit", width: 60 },
+                      { title: "Bid", dataIndex: "points", key: "points", width: 60 },
+                      { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                    ]}
+                    dataSource={winners.jodiWinners}
+                    rowKey="_id"
+                    size={isMobile ? "small" : "middle"}
+                    scroll={isMobile ? { x: 500 } : {}}
+                    pagination={false}
+                  />
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <p style={{ textAlign: "center", fontSize: isMobile ? "14px" : "16px", padding: "20px", color: "#ff4d4f" }}>
@@ -1001,6 +1029,9 @@ const MarketDeclareResult = () => {
             borderRadius: "8px",
           }}
           scroll={isMobile ? { x: 240 } : { x: 400 }}
+          locale={{
+            emptyText: "No declared results found for this date"
+          }}
         />
 
         <ToastContainer />
