@@ -74,7 +74,7 @@ import TotalBidPlayers from './pages/TotalBidPlayers';
 import TodayBidPlayersPage from './pages/TodayBidPlayersPage';
 import TotalNotBidPlayer from './pages/NonBidUsersTillDate';
 import TotalWithdrawal from './pages/wallet_management/TotalWithdrawal'
-
+import TotalwinningAmount from "./pages/Totalwinningamount"
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
@@ -199,7 +199,7 @@ const App = () => {
             <Route path="bidrevert" element={<Bidrevert />} />
             <Route path="bids-list" element={<TotalBidsList />} />
             <Route path="wins-list" element={<TotalWinsList />} />
-
+<Route path = "totalwinning-amount" element={<TotalwinningAmount/>}/>
             <Route path="gateway-payment" element={<GatewayPayment />} />
           </Route>
 

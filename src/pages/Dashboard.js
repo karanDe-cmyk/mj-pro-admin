@@ -1001,14 +1001,17 @@ const fetchTodayNotBidPlayer = async () => {
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
-                <div className="flex w-full items-center">
-                  <span className="font-medium">Total Winning Amount</span>
-                  <span className="font-bold ml-auto">Rs {dashboardData2.totalWinAmount || 0}</span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm">
-                    View
-                  </button>
-                </div>
-              </div>
+      <div className="flex w-full items-center">
+        <span className="font-medium">Total Winning Amount</span>
+        <span className="font-bold ml-auto">Rs {dashboardData2.totalWinAmount || 0}</span>
+        <button
+          onClick={() => navigate("/admin/totalwinning-amount")}
+          className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm"
+        >
+          View
+        </button>
+      </div>
+    </div>
 
               <div
                 className={`p-4 rounded-lg border h-[72px] flex items-center
