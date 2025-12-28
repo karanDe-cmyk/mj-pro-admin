@@ -102,9 +102,7 @@ const Dashboard = () => {
 
   const fetchFinancerStats = async () => {
     try {
-      const response = await instance.get(`/api/auth/dashboardStats`, {
-        params: { date: selectedDate }
-      });
+      const response = await instance.get(`/api/auth/dashboardStats?date=${selectedDate}`);
       const data = response.data?.data;
       if (data) {
         setAmountStats({
@@ -535,6 +533,10 @@ const Dashboard = () => {
     {
       header: "Txn ID",
       key: "txnId",
+    },
+    {
+      header: "Payment Method",
+      key: "method",
     },
     {
       header: "Status",
@@ -1070,7 +1072,7 @@ const Dashboard = () => {
                   <span className="font-bold ml-auto">
                     Rs {amountStats.manualdepositAmount || 0}
                   </span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/wallet-management/all-deposit-by-admin')}>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate(`/admin/wallet-management/all-deposit-by-admin?date=${selectedDate}`)}>
                     View
                   </button>
                 </div>
@@ -1082,7 +1084,7 @@ const Dashboard = () => {
                   <span className="font-bold ml-auto">
                     Rs {amountStats.approvedWithdrawalAmount || 0}
                   </span>
-                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate('/admin/wallet-management/withdraw-request')}>
+                  <button className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm" onClick={() => navigate(`/admin/wallet-management/total-withdraw?date=${selectedDate}`)}>
                     View
                   </button>
                 </div>
@@ -1112,25 +1114,6 @@ const Dashboard = () => {
           <p className="text-gray-500 text-center py-4">
             No records found for {selectedDate || "today"}
           </p>
-        )}
-      </div>
-
-
-      {/* Withdrawal Request History */}
-      <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-        <h3 className="text-lg font-bold mb-4">
-          Withdraw Request History {selectedDate || today}
-        </h3>
-        {loading ? (
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : error ? (
-          <p className="text-red-600">{error}</p>
-        ) : withdrawalHistory.length > 0 ? (
-          renderTable(withdrawalColumns, withdrawalHistory)
-        ) : (
-          <p className="text-gray-500 text-center py-4">No pending withdrawal requests</p>
         )}
       </div>
     </div>

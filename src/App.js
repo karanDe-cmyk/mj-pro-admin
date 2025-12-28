@@ -72,7 +72,8 @@ import TodayRegister from './pages/TodayRegister';
 import TodayRegisterPlayer from './pages/TodayRegisteredPlayed';
 import TotalBidPlayers from './pages/TotalBidPlayers';
 import TodayBidPlayersPage from './pages/TodayBidPlayersPage';
-import TotalNotBidPlayer from './pages/NonBidUsersTillDate'
+import TotalNotBidPlayer from './pages/NonBidUsersTillDate';
+import TotalWithdrawal from './pages/wallet_management/TotalWithdrawal'
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -139,6 +140,7 @@ const App = () => {
             </Route>
             <Route path="wallet-management">
               <Route path="all-deposit-history" element={<WalletAllDepositeHistory />} />
+              <Route path="total-withdraw" element={<TotalWithdrawal />} />
               <Route path="fund-request" element={<FundRequest />} />
               <Route path="offline-payment-records" element={<OfflinePaymentRecords />} />
               <Route path="withdraw-request" element={<WithDrawRequest />} />
