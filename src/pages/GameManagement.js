@@ -56,7 +56,6 @@ const gameTypeOptions = [
 const GameManagement = () => {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
-  // Remove the separate 'games' state; we will use fetchedGames as our raw data source.
   const [fetchedGames, setFetchedGames] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
@@ -65,15 +64,13 @@ const GameManagement = () => {
   const [pageSize, setPageSize] = useState(5);
   const [firstLoad, setFirstLoad] = useState(true);
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" = Old to New, "desc" = New to Old
-  const [marketStatus, setMarketStatus] = useState("active"); // "active" or "inactive"
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [marketStatus, setMarketStatus] = useState("active");
 
-  // Create a sorted copy of gameTypeOptions in ascending order.
   const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
     a.localeCompare(b)
   );
 
-  // Compute sortedGames dynamically whenever fetchedGames or sortOrder changes.
   const sortedGames = useMemo(() => {
     return [...fetchedGames].sort((a, b) => {
       const timeA = dayjs(a.openTime, "hh:mm A").valueOf();
@@ -82,8 +79,6 @@ const GameManagement = () => {
     });
   }, [fetchedGames, sortOrder]);
 
-
-  // Filter the sorted games by the search term.
   const filteredGames = sortedGames
     .filter((game) => {
       if (marketStatus === "active") {
@@ -106,7 +101,6 @@ const GameManagement = () => {
       setLoading(true);
       const response = await axios.get(`/api/marketManagement/getMarketGames`);
       if (response.data) {
-        // Store the raw games data.
         setFetchedGames(response.data || []);
       } else {
         message.error("Failed to fetch market games.");
@@ -120,7 +114,6 @@ const GameManagement = () => {
     }
   };
 
-  // Handler for Add Form game type select
   const handleGameTypeChange = (selectedValues) => {
     if (
       selectedValues.includes("Select All") ||
@@ -137,7 +130,6 @@ const GameManagement = () => {
     }
   };
 
-  // Handler for Edit Modal game type select
   const handleEditGameTypeChange = (selectedValues) => {
     if (
       selectedValues.includes("Select All") ||
@@ -196,11 +188,11 @@ const GameManagement = () => {
         closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null,
         weekends: values.weekends
           ? values.weekends.map((day) => ({
-            ...day,
-            openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
-            closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-            is_on: day.is_on, // pass the is_on flag to the backend
-          }))
+              ...day,
+              openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
+              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
+              is_open: day.is_open, // Fixed: Use is_open instead of is_on
+            }))
           : [],
       };
 
@@ -300,8 +292,7 @@ const GameManagement = () => {
         ...day,
         openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null,
         closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null,
-        is_open: day.is_open,
-        is_on: day.is_on, // include the new flag for editing
+        is_open: day.is_open, // Fixed: Use is_open instead of is_on
       })),
     });
   };
@@ -358,9 +349,7 @@ const GameManagement = () => {
           </h3>
 
           <Form form={form} layout="vertical" onFinish={handleAddGame}>
-            {/* Responsive Row - will stack vertically on small screens */}
             <Row gutter={[16, 16]}>
-              {/* Market Name */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Market Name"
@@ -374,7 +363,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Game Name */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Game Name"
@@ -385,7 +373,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Market Open Time */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Market Open Time"
@@ -400,7 +387,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Market Close Time */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Market Close Time"
@@ -415,7 +401,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Game Type Selection */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Game Type"
@@ -446,7 +431,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Market On/Off Switch */}
               <Col xs={24} sm={12} md={8} lg={4}>
                 <Form.Item
                   label="Market On/Off"
@@ -458,7 +442,6 @@ const GameManagement = () => {
               </Col>
             </Row>
 
-            {/* Submit Button - centered on all screens */}
             <Row justify="center">
               <Col>
                 <Form.Item>
@@ -481,7 +464,7 @@ const GameManagement = () => {
           style={{
             borderRadius: "8px",
             boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-            overflow: "hidden", // Changed from overflowX
+            overflow: "hidden",
           }}
         >
           <h3
@@ -490,16 +473,14 @@ const GameManagement = () => {
               fontWeight: "600",
               marginBottom: "15px",
               textAlign: "center",
-              padding: "0 10px" // Added padding for mobile
+              padding: "0 10px",
             }}
           >
             Game List
           </h3>
 
-          {/* Search & Filter Controls - Now properly responsive */}
           <div style={{ padding: "0 10px" }}>
             <Row gutter={[16, 16]} align="middle">
-              {/* Sort By - Full width on mobile */}
               <Col xs={24} sm={12} md={6}>
                 <Form.Item label="Sort by:" style={{ marginBottom: 0 }}>
                   <Select
@@ -513,7 +494,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Show Entries - Full width on mobile */}
               <Col xs={24} sm={12} md={6}>
                 <Form.Item label="Show Entries:" style={{ marginBottom: 0 }}>
                   <Select
@@ -529,7 +509,6 @@ const GameManagement = () => {
                 </Form.Item>
               </Col>
 
-              {/* Search - Full width on mobile */}
               <Col xs={24} sm={24} md={12}>
                 <Form.Item label="Search:" style={{ marginBottom: 0 }}>
                   <Input
@@ -544,7 +523,6 @@ const GameManagement = () => {
             </Row>
           </div>
 
-          {/* Tabs - Full width with centered text on mobile */}
           <div style={{ padding: "0 10px", margin: "15px 0" }}>
             <Tabs
               activeKey={marketStatus}
@@ -557,7 +535,6 @@ const GameManagement = () => {
             </Tabs>
           </div>
 
-          {/* Table Container with responsive padding */}
           <div style={{ padding: "0 10px" }}>
             {firstLoad ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
@@ -576,16 +553,16 @@ const GameManagement = () => {
                 loading={loading}
                 pagination={{
                   pageSize: pageSize,
-                  showSizeChanger: false, // Hide on mobile
-                  responsive: true
+                  showSizeChanger: false,
+                  responsive: true,
                 }}
                 bordered
-                scroll={{ x: true }} // Allow horizontal scroll when needed
+                scroll={{ x: true }}
                 style={{
                   width: "100%",
-                  overflowX: "auto" // Only show scroll when needed
+                  overflowX: "auto",
                 }}
-                size="middle" // Better for mobile
+                size="middle"
               />
             )}
           </div>
@@ -670,7 +647,7 @@ const GameManagement = () => {
                         <TimePicker format="hh:mm A" use12Hours />
                       </Form.Item>
                       <Form.Item
-                        name={["weekends", index, "is_on"]}
+                        name={["weekends", index, "is_open"]} // Fixed: Use is_open
                         label="Active Status"
                         valuePropName="checked"
                       >
@@ -680,7 +657,6 @@ const GameManagement = () => {
                   </Col>
                 ))}
           </Row>
-
         </Form>
       </Modal>
     </div>
