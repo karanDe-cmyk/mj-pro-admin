@@ -197,7 +197,10 @@ const fetchTodayNotBidPlayer = async () => {
         `/api/userPayment/getpaymentResponse`,
         { params: { date: selectedDate } }
       );
-      setAutoDepositHistory(response.data?.data || []);
+      const data = response.data?.data.filter((data) => {
+        return data.method === 'Auto Deposit'
+      })
+      setAutoDepositHistory(data || []);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching deposit history:", err);
