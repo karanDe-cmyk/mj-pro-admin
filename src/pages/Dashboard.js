@@ -58,30 +58,30 @@ const Dashboard = () => {
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
 
-// Fix 1: Update function names and API endpoints
-const fetchTodayBidPlayer = async () => {
-  try {
-    const response = await instance.get('/api/auth/today-bid-player', {
-      params: { date: selectedDate }
-    })
-    const count = response.data?.count // This should be 4 from your API
-    setTodayBidPlayer(count)
-  } catch (error) {
-    console.log(error)
+  // Fix 1: Update function names and API endpoints
+  const fetchTodayBidPlayer = async () => {
+    try {
+      const response = await instance.get('/api/auth/today-bid-player', {
+        params: { date: selectedDate }
+      })
+      const count = response.data?.count // This should be 4 from your API
+      setTodayBidPlayer(count)
+    } catch (error) {
+      console.log(error)
+    }
   }
-}
 
-const fetchTodayNotBidPlayer = async () => {
-  try {
-    const response = await instance.get('/api/auth/total-not-player', {
-      params: { date: selectedDate }
-    })
-    const count = response.data?.count
-    setTodayNotBidPlayer(count)
-  } catch (error) {
-    console.log(error)
+  const fetchTodayNotBidPlayer = async () => {
+    try {
+      const response = await instance.get('/api/auth/total-not-player', {
+        params: { date: selectedDate }
+      })
+      const count = response.data?.count
+      setTodayNotBidPlayer(count)
+    } catch (error) {
+      console.log(error)
+    }
   }
-}
 
   useEffect(() => {
     fetchTodayBidPlayer();
@@ -845,7 +845,7 @@ const fetchTodayNotBidPlayer = async () => {
         </div>
         <div
           className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate( `/admin/total-notbid-player?date=${selectedDate}`)}
+          onClick={() => navigate(`/admin/total-notbid-player?date=${selectedDate}`)}
         >
           <div className="flex justify-between items-center">
             <div>
@@ -1004,17 +1004,17 @@ const fetchTodayNotBidPlayer = async () => {
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg h-[72px] flex items-center">
-      <div className="flex w-full items-center">
-        <span className="font-medium">Total Winning Amount</span>
-        <span className="font-bold ml-auto">Rs {dashboardData2.totalWinAmount || 0}</span>
-        <button
-          onClick={() => navigate("/admin/totalwinning-amount")}
-          className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm"
-        >
-          View
-        </button>
-      </div>
-    </div>
+                <div className="flex w-full items-center">
+                  <span className="font-medium">Total Winning Amount</span>
+                  <span className="font-bold ml-auto">Rs {dashboardData2.totalWinAmount || 0}</span>
+                  <button
+                    onClick={() => navigate("/admin/totalwinning-amount")}
+                    className="bg-blue-600 ml-4 text-white px-3 py-1 rounded text-sm"
+                  >
+                    View
+                  </button>
+                </div>
+              </div>
 
               <div
                 className={`p-4 rounded-lg border h-[72px] flex items-center

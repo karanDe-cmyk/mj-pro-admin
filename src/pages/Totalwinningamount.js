@@ -75,13 +75,7 @@ const TotalWinningTable = () => {
   return (
     <div className="p-6">
       {/* Title */}
-      <h2 className="text-2xl font-semibold mb-6">Total Winning Dashboard</h2>
-
-      {/* Total Winning Card */}
-      <div className="mb-8 bg-gradient-to-r from-purple-600 to-blue-500 p-6 text-white shadow-lg">
-        <p className="text-sm opacity-90">🏆 Total Winning</p>
-        <h1 className="mt-2 text-4xl font-bold">₹ {totalWinning}</h1>
-      </div>
+      <h2 className="text-2xl font-semibold mb-6">Total Winning</h2>
 
       {/* Filter Input */}
       <div className="mb-4">
@@ -104,6 +98,7 @@ const TotalWinningTable = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100 text-left text-sm font-semibold">
+                <th className="px-4 py-3">Sr. N</th>
                 <th className="px-4 py-3">User Name</th>
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Email</th>
@@ -119,9 +114,18 @@ const TotalWinningTable = () => {
                   </td>
                 </tr>
               ) : (
-                currentUsers.map(user => (
+                currentUsers.map((user, index) => (
                   <tr key={user._id} className="border-b text-sm hover:bg-gray-50">
-                    <td className="px-4 py-3">{user.userName}</td>
+                    <td className="px-4 py-3">{index + 1}</td>
+                    <td className="px-4 py-3">
+                      <a
+                        href={`/admin/user-management/user-details/${user._id}`}
+                        target="_self"
+                        rel="noopener noreferrer"
+                      >
+                        {user.userName}
+                      </a>
+                    </td>
                     <td className="px-4 py-3">{user.phone}</td>
                     <td className="px-4 py-3">{user.email}</td>
                     <td className="px-4 py-3 font-medium">₹ {user.walletBalance}</td>
