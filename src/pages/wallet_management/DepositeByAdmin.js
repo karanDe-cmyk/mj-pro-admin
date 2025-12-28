@@ -27,7 +27,7 @@ const DepositTransactionsTable = () => {
                 // API response में data array में transactions हैं
                 const allTransactions = response.data.data || [];
                 const adminDeposit = allTransactions.filter((data) => {
-                   return data.method === 'Admin Deposit'
+                    return data.method === 'Admin Deposit'
                 })
                 setTransactions(adminDeposit);
                 setFilteredTransactions(adminDeposit);
@@ -290,7 +290,14 @@ const DepositTransactionsTable = () => {
                                             {formatDate(transaction.date || transaction.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {transaction.username || 'N/A'}
+                                            <a
+                                                href={`/admin/user-management/user-details/${transaction.userId}`}
+                                                target="_self"
+                                                rel="noopener noreferrer"
+                                                className='underline text-blue-600'
+                                            >
+                                                {transaction.username || 'N/A'}
+                                            </a>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {transaction.phone || transaction.number || 'N/A'}

@@ -484,7 +484,16 @@ const AllBidHistory = () => {
               paginatedData.map((bid, index) => (
                 <tr key={index}>
                   <td className="border px-4 py-2">{index + 1}</td>
-                  <td className="border px-4 py-2">{bid.userName}</td>
+                  <td className="border px-4 py-2">
+                    <a
+                      href={`/admin/user-management/user-details/${bid.userId}`}
+                      target="_self"
+                      rel="noopener noreferrer"
+                      className="underline text-blue-500"
+                    >
+                      {bid.userName}
+                    </a>
+                  </td>
                   <td className="border px-4 py-2">{bid.market}</td>
                   <td className="border px-4 py-2">
                     {bid.gamename || bid.gameName}

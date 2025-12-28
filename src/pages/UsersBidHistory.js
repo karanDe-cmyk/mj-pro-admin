@@ -134,7 +134,14 @@ const UserBidHistory = () => {
   // Table Columns (without an extra date column)
   const columns = [
     { title: "#", dataIndex: "key", key: "key", render: (_, __, index) => index + 1 },
-    { title: "Member Name", dataIndex: "userName", key: "userName" },
+    { title: "Member Name", dataIndex: "userName", key: "userName", render: (userName, record) => (
+      <a 
+        href={`/admin/user-management/user-details/${record.userId}`}
+        className="text-blue-500 hover:text-blue-700 hover:underline"
+      >
+        {userName}
+      </a>
+    ) },
     { title: "Market Name", dataIndex: "market", key: "market" },
     { title: "Game Name", dataIndex: "gameName", key: "gameName" },
     { title: "Game Type", dataIndex: "gameType", key: "gameType" },
