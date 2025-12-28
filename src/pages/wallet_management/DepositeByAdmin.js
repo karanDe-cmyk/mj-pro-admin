@@ -23,10 +23,14 @@ const DepositTransactionsTable = () => {
 
             const response = await axiosInstance.get(`/api/userPayment/getpaymentResponse?date=${selectedDate}`);
 
-            if (response.data.status) {
-                const allTransactions = response.data.data.transactionsWithUser || response.data.data.transactions;
-                setTransactions(allTransactions);
-                setFilteredTransactions(allTransactions);
+            if (response.data.success) {
+                // API response में data array में transactions हैं
+                const allTransactions = response.data.data || [];
+                const adminDeposit = allTransactions.filter((data) => {
+                    return data.method === 'Admin Deposit'
+                })
+                setTransactions(adminDeposit);
+                setFilteredTransactions(adminDeposit);
             } else {
                 throw new Error(response.data.message || 'Failed to fetch transactions');
             }
@@ -40,7 +44,7 @@ const DepositTransactionsTable = () => {
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
+    }, [selectedDate]); // selectedDate dependency add की है
 
     // Filter and sort transactions whenever filters, sort, or search changes
     useEffect(() => {
@@ -48,18 +52,23 @@ const DepositTransactionsTable = () => {
 
         // Apply status filter
         if (filterStatus !== 'all') {
-            result = result.filter(transaction =>
-                transaction.status?.toLowerCase() === filterStatus.toLowerCase()
-            );
+            result = result.filter(transaction => {
+                const status = transaction.status?.toLowerCase();
+                if (filterStatus === 'success') return status === 'success';
+                if (filterStatus === 'pending') return status === 'pending';
+                if (filterStatus === 'failed') return status === 'failed';
+                return true;
+            });
         }
 
         // Apply search filter
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             result = result.filter(transaction =>
-                transaction.userName?.toLowerCase().includes(term) ||
-                transaction.email?.toLowerCase().includes(term) ||
-                transaction.requestNumber?.toLowerCase().includes(term) ||
+                transaction.username?.toLowerCase().includes(term) ||
+                transaction.phone?.toLowerCase().includes(term) ||
+                transaction._id?.toLowerCase().includes(term) ||
+                transaction.txnId?.toLowerCase().includes(term) ||
                 transaction.amount?.toString().includes(term)
             );
         }
@@ -70,10 +79,15 @@ const DepositTransactionsTable = () => {
             let bValue = b[sortField];
 
             // Handle date sorting
-            if (sortField === 'date') {
+            if (sortField === 'date' || sortField === 'createdAt') {
                 aValue = new Date(aValue).getTime();
                 bValue = new Date(bValue).getTime();
             }
+
+            // Handle undefined or null values
+            if (aValue == null && bValue == null) return 0;
+            if (aValue == null) return sortOrder === 'asc' ? 1 : -1;
+            if (bValue == null) return sortOrder === 'asc' ? -1 : 1;
 
             // Handle string comparison
             if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -104,12 +118,13 @@ const DepositTransactionsTable = () => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return isNaN(date) ? 'Invalid Date' : date.toLocaleDateString(undefined, {
+        return isNaN(date) ? 'Invalid Date' : date.toLocaleDateString('en-IN', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            hour12: true
         });
     };
 
@@ -207,7 +222,7 @@ const DepositTransactionsTable = () => {
                         <input
                             type="text"
                             id="search"
-                            placeholder="Search by name, email, amount..."
+                            placeholder="Search by username, phone, transaction ID..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -234,15 +249,15 @@ const DepositTransactionsTable = () => {
                                 </th>
                                 <th
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    onClick={() => handleSort('userName')}
+                                    onClick={() => handleSort('username')}
                                 >
-                                    User Name {renderSortIndicator('userName')}
+                                    Username {renderSortIndicator('username')}
                                 </th>
                                 <th
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    onClick={() => handleSort('email')}
+                                    onClick={() => handleSort('phone')}
                                 >
-                                    Email {renderSortIndicator('email')}
+                                    Phone {renderSortIndicator('phone')}
                                 </th>
                                 <th
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -250,14 +265,20 @@ const DepositTransactionsTable = () => {
                                 >
                                     Amount {renderSortIndicator('amount')}
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Request Number
+                                <th
+                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                    onClick={() => handleSort('txnId')}
+                                >
+                                    Transaction ID {renderSortIndicator('txnId')}
                                 </th>
                                 <th
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                     onClick={() => handleSort('status')}
                                 >
                                     Status {renderSortIndicator('status')}
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Method
                                 </th>
                             </tr>
                         </thead>
@@ -266,19 +287,26 @@ const DepositTransactionsTable = () => {
                                 filteredTransactions.map((transaction) => (
                                     <tr key={transaction._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {formatDate(transaction.date)}
+                                            {formatDate(transaction.date || transaction.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {transaction.userName || 'N/A'}
+                                            <a
+                                                href={`/admin/user-management/user-details/${transaction.userId}`}
+                                                target="_self"
+                                                rel="noopener noreferrer"
+                                                className='underline text-blue-600'
+                                            >
+                                                {transaction.username || 'N/A'}
+                                            </a>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {transaction.email}
+                                            {transaction.phone || transaction.number || 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {transaction.amount?.toFixed(2)}
+                                            ₹{transaction.amount?.toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono">
-                                            {transaction.requestNumber}
+                                            {transaction.txnId?.substring(0, 20)}...
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
@@ -289,11 +317,14 @@ const DepositTransactionsTable = () => {
                                                 {transaction.status}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                            {transaction.method || 'N/A'}
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
                                         No transactions found
                                     </td>
                                 </tr>

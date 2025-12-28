@@ -131,8 +131,8 @@ const WithDrawRequest = () => {
                       <td className="border p-2 text-center">{index + 1}</td>
                       <td className="border p-2 text-blue-500 hover:underline">
                         <a
-                          href={`/admin/user-management/user-details/${req.user_id}`}
-                          target="_blank"
+                          href={`/admin/user-management/user-details/${req.userId}`}
+                          target="_self"
                           rel="noopener noreferrer"
                         >
                           {req.userName}

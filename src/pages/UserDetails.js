@@ -440,363 +440,8 @@ const UserDetails = () => {
     }
   };
 
-  const depositTransactionColumns = [
-    {
-      header: "#",
-      accessor: "sno",
-      cell: (row, index) => index + 1,
-    },
-    {
-      header: "Amount ₹",
-      accessor: "amount",
-      cell: (amount) => (
-        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-cyan-50 text-black font-bold">
-          {amount}
-        </div>
-      ),
-    },
-    {
-      header: "Transaction Id",
-      accessor: "transactionId",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date) =>
-        moment(date, "YYYY-MM-DD HH:mm").format("YYYY-MM-DD hh:mm:ss A"),
-    },
-    {
-      header: "Action",
-      cell: (row) => (
-        <div className="flex space-x-2">
-          <button
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-            onClick={() => handleAccept(row._id)}
-          >
-            Accept
-          </button>
-          <button
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-            onClick={() => handleCancel(row._id)}
-          >
-            Cancel
-          </button>
-        </div>
-      ),
-    },
-  ];
-
-  const adminDepositColumns = [
-    {
-      header: "#",
-      cell: (_value, _row, index) => index + 1,
-    },
-    {
-      header: "Amount ₹",
-      accessor: "amount",
-      cell: (amount) => (
-        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-green-50 text-green-700 font-bold">
-          + {amount}
-        </div>
-      ),
-    },
-    {
-      header: "Transaction ID",
-      accessor: "txnId",
-    },
-    {
-      header: "Method",
-      accessor: "method",
-    },
-    {
-      header: "Comments",
-      accessor: "comments",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (status) => (
-        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
-          status === "Pending" ? "bg-yellow-500" :
-            "bg-red-500"
-          }`}>
-          {status}
-        </span>
-      ),
-    },
-  ];
-
-  const autoDepositColumns = [
-    {
-      header: "#",
-      cell: (_value, _row, index) => index + 1,
-    },
-    {
-      header: "Amount ₹",
-      accessor: "amount",
-      cell: (amount) => (
-        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-blue-50 text-blue-700 font-bold">
-          + {amount}
-        </div>
-      ),
-    },
-    {
-      header: "Transaction ID",
-      accessor: "txnId",
-    },
-    {
-      header: "Request Type",
-      accessor: "requestType",
-    },
-    {
-      header: "Comments",
-      accessor: "comments",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (status) => (
-        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
-          status === "Pending" ? "bg-yellow-500" :
-            "bg-red-500"
-          }`}>
-          {status}
-        </span>
-      ),
-    },
-  ];
-
-  // New columns for Admin Withdrawal
-  const adminWithdrawalColumns = [
-    {
-      header: "#",
-      cell: (_value, _row, index) => index + 1,
-    },
-    {
-      header: "User Name",
-      accessor: "userName",
-    },
-    {
-      header: "Amount ₹",
-      accessor: "amount",
-      cell: (amount) => (
-        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-red-50 text-red-700 font-bold">
-          - {amount}
-        </div>
-      ),
-    },
-    {
-      header: "Transaction ID",
-      accessor: "transaction_id",
-    },
-    {
-      header: "Method",
-      accessor: "method",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date) => moment(date, "YYYY-MM-DD hh:mm:ss A").format("YYYY-MM-DD hh:mm:ss A"),
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (status) => (
-        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
-          status === "Pending" ? "bg-yellow-500" :
-            "bg-red-500"
-          }`}>
-          {status}
-        </span>
-      ),
-    },
-  ];
-
-  // New columns for Auto Withdrawal
-  const autoWithdrawalColumns = [
-    {
-      header: "#",
-      cell: (_value, _row, index) => index + 1,
-    },
-    {
-      header: "User Name",
-      accessor: "userName",
-    },
-    {
-      header: "Amount ₹",
-      accessor: "amount",
-      cell: (amount) => (
-        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-orange-50 text-orange-700 font-bold">
-          - {amount}
-        </div>
-      ),
-    },
-    {
-      header: "Transaction ID",
-      accessor: "transaction_id",
-    },
-    {
-      header: "Method",
-      accessor: "method",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date) => moment(date, "YYYY-MM-DD hh:mm:ss A").format("YYYY-MM-DD hh:mm:ss A"),
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (status) => (
-        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
-          status === "Pending" ? "bg-yellow-500" :
-            "bg-red-500"
-          }`}>
-          {status}
-        </span>
-      ),
-    },
-  ];
-
-  const historyFilteredData = transactionHistoryDataAll.filter((item) =>
-    Object.values(item).some((value) => {
-      if (value !== null && value !== undefined) {
-        return value.toString().toLowerCase().includes(search.toLowerCase());
-      }
-      return false;
-    })
-  );
-
-  const withdrawColumns = [
-    {
-      header: "S.No",
-      cell: (_value, _row, index) => index + 1,
-    },
-    {
-      header: "Amount",
-      accessor: "amount",
-      cell: (amount) => (
-        <span className="inline-block min-w-20 text-center px-3 py-1.5 rounded bg-red-500 text-white font-bold">
-          - {amount}
-        </span>
-      ),
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
-    },
-    {
-      header: "Request No",
-      accessor: "transaction_id",
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (status) => (
-        <span className="inline-block min-w-20 text-center px-3 py-1.5 rounded text-white bg-yellow-500 capitalize">
-          {status}
-        </span>
-      ),
-    },
-    {
-      header: "Action",
-      cell: (row) => (
-        <div className="flex space-x-3">
-          <button
-            className="flex items-center px-4 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600"
-            onClick={() => updateWithdrawStatus(row._id, "approved")}
-          >
-            <CheckCircleOutlined className="mr-2" />
-            Accept
-          </button>
-          <button
-            className="flex items-center px-4 py-2 bg-red-500 text-white font-bold rounded hover:bg-red-600"
-            onClick={() => updateWithdrawStatus(row._id, "rejected")}
-          >
-            <CloseCircleOutlined className="mr-2" />
-            Reject
-          </button>
-        </div>
-      ),
-    },
-  ];
-
-  const transactionHistoryColumnsAll = [
-    {
-      header: "#",
-      cell: (row, index) => (currentPage - 1) * pageSize + index + 1,
-    },
-    {
-      header: "Request No/Transaction ID",
-      accessor: "requestNumber",
-      cell: (requestNumber) => requestNumber || "N/A",
-    },
-    {
-      header: "Amount",
-      accessor: "amount",
-      cell: (amount, row) => {
-        const isDeposit =
-          row.type === "deposit" ||
-          row.type === "manual" ||
-          row.type === "auto";
-        return (
-          <span
-            className={`px-3 py-1 rounded inline-block min-w-20 font-bold text-center ${isDeposit
-              ? "text-green-700 bg-green-100"
-              : "text-white bg-red-500"
-              }`}
-          >
-            {isDeposit ? `+ ${amount || 0}` : `- ${amount || 0}`}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Transaction Type",
-      accessor: "transactionType",
-      cell: (text, row) => {
-        const isDeposit =
-          row.type === "deposit" ||
-          row.type === "manual" ||
-          row.type === "auto";
-        return (
-          <span
-            className={`px-4 py-2 rounded font-bold inline-block min-w-30 text-center ${isDeposit
-              ? "text-green-700 border-2 border-green-300 bg-green-50"
-              : "text-amber-800 border-2 border-amber-300 bg-amber-50"
-              }`}
-          >
-            {text || "Unknown"}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      cell: (date, row) =>
-        row.sortDate
-          ? dayjs(row.sortDate).format("M/D/YYYY, h:mm:ss A")
-          : "N/A",
-    },
-  ];
-
-  const formatBalance = (balance) => {
-    return Math.floor(balance * 100) / 100;
-  };
-
-  const Table = ({ columns, data, pagination = true }) => {
+  // Updated Table Component with Sum Feature
+  const Table = ({ columns, data, pagination = true, showSum = true }) => {
     const renderCell = (row, column, rowIndex) => {
       if (column.cell) {
         return column.cell(row[column.accessor], row, rowIndex);
@@ -804,6 +449,29 @@ const UserDetails = () => {
       return row[column.accessor] || "—";
     };
 
+    // Calculate sum for each numeric column
+    const calculateColumnSums = () => {
+      const sums = {};
+      
+      columns.forEach(column => {
+        if (column.accessor && column.calculateSum !== false) {
+          let total = 0;
+          data.forEach(row => {
+            const value = row[column.accessor];
+            if (typeof value === 'number') {
+              total += value;
+            } else if (typeof value === 'string' && !isNaN(parseFloat(value))) {
+              total += parseFloat(value);
+            }
+          });
+          sums[column.accessor] = total;
+        }
+      });
+      
+      return sums;
+    };
+
+    const columnSums = showSum && data.length > 0 ? calculateColumnSums() : {};
 
     return (
       <div className="overflow-x-auto">
@@ -821,21 +489,62 @@ const UserDetails = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {data.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-gray-50">
-                {columns.map((col, colIndex) => (
-                  <td
-                    key={colIndex}
-                    className="px-4 py-3 text-sm text-gray-700 border-b"
-                  >
-                    {renderCell(row, col, rowIndex)}
-                  </td>
-                ))}
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-8 text-center text-gray-500">
+                  No data available
+                </td>
               </tr>
-            ))}
+            ) : (
+              <>
+                {data.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50">
+                    {columns.map((col, colIndex) => (
+                      <td
+                        key={colIndex}
+                        className="px-4 py-3 text-sm text-gray-700 border-b"
+                      >
+                        {renderCell(row, col, rowIndex)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                
+                {/* Sum Row */}
+                {showSum && data.length > 0 && (
+                  <tr className="bg-blue-50 font-bold">
+                    {columns.map((col, colIndex) => {
+                      const sum = columnSums[col.accessor];
+                      
+                      if (colIndex === 0) {
+                        return (
+                          <td key={colIndex} className="px-4 py-3 text-sm border-t-2 border-blue-300">
+                            <span className="text-blue-700">Total</span>
+                          </td>
+                        );
+                      }
+                      
+                      if (sum !== undefined && sum !== 0) {
+                        return (
+                          <td key={colIndex} className="px-4 py-3 text-sm border-t-2 border-blue-300">
+                            <span className="text-green-600 font-bold">₹{sum.toFixed(2)}</span>
+                          </td>
+                        );
+                      }
+                      
+                      return (
+                        <td key={colIndex} className="px-4 py-3 text-sm border-t-2 border-blue-300">
+                          <span className="text-gray-500">—</span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                )}
+              </>
+            )}
           </tbody>
         </table>
-        {pagination && (
+        {pagination && data.length > 0 && (
           <div className="flex justify-between items-center px-4 py-3 bg-white border-t border-gray-200">
             <div className="text-sm text-gray-700">
               Showing {Math.min(currentPage * pageSize, data.length)} of {data.length} entries
@@ -860,6 +569,374 @@ const UserDetails = () => {
         )}
       </div>
     );
+  };
+
+  const depositTransactionColumns = [
+    {
+      header: "#",
+      accessor: "sno",
+      cell: (row, index) => index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-cyan-50 text-black font-bold">
+          {amount}
+        </div>
+      ),
+      calculateSum: true,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) =>
+        moment(date, "YYYY-MM-DD HH:mm").format("YYYY-MM-DD hh:mm:ss A"),
+      calculateSum: false,
+    },
+    {
+      header: "Action",
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <button
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+            onClick={() => handleAccept(row._id)}
+          >
+            Accept
+          </button>
+          <button
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            onClick={() => handleCancel(row._id)}
+          >
+            Cancel
+          </button>
+        </div>
+      ),
+      calculateSum: false,
+    },
+  ];
+
+  const adminDepositColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-green-50 text-green-700 font-bold">
+          + {amount}
+        </div>
+      ),
+      calculateSum: true,
+    },
+    {
+      header: "Method",
+      accessor: "method",
+      calculateSum: false,
+    },
+    {
+      header: "Comments",
+      accessor: "comments",
+      calculateSum: false,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+      calculateSum: false,
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+      calculateSum: false,
+    },
+  ];
+
+  const autoDepositColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-blue-50 text-blue-700 font-bold">
+          + {amount}
+        </div>
+      ),
+      calculateSum: true,
+    },
+    {
+      header: "Request Type",
+      accessor: "requestType",
+      calculateSum: false,
+    },
+    {
+      header: "Comments",
+      accessor: "comments",
+      calculateSum: false,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+      calculateSum: false,
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+      calculateSum: false,
+    },
+  ];
+
+  const adminWithdrawalColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "User Name",
+      accessor: "userName",
+      calculateSum: false,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-red-50 text-red-700 font-bold">
+          - {amount}
+        </div>
+      ),
+      calculateSum: true,
+    },
+    {
+      header: "Method",
+      accessor: "method",
+      calculateSum: false,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date, "YYYY-MM-DD hh:mm:ss A").format("YYYY-MM-DD hh:mm:ss A"),
+      calculateSum: false,
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+      calculateSum: false,
+    },
+  ];
+
+  const autoWithdrawalColumns = [
+    {
+      header: "#",
+      cell: (_value, _row, index) => index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "User Name",
+      accessor: "userName",
+      calculateSum: false,
+    },
+    {
+      header: "Amount ₹",
+      accessor: "amount",
+      cell: (amount) => (
+        <div className="inline-block w-20 h-7 leading-7 text-center rounded bg-orange-50 text-orange-700 font-bold">
+          - {amount}
+        </div>
+      ),
+      calculateSum: true,
+    },
+    {
+      header: "Method",
+      accessor: "method",
+      calculateSum: false,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date, "YYYY-MM-DD hh:mm:ss A").format("YYYY-MM-DD hh:mm:ss A"),
+      calculateSum: false,
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className={`inline-block px-3 py-1 rounded text-white font-bold ${status === "Success" ? "bg-green-500" :
+          status === "Pending" ? "bg-yellow-500" :
+            "bg-red-500"
+          }`}>
+          {status}
+        </span>
+      ),
+      calculateSum: false,
+    },
+  ];
+
+  const historyFilteredData = transactionHistoryDataAll.filter((item) =>
+    Object.values(item).some((value) => {
+      if (value !== null && value !== undefined) {
+        return value.toString().toLowerCase().includes(search.toLowerCase());
+      }
+      return false;
+    })
+  );
+
+  const withdrawColumns = [
+    {
+      header: "S.No",
+      cell: (_value, _row, index) => index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "Amount",
+      accessor: "amount",
+      cell: (amount) => (
+        <span className="inline-block min-w-20 text-center px-3 py-1.5 rounded bg-red-500 text-white font-bold">
+          - {amount}
+        </span>
+      ),
+      calculateSum: true,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date) => moment(date).format("YYYY-MM-DD hh:mm:ss A"),
+      calculateSum: false,
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      cell: (status) => (
+        <span className="inline-block min-w-20 text-center px-3 py-1.5 rounded text-white bg-yellow-500 capitalize">
+          {status}
+        </span>
+      ),
+      calculateSum: false,
+    },
+    {
+      header: "Action",
+      cell: (row) => (
+        <div className="flex space-x-3">
+          <button
+            className="flex items-center px-4 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600"
+            onClick={() => updateWithdrawStatus(row._id, "approved")}
+          >
+            <CheckCircleOutlined className="mr-2" />
+            Accept
+          </button>
+          <button
+            className="flex items-center px-4 py-2 bg-red-500 text-white font-bold rounded hover:bg-red-600"
+            onClick={() => updateWithdrawStatus(row._id, "rejected")}
+          >
+            <CloseCircleOutlined className="mr-2" />
+            Reject
+          </button>
+        </div>
+      ),
+      calculateSum: false,
+    },
+  ];
+
+  const transactionHistoryColumnsAll = [
+    {
+      header: "#",
+      cell: (row, index) => (currentPage - 1) * pageSize + index + 1,
+      calculateSum: false,
+    },
+    {
+      header: "Request No/Transaction ID",
+      accessor: "requestNumber",
+      cell: (requestNumber) => requestNumber || "N/A",
+      calculateSum: false,
+    },
+    {
+      header: "Amount",
+      accessor: "amount",
+      cell: (amount, row) => {
+        const isDeposit =
+          row.type === "deposit" ||
+          row.type === "manual" ||
+          row.type === "auto";
+        return (
+          <span
+            className={`px-3 py-1 rounded inline-block min-w-20 font-bold text-center ${isDeposit
+              ? "text-green-700 bg-green-100"
+              : "text-white bg-red-500"
+              }`}
+          >
+            {isDeposit ? `+ ${amount || 0}` : `- ${amount || 0}`}
+          </span>
+        );
+      },
+      calculateSum: true,
+    },
+    {
+      header: "Transaction Type",
+      accessor: "transactionType",
+      cell: (text, row) => {
+        const isDeposit =
+          row.type === "deposit" ||
+          row.type === "manual" ||
+          row.type === "auto";
+        return (
+          <span
+            className={`px-4 py-2 rounded font-bold inline-block min-w-30 text-center ${isDeposit
+              ? "text-green-700 border-2 border-green-300 bg-green-50"
+              : "text-amber-800 border-2 border-amber-300 bg-amber-50"
+              }`}
+          >
+            {text || "Unknown"}
+          </span>
+        );
+      },
+      calculateSum: false,
+    },
+    {
+      header: "Date",
+      accessor: "date",
+      cell: (date, row) =>
+        row.sortDate
+          ? dayjs(row.sortDate).format("M/D/YYYY, h:mm:ss A")
+          : "N/A",
+      calculateSum: false,
+    },
+  ];
+
+  const formatBalance = (balance) => {
+    return Math.floor(balance * 100) / 100;
   };
 
   if (loading) {
@@ -1267,4 +1344,4 @@ const UserDetails = () => {
   );
 };
 
-export default UserDetails
+export default UserDetails;
