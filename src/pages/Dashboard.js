@@ -58,31 +58,30 @@ const Dashboard = () => {
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
 
-  const fetchTodayBidPlayer = async () => {
-    try {
-      const response = await instance.get('/api/auth/total-not-player', {
-        params: { date: selectedDate }
-      })
-
-      const count = response.data?.count
-      setTodayNotBidPlayer(count)
-    } catch (error) {
-      console.log(error)
-    }
+// Fix 1: Update function names and API endpoints
+const fetchTodayBidPlayer = async () => {
+  try {
+    const response = await instance.get('/api/auth/today-bid-player', {
+      params: { date: selectedDate }
+    })
+    const count = response.data?.count // This should be 4 from your API
+    setTodayBidPlayer(count)
+  } catch (error) {
+    console.log(error)
   }
+}
 
-  const fetchTodayNotBidPlayer = async () => {
-    try {
-      const response = await instance.get('/api/auth/total-not-player', {
-        params: { date: selectedDate }
-      })
-
-      const count = response.data?.count
-      setTodayBidPlayer(count)
-    } catch (error) {
-      console.log(error)
-    }
+const fetchTodayNotBidPlayer = async () => {
+  try {
+    const response = await instance.get('/api/auth/total-not-player', {
+      params: { date: selectedDate }
+    })
+    const count = response.data?.count
+    setTodayNotBidPlayer(count)
+  } catch (error) {
+    console.log(error)
   }
+}
 
   useEffect(() => {
     fetchTodayBidPlayer();
