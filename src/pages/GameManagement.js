@@ -1,22 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Table,
-  Button,
-  Switch,
-  TimePicker,
-  Input,
-  Form,
-  Card,
-  Row,
-  Col,
-  message,
-  Modal,
-  Empty,
-  Spin,
-  Select,
-  Tabs,
-} from "antd";
-import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
@@ -25,8 +8,6 @@ import {
 import moment from "moment";
 import axios from "../utils/axiosInstance";
 import dayjs from "dayjs";
-
-const { Option } = Select;
 
 const gameTypeOptions = [
   "Triple Pana",
@@ -53,11 +34,29 @@ const gameTypeOptions = [
   "Double Pana Bulk",
 ];
 
+// 12-hour format time options generator
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) { // Every 30 minutes
+      const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      const time12 = dayjs(`2000-01-01 ${time24}`).format('hh:mm A');
+      times.push({
+        value24: time24,
+        value12: time12,
+        display: time12
+      });
+    }
+  }
+  return times;
+};
+
+const timeOptions = generateTimeOptions();
+
 const GameManagement = () => {
-  const [form] = Form.useForm();
-  const [editForm] = Form.useForm();
   const [fetchedGames, setFetchedGames] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,6 +65,21 @@ const GameManagement = () => {
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc");
   const [marketStatus, setMarketStatus] = useState("active");
+  const [formData, setFormData] = useState({
+    marketName: "Main Market",
+    gameName: "",
+    gameType: [],
+    openTime: "",
+    closeTime: "",
+    marketStatus: "active", // Changed from marketOnOff: false to marketStatus: "active"
+  });
+  const [editFormData, setEditFormData] = useState({
+    gameName: "",
+    gameType: [],
+    openTime: "",
+    closeTime: "",
+    weekends: [],
+  });
 
   const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
     a.localeCompare(b)
@@ -103,11 +117,11 @@ const GameManagement = () => {
       if (response.data) {
         setFetchedGames(response.data || []);
       } else {
-        message.error("Failed to fetch market games.");
+        alert("Failed to fetch market games.");
       }
     } catch (error) {
       console.error("Error fetching games:", error);
-      message.error("Failed to fetch games.");
+      alert("Failed to fetch games.");
     } finally {
       setLoading(false);
       setFirstLoad(false);
@@ -120,13 +134,13 @@ const GameManagement = () => {
       selectedValues.length === sortedGameTypeOptionsAsc.length
     ) {
       setSelectedGameTypes(sortedGameTypeOptionsAsc);
-      form.setFieldsValue({ gameType: sortedGameTypeOptionsAsc });
+      setFormData({ ...formData, gameType: sortedGameTypeOptionsAsc });
     } else {
       const filteredValues = selectedValues.filter(
         (val) => val !== "Select All"
       );
       setSelectedGameTypes(filteredValues);
-      form.setFieldsValue({ gameType: filteredValues });
+      setFormData({ ...formData, gameType: filteredValues });
     }
   };
 
@@ -135,32 +149,42 @@ const GameManagement = () => {
       selectedValues.includes("Select All") ||
       selectedValues.length === sortedGameTypeOptionsAsc.length
     ) {
-      editForm.setFieldsValue({ gameType: sortedGameTypeOptionsAsc });
+      setEditFormData({ ...editFormData, gameType: sortedGameTypeOptionsAsc });
     } else {
-      editForm.setFieldsValue({
+      setEditFormData({
+        ...editFormData,
         gameType: selectedValues.filter((val) => val !== "Select All"),
       });
     }
   };
 
-  const handleAddGame = async (values) => {
+  const handleAddGame = async () => {
     try {
       const newGame = {
-        marketName: values.marketName,
-        gameName: values.gameName,
-        gameType: values.gameType,
-        openTime: values.openTime.format("hh:mm A"),
-        closeTime: values.closeTime.format("hh:mm A"),
-        isActive: values.marketOnOff || false,
+        marketName: "Main Market",
+        gameName: formData.gameName,
+        gameType: sortedGameTypeOptionsAsc,
+        openTime: formData.openTime,
+        closeTime: formData.closeTime,
+        isActive: formData.marketStatus === "active", // Convert to boolean
       };
 
       await axios.post(`/api/marketManagement/addMarketGame`, newGame);
-      message.success("Game added successfully!");
+      alert("Game added successfully!");
       fetchGames();
-      form.resetFields();
+      setFormData({
+        marketName: "Main Market",
+        gameName: "",
+        gameType: [],
+        openTime: "",
+        closeTime: "",
+        marketStatus: "active", // Reset to active
+      });
+      setSelectedGameTypes([]);
+      setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error adding game:", error);
-      message.error("Failed to add game.");
+      alert("Failed to add game.");
     }
   };
 
@@ -169,496 +193,622 @@ const GameManagement = () => {
       await axios.put(`/api/marketManagement/updateMarketGame/${id}`, {
         isActive: !isActive,
       });
-      message.success("Market status updated!");
+      alert("Market status updated!");
       fetchGames();
     } catch (error) {
       console.error("Error updating market status:", error);
-      message.error("Failed to update market status.");
+      alert("Failed to update market status.");
     }
   };
 
   const handleUpdate = async () => {
     try {
-      const values = await editForm.validateFields();
-
       const updatedGame = {
-        gameName: values.gameName,
-        gameType: values.gameType,
-        openTime: values.openTime ? values.openTime.format("hh:mm A") : null,
-        closeTime: values.closeTime ? values.closeTime.format("hh:mm A") : null,
-        weekends: values.weekends
-          ? values.weekends.map((day) => ({
-              ...day,
-              openTime: day.openTime ? day.openTime.format("hh:mm A") : null,
-              closeTime: day.closeTime ? day.closeTime.format("hh:mm A") : null,
-              is_open: day.is_open, // Fixed: Use is_open instead of is_on
-            }))
-          : [],
+        gameName: editFormData.gameName,
+        gameType: editFormData.gameType,
+        openTime: editFormData.openTime,
+        closeTime: editFormData.closeTime,
+        weekends: editFormData.weekends.map((day) => ({
+          ...day,
+          openTime: day.openTime,
+          closeTime: day.closeTime,
+          is_open: day.is_open,
+        })),
       };
 
       await axios.put(
         `/api/marketManagement/updateMarketGame/${editingGame._id}`,
         updatedGame
       );
-      message.success("Game updated successfully!");
-      setIsModalOpen(false);
+      alert("Game updated successfully!");
+      setIsEditModalOpen(false);
       fetchGames();
     } catch (error) {
       console.error("Error updating game:", error);
-      message.error("Failed to update game.");
+      alert("Failed to update game.");
     }
   };
 
-  const columns = [
-    {
-      title: "#",
-      dataIndex: "sNo",
-      key: "sNo",
-      render: (_, __, index) => index + 1,
-      width: 50,
-    },
-    {
-      title: "Game Name",
-      dataIndex: "gameName",
-      key: "gameName",
-      width: 250,
-    },
-    {
-      title: "Open Time",
-      dataIndex: "openTime",
-      key: "openTime",
-      width: 180,
-    },
-    {
-      title: "Close Time",
-      dataIndex: "closeTime",
-      key: "closeTime",
-      width: 180,
-    },
-    {
-      title: "Active",
-      dataIndex: "isActive",
-      key: "isActive",
-      render: (isActive, record) => (
-        <Switch
-          checked={isActive}
-          onChange={() => handleToggle(record._id, isActive)}
-        />
-      ),
-      width: 120,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            style={{
-              marginRight: 10,
-              backgroundColor: "#1890ff",
-              color: "#fff",
-              borderRadius: "5px",
-              border: "none",
-              padding: "4px 12px",
-              fontWeight: "500",
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record._id)}
-            danger
-          >
-            Delete
-          </Button>
-        </>
-      ),
-      width: 180,
-    },
-  ];
-
   const handleEdit = (record) => {
     setEditingGame(record);
-    setIsModalOpen(true);
-    editForm.setFieldsValue({
+    setIsEditModalOpen(true);
+    setEditFormData({
       gameName: record.gameName,
       gameType: record.gameType || [],
-      openTime: record.openTime ? moment(record.openTime, "hh:mm A") : null,
-      closeTime: record.closeTime ? moment(record.closeTime, "hh:mm A") : null,
+      openTime: record.openTime || "",
+      closeTime: record.closeTime || "",
       weekends: record.weekends.map((day) => ({
         ...day,
-        openTime: day.openTime ? moment(day.openTime, "hh:mm A") : null,
-        closeTime: day.closeTime ? moment(day.closeTime, "hh:mm A") : null,
-        is_open: day.is_open, // Fixed: Use is_open instead of is_on
+        openTime: day.openTime || "",
+        closeTime: day.closeTime || "",
+        is_open: day.is_open,
       })),
     });
   };
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
-      message.success("Game deleted successfully!");
-      fetchGames();
-    } catch (error) {
-      console.error("Error deleting game:", error);
-      message.error("Failed to delete game.");
+    if (window.confirm("Are you sure you want to delete this game?")) {
+      try {
+        await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
+        alert("Game deleted successfully!");
+        fetchGames();
+      } catch (error) {
+        console.error("Error deleting game:", error);
+        alert("Failed to delete game.");
+      }
     }
   };
 
+  const handleFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const handleWeekendChange = (index, field, value) => {
+    const updatedWeekends = [...editFormData.weekends];
+    updatedWeekends[index] = {
+      ...updatedWeekends[index],
+      [field]: value,
+    };
+    setEditFormData({
+      ...editFormData,
+      weekends: updatedWeekends,
+    });
+  };
+
+  // Function to convert 12-hour format to 24-hour format
+  const convertTo24Hour = (time12) => {
+    if (!time12) return '';
+    return dayjs(`2000-01-01 ${time12}`).format('HH:mm');
+  };
+
+  // Function to convert 24-hour format to 12-hour format
+  const convertTo12Hour = (time24) => {
+    if (!time24) return '';
+    return dayjs(`2000-01-01 ${time24}`).format('hh:mm A');
+  };
+
   return (
-    <div style={{ padding: "8px", maxWidth: "1400px", margin: "auto" }}>
-      <Card
-        style={{
-          padding: "30px",
-          borderRadius: "10px",
-          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <h2
-          style={{
-            textAlign: "center",
-            fontSize: "28px",
-            fontWeight: "600",
-            marginBottom: "25px",
-          }}
-        >
-          Game Market
-        </h2>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+            Game Market
+          </h2>
 
-        {/* ADD GAME SECTION */}
-        <Card
-          style={{
-            padding: "16px",
-            borderRadius: "8px",
-            marginBottom: "25px",
-            backgroundColor: "#f7fcf8",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: "20px",
-              fontWeight: "600",
-              marginBottom: "15px",
-              textAlign: "center",
-            }}
-          >
-            Add Game
-          </h3>
-
-          <Form form={form} layout="vertical" onFinish={handleAddGame}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Market Name"
-                  name="marketName"
-                  rules={[{ required: true, message: "Select Market name" }]}
+          {/* TABLE SECTION */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4 md:mb-0">
+                  Game List
+                </h3>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
                 >
-                  <Select placeholder="Select Market Name">
-                    <Option value="">--Select Market Name--</Option>
-                    <Option value="Main Market">Main Market</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Game Name"
-                  name="gameName"
-                  rules={[{ required: true, message: "Enter game name" }]}
-                >
-                  <Input placeholder="Enter Game Name" />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Market Open Time"
-                  name="openTime"
-                  rules={[{ required: true, message: "Select open time" }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    use12Hours
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Market Close Time"
-                  name="closeTime"
-                  rules={[{ required: true, message: "Select close time" }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    use12Hours
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Game Type"
-                  name="gameType"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Select at least one game type",
-                    },
-                  ]}
-                >
-                  <Select
-                    mode="multiple"
-                    placeholder="Select Game Types"
-                    value={selectedGameTypes}
-                    onChange={handleGameTypeChange}
-                    style={{ width: "100%" }}
-                  >
-                    <Option key="Select All" value="Select All">
-                      Select All
-                    </Option>
-                    {sortedGameTypeOptionsAsc.map((type) => (
-                      <Option key={type} value={type}>
-                        {type}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={8} lg={4}>
-                <Form.Item
-                  label="Market On/Off"
-                  name="marketOnOff"
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row justify="center">
-              <Col>
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    icon={<PlusOutlined />}
-                    style={{ fontWeight: "600", marginTop: "20px" }}
-                  >
-                    Add Market
-                  </Button>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
-
-        {/* TABLE SECTION */}
-        <Card
-          style={{
-            borderRadius: "8px",
-            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-            overflow: "hidden",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: "20px",
-              fontWeight: "600",
-              marginBottom: "15px",
-              textAlign: "center",
-              padding: "0 10px",
-            }}
-          >
-            Game List
-          </h3>
-
-          <div style={{ padding: "0 10px" }}>
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={12} md={6}>
-                <Form.Item label="Sort by:" style={{ marginBottom: 0 }}>
-                  <Select
-                    value={sortOrder}
-                    onChange={(value) => setSortOrder(value)}
-                    style={{ width: "100%" }}
-                  >
-                    <Select.Option value="asc">Old to New</Select.Option>
-                    <Select.Option value="desc">New to Old</Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={6}>
-                <Form.Item label="Show Entries:" style={{ marginBottom: 0 }}>
-                  <Select
-                    value={pageSize}
-                    onChange={(value) => setPageSize(value)}
-                    style={{ width: "100%" }}
-                  >
-                    <Select.Option value={5}>5</Select.Option>
-                    <Select.Option value={10}>10</Select.Option>
-                    <Select.Option value={20}>20</Select.Option>
-                    <Select.Option value={50}>50</Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={24} md={12}>
-                <Form.Item label="Search:" style={{ marginBottom: 0 }}>
-                  <Input
-                    placeholder="Search Games..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    prefix={<SearchOutlined />}
-                    allowClear
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </div>
-
-          <div style={{ padding: "0 10px", margin: "15px 0" }}>
-            <Tabs
-              activeKey={marketStatus}
-              onChange={(key) => setMarketStatus(key)}
-              centered
-              tabBarStyle={{ margin: 0 }}
-            >
-              <Tabs.TabPane tab="Active Market" key="active" />
-              <Tabs.TabPane tab="Inactive Market" key="inactive" />
-            </Tabs>
-          </div>
-
-          <div style={{ padding: "0 10px" }}>
-            {firstLoad ? (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <Spin size="large" />
+                  <PlusOutlined />
+                  Add Game
+                </button>
               </div>
-            ) : filteredGames.length === 0 ? (
-              <Empty
-                description="No Games Available"
-                style={{ padding: "20px 0" }}
-                imageStyle={{ display: "block", margin: "0 auto" }}
-              />
-            ) : (
-              <Table
-                columns={columns}
-                dataSource={filteredGames}
-                loading={loading}
-                pagination={{
-                  pageSize: pageSize,
-                  showSizeChanger: false,
-                  responsive: true,
-                }}
-                bordered
-                scroll={{ x: true }}
-                style={{
-                  width: "100%",
-                  overflowX: "auto",
-                }}
-                size="middle"
-              />
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sort by:
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="asc">Old to New</option>
+                    <option value="desc">New to Old</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Show Entries:
+                  </label>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Search:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search Games..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <SearchOutlined className="absolute left-3 top-2.5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="border-b border-gray-200">
+                  <nav className="flex space-x-8">
+                    <button
+                      onClick={() => setMarketStatus("active")}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        marketStatus === "active"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Active Market
+                    </button>
+                    <button
+                      onClick={() => setMarketStatus("inactive")}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        marketStatus === "inactive"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Inactive Market
+                    </button>
+                  </nav>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                {firstLoad ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : filteredGames.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 text-5xl mb-4">📊</div>
+                    <p className="text-gray-500">No Games Available</p>
+                  </div>
+                ) : (
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          #
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Game Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Open Time
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Close Time
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Active
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredGames.map((game, index) => (
+                        <tr key={game._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {index + 1}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {game.gameName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {convertTo12Hour(game.openTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {convertTo12Hour(game.closeTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() =>
+                                handleToggle(game._id, game.isActive)
+                              }
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                                game.isActive
+                                  ? "bg-blue-600"
+                                  : "bg-gray-200"
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                                  game.isActive
+                                    ? "translate-x-6"
+                                    : "translate-x-1"
+                                }`}
+                              />
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleEdit(game)}
+                              className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md mr-2"
+                            >
+                              <EditOutlined />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(game._id)}
+                              className="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md"
+                            >
+                              <DeleteOutlined />
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {!firstLoad && filteredGames.length > 0 && (
+                <div className="px-6 py-3 border-t border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-700">
+                      Showing {Math.min(filteredGames.length, pageSize)} of{" "}
+                      {filteredGames.length} games
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </Card>
-      </Card>
+        </div>
+      </div>
+
+      {/* Add Game Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Add New Game
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Game Name
+                    </label>
+                    <input
+                      type="text"
+                      name="gameName"
+                      value={formData.gameName}
+                      onChange={handleFormChange}
+                      placeholder="Enter Game Name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Market Open Time
+                    </label>
+                    <select
+                      name="openTime"
+                      value={formData.openTime}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Open Time</option>
+                      {timeOptions.map((time) => (
+                        <option key={time.value24} value={time.value24}>
+                          {time.display}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Market Close Time
+                    </label>
+                    <select
+                      name="closeTime"
+                      value={formData.closeTime}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Close Time</option>
+                      {timeOptions.map((time) => (
+                        <option key={time.value24} value={time.value24}>
+                          {time.display}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Changed from checkbox to dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Market Status
+                    </label>
+                    <select
+                      name="marketStatus"
+                      value={formData.marketStatus}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="active">Active (On)</option>
+                      <option value="inactive">Inactive (Off)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end space-x-3">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddGame}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+              >
+                Add Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
-      <Modal
-        title="Edit Game"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onOk={handleUpdate}
-        width={700}
-      >
-        <Form form={editForm} layout="vertical">
-          <Form.Item
-            label="Game Name"
-            name="gameName"
-            rules={[{ required: true, message: "Enter game name" }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Game Type"
-            name="gameType"
-            rules={[{ required: true, message: "Select at least one game type" }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select Game Types"
-              onChange={handleEditGameTypeChange}
-            >
-              <Option key="Select All" value="Select All">
-                Select All
-              </Option>
-              {sortedGameTypeOptionsAsc.map((type) => (
-                <Option key={type} value={type}>
-                  {type}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Form.Item
-                label="Open Time"
-                name="openTime"
-                rules={[{ required: true, message: "Enter open time" }]}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Game</h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Game Name
+                  </label>
+                  <input
+                    type="text"
+                    name="gameName"
+                    value={editFormData.gameName}
+                    onChange={handleEditFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Game Type
+                  </label>
+                  <select
+                    multiple
+                    value={editFormData.gameType}
+                    onChange={(e) =>
+                      handleEditGameTypeChange(
+                        Array.from(
+                          e.target.selectedOptions,
+                          (option) => option.value
+                        )
+                      )
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
+                  >
+                    <option value="Select All">Select All</option>
+                    {sortedGameTypeOptionsAsc.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Open Time
+                    </label>
+                    <select
+                      name="openTime"
+                      value={editFormData.openTime}
+                      onChange={handleEditFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Open Time</option>
+                      {timeOptions.map((time) => (
+                        <option key={time.value24} value={time.value24}>
+                          {time.display}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Close Time
+                    </label>
+                    <select
+                      name="closeTime"
+                      value={editFormData.closeTime}
+                      onChange={handleEditFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Close Time</option>
+                      {timeOptions.map((time) => (
+                        <option key={time.value24} value={time.value24}>
+                          {time.display}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {editingGame?.weekends?.length > 0 && (
+                  <div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-4">
+                      Weekends Schedule
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[...editingGame.weekends]
+                        .sort(
+                          (a, b) =>
+                            dayjs(a.openTime, "hh:mm A").valueOf() -
+                            dayjs(b.openTime, "hh:mm A").valueOf()
+                        )
+                        .map((day, index) => (
+                          <div
+                            key={day.day}
+                            className="border rounded-lg p-4 space-y-3"
+                          >
+                            <h5 className="font-medium text-center text-gray-900">
+                              {day.day}
+                            </h5>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Open Time
+                              </label>
+                              <select
+                                value={
+                                  editFormData.weekends[index]?.openTime || ""
+                                }
+                                onChange={(e) =>
+                                  handleWeekendChange(
+                                    index,
+                                    "openTime",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select Open Time</option>
+                                {timeOptions.map((time) => (
+                                  <option key={time.value24} value={time.value24}>
+                                    {time.display}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Close Time
+                              </label>
+                              <select
+                                value={
+                                  editFormData.weekends[index]?.closeTime || ""
+                                }
+                                onChange={(e) =>
+                                  handleWeekendChange(
+                                    index,
+                                    "closeTime",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select Close Time</option>
+                                {timeOptions.map((time) => (
+                                  <option key={time.value24} value={time.value24}>
+                                    {time.display}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex items-center">
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    editFormData.weekends[index]?.is_open ||
+                                    false
+                                  }
+                                  onChange={(e) =>
+                                    handleWeekendChange(
+                                      index,
+                                      "is_open",
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">
+                                  Active Status
+                                </span>
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end space-x-3">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                <TimePicker format="hh:mm A" use12Hours />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Close Time"
-                name="closeTime"
-                rules={[{ required: true, message: "Enter close time" }]}
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
               >
-                <TimePicker format="hh:mm A" use12Hours />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={[16, 16]}>
-            {editingGame &&
-              [...editingGame.weekends]
-                .sort((a, b) => dayjs(a.openTime, "hh:mm A").valueOf() - dayjs(b.openTime, "hh:mm A").valueOf())
-                .map((day, index) => (
-                  <Col span={12} key={day.day}>
-                    <Card size="small" title={day.day} style={{ textAlign: "center" }}>
-                      <Form.Item
-                        name={["weekends", index, "openTime"]}
-                        label="Open Time"
-                        rules={[{ required: true }]}
-                      >
-                        <TimePicker format="hh:mm A" use12Hours />
-                      </Form.Item>
-                      <Form.Item
-                        name={["weekends", index, "closeTime"]}
-                        label="Close Time"
-                        rules={[{ required: true }]}
-                      >
-                        <TimePicker format="hh:mm A" use12Hours />
-                      </Form.Item>
-                      <Form.Item
-                        name={["weekends", index, "is_open"]} // Fixed: Use is_open
-                        label="Active Status"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-                    </Card>
-                  </Col>
-                ))}
-          </Row>
-        </Form>
-      </Modal>
+                Update Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
