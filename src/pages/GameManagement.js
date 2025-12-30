@@ -34,24 +34,59 @@ const gameTypeOptions = [
   "Double Pana Bulk",
 ];
 
-// 12-hour format time options generator
-const generateTimeOptions = () => {
-  const times = [];
-  for (let hour = 0; hour < 24; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) { // Every 30 minutes
-      const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      const time12 = dayjs(`2000-01-01 ${time24}`).format('hh:mm A');
-      times.push({
-        value24: time24,
-        value12: time12,
-        display: time12
-      });
-    }
-  }
-  return times;
+// Time format validation and conversion utilities
+const validateTimeFormat = (timeString) => {
+  if (!timeString) return false;
+
+  // Accept multiple formats
+  const formats = [
+    /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, // 24-hour: HH:mm
+    /^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, // 24-hour: HH:mm:ss
+    /^(1[0-2]|0?[1-9]):[0-5][0-9]\s?(AM|PM|am|pm)$/, // 12-hour: hh:mm AM/PM
+    /^(1[0-2]|0?[1-9]):[0-5][0-9]:[0-5][0-9]\s?(AM|PM|am|pm)$/, // 12-hour: hh:mm:ss AM/PM
+  ];
+
+  return formats.some(format => format.test(timeString.trim()));
 };
 
-const timeOptions = generateTimeOptions();
+const normalizeTo24Hour = (timeString) => {
+  if (!timeString) return '';
+
+  const trimmedTime = timeString.trim().toUpperCase();
+
+  // If already in 24-hour format
+  if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]/.test(trimmedTime)) {
+    const parts = trimmedTime.split(':');
+    const hours = parts[0].padStart(2, '0');
+    const minutes = parts[1].padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Convert 12-hour to 24-hour
+  const match = trimmedTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/);
+  if (match) {
+    let hours = parseInt(match[1]);
+    const minutes = match[2].padStart(2, '0');
+    const period = match[4] || '';
+
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  }
+
+  return '';
+};
+
+const formatTo12Hour = (time24) => {
+  if (!time24) return '';
+
+  try {
+    return dayjs(`2000-01-01 ${time24}`).format('hh:mm A');
+  } catch (error) {
+    return time24;
+  }
+};
 
 const GameManagement = () => {
   const [fetchedGames, setFetchedGames] = useState([]);
@@ -71,7 +106,7 @@ const GameManagement = () => {
     gameType: [],
     openTime: "",
     closeTime: "",
-    marketStatus: "active", // Changed from marketOnOff: false to marketStatus: "active"
+    marketStatus: "active",
   });
   const [editFormData, setEditFormData] = useState({
     gameName: "",
@@ -79,6 +114,13 @@ const GameManagement = () => {
     openTime: "",
     closeTime: "",
     weekends: [],
+  });
+
+  const [timeErrors, setTimeErrors] = useState({
+    addOpenTime: "",
+    addCloseTime: "",
+    editOpenTime: "",
+    editCloseTime: "",
   });
 
   const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
@@ -159,14 +201,25 @@ const GameManagement = () => {
   };
 
   const handleAddGame = async () => {
+    // Validate time formats
+    if (!validateTimeFormat(formData.openTime)) {
+      setTimeErrors(prev => ({ ...prev, addOpenTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
+      return;
+    }
+
+    if (!validateTimeFormat(formData.closeTime)) {
+      setTimeErrors(prev => ({ ...prev, addCloseTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
+      return;
+    }
+
     try {
       const newGame = {
         marketName: "Main Market",
         gameName: formData.gameName,
         gameType: sortedGameTypeOptionsAsc,
-        openTime: formData.openTime,
-        closeTime: formData.closeTime,
-        isActive: formData.marketStatus === "active", // Convert to boolean
+        openTime: normalizeTo24Hour(formData.openTime),
+        closeTime: normalizeTo24Hour(formData.closeTime),
+        isActive: formData.marketStatus === "active",
       };
 
       await axios.post(`/api/marketManagement/addMarketGame`, newGame);
@@ -178,9 +231,15 @@ const GameManagement = () => {
         gameType: [],
         openTime: "",
         closeTime: "",
-        marketStatus: "active", // Reset to active
+        marketStatus: "active",
       });
       setSelectedGameTypes([]);
+      setTimeErrors({
+        addOpenTime: "",
+        addCloseTime: "",
+        editOpenTime: "",
+        editCloseTime: "",
+      });
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error adding game:", error);
@@ -202,16 +261,27 @@ const GameManagement = () => {
   };
 
   const handleUpdate = async () => {
+    // Validate time formats
+    if (!validateTimeFormat(editFormData.openTime)) {
+      setTimeErrors(prev => ({ ...prev, editOpenTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
+      return;
+    }
+
+    if (!validateTimeFormat(editFormData.closeTime)) {
+      setTimeErrors(prev => ({ ...prev, editCloseTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
+      return;
+    }
+
     try {
       const updatedGame = {
         gameName: editFormData.gameName,
-        gameType: editFormData.gameType,
-        openTime: editFormData.openTime,
-        closeTime: editFormData.closeTime,
+        gameType: sortedGameTypeOptionsAsc, // Always use all game types
+        openTime: normalizeTo24Hour(editFormData.openTime),
+        closeTime: normalizeTo24Hour(editFormData.closeTime),
         weekends: editFormData.weekends.map((day) => ({
           ...day,
-          openTime: day.openTime,
-          closeTime: day.closeTime,
+          openTime: day.openTime ? normalizeTo24Hour(day.openTime) : "",
+          closeTime: day.closeTime ? normalizeTo24Hour(day.closeTime) : "",
           is_open: day.is_open,
         })),
       };
@@ -222,6 +292,12 @@ const GameManagement = () => {
       );
       alert("Game updated successfully!");
       setIsEditModalOpen(false);
+      setTimeErrors({
+        addOpenTime: "",
+        addCloseTime: "",
+        editOpenTime: "",
+        editCloseTime: "",
+      });
       fetchGames();
     } catch (error) {
       console.error("Error updating game:", error);
@@ -235,14 +311,20 @@ const GameManagement = () => {
     setEditFormData({
       gameName: record.gameName,
       gameType: record.gameType || [],
-      openTime: record.openTime || "",
-      closeTime: record.closeTime || "",
+      openTime: formatTo12Hour(record.openTime) || "",
+      closeTime: formatTo12Hour(record.closeTime) || "",
       weekends: record.weekends.map((day) => ({
         ...day,
-        openTime: day.openTime || "",
-        closeTime: day.closeTime || "",
+        openTime: day.openTime ? formatTo12Hour(day.openTime) : "",
+        closeTime: day.closeTime ? formatTo12Hour(day.closeTime) : "",
         is_open: day.is_open,
       })),
+    });
+    setTimeErrors({
+      addOpenTime: "",
+      addCloseTime: "",
+      editOpenTime: "",
+      editCloseTime: "",
     });
   };
 
@@ -265,6 +347,14 @@ const GameManagement = () => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+
+    // Clear error when user starts typing
+    if (name === 'openTime') {
+      setTimeErrors(prev => ({ ...prev, addOpenTime: "" }));
+    }
+    if (name === 'closeTime') {
+      setTimeErrors(prev => ({ ...prev, addCloseTime: "" }));
+    }
   };
 
   const handleEditFormChange = (e) => {
@@ -273,6 +363,14 @@ const GameManagement = () => {
       ...editFormData,
       [name]: type === "checkbox" ? checked : value,
     });
+
+    // Clear error when user starts typing
+    if (name === 'openTime') {
+      setTimeErrors(prev => ({ ...prev, editOpenTime: "" }));
+    }
+    if (name === 'closeTime') {
+      setTimeErrors(prev => ({ ...prev, editCloseTime: "" }));
+    }
   };
 
   const handleWeekendChange = (index, field, value) => {
@@ -287,16 +385,25 @@ const GameManagement = () => {
     });
   };
 
-  // Function to convert 12-hour format to 24-hour format
-  const convertTo24Hour = (time12) => {
-    if (!time12) return '';
-    return dayjs(`2000-01-01 ${time12}`).format('HH:mm');
+  const formatTimeDisplay = (time24) => {
+    if (!time24) return '';
+    try {
+      return formatTo12Hour(time24);
+    } catch (error) {
+      return time24;
+    }
   };
 
-  // Function to convert 24-hour format to 12-hour format
-  const convertTo12Hour = (time24) => {
-    if (!time24) return '';
-    return dayjs(`2000-01-01 ${time24}`).format('hh:mm A');
+  const handleTimeInputBlur = (field, value, isEdit = false) => {
+    if (value && validateTimeFormat(value)) {
+      // Auto-format the time
+      const formattedTime = formatTo12Hour(normalizeTo24Hour(value));
+      if (isEdit) {
+        setEditFormData(prev => ({ ...prev, [field]: formattedTime }));
+      } else {
+        setFormData(prev => ({ ...prev, [field]: formattedTime }));
+      }
+    }
   };
 
   return (
@@ -376,21 +483,19 @@ const GameManagement = () => {
                   <nav className="flex space-x-8">
                     <button
                       onClick={() => setMarketStatus("active")}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                        marketStatus === "active"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${marketStatus === "active"
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
                     >
                       Active Market
                     </button>
                     <button
                       onClick={() => setMarketStatus("inactive")}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                        marketStatus === "inactive"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${marketStatus === "inactive"
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
                     >
                       Inactive Market
                     </button>
@@ -442,28 +547,26 @@ const GameManagement = () => {
                             {game.gameName}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {convertTo12Hour(game.openTime)}
+                            {formatTimeDisplay(game.openTime)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {convertTo12Hour(game.closeTime)}
+                            {formatTimeDisplay(game.closeTime)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() =>
                                 handleToggle(game._id, game.isActive)
                               }
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                                game.isActive
-                                  ? "bg-blue-600"
-                                  : "bg-gray-200"
-                              }`}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full ${game.isActive
+                                ? "bg-blue-600"
+                                : "bg-gray-200"
+                                }`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                  game.isActive
-                                    ? "translate-x-6"
-                                    : "translate-x-1"
-                                }`}
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${game.isActive
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
+                                  }`}
                               />
                             </button>
                           </td>
@@ -535,41 +638,44 @@ const GameManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Market Open Time
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="openTime"
                       value={formData.openTime}
                       onChange={handleFormChange}
+                      onBlur={() => handleTimeInputBlur('openTime', formData.openTime, false)}
+                      placeholder="e.g., 09:30 AM or 14:45"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Open Time</option>
-                      {timeOptions.map((time) => (
-                        <option key={time.value24} value={time.value24}>
-                          {time.display}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    {timeErrors.addOpenTime && (
+                      <p className="mt-1 text-sm text-red-600">{timeErrors.addOpenTime}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Market Close Time
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="closeTime"
                       value={formData.closeTime}
                       onChange={handleFormChange}
+                      onBlur={() => handleTimeInputBlur('closeTime', formData.closeTime, false)}
+                      placeholder="e.g., 06:00 PM or 18:00"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Close Time</option>
-                      {timeOptions.map((time) => (
-                        <option key={time.value24} value={time.value24}>
-                          {time.display}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    {timeErrors.addCloseTime && (
+                      <p className="mt-1 text-sm text-red-600">{timeErrors.addCloseTime}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
+                    </p>
                   </div>
 
-                  {/* Changed from checkbox to dropdown */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Market Status
@@ -604,7 +710,6 @@ const GameManagement = () => {
           </div>
         </div>
       )}
-
       {/* Edit Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -627,70 +732,77 @@ const GameManagement = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Game Type
-                  </label>
-                  <select
-                    multiple
-                    value={editFormData.gameType}
-                    onChange={(e) =>
-                      handleEditGameTypeChange(
-                        Array.from(
-                          e.target.selectedOptions,
-                          (option) => option.value
-                        )
-                      )
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
-                  >
-                    <option value="Select All">Select All</option>
-                    {sortedGameTypeOptionsAsc.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Open Time
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="openTime"
                       value={editFormData.openTime}
                       onChange={handleEditFormChange}
+                      onBlur={() => handleTimeInputBlur('openTime', editFormData.openTime, true)}
+                      placeholder="e.g., 09:30 AM or 14:45"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Open Time</option>
-                      {timeOptions.map((time) => (
-                        <option key={time.value24} value={time.value24}>
-                          {time.display}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    {timeErrors.editOpenTime && (
+                      <p className="mt-1 text-sm text-red-600">{timeErrors.editOpenTime}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Close Time
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="closeTime"
                       value={editFormData.closeTime}
                       onChange={handleEditFormChange}
+                      onBlur={() => handleTimeInputBlur('closeTime', editFormData.closeTime, true)}
+                      placeholder="e.g., 06:00 PM or 18:00"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Close Time</option>
-                      {timeOptions.map((time) => (
-                        <option key={time.value24} value={time.value24}>
-                          {time.display}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    {timeErrors.editCloseTime && (
+                      <p className="mt-1 text-sm text-red-600">{timeErrors.editCloseTime}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
+                    </p>
                   </div>
+                </div>
+
+                {/* Apply to All Weekends Checkbox */}
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="applyToAllWeekends"
+                    onChange={(e) => {
+                      if (e.target.checked && editFormData.openTime && editFormData.closeTime) {
+                        const updatedWeekends = editFormData.weekends.map(day => ({
+                          ...day,
+                          openTime: editFormData.openTime,
+                          closeTime: editFormData.closeTime,
+                          is_open: true
+                        }));
+                        setEditFormData({
+                          ...editFormData,
+                          weekends: updatedWeekends
+                        });
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="applyToAllWeekends" className="ml-2 text-sm font-medium text-gray-700">
+                    Apply main times to all weekends
+                  </label>
+                  <span className="ml-2 text-xs text-gray-500">
+                    (Check this to copy main open/close times to all weekends)
+                  </span>
                 </div>
 
                 {editingGame?.weekends?.length > 0 && (
@@ -717,7 +829,8 @@ const GameManagement = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Open Time
                               </label>
-                              <select
+                              <input
+                                type="text"
                                 value={
                                   editFormData.weekends[index]?.openTime || ""
                                 }
@@ -728,21 +841,23 @@ const GameManagement = () => {
                                     e.target.value
                                   )
                                 }
+                                onBlur={() => {
+                                  const value = editFormData.weekends[index]?.openTime;
+                                  if (value && validateTimeFormat(value)) {
+                                    const formattedTime = formatTo12Hour(normalizeTo24Hour(value));
+                                    handleWeekendChange(index, "openTime", formattedTime);
+                                  }
+                                }}
+                                placeholder="e.g., 09:00 AM"
                                 className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="">Select Open Time</option>
-                                {timeOptions.map((time) => (
-                                  <option key={time.value24} value={time.value24}>
-                                    {time.display}
-                                  </option>
-                                ))}
-                              </select>
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Close Time
                               </label>
-                              <select
+                              <input
+                                type="text"
                                 value={
                                   editFormData.weekends[index]?.closeTime || ""
                                 }
@@ -753,15 +868,16 @@ const GameManagement = () => {
                                     e.target.value
                                   )
                                 }
+                                onBlur={() => {
+                                  const value = editFormData.weekends[index]?.closeTime;
+                                  if (value && validateTimeFormat(value)) {
+                                    const formattedTime = formatTo12Hour(normalizeTo24Hour(value));
+                                    handleWeekendChange(index, "closeTime", formattedTime);
+                                  }
+                                }}
+                                placeholder="e.g., 06:00 PM"
                                 className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="">Select Close Time</option>
-                                {timeOptions.map((time) => (
-                                  <option key={time.value24} value={time.value24}>
-                                    {time.display}
-                                  </option>
-                                ))}
-                              </select>
+                              />
                             </div>
                             <div className="flex items-center">
                               <label className="flex items-center space-x-2">
