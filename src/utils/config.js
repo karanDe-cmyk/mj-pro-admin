@@ -1,1 +1,1 @@
-export const apiUrl = "https://bazigar-api.phoenixappapi.com"
+export const apiUrl = "https://demo-api.phoenixappapi.com"
