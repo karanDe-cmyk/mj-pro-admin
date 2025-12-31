@@ -1,1 +1,1 @@
-export const apiUrl = "https://lotus-api.phoenixappapi.com"
+export const apiUrl = "https://demo-api.phoenixappapi.com"
