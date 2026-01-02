@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Layout, Dropdown, Menu, Button } from "antd";
-import { MenuFoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined } from "@ant-design/icons";
+import { MenuFoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined, HomeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 const { Header: AntHeader } = Layout;
@@ -31,15 +31,23 @@ const Header = ({ username = "Admin", onToggleSidebar, handleLogout }) => {
     return (
         <AntHeader className="bg-white shadow-md flex justify-between items-center p-4 sticky top-0 z-50 w-full">
             {/* Sidebar Toggle Button */}
-            <Button
-                type="text"
-                icon={<MenuFoldOutlined />}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleSidebar();
-                }}
-                className="text-gray-700 text-xl hamburger-button"
-            />
+            <div>
+                <Button
+                    type="text"
+                    icon={<MenuFoldOutlined />}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleSidebar();
+                    }}
+                    className="text-gray-700 text-xl hamburger-button"
+                />
+                <Button
+                    type="text"
+                    icon={<HomeOutlined />}
+                    onClick={() => navigate("/admin/dashboard")}
+                    className="text-gray-700 text-xl hamburger-button"
+                />
+            </div>
             {/* Username with Dropdown */}
             <Dropdown
                 overlay={menu}

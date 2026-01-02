@@ -305,14 +305,6 @@ const MarketDeclareResult = () => {
           const storedToken = localStorage.getItem("fcmToken");
 
           if (storedToken) {
-            console.log("Sending notification with data:", {
-              market: values.marketGame,
-              gameType: values.gameType,
-              gameName: normalizedGameName,
-              result: values.gameType === "open"
-                ? `${values.panna}-${values.digit}`
-                : `${values.digit}-${values.panna}`
-            });
             const notificationResponse = await instance.post('/api/notification', {
               token: storedToken,
               market: values.marketGame,
