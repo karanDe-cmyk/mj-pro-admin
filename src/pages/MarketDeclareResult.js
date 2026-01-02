@@ -79,33 +79,22 @@ const MarketDeclareResult = () => {
   const fetchMarketGameList = async () => {
     try {
       setLoading(true);
-      const response = await instance.get(`/api/marketManagement/getMarketGames`);
-      if (response?.data) {
-        const uniqueMarkets = [
-          ...new Set(
-            response.data
-              .map((item) => item.marketName)
-              .filter((name) => name && name.trim() !== "")
-          ),
-        ];
-        setMarketGameList(uniqueMarkets);
-        setAllGames(response.data);
-        
-        // Set default market to "Main Market" if it exists
-        if (uniqueMarkets.includes("Main Market")) {
-          setSelectedMarketGame("Main Market");
-          form.setFieldsValue({ marketGame: "Main Market" });
-          
-          // Set game options for Main Market
-          const filteredGames = response.data
-            .filter((game) => game.marketName === "Main Market")
-            .map((game) => game.gameName);
-          setGameOptions([...new Set(filteredGames)]);
-        }
+
+      const response = await instance.get(
+        "/api/marketManagement/market_games"
+      );
+
+      if (Array.isArray(response?.data)) {
+        // sirf gameName nikaalo
+        const gameNames = response.data
+          .map(item => item.gameName)
+          .filter(Boolean);
+
+        setGameOptions(gameNames);
       }
     } catch (error) {
-      console.error("Error fetching market and game list:", error);
-      message.error("Failed to fetch market & game names.");
+      console.error("Error fetching game list:", error);
+      message.error("Failed to fetch game names.");
     } finally {
       setLoading(false);
     }
@@ -397,14 +386,14 @@ const MarketDeclareResult = () => {
     }
   };
 
-  const handleMarketChange = (selectedMarket) => {
-    const filteredGames = allGames
-      .filter((game) => game.marketName === selectedMarket)
-      .map((game) => game.gameName);
-    setGameOptions([...new Set(filteredGames)]);
-    setSelectedMarketGame(selectedMarket);
-    form.setFieldsValue({ gameName: undefined });
-  };
+  // const handleMarketChange = (selectedMarket) => {
+  //   const filteredGames = allGames
+  //     .filter((game) => game.marketName === selectedMarket)
+  //     .map((game) => game.gameName);
+  //   setGameOptions([...new Set(filteredGames)]);
+  //   setSelectedMarketGame(selectedMarket);
+  //   form.setFieldsValue({ gameName: undefined });
+  // };
 
   const handleDelete = async (record) => {
     if (!record || !record._id) {
@@ -752,9 +741,9 @@ const MarketDeclareResult = () => {
                   label="Panna"
                   rules={[
                     { required: true, message: "Please enter panna" },
-                    { 
-                      pattern: /^[0-9]{3}$/, 
-                      message: "Panna must be 3 digits" 
+                    {
+                      pattern: /^[0-9]{3}$/,
+                      message: "Panna must be 3 digits"
                     }
                   ]}
                   style={{ marginBottom: 0 }}
