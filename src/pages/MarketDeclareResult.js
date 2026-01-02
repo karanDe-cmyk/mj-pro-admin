@@ -320,6 +320,8 @@ const MarketDeclareResult = () => {
         }
 
       }
+
+      window.location.reload();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to declare winner.");
     } finally {
