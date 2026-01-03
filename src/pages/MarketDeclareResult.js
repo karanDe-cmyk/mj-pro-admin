@@ -34,6 +34,9 @@ const MarketDeclareResult = () => {
   const [date, setDate] = useState(dayjs());
   const [declaredDigit, setDeclaredDigit] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isGameModalVisible, setIsGameModalVisible] = useState(false);
+  const [gameSearch, setGameSearch] = useState("");
+
 
   // Mobile detection
   useEffect(() => {
@@ -696,22 +699,16 @@ const MarketDeclareResult = () => {
                   name="gameName"
                   label={isMobile ? "Game" : "Game Name"}
                   rules={[{ required: true }]}
-                  style={{ marginBottom: 0 }}
                 >
-                  <Select
-                    onChange={(value) => setSelectedGameName(value)}
+                  <Input
                     placeholder="Select Game"
-                    disabled={!gameOptions.length}
-                    style={{ width: "100%" }}
+                    readOnly
+                    onClick={() => setIsGameModalVisible(true)}
+                    style={{ cursor: "pointer" }}
                     size={isMobile ? "small" : "middle"}
-                  >
-                    {gameOptions.map((game, index) => (
-                      <Select.Option key={index} value={game}>
-                        {game}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                  />
                 </Form.Item>
+
               </Col>
             </Row>
 
@@ -1019,6 +1016,55 @@ const MarketDeclareResult = () => {
 
         <ToastContainer />
       </Card>
+      <Modal
+        title="Select Game"
+        open={isGameModalVisible}
+        onCancel={() => setIsGameModalVisible(false)}
+        footer={null}
+        width={isMobile ? "90%" : "400px"}
+      >
+        {/* Search */}
+        <Input
+          placeholder="Search game..."
+          value={gameSearch}
+          onChange={(e) => setGameSearch(e.target.value)}
+          style={{ marginBottom: 12 }}
+        />
+
+        {/* Game List */}
+        <div style={{ maxHeight: 350, overflowY: "auto" }}>
+          {gameOptions
+            .filter(game =>
+              game.toLowerCase().includes(gameSearch.toLowerCase())
+            )
+            .map((game, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  form.setFieldsValue({ gameName: game });
+                  setSelectedGameName(game);
+                  setIsGameModalVisible(false);
+                  setGameSearch("");
+                }}
+                style={{
+                  padding: "10px",
+                  cursor: "pointer",
+                  borderBottom: "1px solid #f0f0f0",
+                  fontWeight: 500
+                }}
+              >
+                {game}
+              </div>
+            ))}
+
+          {gameOptions.length === 0 && (
+            <p style={{ textAlign: "center", color: "#999" }}>
+              No games found
+            </p>
+          )}
+        </div>
+      </Modal>
+
     </div>
   );
 };
