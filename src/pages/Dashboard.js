@@ -9,12 +9,10 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(true);
   const [autoDepositHistory, setAutoDepositHistory] = useState([]);
-  const [totalUsers, setTotalUsers] = useState({ totalUsers: 0 });
   const [approvedUsers, setApprovedUsers] = useState({ approvedUsers: 0 });
   const [unapprovedUsers, setUnApprovedUsers] = useState({
     unapprovedUsers: 0,
   });
-  const [totalGames, setTotalGames] = useState({ totalGameCount: 0 });
   const [mainMarketGamesList, setMainMarketGamesList] = useState([]);
   const [mainMarketGamesListLeft, setMainMarketGamesListLeft] = useState([]);
   const [selectedGame, setSelectedGame] = useState("");
@@ -33,14 +31,20 @@ const Dashboard = () => {
   const [loadingButton2, setLoadingButton2] = useState(false);
   const [betRates, setBetRates] = useState([]);
   const [selectedGameType, setSelectedGameType] = useState("");
-  const [todayBidPlayer, setTodayBidPlayer] = useState(0)
-  const [totalNotBidPlayer, setTodayNotBidPlayer] = useState(0);
-  const [userStats, setUserStats] = useState({
+
+  const [dailySummary, setDailySummary] = useState({
+    totalUsers: 0,
+    totalGames: 0,
     todayRegistrations: 0,
     todayRegisteredUsersWhoPlayedBid: 0,
-    todayUsersWhoPlayedBid: 0,
-    totalUsersWhoPlayedBid: 0
+    todayBidPlayers: 0,
+    todayNotBidPlayers: 0,
+    totalUsersWhoPlayedBid: 0,
+    todayTotalBidAmount: 0,
+    todayTotalBidEntries: 0,
+    averageBidPerPlayer: 0,
   });
+
 
   const [amountStats, setAmountStats] = useState({
     totalWalletBalance: 0,
@@ -54,34 +58,28 @@ const Dashboard = () => {
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
 
-  // Fix 1: Update function names and API endpoints
-  const fetchTodayBidPlayer = async () => {
+  const fetchDailySummary = async () => {
     try {
-      const response = await instance.get('/api/auth/today-bid-player', {
-        params: { date: selectedDate }
-      })
-      const count = response.data?.count
-      setTodayBidPlayer(count)
-    } catch (error) {
-      console.log(error)
-    }
-  }
+      setLoading(true);
 
-  const fetchTodayNotBidPlayer = async () => {
-    try {
-      const response = await instance.get('/api/auth/total-not-player', {
-        params: { date: selectedDate }
-      })
-      const count = response.data?.count
-      setTodayNotBidPlayer(count)
+      const response = await instance.get(
+        "/api/auth/dailySummary",
+        { params: { date: selectedDate } }
+      );
+
+      if (response.data?.success) {
+        setDailySummary(response.data.summary);
+      }
     } catch (error) {
-      console.log(error)
+      console.error("Error fetching daily summary:", error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchTodayBidPlayer();
-    fetchTodayNotBidPlayer();
+    if (!selectedDate) return;
+    fetchDailySummary();
   }, [selectedDate]);
 
   // Handler for DatePicker changes
@@ -117,75 +115,6 @@ const Dashboard = () => {
     }
   };
 
-  const fetchUserStats = async () => {
-    try {
-      const response = await instance.get(`/api/auth/getUserStats`, {
-        params: { date: selectedDate }
-      });
-      const data = response.data;
-      if (data.success) {
-        setUserStats({
-          todayRegistrations: data.todayRegistrations || 0,
-          todayRegisteredUsersWhoPlayedBid: data.todayRegisteredUsersWhoPlayedBid || 0,
-          todayUsersWhoPlayedBid: data.todayUsersWhoPlayedBid || 0,
-          totalUsersWhoPlayedBid: data.totalUsersWhoPlayedBid || 0
-        });
-      } else {
-        console.error("Error fetching user stats:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching user stats:", error);
-    }
-  };
-
-  const fetchTotalUsers = async () => {
-    try {
-      const response = await instance.get(`/api/app/users`, {
-        params: { date: selectedDate }
-      });
-      const data = response.data;
-      if (data.totalUsers !== undefined) {
-        setTotalUsers({ totalUsers: data.totalUsers });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching Starline Bid Amount:", error);
-    }
-  };
-
-  const fetchApprovedUsers = async () => {
-    try {
-      const response = await instance.get(`/api/app/users`, {
-        params: { date: selectedDate }
-      });
-      const data = response.data;
-      if (data.approvedUsers !== undefined) {
-        setApprovedUsers({ approvedUsers: data.approvedUsers });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching Starline Bid Amount:", error);
-    }
-  };
-
-  const fetchUnApprovedUsers = async () => {
-    try {
-      const response = await instance.get(`/api/app/users`, {
-        params: { date: selectedDate }
-      });
-      const data = response.data;
-      if (data.unapprovedUsers !== undefined) {
-        setUnApprovedUsers({ unapprovedUsers: data.unapprovedUsers });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching Starline Bid Amount:", error);
-    }
-  };
-
   const fetchDepositHistory = async () => {
     try {
       setLoading(true);
@@ -202,23 +131,6 @@ const Dashboard = () => {
       console.error("Error fetching deposit history:", err);
       setError("Failed to fetch deposit history. Please try again.");
       setLoading(false);
-    }
-  };
-
-  const fetchTotalGames = async () => {
-    try {
-      const response = await instance.get(
-        `/api/marketManagement/games/totalCount`,
-        { params: { date: selectedDate } }
-      );
-      const data = response.data;
-      if (data.totalGameCount !== undefined) {
-        setTotalGames({ totalGameCount: data.totalGameCount });
-      } else {
-        console.error("Error in API response:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching MainMarketData Bid Amount:", error);
     }
   };
 
@@ -248,13 +160,8 @@ const Dashboard = () => {
   }, [selectedDate]);
 
   const fetchAllData = () => {
-    fetchUserStats();
     fetchFinancerStats();
-    fetchTotalUsers();
-    fetchApprovedUsers();
-    fetchUnApprovedUsers();
     fetchDepositHistory();
-    fetchTotalGames();
     fetchProfitLossData();
   };
 
@@ -589,7 +496,7 @@ const Dashboard = () => {
                 onClick={() => navigate("/admin/user-management/approved")}
               >
                 <p className="text-gray-700 text-xl">
-                  Approved Users: {approvedUsers.approvedUsers ?? "Failed to fetch"}
+                  Approved Users: {dailySummary.totalUsers}
                 </p>
               </div>
               <div
@@ -597,7 +504,7 @@ const Dashboard = () => {
                 onClick={() => navigate("/admin/user-management/unapproved")}
               >
                 <p className="text-gray-700 text-xl">
-                  Unapproved Users: {unapprovedUsers.unapprovedUsers ?? "Failed to fetch"}
+                  Unapproved Users: {dailySummary.inactiveUsers}
                 </p>
               </div>
             </div>
@@ -614,7 +521,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Users</p>
               <p className="text-2xl font-bold mt-1">
-                {totalUsers.totalUsers ?? "Failed to fetch"}
+                {dailySummary.totalUsers ?? "Failed to fetch"}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -633,7 +540,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Today Registration</p>
               <p className="text-2xl font-bold mt-1">
-                {userStats.todayRegistrations ?? "0"}
+                {dailySummary.todayRegistrations}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -653,7 +560,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Games</p>
               <p className="text-2xl font-bold mt-1">
-                {totalGames.totalGameCount ?? "Failed to fetch"}
+                {dailySummary.totalGames}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -673,7 +580,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Players(Today)</p>
               <p className="text-2xl font-bold mt-1">
-                {todayBidPlayer ?? "0"}
+                {dailySummary.todayBidPlayers ?? "0"}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -692,7 +599,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Total Bet Players</p>
               <p className="text-2xl font-bold mt-1">
-                {userStats.totalUsersWhoPlayedBid ?? "0"}
+                {dailySummary.totalUsersWhoPlayedBid ?? "0"}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -710,7 +617,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Today Registration Player</p>
               <p className="text-2xl font-bold mt-1">
-                {userStats.todayRegisteredUsersWhoPlayedBid ?? "0"}
+                {dailySummary.todayRegisteredUsersWhoPlayedBid ?? "0"}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -728,7 +635,7 @@ const Dashboard = () => {
             <div>
               <p className="font-bold text-gray-700">Total Not Bid Player</p>
               <p className="text-2xl font-bold mt-1">
-                {totalNotBidPlayer}
+                {Number(dailySummary.totalUsers) - Number(dailySummary.totalUsersWhoPlayedBid)}
               </p>
             </div>
             <div className="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center">
