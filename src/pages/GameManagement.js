@@ -302,22 +302,17 @@ const GameManagement = () => {
     }
 
     try {
-      // Ensure weekends have all required fields with proper defaults
-      const processedWeekends = editFormData.weekends.map((day) => ({
-        day: day.day,
-        openTime: day.openTime ? normalizeTo24Hour(day.openTime) : "",
-        closeTime: day.closeTime ? normalizeTo24Hour(day.closeTime) : "",
-        is_open: day.is_open !== undefined ? day.is_open : true, // Default to true if undefined
-        // Include any other fields that might be required
-        ...(day._id && { _id: day._id }) // Preserve existing _id if it exists
-      }));
-
       const updatedGame = {
         gameName: editFormData.gameName,
         gameType: sortedGameTypeOptionsAsc, // Always use all game types
         openTime: normalizeTo24Hour(editFormData.openTime),
         closeTime: normalizeTo24Hour(editFormData.closeTime),
-        weekends: processedWeekends,
+        weekends: editFormData.weekends.map((day) => ({
+          ...day,
+          openTime: day.openTime ? normalizeTo24Hour(day.openTime) : "",
+          closeTime: day.closeTime ? normalizeTo24Hour(day.closeTime) : "",
+          is_open: day.is_open,
+        })),
       };
 
       await axios.put(
