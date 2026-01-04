@@ -1,5 +1,22 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
+  Table,
+  Button,
+  Switch,
+  InputNumber,
+  Input,
+  Form,
+  Card,
+  Row,
+  Col,
+  message,
+  Modal,
+  Empty,
+  Spin,
+  Select,
+  Tabs,
+} from "antd";
+import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
@@ -8,6 +25,8 @@ import {
 import moment from "moment";
 import axios from "../utils/axiosInstance";
 import dayjs from "dayjs";
+
+const { Option } = Select;
 
 const gameTypeOptions = [
   "Triple Pana",
@@ -34,98 +53,42 @@ const gameTypeOptions = [
   "Double Pana Bulk",
 ];
 
-// Time format validation and conversion utilities
-const validateTimeFormat = (timeString) => {
-  if (!timeString) return false;
-
-  // Accept multiple formats
-  const formats = [
-    /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, // 24-hour: HH:mm
-    /^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, // 24-hour: HH:mm:ss
-    /^(1[0-2]|0?[1-9]):[0-5][0-9]\s?(AM|PM|am|pm)$/, // 12-hour: hh:mm AM/PM
-    /^(1[0-2]|0?[1-9]):[0-5][0-9]:[0-5][0-9]\s?(AM|PM|am|pm)$/, // 12-hour: hh:mm:ss AM/PM
-  ];
-
-  return formats.some(format => format.test(timeString.trim()));
+/* ---------------- Time helpers ---------------- */
+const TIME_FORMATS = ["hh:mm A", "hh:mm:ssA"];
+const buildTime = (hour, minute, period) => {
+  const hh = String(((Number(hour) % 12) || 12)).padStart(2, "0");
+  const mm = String(Number(minute)).padStart(2, "0");
+  const p = (period || "AM").toUpperCase() === "PM" ? "PM" : "AM";
+  return `${hh}:${mm} ${p}`;
 };
-
-const normalizeTo24Hour = (timeString) => {
-  if (!timeString) return '';
-
-  const trimmedTime = timeString.trim().toUpperCase();
-
-  // If already in 24-hour format
-  if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]/.test(trimmedTime)) {
-    const parts = trimmedTime.split(':');
-    const hours = parts[0].padStart(2, '0');
-    const minutes = parts[1].padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  // Convert 12-hour to 24-hour
-  const match = trimmedTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/);
-  if (match) {
-    let hours = parseInt(match[1]);
-    const minutes = match[2].padStart(2, '0');
-    const period = match[4] || '';
-
-    if (period === 'PM' && hours < 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
-  }
-
-  return '';
+const explodeTime = (t) => {
+  const m = moment(t, TIME_FORMATS, true);
+  if (!m.isValid()) return { hour: 1, minute: 0, period: "AM" };
+  return {
+    hour: Number(m.format("hh")),
+    minute: Number(m.format("mm")),
+    period: m.format("A"),
+  };
 };
-
-const formatTo12Hour = (time24) => {
-  if (!time24) return '';
-
-  try {
-    return dayjs(`2000-01-01 ${time24}`).format('hh:mm A');
-  } catch (error) {
-    return time24;
-  }
-};
+/* ------------------------------------------------ */
 
 const GameManagement = () => {
+
+  const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [fetchedGames, setFetchedGames] = useState([]);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(5);
   const [firstLoad, setFirstLoad] = useState(true);
   const [selectedGameTypes, setSelectedGameTypes] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc");
   const [marketStatus, setMarketStatus] = useState("active");
-  const [formData, setFormData] = useState({
-    marketName: "Main Market",
-    gameName: "",
-    gameType: [],
-    openTime: "",
-    closeTime: "",
-    marketStatus: "active",
-  });
-  const [editFormData, setEditFormData] = useState({
-    gameName: "",
-    gameType: [],
-    openTime: "",
-    closeTime: "",
-    weekends: [],
-  });
 
-  const [timeErrors, setTimeErrors] = useState({
-    addOpenTime: "",
-    addCloseTime: "",
-    editOpenTime: "",
-    editCloseTime: "",
-  });
-
-  const sortedGameTypeOptionsAsc = [...gameTypeOptions].sort((a, b) =>
-    a.localeCompare(b)
-  );
+  const sortedGameTypeOptionsAsc = useMemo(() => {
+    return [...gameTypeOptions].sort((a, b) => a.localeCompare(b));
+  }, []);
 
   const sortedGames = useMemo(() => {
     return [...fetchedGames].sort((a, b) => {
@@ -135,18 +98,20 @@ const GameManagement = () => {
     });
   }, [fetchedGames, sortOrder]);
 
-  const filteredGames = sortedGames
-    .filter((game) => {
-      if (marketStatus === "active") {
-        return game.isActive === true;
-      } else if (marketStatus === "inactive") {
-        return game.isActive === false;
-      }
-      return true;
-    })
-    .filter((game) =>
-      game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredGames = useMemo(() => {
+    return sortedGames
+      .filter((game) => {
+        if (marketStatus === "active") {
+          return game.isActive === true;
+        } else if (marketStatus === "inactive") {
+          return game.isActive === false;
+        }
+        return true;
+      })
+      .filter((game) =>
+        game?.gameName?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [sortedGames, marketStatus, searchTerm]);
 
   useEffect(() => {
     fetchGames();
@@ -159,11 +124,11 @@ const GameManagement = () => {
       if (response.data) {
         setFetchedGames(response.data || []);
       } else {
-        alert("Failed to fetch market games.");
+        message.error("Failed to fetch market games.");
       }
     } catch (error) {
       console.error("Error fetching games:", error);
-      alert("Failed to fetch games.");
+      message.error("Failed to fetch games.");
     } finally {
       setLoading(false);
       setFirstLoad(false);
@@ -176,13 +141,13 @@ const GameManagement = () => {
       selectedValues.length === sortedGameTypeOptionsAsc.length
     ) {
       setSelectedGameTypes(sortedGameTypeOptionsAsc);
-      setFormData({ ...formData, gameType: sortedGameTypeOptionsAsc });
+      form.setFieldsValue({ gameType: sortedGameTypeOptionsAsc });
     } else {
       const filteredValues = selectedValues.filter(
         (val) => val !== "Select All"
       );
       setSelectedGameTypes(filteredValues);
-      setFormData({ ...formData, gameType: filteredValues });
+      form.setFieldsValue({ gameType: filteredValues });
     }
   };
 
@@ -191,127 +156,64 @@ const GameManagement = () => {
       selectedValues.includes("Select All") ||
       selectedValues.length === sortedGameTypeOptionsAsc.length
     ) {
-      setEditFormData({ ...editFormData, gameType: sortedGameTypeOptionsAsc });
+      editForm.setFieldsValue({ gameType: sortedGameTypeOptionsAsc });
     } else {
-      setEditFormData({
-        ...editFormData,
+      editForm.setFieldsValue({
         gameType: selectedValues.filter((val) => val !== "Select All"),
       });
     }
   };
 
-  const handleAddGame = async () => {
-    // Validate time formats
-    if (!validateTimeFormat(formData.openTime)) {
-      setTimeErrors(prev => ({ ...prev, addOpenTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
-      return;
-    }
-
-    if (!validateTimeFormat(formData.closeTime)) {
-      setTimeErrors(prev => ({ ...prev, addCloseTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
-      return;
-    }
-
+  // ADD GAME (now manual HH/MM + AM/PM)
+  const handleAddGame = async (values) => {
     try {
       const newGame = {
-        marketName: "Main Market",
-        gameName: formData.gameName,
-        gameType: sortedGameTypeOptionsAsc,
-        openTime: normalizeTo24Hour(formData.openTime),
-        closeTime: normalizeTo24Hour(formData.closeTime),
-        isActive: formData.marketStatus === "active",
+        marketName: values.marketName,
+        gameName: values.gameName,
+        gameType: values.gameType,
+        openTime: buildTime(values.openHour, values.openMinute, values.openPeriod),
+        closeTime: buildTime(values.closeHour, values.closeMinute, values.closePeriod),
+        isActive: values.marketOnOff || false,
       };
 
       await axios.post(`/api/marketManagement/addMarketGame`, newGame);
-      alert("Game added successfully!");
+      message.success("Game added successfully!");
       fetchGames();
-      setFormData({
-        marketName: "Main Market",
-        gameName: "",
-        gameType: [],
-        openTime: "",
-        closeTime: "",
-        marketStatus: "active",
-      });
+      form.resetFields();
       setSelectedGameTypes([]);
-      setTimeErrors({
-        addOpenTime: "",
-        addCloseTime: "",
-        editOpenTime: "",
-        editCloseTime: "",
-      });
-      setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error adding game:", error);
-      alert("Failed to add game.");
+      message.error("Failed to add game.");
     }
   };
 
   const handleToggle = async (id, isActive) => {
     try {
-      // Find the game in the fetchedGames array
-      const gameToUpdate = fetchedGames.find(game => game._id === id);
-
-      if (!gameToUpdate) {
-        alert("Game not found!");
-        return;
-      }
-
-      // Prepare the update payload with all required fields
-      const updatePayload = {
+      await axios.put(`/api/marketManagement/updateMarketGame/${id}`, {
         isActive: !isActive,
-        gameName: gameToUpdate.gameName,
-        gameType: gameToUpdate.gameType || [],
-        openTime: gameToUpdate.openTime,
-        closeTime: gameToUpdate.closeTime,
-        // Make sure weekends are included with all required fields
-        weekends: gameToUpdate.weekends ? gameToUpdate.weekends.map(day => ({
-          day: day.day,
-          openTime: day.openTime || "",
-          closeTime: day.closeTime || "",
-          is_open: day.is_open !== undefined ? day.is_open : true
-        })) : []
-      };
-
-      await axios.put(`/api/marketManagement/updateMarketGame/${id}`, updatePayload);
-      alert("Market status updated!");
+      });
+      message.success("Market status updated!");
       fetchGames();
     } catch (error) {
       console.error("Error updating market status:", error);
-
-      // More detailed error message
-      if (error.response) {
-        console.error("Response error:", error.response.data);
-        alert(`Failed to update market status: ${error.response.data.error || error.response.data.message}`);
-      } else {
-        alert("Failed to update market status.");
-      }
+      message.error("Failed to update market status.");
     }
   };
 
   const handleUpdate = async () => {
-    // Validate time formats
-    if (!validateTimeFormat(editFormData.openTime)) {
-      setTimeErrors(prev => ({ ...prev, editOpenTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
-      return;
-    }
-
-    if (!validateTimeFormat(editFormData.closeTime)) {
-      setTimeErrors(prev => ({ ...prev, editCloseTime: "Invalid time format. Use HH:mm or hh:mm AM/PM" }));
-      return;
-    }
-
     try {
+      const values = await editForm.validateFields();
+
       const updatedGame = {
-        gameName: editFormData.gameName,
-        gameType: sortedGameTypeOptionsAsc, // Always use all game types
-        openTime: normalizeTo24Hour(editFormData.openTime),
-        closeTime: normalizeTo24Hour(editFormData.closeTime),
-        weekends: editFormData.weekends.map((day) => ({
+        gameName: values.gameName,
+        gameType: values.gameType,
+        openTime: buildTime(values.openHour, values.openMinute, values.openPeriod),
+        closeTime: buildTime(values.closeHour, values.closeMinute, values.closePeriod),
+        weekends: (values.weekends || []).map((day) => ({
           ...day,
-          openTime: day.openTime ? normalizeTo24Hour(day.openTime) : "",
-          closeTime: day.closeTime ? normalizeTo24Hour(day.closeTime) : "",
-          is_open: day.is_open,
+          openTime: buildTime(day.openHour, day.openMinute, day.openPeriod),
+          closeTime: buildTime(day.closeHour, day.closeMinute, day.closePeriod),
+          is_on: !!day.is_on,
         })),
       };
 
@@ -319,646 +221,680 @@ const GameManagement = () => {
         `/api/marketManagement/updateMarketGame/${editingGame._id}`,
         updatedGame
       );
-      alert("Game updated successfully!");
-      setIsEditModalOpen(false);
-      setTimeErrors({
-        addOpenTime: "",
-        addCloseTime: "",
-        editOpenTime: "",
-        editCloseTime: "",
-      });
+      message.success("Game updated successfully!");
+      setIsModalOpen(false);
+      setEditingGame(null);
       fetchGames();
     } catch (error) {
       console.error("Error updating game:", error);
-      alert("Failed to update game.");
+      message.error("Failed to update game.");
     }
   };
 
+  const columns = [
+    {
+      title: "#",
+      dataIndex: "sNo",
+      key: "sNo",
+      render: (_, __, index) => index + 1,
+      width: 50,
+    },
+    {
+      title: "Game Name",
+      dataIndex: "gameName",
+      key: "gameName",
+      width: 250,
+    },
+    {
+      title: "Open Time",
+      dataIndex: "openTime",
+      key: "openTime",
+      width: 180,
+    },
+    {
+      title: "Close Time",
+      dataIndex: "closeTime",
+      key: "closeTime",
+      width: 180,
+    },
+    {
+      title: "Active",
+      dataIndex: "isActive",
+      key: "isActive",
+      render: (isActive, record) => (
+        <Switch
+          checked={isActive}
+          onChange={() => handleToggle(record._id, isActive)}
+        />
+      ),
+      width: 120,
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+            style={{
+              marginRight: 10,
+              backgroundColor: "#1890ff",
+              color: "#fff",
+              borderRadius: "5px",
+              border: "none",
+              padding: "4px 12px",
+              fontWeight: "500",
+            }}
+          >
+            Edit
+          </Button>
+          <Button
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record._id)}
+            danger
+          >
+            Delete
+          </Button>
+        </>
+      ),
+      width: 180,
+    },
+  ];
+
   const handleEdit = (record) => {
     setEditingGame(record);
-    setIsEditModalOpen(true);
+    setIsModalOpen(true);
 
-    // Ensure weekends have default values for required fields
-    const weekendsWithDefaults = record.weekends.map((day) => ({
-      ...day,
-      openTime: day.openTime ? formatTo12Hour(day.openTime) : "",
-      closeTime: day.closeTime ? formatTo12Hour(day.closeTime) : "",
-      is_open: day.is_open !== undefined ? day.is_open : true, // Default to true
-    }));
+    // explode top-level times
+    const o = explodeTime(record.openTime);
+    const c = explodeTime(record.closeTime);
 
-    setEditFormData({
-      gameName: record.gameName,
-      gameType: record.gameType || [],
-      openTime: formatTo12Hour(record.openTime) || "",
-      closeTime: formatTo12Hour(record.closeTime) || "",
-      weekends: weekendsWithDefaults,
+    // weekends: ensure array; explode each day's times
+    const weekends = (record.weekends || []).map((day) => {
+      const dn = explodeTime(day.openTime);
+      const dc = explodeTime(day.closeTime);
+      return {
+        ...day,
+        openHour: dn.hour,
+        openMinute: dn.minute,
+        openPeriod: dn.period,
+        closeHour: dc.hour,
+        closeMinute: dc.minute,
+        closePeriod: dc.period,
+        is_on: !!day.is_on,
+      };
     });
 
-    setTimeErrors({
-      addOpenTime: "",
-      addCloseTime: "",
-      editOpenTime: "",
-      editCloseTime: "",
+    editForm.setFieldsValue({
+      gameName: record.gameName,
+      gameType: record.gameType || [],
+      openHour: o.hour,
+      openMinute: o.minute,
+      openPeriod: o.period,
+      closeHour: c.hour,
+      closeMinute: c.minute,
+      closePeriod: c.period,
+      weekends,
     });
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this game?")) {
-      try {
-        await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
-        alert("Game deleted successfully!");
-        fetchGames();
-      } catch (error) {
-        console.error("Error deleting game:", error);
-        alert("Failed to delete game.");
-      }
-    }
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-
-    // Clear error when user starts typing
-    if (name === 'openTime') {
-      setTimeErrors(prev => ({ ...prev, addOpenTime: "" }));
-    }
-    if (name === 'closeTime') {
-      setTimeErrors(prev => ({ ...prev, addCloseTime: "" }));
-    }
-  };
-
-  const handleEditFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditFormData({
-      ...editFormData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-
-    // Clear error when user starts typing
-    if (name === 'openTime') {
-      setTimeErrors(prev => ({ ...prev, editOpenTime: "" }));
-    }
-    if (name === 'closeTime') {
-      setTimeErrors(prev => ({ ...prev, editCloseTime: "" }));
-    }
-  };
-
-  const handleWeekendChange = (index, field, value) => {
-    const updatedWeekends = [...editFormData.weekends];
-    updatedWeekends[index] = {
-      ...updatedWeekends[index],
-      [field]: value,
-    };
-    setEditFormData({
-      ...editFormData,
-      weekends: updatedWeekends,
-    });
-  };
-
-  const formatTimeDisplay = (time24) => {
-    if (!time24) return '';
     try {
-      return formatTo12Hour(time24);
+      await axios.delete(`/api/marketManagement/deleteMarketGameById/${id}`);
+      message.success("Game deleted successfully!");
+      fetchGames();
     } catch (error) {
-      return time24;
+      console.error("Error deleting game:", error);
+      message.error("Failed to delete game.");
     }
   };
 
-  const handleTimeInputBlur = (field, value, isEdit = false) => {
-    if (value && validateTimeFormat(value)) {
-      // Auto-format the time
-      const formattedTime = formatTo12Hour(normalizeTo24Hour(value));
-      if (isEdit) {
-        setEditFormData(prev => ({ ...prev, [field]: formattedTime }));
-      } else {
-        setFormData(prev => ({ ...prev, [field]: formattedTime }));
-      }
-    }
+  // Quick fill buttons in edit modal
+  const applyOpenToAll = () => {
+    const vals = editForm.getFieldsValue();
+    const weekends = (vals.weekends || []).map((d) => ({
+      ...d,
+      openHour: vals.openHour,
+      openMinute: vals.openMinute,
+      openPeriod: vals.openPeriod,
+    }));
+    editForm.setFieldsValue({ weekends });
+  };
+  const applyCloseToAll = () => {
+    const vals = editForm.getFieldsValue();
+    const weekends = (vals.weekends || []).map((d) => ({
+      ...d,
+      closeHour: vals.closeHour,
+      closeMinute: vals.closeMinute,
+      closePeriod: vals.closePeriod,
+    }));
+    editForm.setFieldsValue({ weekends });
+  };
+  const applyBothToAll = () => {
+    const vals = editForm.getFieldsValue();
+    const weekends = (vals.weekends || []).map((d) => ({
+      ...d,
+      openHour: vals.openHour,
+      openMinute: vals.openMinute,
+      openPeriod: vals.openPeriod,
+      closeHour: vals.closeHour,
+      closeMinute: vals.closeMinute,
+      closePeriod: vals.closePeriod,
+    }));
+    editForm.setFieldsValue({ weekends });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-            Game Market
-          </h2>
+    <div style={{ padding: "8px", maxWidth: "1400px", margin: "auto" }}>
+      <Card
+        style={{
+          padding: "30px",
+          borderRadius: "10px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "28px",
+            fontWeight: "600",
+            marginBottom: "25px",
+          }}
+        >
+          Game Market
+        </h2>
 
-          {/* TABLE SECTION */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-                <h3 className="text-2xl font-semibold text-gray-800 mb-4 md:mb-0">
-                  Game List
-                </h3>
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-                >
-                  <PlusOutlined />
-                  Add Game
-                </button>
-              </div>
+        {/* ADD GAME SECTION */}
+        <Card
+          style={{
+            padding: "16px",
+            borderRadius: "8px",
+            marginBottom: "25px",
+            backgroundColor: "#f7fcf8",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "20px",
+              fontWeight: "600",
+              marginBottom: "15px",
+              textAlign: "center",
+            }}
+          >
+            Add Game
+          </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sort by:
-                  </label>
-                  <select
+          <Form
+  form={form}
+  layout="vertical"
+  onFinish={handleAddGame}
+  initialValues={{
+    marketName: "Main Market",
+    openPeriod: "AM",
+    closePeriod: "AM",
+  }}
+>
+  <Row gutter={[16, 16]}>
+    <Col xs={24} sm={12} md={8} lg={4}>
+      <Form.Item
+        label="Market Name"
+        name="marketName"
+        rules={[{ required: true, message: "Select Market name" }]}
+      >
+        {/* Locked to Main Market */}
+        <Select >
+          <Option value="Main Market">Main Market</Option>
+        </Select>
+      </Form.Item>
+    </Col>
+
+    <Col xs={24} sm={12} md={8} lg={4}>
+      <Form.Item
+        label="Game Name"
+        name="gameName"
+        rules={[{ required: true, message: "Enter game name" }]}
+      >
+        <Input placeholder="Enter Game Name" />
+      </Form.Item>
+    </Col>
+
+    {/* Open Time: HH / MM / AMPM */}
+    <Col xs={24} sm={12} md={8} lg={6}>
+      <Form.Item label="Market Open Time" required style={{ marginBottom: 0 }}>
+        <Row gutter={8}>
+          <Col span={8}>
+            <Form.Item
+              name="openHour"
+              rules={[{ required: true, message: "HH" }]}
+            >
+              <InputNumber
+                min={1}
+                max={12}
+                placeholder="HH"
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="openMinute"
+              rules={[{ required: true, message: "MM" }]}
+            >
+              <InputNumber
+                min={0}
+                max={59}
+                placeholder="MM"
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="openPeriod"
+              rules={[{ required: true, message: "AM/PM" }]}
+            >
+              <Select>
+                <Option value="AM">AM</Option>
+                <Option value="PM">PM</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form.Item>
+    </Col>
+
+    {/* Close Time: HH / MM / AMPM */}
+    <Col xs={24} sm={12} md={8} lg={6}>
+      <Form.Item label="Market Close Time" required style={{ marginBottom: 0 }}>
+        <Row gutter={8}>
+          <Col span={8}>
+            <Form.Item
+              name="closeHour"
+              rules={[{ required: true, message: "HH" }]}
+            >
+              <InputNumber
+                min={1}
+                max={12}
+                placeholder="HH"
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="closeMinute"
+              rules={[{ required: true, message: "MM" }]}
+            >
+              <InputNumber
+                min={0}
+                max={59}
+                placeholder="MM"
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="closePeriod"
+              rules={[{ required: true, message: "AM/PM" }]}
+            >
+              <Select>
+                <Option value="AM">AM</Option>
+                <Option value="PM">PM</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form.Item>
+    </Col>
+
+    <Col xs={24} sm={12} md={8} lg={4}>
+      <Form.Item
+        label="Game Type"
+        name="gameType"
+        rules={[{ required: true, message: "Select at least one game type" }]}
+      >
+        <Select
+          mode="multiple"
+          placeholder="Select Game Types"
+          value={selectedGameTypes}
+          onChange={handleGameTypeChange}
+          style={{ width: "100%" }}
+        >
+          <Option key="Select All" value="Select All">
+            Select All
+          </Option>
+          {sortedGameTypeOptionsAsc.map((type) => (
+            <Option key={type} value={type}>
+              {type}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+    </Col>
+
+    <Col xs={24} sm={12} md={8} lg={4}>
+      <Form.Item
+        label="Market On/Off"
+        name="marketOnOff"
+        valuePropName="checked"
+      >
+        <Switch />
+      </Form.Item>
+    </Col>
+  </Row>
+
+  <Row justify="center">
+    <Col>
+      <Form.Item>
+        <Button
+          type="primary"
+          htmlType="submit"
+          icon={<PlusOutlined />}
+          style={{ fontWeight: "600", marginTop: "20px" }}
+        >
+          Add Market
+        </Button>
+      </Form.Item>
+    </Col>
+  </Row>
+</Form>
+
+        </Card>
+
+        {/* TABLE SECTION */}
+        <Card
+          style={{
+            borderRadius: "8px",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            overflow: "hidden",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "20px",
+              fontWeight: "600",
+              marginBottom: "15px",
+              textAlign: "center",
+              padding: "0 10px",
+            }}
+          >
+            Game List
+          </h3>
+
+          <div style={{ padding: "0 10px" }}>
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item label="Sort by:" style={{ marginBottom: 0 }}>
+                  <Select
                     value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(value) => setSortOrder(value)}
+                    style={{ width: "100%" }}
                   >
-                    <option value="asc">Old to New</option>
-                    <option value="desc">New to Old</option>
-                  </select>
-                </div>
+                    <Select.Option value="asc">Old to New</Select.Option>
+                    <Select.Option value="desc">New to Old</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Show Entries:
-                  </label>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Search:
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search Games..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <SearchOutlined className="absolute left-3 top-2.5 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <div className="border-b border-gray-200">
-                  <nav className="flex space-x-8">
-                    <button
-                      onClick={() => setMarketStatus("active")}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${marketStatus === "active"
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                      Active Market
-                    </button>
-                    <button
-                      onClick={() => setMarketStatus("inactive")}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${marketStatus === "inactive"
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                      Inactive Market
-                    </button>
-                  </nav>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                {firstLoad ? (
-                  <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : filteredGames.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 text-5xl mb-4">📊</div>
-                    <p className="text-gray-500">No Games Available</p>
-                  </div>
-                ) : (
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          #
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Game Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Open Time
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Close Time
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Active
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredGames.map((game, index) => (
-                        <tr key={game._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {index + 1}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {game.gameName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatTimeDisplay(game.openTime)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatTimeDisplay(game.closeTime)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() =>
-                                handleToggle(game._id, game.isActive)
-                              }
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full ${game.isActive
-                                ? "bg-blue-600"
-                                : "bg-gray-200"
-                                }`}
-                            >
-                              <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${game.isActive
-                                  ? "translate-x-6"
-                                  : "translate-x-1"
-                                  }`}
-                              />
-                            </button>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => handleEdit(game)}
-                              className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md mr-2"
-                            >
-                              <EditOutlined />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(game._id)}
-                              className="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md"
-                            >
-                              <DeleteOutlined />
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              {!firstLoad && filteredGames.length > 0 && (
-                <div className="px-6 py-3 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-700">
-                      Showing {Math.min(filteredGames.length, pageSize)} of{" "}
-                      {filteredGames.length} games
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Add Game Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Add New Game
-              </h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Game Name
-                    </label>
-                    <input
-                      type="text"
-                      name="gameName"
-                      value={formData.gameName}
-                      onChange={handleFormChange}
-                      placeholder="Enter Game Name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Market Open Time
-                    </label>
-                    <input
-                      type="text"
-                      name="openTime"
-                      value={formData.openTime}
-                      onChange={handleFormChange}
-                      onBlur={() => handleTimeInputBlur('openTime', formData.openTime, false)}
-                      placeholder="e.g., 09:30 AM or 14:45"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {timeErrors.addOpenTime && (
-                      <p className="mt-1 text-sm text-red-600">{timeErrors.addOpenTime}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Market Close Time
-                    </label>
-                    <input
-                      type="text"
-                      name="closeTime"
-                      value={formData.closeTime}
-                      onChange={handleFormChange}
-                      onBlur={() => handleTimeInputBlur('closeTime', formData.closeTime, false)}
-                      placeholder="e.g., 06:00 PM or 18:00"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {timeErrors.addCloseTime && (
-                      <p className="mt-1 text-sm text-red-600">{timeErrors.addCloseTime}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Market Status
-                    </label>
-                    <select
-                      name="marketStatus"
-                      value={formData.marketStatus}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="active">Active (On)</option>
-                      <option value="inactive">Inactive (Off)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t flex justify-end space-x-3">
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddGame}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-              >
-                Add Game
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Edit Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Game</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Game Name
-                  </label>
-                  <input
-                    type="text"
-                    name="gameName"
-                    value={editFormData.gameName}
-                    onChange={handleEditFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <Col xs={24} sm={24} md={18}>
+                <Form.Item label="Search:" style={{ marginBottom: 0 }}>
+                  <Input
+                    placeholder="Search Games..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    prefix={<SearchOutlined />}
+                    allowClear
                   />
-                </div>
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Open Time
-                    </label>
-                    <input
-                      type="text"
-                      name="openTime"
-                      value={editFormData.openTime}
-                      onChange={handleEditFormChange}
-                      onBlur={() => handleTimeInputBlur('openTime', editFormData.openTime, true)}
-                      placeholder="e.g., 09:30 AM or 14:45"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {timeErrors.editOpenTime && (
-                      <p className="mt-1 text-sm text-red-600">{timeErrors.editOpenTime}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
-                    </p>
-                  </div>
+          <div style={{ padding: "0 10px", margin: "15px 0" }}>
+            <Tabs
+              activeKey={marketStatus}
+              onChange={(key) => setMarketStatus(key)}
+              centered
+              tabBarStyle={{ margin: 0 }}
+            >
+              <Tabs.TabPane tab="Active Market" key="active" />
+              <Tabs.TabPane tab="Inactive Market" key="inactive" />
+            </Tabs>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Close Time
-                    </label>
-                    <input
-                      type="text"
-                      name="closeTime"
-                      value={editFormData.closeTime}
-                      onChange={handleEditFormChange}
-                      onBlur={() => handleTimeInputBlur('closeTime', editFormData.closeTime, true)}
-                      placeholder="e.g., 06:00 PM or 18:00"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {timeErrors.editCloseTime && (
-                      <p className="mt-1 text-sm text-red-600">{timeErrors.editCloseTime}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Format: HH:mm (24-hour) or hh:mm AM/PM (12-hour)
-                    </p>
-                  </div>
-                </div>
+          <div style={{ padding: "0 10px" }}>
+            {firstLoad ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <Spin size="large" />
+              </div>
+            ) : filteredGames.length === 0 ? (
+              <Empty
+                description="No Games Available"
+                style={{ padding: "20px 0" }}
+                imageStyle={{ display: "block", margin: "0 auto" }}
+              />
+            ) : (
+              <Table
+                columns={columns}
+                dataSource={filteredGames}
+                loading={loading}
+                pagination={false}
+                bordered
+                scroll={{ x: true }}
+                style={{
+                  width: "100%",
+                  overflowX: "auto",
+                }}
+                size="middle"
+              />
+            )}
+          </div>
+        </Card>
+      </Card>
 
-                {/* Apply to All Weekends Checkbox */}
-                <div className="flex items-center mb-4">
-                  <input
-                    type="checkbox"
-                    id="applyToAllWeekends"
-                    onChange={(e) => {
-                      if (e.target.checked && editFormData.openTime && editFormData.closeTime) {
-                        const updatedWeekends = editFormData.weekends.map(day => ({
-                          ...day,
-                          openTime: editFormData.openTime,
-                          closeTime: editFormData.closeTime,
-                          is_open: true
-                        }));
-                        setEditFormData({
-                          ...editFormData,
-                          weekends: updatedWeekends
-                        });
-                      }
-                    }}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <label htmlFor="applyToAllWeekends" className="ml-2 text-sm font-medium text-gray-700">
-                    Apply main times to all weekends
-                  </label>
-                  <span className="ml-2 text-xs text-gray-500">
-                    (Check this to copy main open/close times to all weekends)
-                  </span>
-                </div>
+      {/* Edit Modal - Full width and manual HH/MM AM-PM */}
+      <Modal
+        title="Edit Game"
+        open={isModalOpen}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setEditingGame(null);
+        }}
+        onOk={handleUpdate}
+        width="95vw"
+        style={{ top: 20 }}
+        bodyStyle={{ maxHeight: "80vh", overflowY: "auto" }}
+      >
+        <Form form={editForm} layout="vertical">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Game Name"
+                name="gameName"
+                rules={[{ required: true, message: "Enter game name" }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Game Type"
+                name="gameType"
+                rules={[{ required: true, message: "Select at least one game type" }]}
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Select Game Types"
+                  onChange={handleEditGameTypeChange}
+                >
+                  <Option key="Select All" value="Select All">
+                    Select All
+                  </Option>
+                  {sortedGameTypeOptionsAsc.map((type) => (
+                    <Option key={type} value={type}>
+                      {type}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-                {editingGame?.weekends?.length > 0 && (
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">
-                      Weekends Schedule
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[...editingGame.weekends]
-                        .sort(
-                          (a, b) =>
-                            dayjs(a.openTime, "hh:mm A").valueOf() -
-                            dayjs(b.openTime, "hh:mm A").valueOf()
-                        )
-                        .map((day, index) => (
-                          <div
-                            key={day.day}
-                            className="border rounded-lg p-4 space-y-3"
+          {/* Top-level open/close time as HH/MM/AMPM */}
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Form.Item label="Open Time" required style={{ marginBottom: 0 }}>
+                <Row gutter={8}>
+                  <Col span={8}>
+                    <Form.Item name="openHour" rules={[{ required: true, message: "HH" }]}>
+                      <InputNumber min={1} max={12} placeholder="HH" style={{ width: "100%" }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="openMinute" rules={[{ required: true, message: "MM" }]}>
+                      <InputNumber min={0} max={59} placeholder="MM" style={{ width: "100%" }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="openPeriod" rules={[{ required: true, message: "AM/PM" }]}>
+                      <Select>
+                        <Option value="AM">AM</Option>
+                        <Option value="PM">PM</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Close Time" required style={{ marginBottom: 0 }}>
+                <Row gutter={8}>
+                  <Col span={8}>
+                    <Form.Item name="closeHour" rules={[{ required: true, message: "HH" }]}>
+                      <InputNumber min={1} max={12} placeholder="HH" style={{ width: "100%" }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="closeMinute" rules={[{ required: true, message: "MM" }]}>
+                      <InputNumber min={0} max={59} placeholder="MM" style={{ width: "100%" }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="closePeriod" rules={[{ required: true, message: "AM/PM" }]}>
+                      <Select>
+                        <Option value="AM">AM</Option>
+                        <Option value="PM">PM</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Apply-to-all controls */}
+          <Row justify="end" gutter={8} style={{ marginBottom: 16 }}>
+            <Col>
+              <Button onClick={applyOpenToAll} type="primary">Apply Open to All</Button>
+            </Col>
+            <Col>
+              <Button onClick={applyCloseToAll} type="primary" ghost>Apply Close to All</Button>
+            </Col>
+            <Col>
+              <Button onClick={applyBothToAll} style={{ background: "#722ed1", color: "#fff" }}>
+                Apply Both to All
+              </Button>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            {editingGame &&
+              [...(editingGame.weekends || [])]
+                .sort(
+                  (a, b) =>
+                    dayjs(a.openTime, "hh:mm A").valueOf() -
+                    dayjs(b.openTime, "hh:mm A").valueOf()
+                )
+                .map((day, index) => (
+                  <Col xs={24} sm={12} md={8} lg={6} key={day.day}>
+                    <Card size="small" title={day.day} style={{ textAlign: "center" }}>
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>Open Time</div>
+                      <Row gutter={8}>
+                        <Col span={8}>
+                          <Form.Item
+                            name={["weekends", index, "openHour"]}
+                            rules={[{ required: true }]}
                           >
-                            <h5 className="font-medium text-center text-gray-900">
-                              {day.day}
-                            </h5>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Open Time
-                              </label>
-                              <input
-                                type="text"
-                                value={
-                                  editFormData.weekends[index]?.openTime || ""
-                                }
-                                onChange={(e) =>
-                                  handleWeekendChange(
-                                    index,
-                                    "openTime",
-                                    e.target.value
-                                  )
-                                }
-                                onBlur={() => {
-                                  const value = editFormData.weekends[index]?.openTime;
-                                  if (value && validateTimeFormat(value)) {
-                                    const formattedTime = formatTo12Hour(normalizeTo24Hour(value));
-                                    handleWeekendChange(index, "openTime", formattedTime);
-                                  }
-                                }}
-                                placeholder="e.g., 09:00 AM"
-                                className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Close Time
-                              </label>
-                              <input
-                                type="text"
-                                value={
-                                  editFormData.weekends[index]?.closeTime || ""
-                                }
-                                onChange={(e) =>
-                                  handleWeekendChange(
-                                    index,
-                                    "closeTime",
-                                    e.target.value
-                                  )
-                                }
-                                onBlur={() => {
-                                  const value = editFormData.weekends[index]?.closeTime;
-                                  if (value && validateTimeFormat(value)) {
-                                    const formattedTime = formatTo12Hour(normalizeTo24Hour(value));
-                                    handleWeekendChange(index, "closeTime", formattedTime);
-                                  }
-                                }}
-                                placeholder="e.g., 06:00 PM"
-                                className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                            <div className="flex items-center">
-                              <label className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    editFormData.weekends[index]?.is_open ||
-                                    false
-                                  }
-                                  onChange={(e) =>
-                                    handleWeekendChange(
-                                      index,
-                                      "is_open",
-                                      e.target.checked
-                                    )
-                                  }
-                                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-sm text-gray-700">
-                                  Active Status
-                                </span>
-                              </label>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t flex justify-end space-x-3">
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-              >
-                Update Game
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                            <InputNumber min={1} max={12} placeholder="HH" style={{ width: "100%" }} />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={["weekends", index, "openMinute"]}
+                            rules={[{ required: true }]}
+                          >
+                            <InputNumber min={0} max={59} placeholder="MM" style={{ width: "100%" }} />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={["weekends", index, "openPeriod"]}
+                            rules={[{ required: true }]}
+                          >
+                            <Select>
+                              <Option value="AM">AM</Option>
+                              <Option value="PM">PM</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>Close Time</div>
+                      <Row gutter={8}>
+                        <Col span={8}>
+                          <Form.Item
+                            name={["weekends", index, "closeHour"]}
+                            rules={[{ required: true }]}
+                          >
+                            <InputNumber min={1} max={12} placeholder="HH" style={{ width: "100%" }} />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={["weekends", index, "closeMinute"]}
+                            rules={[{ required: true }]}
+                          >
+                            <InputNumber min={0} max={59} placeholder="MM" style={{ width: "100%" }} />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            name={["weekends", index, "closePeriod"]}
+                            rules={[{ required: true }]}
+                          >
+                            <Select>
+                              <Option value="AM">AM</Option>
+                              <Option value="PM">PM</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <Form.Item
+                        name={["weekends", index, "is_on"]}
+                        label="Active Status"
+                        valuePropName="checked"
+                      >
+                        <Switch />
+                      </Form.Item>
+                    </Card>
+                  </Col>
+                ))}
+          </Row>
+        </Form>
+      </Modal>
     </div>
   );
 };
