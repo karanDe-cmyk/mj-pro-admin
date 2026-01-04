@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [fundRequests, setFundRequests] = useState([]);
   const [autoDepositHistory, setAutoDepositHistory] = useState([]);
   const [totalUsers, setTotalUsers] = useState({ totalUsers: 0 });
   const [approvedUsers, setApprovedUsers] = useState({ approvedUsers: 0 });
@@ -32,8 +31,6 @@ const Dashboard = () => {
   const [selectedGame2, setSelectedGame2] = useState("");
   const [loadingButton, setLoadingButton] = useState(false);
   const [loadingButton2, setLoadingButton2] = useState(false);
-  const [loadingButton3, setLoadingButton3] = useState(false);
-  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [betRates, setBetRates] = useState([]);
   const [selectedGameType, setSelectedGameType] = useState("");
   const [todayBidPlayer, setTodayBidPlayer] = useState(0)
@@ -54,7 +51,6 @@ const Dashboard = () => {
     manualdepositAmount: 0
   });
 
-  const today = dayjs().format("YYYY-MM-DD");
   const todayFormatted = dayjs().format("DD-MM-YYYY");
   const navigate = useNavigate();
 
@@ -64,7 +60,7 @@ const Dashboard = () => {
       const response = await instance.get('/api/auth/today-bid-player', {
         params: { date: selectedDate }
       })
-      const count = response.data?.count // This should be 4 from your API
+      const count = response.data?.count
       setTodayBidPlayer(count)
     } catch (error) {
       console.log(error)
@@ -209,24 +205,6 @@ const Dashboard = () => {
     }
   };
 
-  const fetchWithdrawals = async () => {
-    setLoading(true);
-    try {
-      const response = await instance.get("/api/users/todaywithdrawals", {
-        params: { date: selectedDate }
-      });
-      const pendingWithdrawals = response.data.data.filter(
-        (withdrawal) => withdrawal.status === "Success" || withdrawal.status === "pending"
-      );
-      setWithdrawalHistory(pendingWithdrawals);
-    } catch (err) {
-      console.error("Error fetching withdrawal requests:", err);
-      setError("Failed to fetch withdrawal requests.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchTotalGames = async () => {
     try {
       const response = await instance.get(
@@ -246,7 +224,6 @@ const Dashboard = () => {
 
   const fetchProfitLossData = async () => {
     try {
-      setLoadingButton3(true);
       setError(null);
       const response = await instance.get(`/api/users/total-profit-loss`, {
         params: { date: selectedDate }
@@ -262,8 +239,6 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error fetching profit/loss data:", err);
       setError("Error fetching profit/loss data");
-    } finally {
-      setLoadingButton3(false);
     }
   };
 
@@ -279,7 +254,6 @@ const Dashboard = () => {
     fetchApprovedUsers();
     fetchUnApprovedUsers();
     fetchDepositHistory();
-    fetchWithdrawals();
     fetchTotalGames();
     fetchProfitLossData();
   };
@@ -448,62 +422,6 @@ const Dashboard = () => {
     (game) => game.marketName === "Main Market"
   );
 
-  const handleStatusChange = async (id, status) => {
-    try {
-      await instance.patch(`api/users/withdrawals/status/${id}`, { status });
-      setWithdrawalHistory(withdrawalHistory.filter((item) => item._id !== id));
-      alert(`Withdrawal ${status} successfully!`);
-    } catch (error) {
-      console.error(`Error updating withdrawal status to ${status}:`, error);
-      alert(`Failed to ${status} withdrawal.`);
-    }
-  };
-
-  const withdrawalColumns = [
-    {
-      header: "#",
-      key: "index",
-      render: (text, record, index) => index + 1,
-    },
-    {
-      header: "Username",
-      key: "userName",
-      render: (text, record) => (
-        <span
-          className="text-blue-600 font-semibold cursor-pointer hover:underline"
-          onClick={() => navigate(`/admin/user-management/user-details/${record.userId}`)}
-        >
-          {record.userName}
-        </span>
-      ),
-    },
-    {
-      header: "Mobile",
-      key: "phone",
-    },
-    {
-      header: "Amount",
-      key: "amount",
-    },
-    {
-      header: "Transaction Id",
-      key: "transaction_id",
-    },
-    {
-      header: "Payment Method",
-      key: "method",
-    },
-    {
-      header: "Status",
-      key: "status",
-      render: (status) =>
-        status.charAt(0).toUpperCase() + status.slice(1),
-    },
-    {
-      header: "Time",
-      key: "date",
-    },
-  ];
 
   const fundRequestColumns = [
     {
@@ -557,47 +475,6 @@ const Dashboard = () => {
       key: "createdAt",
       render: (createdAt) =>
         moment(createdAt).format("DD-MM-YYYY hh:mm A"),
-    },
-  ];
-
-  const profitLossColumns = [
-    {
-      header: "Deposit",
-      key: "deposit",
-    },
-    {
-      header: "Withdraw",
-      key: "withdraw",
-    },
-    {
-      header: "Total",
-      key: "total",
-    },
-    {
-      header: "Result",
-      key: "result",
-      render: (result) => {
-        const isProfit = result > 0;
-        const isLoss = result < 0;
-        const bgColor = isProfit ? "#7f56c7" : isLoss ? "#ed583e" : "#f3f4f6";
-        const textColor = isLoss ? "white" : "black";
-
-        return (
-          <div
-            className="p-2 rounded text-center"
-            style={{
-              backgroundColor: bgColor,
-              color: textColor,
-            }}
-          >
-            {isProfit
-              ? `Profit: ${result}`
-              : isLoss
-                ? `Loss: ${Math.abs(result)}`
-                : "No Profit/Loss"}
-          </div>
-        );
-      },
     },
   ];
 
