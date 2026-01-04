@@ -249,14 +249,43 @@ const GameManagement = () => {
 
   const handleToggle = async (id, isActive) => {
     try {
-      await axios.put(`/api/marketManagement/updateMarketGame/${id}`, {
+      // Find the game in the fetchedGames array
+      const gameToUpdate = fetchedGames.find(game => game._id === id);
+
+      if (!gameToUpdate) {
+        alert("Game not found!");
+        return;
+      }
+
+      // Prepare the update payload with all required fields
+      const updatePayload = {
         isActive: !isActive,
-      });
+        gameName: gameToUpdate.gameName,
+        gameType: gameToUpdate.gameType || [],
+        openTime: gameToUpdate.openTime,
+        closeTime: gameToUpdate.closeTime,
+        // Make sure weekends are included with all required fields
+        weekends: gameToUpdate.weekends ? gameToUpdate.weekends.map(day => ({
+          day: day.day,
+          openTime: day.openTime || "",
+          closeTime: day.closeTime || "",
+          is_open: day.is_open !== undefined ? day.is_open : true
+        })) : []
+      };
+
+      await axios.put(`/api/marketManagement/updateMarketGame/${id}`, updatePayload);
       alert("Market status updated!");
       fetchGames();
     } catch (error) {
       console.error("Error updating market status:", error);
-      alert("Failed to update market status.");
+
+      // More detailed error message
+      if (error.response) {
+        console.error("Response error:", error.response.data);
+        alert(`Failed to update market status: ${error.response.data.error || error.response.data.message}`);
+      } else {
+        alert("Failed to update market status.");
+      }
     }
   };
 
