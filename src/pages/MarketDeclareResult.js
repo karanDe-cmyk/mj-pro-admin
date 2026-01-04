@@ -453,6 +453,23 @@ const MarketDeclareResult = () => {
     }
   };
 
+  const calculateSummary = (data = []) => {
+    return data.reduce(
+      (acc, item) => {
+        acc.totalUsers += 1;
+        acc.totalBid += Number(item.points || 0);
+        acc.totalWin += Number(item.winningPoints || 0);
+        return acc;
+      },
+      {
+        totalUsers: 0,
+        totalBid: 0,
+        totalWin: 0,
+      }
+    );
+  };
+
+
   // Enhanced Game Result Columns - No Horizontal Scrolling
   const gameResultColumns = [
     {
@@ -921,6 +938,55 @@ const MarketDeclareResult = () => {
             {winners.closeWinners?.length == 0 ? "Open result not declared for that game." : "No Winners Found"}
           </p>
         )}
+
+        {winners.openWinners?.length > 0 && (() => {
+          const summary = calculateSummary(winners.openWinners);
+          return (
+            <Card
+              size="small"
+              style={{ marginTop: 8, background: "#f6ffed", border: "1px solid #b7eb8f" }}
+            >
+              <Row justify="space-between">
+                <Col><b>Total Users:</b> {summary.totalUsers}</Col>
+                <Col><b>Total Bid:</b> ₹{summary.totalBid}</Col>
+                <Col><b>Total Winning:</b> ₹{summary.totalWin}</Col>
+              </Row>
+            </Card>
+          );
+        })()}
+
+        {winners.closeWinners?.length > 0 && (() => {
+          const summary = calculateSummary(winners.closeWinners);
+          return (
+            <Card
+              size="small"
+              style={{ marginTop: 8, background: "#fff7e6", border: "1px solid #ffd591" }}
+            >
+              <Row justify="space-between">
+                <Col><b>Total Users:</b> {summary.totalUsers}</Col>
+                <Col><b>Total Bid:</b> ₹{summary.totalBid}</Col>
+                <Col><b>Total Winning:</b> ₹{summary.totalWin}</Col>
+              </Row>
+            </Card>
+          );
+        })()}
+
+        {winners.jodiWinners?.length > 0 && (() => {
+          const summary = calculateSummary(winners.jodiWinners);
+          return (
+            <Card
+              size="small"
+              style={{ marginTop: 8, background: "#e6f7ff", border: "1px solid #91d5ff" }}
+            >
+              <Row justify="space-between">
+                <Col><b>Total Users:</b> {summary.totalUsers}</Col>
+                <Col><b>Total Bid:</b> ₹{summary.totalBid}</Col>
+                <Col><b>Total Winning:</b> ₹{summary.totalWin}</Col>
+              </Row>
+            </Card>
+          );
+        })()}
+
       </Modal>
 
       {/* Edit Modal */}
