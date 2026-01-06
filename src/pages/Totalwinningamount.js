@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 
 const TotalWinningTable = () => {
-  const [winners, setWinners] = useState([]);
+  const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [expandedUser, setExpandedUser] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -13,15 +16,40 @@ const TotalWinningTable = () => {
 
   useEffect(() => {
     fetchWinningUsers();
-  }, []);
+  }, [selectedDate]);
+
 
   const fetchWinningUsers = async () => {
     try {
       setLoading(true);
       const res = await axiosInstance.get(
-        "/api/winning/getAllUsersTotalWinningPoints"
+        `/api/winning/getAllUsersTotalWinningPoints?date=${selectedDate}`
       );
-      setWinners(res.data?.data || []);
+
+      const data = res.data?.data || [];
+
+      // 🔁 FLATTEN users + wins
+      const flatRows = [];
+
+      data.forEach(user => {
+        user.wins.forEach(win => {
+          flatRows.push({
+            userId: user.userId,
+            userName: user.userName,
+            email: user.email,
+            totalWinningPoints: user.totalWinningPoints,
+            gameName: win.gameName,
+            marketName: win.marketName,
+            gameType: win.gameType,
+            digit: win.digit,
+            panna: win.panna,
+            winAmount: win.winAmount,
+            date: win.date
+          });
+        });
+      });
+
+      setRows(flatRows);
     } catch (err) {
       console.error("Winning Fetch Error:", err);
     } finally {
@@ -30,16 +58,19 @@ const TotalWinningTable = () => {
   };
 
   // 🔍 Filter
-  const filteredUsers = winners.filter(u =>
-    u.userName.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+  const filteredRows = rows.filter(r =>
+    r.userName.toLowerCase().includes(search.toLowerCase()) ||
+    r.email.toLowerCase().includes(search.toLowerCase()) ||
+    r.gameName.toLowerCase().includes(search.toLowerCase()) ||
+    r.marketName.toLowerCase().includes(search.toLowerCase())
   );
+
 
   // 📄 Pagination
   const indexOfLast = currentPage * rowsPerPage;
   const indexOfFirst = indexOfLast - rowsPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
+  const currentRows = filteredRows.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
   if (loading) {
     return (
@@ -51,12 +82,14 @@ const TotalWinningTable = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Winner Users & Winning Details</h2>
+      <h2 className="text-2xl font-semibold mb-6">
+        Winner Users – Complete Winning Details
+      </h2>
 
       {/* Search */}
       <input
         type="text"
-        placeholder="Search by username or email..."
+        placeholder="Search by user, email or game..."
         className="mb-4 w-full rounded-lg border p-2"
         value={search}
         onChange={(e) => {
@@ -64,91 +97,67 @@ const TotalWinningTable = () => {
           setCurrentPage(1);
         }}
       />
+      <div className="mb-4 flex items-center gap-4">
+        <label className="font-medium">Select Date:</label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => {
+            setSelectedDate(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="rounded border px-3 py-2"
+        />
+      </div>
 
-      {/* Table */}
       <div className="rounded-2xl bg-white p-6 shadow-lg overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-gray-100 text-left text-sm font-semibold">
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">User</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Total Winning ₹</th>
-              <th className="px-4 py-3">Action</th>
+            <tr className="bg-gray-100 font-semibold">
+              <th className="px-3 py-2">#</th>
+              <th className="px-3 py-2">User</th>
+              <th className="px-3 py-2">Email</th>
+              <th className="px-3 py-2">Game</th>
+              <th className="px-3 py-2">Market</th>
+              <th className="px-3 py-2">Type</th>
+              <th className="px-3 py-2">Digit</th>
+              <th className="px-3 py-2">Panna</th>
+              <th className="px-3 py-2">Winning ₹</th>
+              <th className="px-3 py-2">Date</th>
             </tr>
           </thead>
 
           <tbody>
-            {currentUsers.length === 0 ? (
+            {currentRows.length === 0 ? (
               <tr>
-                <td colSpan="5" className="py-6 text-center text-gray-500">
-                  No winners found
+                <td colSpan="10" className="py-6 text-center text-gray-500">
+                  No winning records found
                 </td>
               </tr>
             ) : (
-              currentUsers.map((user, index) => (
-                <React.Fragment key={user.userId}>
-                  <tr className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      {indexOfFirst + index + 1}
-                    </td>
-                    <td className="px-4 py-3 font-medium">
-                      {user.userName}
-                    </td>
-                    <td className="px-4 py-3">{user.email}</td>
-                    <td className="px-4 py-3 font-semibold text-green-600">
-                      ₹ {user.totalWinningPoints}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        className="text-blue-600 underline"
-                        onClick={() =>
-                          setExpandedUser(
-                            expandedUser === user.userId ? null : user.userId
-                          )
-                        }
-                      >
-                        {expandedUser === user.userId ? "Hide" : "View"}
-                      </button>
-                    </td>
-                  </tr>
-
-                  {/* 🔽 Expanded Winning Details */}
-                  {expandedUser === user.userId && (
-                    <tr>
-                      <td colSpan="5" className="bg-gray-50 px-6 py-4">
-                        <table className="w-full text-sm border">
-                          <thead>
-                            <tr className="bg-gray-200">
-                              <th className="p-2">Game</th>
-                              <th className="p-2">Market</th>
-                              <th className="p-2">Type</th>
-                              <th className="p-2">Digit</th>
-                              <th className="p-2">Panna</th>
-                              <th className="p-2">Win ₹</th>
-                              <th className="p-2">Date</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {user.wins.map((win, i) => (
-                              <tr key={i} className="border-t">
-                                <td className="p-2">{win.gameName}</td>
-                                <td className="p-2">{win.marketName}</td>
-                                <td className="p-2">{win.gameType}</td>
-                                <td className="p-2">{win.digit || "-"}</td>
-                                <td className="p-2">{win.panna || "-"}</td>
-                                <td className="p-2 text-green-600 font-semibold">
-                                  ₹ {win.winAmount}
-                                </td>
-                                <td className="p-2">{win.date}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
+              currentRows.map((row, index) => (
+                <tr key={index} className="border-b hover:bg-gray-50">
+                  <td className="px-3 py-2">
+                    {indexOfFirst + index + 1}
+                  </td>
+                  <td className="px-3 py-2 font-medium">
+                    <a href={`/admin/user-management/user-details/${row.userId}`}>
+                      {row.userName}
+                    </a>
+                  </td>
+                  <td className="px-3 py-2">{row.email}</td>
+                  <td className="px-3 py-2">{row.gameName}</td>
+                  <td className="px-3 py-2">{row.marketName}</td>
+                  <td className="px-3 py-2 capitalize">{row.gameType}</td>
+                  <td className="px-3 py-2">{row.digit || "-"}</td>
+                  <td className="px-3 py-2">{row.panna || "-"}</td>
+                  <td className="px-3 py-2 font-semibold text-green-600">
+                    ₹ {row.winAmount}
+                  </td>
+                  <td className="px-3 py-2">
+                    {new Date(row.date).toLocaleDateString("en-GB")}
+                  </td>
+                </tr>
               ))
             )}
           </tbody>

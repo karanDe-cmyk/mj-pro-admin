@@ -252,7 +252,7 @@ const UserDetails = () => {
 
     try {
       const requestBody = {
-        phone: userData.phone,
+        phone: userData?.phone,
         email: userData.email,
         amount: parseFloat(amount),
         method: "Manual Withdrawal",
@@ -986,7 +986,7 @@ const UserDetails = () => {
               <h2 className="text-xl font-bold text-gray-800">{userData?.userName}</h2>
               <div className="flex items-center mt-2">
                 <PhoneOutlined className="text-gray-600 mr-2" />
-                <span className="mr-4">{userData.phone}</span>
+                <span className="mr-4">{userData?.phone}</span>
                 <WhatsAppOutlined
                   className="text-green-500 text-xl cursor-pointer hover:text-green-600"
                   onClick={handleWhatsAppClick}
@@ -1027,7 +1027,7 @@ const UserDetails = () => {
           <div className="mb-5">
             <p className="text-gray-600">Available Balance:</p>
             <h3 className="text-3xl font-bold text-gray-800">
-              ₹{formatBalance(userData.walletBalance)}
+              ₹{formatBalance(userData?.walletBalance)}
             </h3>
           </div>
 
@@ -1054,7 +1054,7 @@ const UserDetails = () => {
 
             <div className="flex gap-2">
               <span className="font-semibold w-32">Mobile :</span>
-              <span>{userData.phone}</span>
+              <span>{userData?.phone}</span>
             </div>
 
             <div className="flex gap-2">
@@ -1065,14 +1065,14 @@ const UserDetails = () => {
             <div className="flex gap-2">
               <span className="font-semibold w-32">Creation Date :</span>
               <span>
-                {moment(userData.date).format("DD MMM YYYY HH:mm:ss")}
+                {moment(userData?.date).format("DD MMM YYYY HH:mm:ss")}
               </span>
             </div>
 
             <div className="flex gap-2">
               <span className="font-semibold w-32">Last Login :</span>
               <span>
-                {moment(userData.lastLogin).format("DD MMM YYYY HH:mm:ss")}
+                {moment(userData?.lastLogin).format("DD MMM YYYY HH:mm:ss")}
               </span>
             </div>
 
@@ -1114,28 +1114,28 @@ const UserDetails = () => {
           {/* Row 1 */}
           <div className="flex gap-2">
             <span className="font-semibold w-32">Bank Name :</span>
-            <span>{userData.bank_details?.bank_name || "N/A"}</span>
+            <span>{userData?.bank_details?.bank_name || "N/A"}</span>
           </div>
 
           <div className="flex gap-2">
             <span className="font-semibold w-32">Branch Address :</span>
-            <span>{userData.bank_details?.branch_address || "N/A"}</span>
+            <span>{userData?.bank_details?.branch_address || "N/A"}</span>
           </div>
 
           <div className="flex gap-2">
             <span className="font-semibold w-32">IFSC Code :</span>
-            <span>{userData.bank_details?.ifsc_code || "N/A"}</span>
+            <span>{userData?.bank_details?.ifsc_code || "N/A"}</span>
           </div>
 
           {/* Row 2 */}
           <div className="flex gap-2">
             <span className="font-semibold w-32">A/c Holder Name :</span>
-            <span>{userData.userName}</span>
+            <span>{userData?.userName}</span>
           </div>
 
           <div className="flex gap-2">
             <span className="font-semibold w-32">A/c Number :</span>
-            <span>{userData.bank_details?.account_number || "N/A"}</span>
+            <span>{userData?.bank_details?.account_number || "N/A"}</span>
           </div>
 
           <div className="flex gap-2">
@@ -1146,17 +1146,17 @@ const UserDetails = () => {
           {/* Row 3 */}
           <div className="flex gap-2">
             <span className="font-semibold w-32">PhonePe No. :</span>
-            <span>{userData.upi_id?.phonepeUpi || "N/A"}</span>
+            <span>{userData?.upi_id?.phonepeUpi || "N/A"}</span>
           </div>
 
           <div className="flex gap-2">
             <span className="font-semibold w-32">Google Pay No. :</span>
-            <span>{userData.upi_id?.gpayUpi || "N/A"}</span>
+            <span>{userData?.upi_id?.gpayUpi || "N/A"}</span>
           </div>
 
           <div className="flex gap-2">
             <span className="font-semibold w-32">Paytm No. :</span>
-            <span>{userData.upi_id?.paytmUpi || "N/A"}</span>
+            <span>{userData?.upi_id?.paytmUpi || "N/A"}</span>
           </div>
 
         </div>
