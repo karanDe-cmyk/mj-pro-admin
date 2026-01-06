@@ -947,13 +947,13 @@ const UserDetails = () => {
     );
   }
 
-  if (!userData) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-lg text-red-500">No user data available.</div>
-      </div>
-    );
-  }
+  // if (!userData) {
+  //   return (
+  //     <div className="flex justify-center items-center h-screen">
+  //       <div className="text-lg text-red-500">No user data available.</div>
+  //     </div>
+  //   );
+  // }
 
   const filteredDepositTransactions = manualDepositTransactions.filter((item) =>
     Object.values(item || {}).some(
@@ -983,7 +983,7 @@ const UserDetails = () => {
         <div className="bg-white rounded-lg shadow p-5 mb-5 w-[60%]">
           <div className="flex flex-wrap justify-between items-center bg-purple-100 p-4 rounded-lg mb-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">{userData.userName}</h2>
+              <h2 className="text-xl font-bold text-gray-800">{userData?.userName}</h2>
               <div className="flex items-center mt-2">
                 <PhoneOutlined className="text-gray-600 mr-2" />
                 <span className="mr-4">{userData.phone}</span>
@@ -1065,7 +1065,7 @@ const UserDetails = () => {
             <div className="flex gap-2">
               <span className="font-semibold w-32">Creation Date :</span>
               <span>
-                {moment(userData.createdAt).format("DD MMM YYYY HH:mm:ss")}
+                {moment(userData.date).format("DD MMM YYYY HH:mm:ss")}
               </span>
             </div>
 
