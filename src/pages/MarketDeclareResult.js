@@ -124,47 +124,78 @@ const MarketDeclareResult = () => {
       setLoading(true);
       const formattedDate = date.format("YYYY-MM-DD");
 
+      // First, get all market games to filter Main Market games
       const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
       const mainMarketGames = gameResponse.data
         .filter((game) => game.marketName === "Main Market")
         .map((game) => game.gameName);
 
-      let results = [];
+      let apiResults = [];
       try {
-        const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
-        results = resultResponse?.data?.results || [];
+        // Fetch declared results from the API
+        const resultResponse = await instance.get(
+          `/api/mainmarketdeclareResult/getDeclareResult?date=${formattedDate}`
+        );
+
+        // The API returns data in "data" field, not "results"
+        apiResults = resultResponse?.data?.data || [];
+
+        // Log for debugging
+        console.log("API Results:", apiResults);
       } catch (err) {
         console.error("No declared results found or API error:", err);
       }
 
+      // Create a map to organize results by game/market
       const resultMap = {};
-      results.forEach((item) => {
-        if (item.marketName === "Main Market" && item.date === formattedDate) {
-          const key = `${item.gameName}_${dayjs(item.date).format("DD-MM-YYYY")}`;
+
+      // Process each result from API
+      apiResults.forEach((item) => {
+        // Find if this market name corresponds to a Main Market game
+        const matchingGame = mainMarketGames.find(game =>
+          game.toLowerCase().includes(item.marketName.toLowerCase()) ||
+          item.marketName.toLowerCase().includes(game.toLowerCase())
+        );
+
+        if (matchingGame && item.resultDate === formattedDate) {
+          const key = `${matchingGame}_${formattedDate}`;
+
           if (!resultMap[key]) {
             resultMap[key] = {
-              gameName: item.gameName,
-              date: dayjs(item.date).format("DD-MM-YYYY"),
+              gameName: matchingGame,
+              date: dayjs(item.resultDate).format("DD-MM-YYYY"),
               open: null,
               close: null,
             };
           }
-          if (item.gameType === "open") {
-            resultMap[key].open = {
-              value: `${item.panna}-${item.digit}`,
-              id: item._id,
-            };
+
+          // Check if open result exists
+          if (item.open && (item.open.digit || item.open.pana)) {
+            const panna = item.open.pana || "";
+            const digit = item.open.digit || "";
+            if (panna || digit) {
+              resultMap[key].open = {
+                value: panna && digit ? `${panna}-${digit}` : (panna || digit),
+                id: item._id || `${matchingGame}_open_${formattedDate}`,
+              };
+            }
           }
-          if (item.gameType === "close") {
-            resultMap[key].close = {
-              value: `${item.digit}-${item.panna}`,
-              id: item._id,
-            };
+
+          // Check if close result exists
+          if (item.close && (item.close.digit || item.close.pana)) {
+            const panna = item.close.pana || "";
+            const digit = item.close.digit || "";
+            if (panna || digit) {
+              resultMap[key].close = {
+                value: panna && digit ? `${digit}-${panna}` : (digit || panna),
+                id: item._id || `${matchingGame}_close_${formattedDate}`,
+              };
+            }
           }
         }
       });
 
-      // Only show games that have been declared (have open or close results)
+      // Convert map to array
       const mergedResults = Object.values(resultMap).map((resultData, index) => ({
         sNo: index + 1,
         gameName: resultData.gameName,
@@ -173,8 +204,15 @@ const MarketDeclareResult = () => {
         close: resultData.close || null,
       }));
 
+      console.log("Merged Results:", mergedResults);
+
       setGameResults(mergedResults);
       setFilteredResults(mergedResults);
+
+      // If no results found, show a message
+      if (mergedResults.length === 0) {
+        message.info(`No declared results found for ${formattedDate}`);
+      }
     } catch (error) {
       console.error("Error fetching declared results:", error);
       message.error("Failed to fetch declared results.");
