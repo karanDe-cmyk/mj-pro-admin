@@ -23,6 +23,7 @@ const SettingsForm = () => {
     min_bid_amount: "",
     max_bid_amount: "",
     welcome_bonus: "",
+    min_withdrawals_per_day: "",
 
     // ✅ NEW FIELDS
     min_single_ank: "",
@@ -76,6 +77,7 @@ const SettingsForm = () => {
           min_bid_amount: getValue(data.min_bid_amount),
           max_bid_amount: getValue(data.max_bid_amount),
           welcome_bonus: getValue(data.welcome_bonus),
+          min_withdrawals_per_day: getValue(data.min_withdrawals_per_day),
 
           // ✅ NEW FIELDS - use getValue instead of ||
           min_single_ank: getValue(data.min_single_ank),
