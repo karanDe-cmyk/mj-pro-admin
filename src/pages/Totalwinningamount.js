@@ -2,66 +2,43 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 
 const TotalWinningTable = () => {
-  const [users, setUsers] = useState([]);
+  const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [totalWinning, setTotalWinning] = useState(0);
+  const [search, setSearch] = useState("");
+  const [expandedUser, setExpandedUser] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage] = useState(10);
-
-  // Filter
-  const [search, setSearch] = useState("");
+  const rowsPerPage = 10;
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchWinningUsers();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchWinningUsers = async () => {
     try {
       setLoading(true);
-
-      const usersRes = await axiosInstance.get("/api/auth/userStatus?status=true");
-      const activeUsers = usersRes.data || [];
-
-      const winningRes = await axiosInstance.get("/api/winning/getAllUsersTotalWinningPoints");
-      const winningData = winningRes.data?.data || [];
-
-      const winningMap = {};
-      winningData.forEach(item => {
-        winningMap[item._id] = item.totalWinningPoints;
-      });
-
-      const finalUsers = activeUsers.map(user => ({
-        ...user,
-        totalWinningPoints: winningMap[user._id] || 0
-      }));
-
-      const overallTotalWinning = finalUsers.reduce(
-        (sum, u) => sum + u.totalWinningPoints,
-        0
+      const res = await axiosInstance.get(
+        "/api/winning/getAllUsersTotalWinningPoints"
       );
-
-      setUsers(finalUsers);
-      setTotalWinning(overallTotalWinning);
-    } catch (error) {
-      console.error("Dashboard Error:", error);
+      setWinners(res.data?.data || []);
+    } catch (err) {
+      console.error("Winning Fetch Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filtered & Paginated Users
-  const filteredUsers = users.filter(user =>
-    user.userName.toLowerCase().includes(search.toLowerCase()) ||
-    user.phone.includes(search) ||
-    user.email.toLowerCase().includes(search.toLowerCase())
+  // 🔍 Filter
+  const filteredUsers = winners.filter(u =>
+    u.userName.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const indexOfLastUser = currentPage * rowsPerPage;
-  const indexOfFirstUser = indexOfLastUser - rowsPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-
+  // 📄 Pagination
+  const indexOfLast = currentPage * rowsPerPage;
+  const indexOfFirst = indexOfLast - rowsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
 
   if (loading) {
@@ -74,74 +51,114 @@ const TotalWinningTable = () => {
 
   return (
     <div className="p-6">
-      {/* Title */}
-      <h2 className="text-2xl font-semibold mb-6">Total Winning</h2>
+      <h2 className="text-2xl font-semibold mb-6">Winner Users & Winning Details</h2>
 
-      {/* Filter Input */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by name, phone or email..."
-          className="w-full p-2 border rounded-lg"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1); // Reset to first page when searching
-          }}
-        />
-      </div>
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search by username or email..."
+        className="mb-4 w-full rounded-lg border p-2"
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setCurrentPage(1);
+        }}
+      />
 
-      {/* Users Table */}
-      <div className="rounded-2xl bg-white p-6 shadow-lg">
-        <h3 className="mb-4 text-lg font-semibold">Active Users</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100 text-left text-sm font-semibold">
-                <th className="px-4 py-3">Sr. N</th>
-                <th className="px-4 py-3">User Name</th>
-                <th className="px-4 py-3">Phone</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Wallet (₹)</th>
-                <th className="px-4 py-3">Total Winning (₹)</th>
+      {/* Table */}
+      <div className="rounded-2xl bg-white p-6 shadow-lg overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-100 text-left text-sm font-semibold">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">User</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Total Winning ₹</th>
+              <th className="px-4 py-3">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {currentUsers.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="py-6 text-center text-gray-500">
+                  No winners found
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {currentUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="py-6 text-center text-gray-500">
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                currentUsers.map((user, index) => (
-                  <tr key={user._id} className="border-b text-sm hover:bg-gray-50">
-                    <td className="px-4 py-3">{index + 1}</td>
+            ) : (
+              currentUsers.map((user, index) => (
+                <React.Fragment key={user.userId}>
+                  <tr className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <a
-                        href={`/admin/user-management/user-details/${user._id}`}
-                        target="_self"
-                        rel="noopener noreferrer"
-                      >
-                        {user.userName}
-                      </a>
+                      {indexOfFirst + index + 1}
                     </td>
-                    <td className="px-4 py-3">{user.phone}</td>
+                    <td className="px-4 py-3 font-medium">
+                      {user.userName}
+                    </td>
                     <td className="px-4 py-3">{user.email}</td>
-                    <td className="px-4 py-3 font-medium">₹ {user.walletBalance}</td>
-                    <td className="px-4 py-3 font-medium text-green-600">₹ {user.totalWinningPoints}</td>
+                    <td className="px-4 py-3 font-semibold text-green-600">
+                      ₹ {user.totalWinningPoints}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        className="text-blue-600 underline"
+                        onClick={() =>
+                          setExpandedUser(
+                            expandedUser === user.userId ? null : user.userId
+                          )
+                        }
+                      >
+                        {expandedUser === user.userId ? "Hide" : "View"}
+                      </button>
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+
+                  {/* 🔽 Expanded Winning Details */}
+                  {expandedUser === user.userId && (
+                    <tr>
+                      <td colSpan="5" className="bg-gray-50 px-6 py-4">
+                        <table className="w-full text-sm border">
+                          <thead>
+                            <tr className="bg-gray-200">
+                              <th className="p-2">Game</th>
+                              <th className="p-2">Market</th>
+                              <th className="p-2">Type</th>
+                              <th className="p-2">Digit</th>
+                              <th className="p-2">Panna</th>
+                              <th className="p-2">Win ₹</th>
+                              <th className="p-2">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {user.wins.map((win, i) => (
+                              <tr key={i} className="border-t">
+                                <td className="p-2">{win.gameName}</td>
+                                <td className="p-2">{win.marketName}</td>
+                                <td className="p-2">{win.gameType}</td>
+                                <td className="p-2">{win.digit || "-"}</td>
+                                <td className="p-2">{win.panna || "-"}</td>
+                                <td className="p-2 text-green-600 font-semibold">
+                                  ₹ {win.winAmount}
+                                </td>
+                                <td className="p-2">{win.date}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))
+            )}
+          </tbody>
+        </table>
 
         {/* Pagination */}
-        <div className="mt-4 flex justify-end items-center space-x-2">
+        <div className="mt-4 flex justify-end items-center gap-2">
           <button
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
+            onClick={() => setCurrentPage(p => p - 1)}
             className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
           >
             Prev
@@ -151,7 +168,7 @@ const TotalWinningTable = () => {
           </span>
           <button
             disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => prev + 1)}
+            onClick={() => setCurrentPage(p => p + 1)}
             className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
           >
             Next
