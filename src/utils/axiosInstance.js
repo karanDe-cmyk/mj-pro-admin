@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 // ✅ Use runtime-configured API URL
 const instance = axios.create({
-  baseURL :'https://super777-api.phoenixappapi.com'
+  baseURL :'https://miraz-api.Phonexappapi.com'
   // baseURL: "http://localhost:5002"
 });
 
