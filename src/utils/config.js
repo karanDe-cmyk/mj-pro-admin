@@ -1,1 +1,1 @@
-export const apiUrl = "https://miraz-api.Phonexappapi.com"
+export const apiUrl = "https://miraz-api.phoenixappapi.com"
