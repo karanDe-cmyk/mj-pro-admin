@@ -39,6 +39,7 @@ const GameRate = () => {
   const [displayRates, setDisplayRates] = useState({});
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [rateId, setRateId] = useState(null);
 
   useEffect(() => {
     fetchBetRates();
@@ -48,28 +49,35 @@ const GameRate = () => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/rates/getBetRates`);
-      if (response.data) {
+
+      if (response.data && response.data._id) {
         const { _id, createdAt, updatedAt, __v, ...filteredData } = response.data;
+
+        setRateId(_id);
         setRates(filteredData);
 
-        // Prepare displayRates (value fields * 10)
         const transformed = {};
         for (const key in filteredData) {
           if (key.endsWith("Value")) {
-            transformed[key] = filteredData[key];
+            transformed[key] = filteredData[key] * 10;
           } else {
             transformed[key] = filteredData[key];
           }
         }
         setDisplayRates(transformed);
+      } else {
+        setRateId(null);
+        setRates({});
+        setDisplayRates({});
       }
     } catch (error) {
       console.error("Error fetching bet rates:", error);
-      alert("Failed to fetch bet rates!");
+      message.error("Failed to fetch bet rates");
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleGroupInputChange = (group, field, e) => {
     const { value } = e.target;
@@ -81,7 +89,7 @@ const GameRate = () => {
         updatedRates[key] = value;
         updatedDisplayRates[key] = value;
       } else if (field === "value") {
-        updatedRates[key + "Value"] = value;
+        updatedRates[key + "Value"] = value / 10;
         updatedDisplayRates[key + "Value"] = value;
       }
     });
@@ -93,23 +101,26 @@ const GameRate = () => {
   const handleUpdate = async () => {
     try {
       setUpdating(true);
-      const transformedRates = { ...rates };
-      for (const key in transformedRates) {
-        if (key.endsWith("Value")) {
-          transformedRates[key] = transformedRates[key];
-        }
+
+      const payload = { ...rates };
+
+      if (rateId) {
+        await axios.put(`/api/rates/updateBetRates`, payload);
+        message.success("Rates updated successfully!");
+      } else {
+        await axios.post(`/api/rates/add`, payload);
+        message.success("Rates created successfully!");
       }
-      await axios.put(`/api/rates/updateBetRates`, transformedRates);
+
       fetchBetRates();
-      message.success("Rates updated successfully!");
-      alert("Rates updated successfully!");
     } catch (error) {
-      console.error("Error updating bet rates:", error);
-      alert("Failed to update rates!");
+      console.error("Error saving bet rates:", error);
+      message.error("Failed to save rates!");
     } finally {
       setUpdating(false);
     }
   };
+
 
   return (
     <div className="p-6">
