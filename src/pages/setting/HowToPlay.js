@@ -27,7 +27,7 @@ const HowToPlay = () => {
         }
       } catch (error) {
         console.error("Error fetching How to Play data:", error);
-        alert("Failed to fetch How to Play content.");
+        // alert("Failed to fetch How to Play content.");
       } finally {
         setLoading(false); // Set loading to false after the data fetch is complete
       }
