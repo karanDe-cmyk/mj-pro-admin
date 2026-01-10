@@ -36,6 +36,8 @@ const MarketDeclareResult = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isGameModalVisible, setIsGameModalVisible] = useState(false);
   const [gameSearch, setGameSearch] = useState("");
+  const [isGameTypeModalVisible, setIsGameTypeModalVisible] = useState(false);
+
 
 
   // Mobile detection
@@ -736,17 +738,15 @@ const MarketDeclareResult = () => {
                 <Form.Item
                   name="gameType"
                   label={isMobile ? "Type" : "Game Type"}
-                  rules={[{ required: true }]}
-                  style={{ marginBottom: 0 }}
+                  rules={[{ required: true, message: "Please select game type" }]}
                 >
-                  <Select
-                    placeholder="Select Type"
-                    style={{ width: "100%" }}
+                  <Input
+                    placeholder="Select Game Type"
+                    readOnly
+                    onClick={() => setIsGameTypeModalVisible(true)}
+                    style={{ cursor: "pointer" }}
                     size={isMobile ? "small" : "middle"}
-                  >
-                    <Select.Option value="open">Open</Select.Option>
-                    <Select.Option value="close">Close</Select.Option>
-                  </Select>
+                  />
                 </Form.Item>
               </Col>
 
@@ -1128,6 +1128,35 @@ const MarketDeclareResult = () => {
               No games found
             </p>
           )}
+        </div>
+      </Modal>
+      <Modal
+        title="Select Game Type"
+        open={isGameTypeModalVisible}
+        onCancel={() => setIsGameTypeModalVisible(false)}
+        footer={null}
+        width={isMobile ? "80%" : "300px"}
+      >
+        <div>
+          {["open", "close"].map((type) => (
+            <div
+              key={type}
+              onClick={() => {
+                form.setFieldsValue({ gameType: type });
+                setCurrentSessionType(type);
+                setIsGameTypeModalVisible(false);
+              }}
+              style={{
+                padding: "12px",
+                cursor: "pointer",
+                borderBottom: "1px solid #f0f0f0",
+                fontWeight: 500,
+                textTransform: "capitalize"
+              }}
+            >
+              {type}
+            </div>
+          ))}
         </div>
       </Modal>
 
