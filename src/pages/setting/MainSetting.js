@@ -30,15 +30,15 @@ const MainSetting = () => {
       </div>
       <Divider />
 
-      <div style={{ marginBottom: 20 }}>
+      {/* <div style={{ marginBottom: 20 }}>
         <AppLinks />
       </div>
-      <Divider />
+      <Divider /> */}
 
-      <div style={{ marginBottom: 20 }}>
+      {/* <div style={{ marginBottom: 20 }}>
         <HomeTitle />
       </div>
-      <Divider />
+      <Divider /> */}
 
       <div style={{ marginBottom: 20 }}>
         <UpiPaymentId />
@@ -50,25 +50,25 @@ const MainSetting = () => {
       </div>
       <Divider />
 
-      <div style={{ marginBottom: 20 }}>
+      {/* <div style={{ marginBottom: 20 }}>
         <OtherSettings />
       </div>
-      <Divider />
+      <Divider /> */}
 
       <div style={{ marginBottom: 20 }}>
         <HowToPlay />
       </div>
       <Divider />
 
-      <div style={{ marginBottom: 20 }}>
+      {/* <div style={{ marginBottom: 20 }}>
         <ReferAndEarn />
       </div>
-      <Divider />
+      <Divider /> */}
 
-      <div style={{ marginBottom: 20 }}>
+      {/* <div style={{ marginBottom: 20 }}>
         <WelcomeSettings />
       </div>
-      <Divider />
+      <Divider /> */}
     </div>
   );
 };

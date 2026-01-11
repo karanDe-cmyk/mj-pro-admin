@@ -31,7 +31,7 @@ const OtherSettings = () => {
         }
       } catch (error) {
         console.error("Error fetching settings:", error);
-        alert("Failed to fetch settings.");
+        // alert("Failed to fetch settings.");
       } finally {
         setLoading(false); // Set loading to false after fetch is complete
       }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from '../../utils/axiosInstance';
-import XtreemGateway from '../../components/XtreemGateway';
+// import XtreemGateway from '../../components/XtreemGateway';
 
 // Custom alert component to replace window.alert
 const AlertMessage = ({ message, type, onClose }) => {
@@ -139,7 +139,7 @@ const UPISettings = () => {
 
       } catch (error) {
         console.error("Error fetching settings data:", error);
-        setAlert({ message: "Failed to fetch settings data", type: "error" });
+        // setAlert({ message: "Failed to fetch settings data", type: "error" });
       } finally {
         setFetchingData(false);
       }
@@ -290,13 +290,13 @@ const UPISettings = () => {
           >
             IMB Gateway
           </button>
-          <button
+          {/* <button
             className={`px-6 py-3 -mb-px font-medium rounded-t-lg transition-colors duration-200 ease-in-out ${activeTab === 'xtreem' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('xtreem')}
             disabled={loading}
           >
             Xtreem Gateway
-          </button>
+          </button> */}
         </div>
 
         {/* UPI Settings Tab */}
@@ -392,7 +392,6 @@ const UPISettings = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">IMB Gateway Settings</h2>
 
-            {/* Basic Settings */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">User Token</label>
@@ -442,7 +441,6 @@ const UPISettings = () => {
               </div>
             </div>
 
-            {/* Discount Amounts Section */}
             <div className="mb-8">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Discount Amount Settings</h3>
               <p className="text-gray-600 mb-4">Set discount amounts for different percentage values:</p>
@@ -482,9 +480,9 @@ const UPISettings = () => {
           </div>
         )}
 
-        {activeTab === 'xtreem' && (
+        {/* {activeTab === 'xtreem' && (
           <XtreemGateway />
-        )}
+        )} */}
 
       </div>
     </div>
