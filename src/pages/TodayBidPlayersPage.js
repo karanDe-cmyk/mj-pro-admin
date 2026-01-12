@@ -89,7 +89,9 @@ const TodayBidPlayersPage = () => {
                     >
                       <td className="p-2 border">{index + 1}</td>
                       <td className="p-2 border font-medium">
-                        {user.userName}
+                        <a className="underline" href={`/admin/user-management/user-details/${user.userId}`}>
+                          {user.userName}
+                        </a>
                       </td>
                       <td className="p-2 border">{user.phone}</td>
                       <td className="p-2 border text-green-600 font-semibold">
