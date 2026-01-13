@@ -18,20 +18,27 @@ const GameRates = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/api/GaliDisawarRate/getBetRates");
-      // Assuming response.data includes _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue
-      const { _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue } = response.data;
+
+      if (!response.data || !response.data._id) {
+        setRateId("");
+        return;
+      }
+
+      const { _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue } =
+        response.data;
+
       setRateId(_id);
       setSingleDigit(singleDigit);
       setSingleDigitValue(singleDigitValue);
       setJodiDigit(jodiDigit);
       setJodiDigitValue(jodiDigitValue);
     } catch (error) {
-      console.error("Error fetching bet rates:", error);
       message.error("Error fetching bet rates");
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchBetRates();
@@ -40,26 +47,45 @@ const GameRates = () => {
   // Handler for updating bet rates via the update API.
   const handleSubmit = async () => {
     try {
+      setLoading(true);
+
       const payload = {
         singleDigit,
         singleDigitValue,
         jodiDigit,
         jodiDigitValue,
       };
-      const response = await axiosInstance.put(`/api/GaliDisawarRate/updateBetRates/${rateId}`, payload);
-      if (response.data.message === "Bet rates updated successfully!") {
-        message.success("Rates updated successfully");
-        alert("Rates updated successfully");
+
+      let response;
+
+      if (rateId) {
+        // ✅ UPDATE (PUT)
+        response = await axiosInstance.put(
+          `/api/GaliDisawarRate/updateBetRates/${rateId}`,
+          payload
+        );
       } else {
-        message.info(response.data.message || "Update completed");
+        // ✅ CREATE (POST)
+        response = await axiosInstance.post(
+          `/api/GaliDisawarRate/addrate`,
+          payload
+        );
       }
-      // Refresh the rates after update
+
+      message.success(
+        response.data.message || "Rates saved successfully"
+      );
+
+      // 🔄 Refresh data
       fetchBetRates();
     } catch (error) {
-      console.error("Error updating rates:", error);
-      message.error("Error updating rates");
+      console.error("Error saving rates:", error);
+      message.error("Error saving rates");
+    } finally {
+      setLoading(false);
     }
   };
+
 
   return (
     <div
