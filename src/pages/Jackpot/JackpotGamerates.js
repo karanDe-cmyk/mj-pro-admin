@@ -19,13 +19,26 @@ const GameRates = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/api/jackpotRate/getBetRates");
-      // Assuming response.data includes _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue
-      const { _id, singleDigit, singleDigitValue, jodiDigit, jodiDigitValue } = response.data;
-      setRateId(_id);
-      setSingleDigit(singleDigit);
-      setSingleDigitValue(singleDigitValue);
-      setJodiDigit(jodiDigit);
-      setJodiDigitValue(jodiDigitValue);
+
+      if (response.data && response.data._id) {
+        const {
+          _id,
+          singleDigit,
+          singleDigitValue,
+          jodiDigit,
+          jodiDigitValue,
+        } = response.data;
+
+        setRateId(_id);
+        setSingleDigit(singleDigit || "");
+        setSingleDigitValue(singleDigitValue || "");
+        setJodiDigit(jodiDigit || "");
+        setJodiDigitValue(jodiDigitValue || "");
+      } else {
+        // ❗ No record found → prepare for POST
+        setRateId("");
+      }
+
     } catch (error) {
       console.error("Error fetching bet rates:", error);
       message.error("Error fetching bet rates");
@@ -34,6 +47,7 @@ const GameRates = () => {
     }
   };
 
+
   useEffect(() => {
     fetchBetRates();
   }, []);
@@ -41,26 +55,47 @@ const GameRates = () => {
   // Handler for updating bet rates via the update API.
   const handleSubmit = async () => {
     try {
+      setLoading(true);
+
       const payload = {
         singleDigit,
         singleDigitValue,
         jodiDigit,
         jodiDigitValue,
       };
-      const response = await axiosInstance.put(`/api/jackpotRate/jackpotupdateBetRates/${rateId}`, payload);
-      if (response.data.message === "Bet rates updated successfully!") {
-        message.success("Rates updated successfully");
-        alert("Rates updated successfully");
+
+      let response;
+
+      if (rateId) {
+        response = await axiosInstance.put(
+          `/api/jackpotRate/jackpotupdateBetRates/${rateId}`,
+          payload
+        );
       } else {
-        message.info(response.data.message || "Update completed");
+        response = await axiosInstance.post(
+          "/api/jackpotRate/jackpotaddrate",
+          payload
+        );
       }
-      // Refresh the rates after update
+
+      if (response.data?.success || response.data?.message) {
+        message.success(
+          rateId
+            ? "Rates updated successfully"
+            : "Rates added successfully"
+        );
+      }
+
       fetchBetRates();
+
     } catch (error) {
-      console.error("Error updating rates:", error);
-      message.error("Error updating rates");
+      console.error("Error saving rates:", error);
+      message.error("Failed to save rates");
+    } finally {
+      setLoading(false);
     }
   };
+
   // const handleSubmit = async () => {
   //   try {
   //     const payload = {
@@ -69,17 +104,17 @@ const GameRates = () => {
   //       jodiDigit,
   //       jodiDigitValue,
   //     };
-  
+
   //     const response = await axiosInstanceInstance.post("/api/jackpotRate/jackpotaddrate", payload);
 
-  
+
   //     if (response.data.message === "Bet rates added successfully!") {
   //       message.success("Rates added successfully");
   //       alert("Rates added successfully");
   //     } else {
   //       message.info(response.data.message || "Submission completed");
   //     }
-  
+
   //     // Refresh or reset form (if needed)
   //     fetchBetRates(); // Optional: reload rates if you're showing them
   //   } catch (error) {
