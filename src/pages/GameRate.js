@@ -59,7 +59,7 @@ const GameRate = () => {
         const transformed = {};
         for (const key in filteredData) {
           if (key.endsWith("Value")) {
-            transformed[key] = filteredData[key] * 10;
+            transformed[key] = filteredData[key];
           } else {
             transformed[key] = filteredData[key];
           }
@@ -89,7 +89,7 @@ const GameRate = () => {
         updatedRates[key] = value;
         updatedDisplayRates[key] = value;
       } else if (field === "value") {
-        updatedRates[key + "Value"] = value / 10;
+        updatedRates[key + "Value"] = value;
         updatedDisplayRates[key + "Value"] = value;
       }
     });
