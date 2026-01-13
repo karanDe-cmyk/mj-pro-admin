@@ -1088,7 +1088,6 @@ const MarketDeclareResult = () => {
         onCancel={() => setIsGameModalVisible(false)}
         footer={null}
         width={isMobile ? "100%" : "600px"}
-        height={isMobile ? "75%" : "600px"}
         centered
       >
         {/* Search */}
@@ -1119,7 +1118,7 @@ const MarketDeclareResult = () => {
                   cursor: "pointer",
                   borderBottom: "1px solid #f0f0f0",
                   fontWeight: 600,
-                  fontSize: "56px"
+                  fontSize: "35px"
                 }}
               >
                 {game}
