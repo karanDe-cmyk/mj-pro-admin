@@ -1088,6 +1088,7 @@ const MarketDeclareResult = () => {
         onCancel={() => setIsGameModalVisible(false)}
         footer={null}
         width={isMobile ? "90%" : "400px"}
+        centered
       >
         {/* Search */}
         <Input
@@ -1116,7 +1117,8 @@ const MarketDeclareResult = () => {
                   padding: "10px",
                   cursor: "pointer",
                   borderBottom: "1px solid #f0f0f0",
-                  fontWeight: 500
+                  fontWeight: 600,
+                  fontSize: "28px"
                 }}
               >
                 {game}
@@ -1136,6 +1138,7 @@ const MarketDeclareResult = () => {
         onCancel={() => setIsGameTypeModalVisible(false)}
         footer={null}
         width={isMobile ? "80%" : "300px"}
+        centered
       >
         <div>
           {["open", "close"].map((type) => (
