@@ -1087,7 +1087,8 @@ const MarketDeclareResult = () => {
         open={isGameModalVisible}
         onCancel={() => setIsGameModalVisible(false)}
         footer={null}
-        width={isMobile ? "90%" : "400px"}
+        width={isMobile ? "100%" : "600px"}
+        height={isMobile ? "75%" : "600px"}
         centered
       >
         {/* Search */}
@@ -1118,7 +1119,7 @@ const MarketDeclareResult = () => {
                   cursor: "pointer",
                   borderBottom: "1px solid #f0f0f0",
                   fontWeight: 600,
-                  fontSize: "28px"
+                  fontSize: "56px"
                 }}
               >
                 {game}
@@ -1137,7 +1138,7 @@ const MarketDeclareResult = () => {
         open={isGameTypeModalVisible}
         onCancel={() => setIsGameTypeModalVisible(false)}
         footer={null}
-        width={isMobile ? "80%" : "300px"}
+        width={isMobile ? "80%" : "500px"}
         centered
       >
         <div>
