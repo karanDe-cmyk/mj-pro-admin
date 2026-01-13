@@ -91,17 +91,17 @@ const AdminPanel = () => {
       path: "/admin/game-management/declare-market-result",
       icon: <i className="fa fa-bullhorn" />,
     },
-    {
-      label: "Starline Management",
-      icon: <i className="fa fa-star" aria-hidden="true"></i>,
-      children: [
-        { key: "starline-game-name", label: "Game Name", path: "/admin/starline-management/game-name" },
-        { key: "starline-bid-history", label: "Bid History", path: "/admin/starline-management/bid-history" },
-        { key: "starline-declare-result", label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
-        { key: "starline-game-rates", label: "Game Rates", path: "/admin/starline-management/game-rates" },
-        { key: "starline-bid-revert", label: "Starline Bid Revert", path: "/admin/starline-management/starline-bid-revert" },
-      ],
-    },
+    // {
+    //   label: "Starline Management",
+    //   icon: <i className="fa fa-star" aria-hidden="true"></i>,
+    //   children: [
+    //     { key: "starline-game-name", label: "Game Name", path: "/admin/starline-management/game-name" },
+    //     { key: "starline-bid-history", label: "Bid History", path: "/admin/starline-management/bid-history" },
+    //     { key: "starline-declare-result", label: "Declare Result", path: "/admin/starline-management/declare-result-starline" },
+    //     { key: "starline-game-rates", label: "Game Rates", path: "/admin/starline-management/game-rates" },
+    //     { key: "starline-bid-revert", label: "Starline Bid Revert", path: "/admin/starline-management/starline-bid-revert" },
+    //   ],
+    // },
     {
       key: "winning-prediction",
       label: "Winning Prediction",
@@ -213,18 +213,18 @@ const AdminPanel = () => {
         },
       ],
     },
-    // {
-    //   key: "galidisawar-games",
-    //   label: "Galidisawar Games",
-    //   icon: <i className="fa fa-dice" />,
-    //   children: [
-    //     { key: "galidi-game-name", label: "Game Name", path: "/admin/galidisawer-games/game-list" },
-    //     { key: "galidi-bid-history", label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
-    //     { key: "galidi-declare-results", label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
-    //     { key: "galidi-game-rates", label: "Game Rates", path: "/admin/galidisawer-games/game-rates" },
-    //     { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
-    //   ],
-    // },
+    {
+      key: "galidisawar-games",
+      label: "Galidisawar Games",
+      icon: <i className="fa fa-dice" />,
+      children: [
+        { key: "galidi-game-name", label: "Game Name", path: "/admin/galidisawer-games/game-list" },
+        { key: "galidi-bid-history", label: "Bid History", path: "/admin/galidisawer-games/bid-history" },
+        { key: "galidi-declare-results", label: "Declare Results", path: "/admin/galidisawer-games/declare-result" },
+        { key: "galidi-game-rates", label: "Game Rates", path: "/admin/galidisawer-games/game-rates" },
+        { key: "galidisawar-bid-revert", label: "Gali Disawar Bid Revert", path: "/admin/galidisawer-games/galidisawar-bid-revert" },
+      ],
+    },
     {
       key: "Jackpot-games",
       label: "Jackpot Games",
