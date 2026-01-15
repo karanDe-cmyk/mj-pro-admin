@@ -288,13 +288,13 @@ const UPISettings = () => {
           >
             UPI Settings
           </button>
-          {/* <button
+          <button
             className={`px-6 py-3 -mb-px font-medium rounded-t-lg transition-colors duration-200 ease-in-out ${activeTab === 'fbm' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('fbm')}
             disabled={loading}
           >
             IMB Gateway
-          </button> */}
+          </button>
           <button
             className={`px-6 py-3 -mb-px font-medium rounded-t-lg transition-colors duration-200 ease-in-out ${activeTab === 'payu' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('payu')}
@@ -393,7 +393,7 @@ const UPISettings = () => {
         )}
 
         {/* FBM Gateway Tab */}
-        {/* {activeTab === 'fbm' && (
+        {activeTab === 'fbm' && (
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">IMB Gateway Settings</h2>
             <div className="grid md:grid-cols-2 gap-6">
@@ -455,7 +455,7 @@ const UPISettings = () => {
               </button>
             </div>
           </div>
-        )} */}
+        )}
 
         {/* PayU Gateway Tab */}
         {activeTab === 'payu' && (
