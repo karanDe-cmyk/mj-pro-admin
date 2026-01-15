@@ -872,6 +872,23 @@ const MarketDeclareResult = () => {
                       { title: "Digit", dataIndex: "digit", key: "digit", width: 60 },
                       { title: "Bid", dataIndex: "points", key: "points", width: 60 },
                       { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                      {
+                        title: "Action",
+                        key: "action",
+                        width: 100,
+                        render: (_, record) => (
+                          <Button
+                            type="link"
+                            danger
+                            size="small"
+                            onClick={() => handleDelete(record)}
+                            loading={isDeleting}
+                            style={{ padding: 0, fontSize: '12px' }}
+                          >
+                            Delete Bid
+                          </Button>
+                        ),
+                      }
                     ]}
                     dataSource={winners.openWinners.filter(w => !["jodi", "jodiBulk", "digitBasedJodi", "groupJodi", "redBracket", "halfSangamA", "halfSangamB", "fullSangma"].includes(w.gameType))}
                     rowKey="_id"
@@ -897,6 +914,23 @@ const MarketDeclareResult = () => {
                       { title: "Digit", dataIndex: "digit", key: "digit", width: 60 },
                       { title: "Bid", dataIndex: "points", key: "points", width: 60 },
                       { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                      {
+                        title: "Action",
+                        key: "action",
+                        width: 100,
+                        render: (_, record) => (
+                          <Button
+                            type="link"
+                            danger
+                            size="small"
+                            onClick={() => handleDelete(record)}
+                            loading={isDeleting}
+                            style={{ padding: 0, fontSize: '12px' }}
+                          >
+                            Delete Bid
+                          </Button>
+                        ),
+                      },
                     ]}
                     dataSource={winners.closeWinners}
                     rowKey="_id"
@@ -922,6 +956,23 @@ const MarketDeclareResult = () => {
                       { title: "Digit", dataIndex: "digit", key: "digit", width: 60 },
                       { title: "Bid", dataIndex: "points", key: "points", width: 60 },
                       { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                      {
+                        title: "Action",
+                        key: "action",
+                        width: 100,
+                        render: (_, record) => (
+                          <Button
+                            type="link"
+                            danger
+                            size="small"
+                            onClick={() => handleDelete(record)}
+                            loading={isDeleting}
+                            style={{ padding: 0, fontSize: '12px' }}
+                          >
+                            Delete Bid
+                          </Button>
+                        ),
+                      },
                     ]}
                     dataSource={winners.jodiWinners}
                     rowKey="_id"
