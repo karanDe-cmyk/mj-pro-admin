@@ -46,7 +46,6 @@ const AlertMessage = ({ message, type, onClose }) => {
   );
 };
 
-
 const UPISettings = () => {
   // UPI Data State
   const [upiData, setUpiData] = useState({
@@ -68,9 +67,15 @@ const UPISettings = () => {
     status: "Active",
   });
 
+  // PayU Gateway State
+  const [payuData, setPayuData] = useState({
+    status: "inactive",
+  });
+
   const [loading, setLoading] = useState(false);
+  const [payuLoading, setPayuLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
-  const [activeTab, setActiveTab] = useState("upi"); // 'upi' or 'fbm'
+  const [activeTab, setActiveTab] = useState("upi"); // 'upi', 'fbm', or 'payu'
   const [alert, setAlert] = useState({ message: '', type: '' });
 
   // Handle alert closure
@@ -119,6 +124,14 @@ const UPISettings = () => {
           });
         }
 
+        // Fetch PayU gateway status
+        const payuResponse = await axiosInstance.get(`/api/settings/payu/status/payu`);
+        if (payuResponse.data.success) {
+          setPayuData({
+            status: payuResponse.data.status || "inactive",
+          });
+        }
+
       } catch (error) {
         console.error("Error fetching settings data:", error);
         setAlert({ message: "Failed to fetch settings data", type: "error" });
@@ -140,6 +153,12 @@ const UPISettings = () => {
   const handleFbmChange = (e) => {
     const { name, value } = e.target;
     setFbmData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle PayU status change
+  const handlePayuStatusChange = (e) => {
+    const { value } = e.target;
+    setPayuData((prev) => ({ ...prev, status: value }));
   };
 
   // Handle UPI form submission
@@ -220,13 +239,40 @@ const UPISettings = () => {
     }
   };
 
+  // Handle PayU status update
+  const handlePayuUpdate = async () => {
+    try {
+      setPayuLoading(true);
+
+      const payload = {
+        name: "payu",
+        status: payuData.status
+      };
+
+      const response = await axiosInstance.post("/api/settings/payu/update", payload);
+
+      if (response.data.success) {
+        setAlert({
+          message: `PayU Gateway ${payuData.status === 'active' ? 'Activated' : 'Deactivated'} Successfully!`,
+          type: "success"
+        });
+      } else {
+        setAlert({ message: "Failed to update PayU status", type: "error" });
+      }
+    } catch (error) {
+      console.error("Error updating PayU status:", error);
+      setAlert({ message: "Failed to update PayU status", type: "error" });
+    } finally {
+      setPayuLoading(false);
+    }
+  };
 
   return (
     <div className="relative p-6 bg-gray-100 min-h-screen font-sans">
       <AlertMessage message={alert.message} type={alert.type} onClose={handleAlertClose} />
 
       {/* Loading overlay */}
-      {(loading || fetchingData) && (
+      {(loading || fetchingData || payuLoading) && (
         <div className="absolute inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-20">
           <div className="text-white text-xl">Loading...</div>
         </div>
@@ -249,6 +295,13 @@ const UPISettings = () => {
           >
             IMB Gateway
           </button> */}
+          <button
+            className={`px-6 py-3 -mb-px font-medium rounded-t-lg transition-colors duration-200 ease-in-out ${activeTab === 'payu' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('payu')}
+            disabled={loading}
+          >
+            PayU Gateway
+          </button>
         </div>
 
         {/* UPI Settings Tab */}
@@ -403,6 +456,55 @@ const UPISettings = () => {
             </div>
           </div>
         )} */}
+
+        {/* PayU Gateway Tab */}
+        {activeTab === 'payu' && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">PayU Gateway Settings</h2>
+
+            <div className="bg-gray-50 p-6 rounded-lg mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700">Gateway Status</h3>
+                  <p className="text-gray-600 mt-1">
+                    {payuData.status === 'active' ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Inactive
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="w-64">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                  <select
+                    value={payuData.status}
+                    onChange={handlePayuStatusChange}
+                    className="w-full border border-gray-300 p-3 rounded-md bg-white focus:ring focus:ring-blue-200 focus:border-blue-500 transition-colors"
+                    disabled={payuLoading}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={handlePayuUpdate}
+                className="w-40 bg-purple-600 text-white font-semibold py-3 rounded-md shadow-md hover:bg-purple-700 transition-colors duration-200 ease-in-out disabled:bg-purple-300"
+                disabled={payuLoading}
+              >
+                {payuLoading ? "Updating..." : "Update Status"}
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
