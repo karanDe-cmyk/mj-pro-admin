@@ -110,7 +110,7 @@ const AdminPanel = () => {
     },
     {
       key: "auto-deposit-history",
-      label: "Auto Deposit History",
+      label: "All Deposit History",
       path: "/admin/auto-deposit-history",
       icon: <i className="fa fa-history" />,
     },
