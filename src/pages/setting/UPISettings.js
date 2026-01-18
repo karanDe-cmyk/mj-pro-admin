@@ -243,7 +243,7 @@ const UPISettings = () => {
           >
             UPI Settings
           </button>
-          <button
+          {/* <button
             className={`px-6 py-3 -mb-px font-medium rounded-t-lg transition-colors duration-200 ease-in-out ${activeTab === 'fbm' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('fbm')}
             disabled={loading}
@@ -256,7 +256,7 @@ const UPISettings = () => {
             disabled={loading}
           >
             Xtreem Gateway
-          </button>
+          </button> */}
         </div>
 
         {/* UPI Settings Tab */}
