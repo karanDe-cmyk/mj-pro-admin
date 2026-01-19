@@ -69,8 +69,14 @@ const UPISettings = () => {
 
   // PayU Gateway State
   const [payuData, setPayuData] = useState({
+    id: "",
     status: "inactive",
+    merchantKey: "",
+    salt: "",
+    mode: "test",
+    backendUrl: ""
   });
+
 
   const [loading, setLoading] = useState(false);
   const [payuLoading, setPayuLoading] = useState(false);
@@ -127,8 +133,15 @@ const UPISettings = () => {
         // Fetch PayU gateway status
         const payuResponse = await axiosInstance.get(`/api/settings/payu/status/payu`);
         if (payuResponse.data.success) {
+          const config = payuResponse.data.config;
+
           setPayuData({
-            status: payuResponse.data.status || "inactive",
+            id: config?._id || "",
+            status: config?.status || "inactive",
+            merchantKey: config?.merchantKey || "",
+            salt: config?.salt || "",
+            mode: config?.mode || "test",
+            backendUrl: config?.backendUrl || "",
           });
         }
 
@@ -246,7 +259,11 @@ const UPISettings = () => {
 
       const payload = {
         name: "payu",
-        status: payuData.status
+        status: payuData.status,
+        merchantKey: payuData.merchantKey.trim(),
+        salt: payuData.salt.trim(),
+        mode: payuData.mode,
+        backendUrl: payuData.backendUrl.trim(),
       };
 
       const response = await axiosInstance.post("/api/settings/payu/update", payload);
@@ -462,50 +479,74 @@ const UPISettings = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">PayU Gateway Settings</h2>
 
-            <div className="bg-gray-50 p-6 rounded-lg mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700">Gateway Status</h3>
-                  <p className="text-gray-600 mt-1">
-                    {payuData.status === 'active' ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Inactive
-                      </span>
-                    )}
-                  </p>
-                </div>
+            <div className="grid md:grid-cols-2 gap-6">
 
-                <div className="w-64">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                  <select
-                    value={payuData.status}
-                    onChange={handlePayuStatusChange}
-                    className="w-full border border-gray-300 p-3 rounded-md bg-white focus:ring focus:ring-blue-200 focus:border-blue-500 transition-colors"
-                    disabled={payuLoading}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Merchant Key</label>
+                <input
+                  type="text"
+                  value={payuData.merchantKey}
+                  onChange={(e) => setPayuData({ ...payuData, merchantKey: e.target.value })}
+                  className="w-full border p-3 rounded-md"
+                />
               </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Salt</label>
+                <input
+                  type="text"
+                  value={payuData.salt}
+                  onChange={(e) => setPayuData({ ...payuData, salt: e.target.value })}
+                  className="w-full border p-3 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Mode</label>
+                <select
+                  value={payuData.mode}
+                  onChange={(e) => setPayuData({ ...payuData, mode: e.target.value })}
+                  className="w-full border p-3 rounded-md"
+                >
+                  <option value="test">Test</option>
+                  <option value="live">Live</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Backend URL</label>
+                <input
+                  type="text"
+                  value={payuData.backendUrl}
+                  onChange={(e) => setPayuData({ ...payuData, backendUrl: e.target.value })}
+                  className="w-full border p-3 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Status</label>
+                <select
+                  value={payuData.status}
+                  onChange={(e) => setPayuData({ ...payuData, status: e.target.value })}
+                  className="w-full border p-3 rounded-md"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
             </div>
 
             <div className="mt-8 flex justify-end">
               <button
                 onClick={handlePayuUpdate}
-                className="w-40 bg-purple-600 text-white font-semibold py-3 rounded-md shadow-md hover:bg-purple-700 transition-colors duration-200 ease-in-out disabled:bg-purple-300"
-                disabled={payuLoading}
+                className="w-40 bg-purple-600 text-white font-semibold py-3 rounded-md shadow-md hover:bg-purple-700"
               >
-                {payuLoading ? "Updating..." : "Update Status"}
+                Update PayU
               </button>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
