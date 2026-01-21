@@ -123,11 +123,12 @@ const MarketDeclareResult = () => {
       const gameResponse = await instance.get(`/api/marketManagement/getMarketGames`);
       const mainMarketGames = gameResponse.data
         .filter((game) => game.marketName === "Main Market")
-        .map((game) => game.gameName);
+        .map((game) => game.gameName.trim());
 
       let results = [];
       try {
-        const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult`);
+        const formattedDate = date.format("YYYY-MM-DD");
+        const resultResponse = await instance.get(`/api/mainmarketdeclareResult/getDeclareResult?date=${formattedDate}`);
         results = resultResponse?.data?.results || [];
       } catch (err) {
         console.error("No declared results found or API error:", err);
@@ -139,7 +140,7 @@ const MarketDeclareResult = () => {
           const key = `${item.gameName}_${dayjs(item.date).format("DD-MM-YYYY")}`;
           if (!resultMap[key]) {
             resultMap[key] = {
-              gameName: item.gameName,
+              gameName: item.gameName.trim(),
               date: dayjs(item.date).format("DD-MM-YYYY"),
               open: null,
               close: null,
