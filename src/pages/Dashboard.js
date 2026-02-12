@@ -123,7 +123,7 @@ const Dashboard = () => {
         { params: { date: selectedDate } }
       );
       const data = response.data?.data.filter((data) => {
-        return data.method === 'Auto Deposit'
+        return data.method === 'Auto Deposit' || data.gateway === "payu"
       })
       setAutoDepositHistory(data || []);
       setLoading(false);
