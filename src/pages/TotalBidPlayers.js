@@ -85,7 +85,7 @@ const TotalBidPlayers = () => {
                         {/* VIEW */}
                         <button
                           onClick={() =>
-                            navigate(`/admin/user-management/user-details/${item._id}`)
+                            navigate(`/admin/user-management/user-details/${item.userId}`)
                           }
                           className="text-blue-600 hover:text-blue-800"
                           title="View Profile"
