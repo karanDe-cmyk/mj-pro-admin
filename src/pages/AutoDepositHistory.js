@@ -48,7 +48,7 @@ const AutoDepositHistory = () => {
     const fetchDepositHistory = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/userPayment/getpaymentResponse`);
+        const response = await axios.get(`/api/userPayment/auto/getpaymentResponse`);
         const allTransactions = response.data.data || [];
         setData(allTransactions);
 
