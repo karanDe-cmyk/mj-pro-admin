@@ -55,7 +55,7 @@ const AutoDepositHistory = () => {
         // Filter transactions only for today on load
         const todayStr = moment().utc().format("YYYY-MM-DD");
         const todayData = allTransactions.filter((item) =>
-          moment.utc(item.createdAt).format("YYYY-MM-DD") === todayStr
+          moment.utc(item.date).format("YYYY-MM-DD") === todayStr
         );
         setFilteredData(todayData);
       } catch (err) {

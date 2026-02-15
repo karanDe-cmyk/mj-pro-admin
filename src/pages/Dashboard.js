@@ -363,7 +363,7 @@ const Dashboard = () => {
     },
     {
       header: "Payment Method",
-      key: "method",
+      key: "gateway",
     },
     {
       header: "Status",
