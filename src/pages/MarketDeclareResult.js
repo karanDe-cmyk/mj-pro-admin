@@ -364,7 +364,7 @@ const MarketDeclareResult = () => {
 
       message.success(alertMessage);
       alert(alertMessage);
-
+      fetchMarketGameList();
       setGameResults((prevResults) =>
         prevResults.map((result) => {
           if (result.open?.id === declaredId) {
