@@ -239,8 +239,10 @@ const MarketDeclareResult = () => {
       setWinners({
         openWinners: [...openWinners, ...jodiOpenWinners],
         closeWinners: response.data.closeSessionWins || [],
-        jodiWinners: jodiWinners
+        jodiWinners: jodiWinners,
+        sangamSessionWins: response.data.sangamSessionWins || []   // ✅ ADD THIS
       });
+
 
       setDeclaredDigit(response?.data?.declaredResult?.digit || null);
       setIsWinnerModalVisible(true);
@@ -251,8 +253,10 @@ const MarketDeclareResult = () => {
       setWinners({
         openWinners: [],
         closeWinners: [],
-        jodiWinners: []
+        jodiWinners: [],
+        sangamSessionWins: []   // ✅ ADD HERE ALSO
       });
+
       setIsWinnerModalVisible(true);
     } finally {
       setLoading(false);
@@ -855,7 +859,7 @@ const MarketDeclareResult = () => {
         bodyStyle={{ padding: isMobile ? "8px" : "16px" }}
         footer={null}
       >
-        {(winners.openWinners?.length > 0 || winners.closeWinners?.length > 0 || winners.jodiWinners?.length > 0) ? (
+        {(winners.openWinners?.length > 0 || winners.closeWinners?.length > 0 || winners.jodiWinners?.length > 0 || winners.sangamSessionWins?.length > 0) ? (
           <>
             {/* Open Winners */}
             {winners.openWinners?.length > 0 && (
@@ -983,6 +987,49 @@ const MarketDeclareResult = () => {
                 </div>
               </div>
             )}
+
+            {winners.sangamSessionWins?.length > 0 && (
+              <div style={{ marginTop: isMobile ? "16px" : "24px" }}>
+                <Title level={5} style={{ fontSize: isMobile ? '14px' : '16px', marginBottom: '8px' }}>
+                  Sangam Winners
+                </Title>
+                <div style={{ overflowX: 'auto' }}>
+                  <Table
+                    columns={[
+                      { title: "User", dataIndex: "userName", key: "userName", width: 80 },
+                      { title: "Game", dataIndex: "gameName", key: "gameName", width: 80 },
+                      { title: "Type", dataIndex: "gameType", key: "gameType", width: 80 },
+                      { title: "Digit", dataIndex: "digit", key: "digit", width: 80 },
+                      { title: "Bid", dataIndex: "points", key: "points", width: 60 },
+                      { title: "Win", dataIndex: "winningPoints", key: "winningPoints", width: 70 },
+                      {
+                        title: "Action",
+                        key: "action",
+                        width: 100,
+                        render: (_, record) => (
+                          <Button
+                            type="link"
+                            danger
+                            size="small"
+                            onClick={() => handleDelete(record)}
+                            loading={isDeleting}
+                            style={{ padding: 0, fontSize: '12px' }}
+                          >
+                            Delete Bid
+                          </Button>
+                        ),
+                      },
+                    ]}
+                    dataSource={winners.sangamSessionWins}
+                    rowKey="_id"
+                    size={isMobile ? "small" : "middle"}
+                    scroll={isMobile ? { x: 500 } : {}}
+                    pagination={false}
+                  />
+                </div>
+              </div>
+            )}
+
           </>
         ) : (
           <p style={{ textAlign: "center", fontSize: isMobile ? "14px" : "16px", padding: "20px", color: "#ff4d4f" }}>
@@ -1028,6 +1075,22 @@ const MarketDeclareResult = () => {
             <Card
               size="small"
               style={{ marginTop: 8, background: "#e6f7ff", border: "1px solid #91d5ff" }}
+            >
+              <Row justify="space-between">
+                <Col><b>Total Users:</b> {summary.totalUsers}</Col>
+                <Col><b>Total Bid:</b> ₹{summary.totalBid}</Col>
+                <Col><b>Total Winning:</b> ₹{summary.totalWin}</Col>
+              </Row>
+            </Card>
+          );
+        })()}
+
+        {winners.sangamSessionWins?.length > 0 && (() => {
+          const summary = calculateSummary(winners.sangamSessionWins);
+          return (
+            <Card
+              size="small"
+              style={{ marginTop: 8, background: "#f9f0ff", border: "1px solid #d3adf7" }}
             >
               <Row justify="space-between">
                 <Col><b>Total Users:</b> {summary.totalUsers}</Col>
