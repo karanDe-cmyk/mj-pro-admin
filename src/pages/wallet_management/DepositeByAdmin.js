@@ -287,7 +287,7 @@ const DepositTransactionsTable = () => {
                                 filteredTransactions.map((transaction) => (
                                     <tr key={transaction._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {formatDate(transaction.date || transaction.createdAt)}
+                                            {formatDate(transaction.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             <a
