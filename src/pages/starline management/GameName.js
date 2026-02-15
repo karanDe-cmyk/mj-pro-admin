@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm } from "antd";
+import { Table, Button, Switch, message, Spin, Input, Select, Popconfirm, Modal } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import AddGame from "../../components/AddGame";
 import instance from "../../utils/axiosInstance";
@@ -10,6 +10,60 @@ import moment from "moment";
 
 const { Option } = Select;
 
+/* ===== Helpers for exploding/building time strings ===== */
+const TIME_FORMATS = ["hh:mm A", "hh:mm:ssA"];
+
+const buildTime = ({ hour, minute, period }) => {
+  const hh = String(((Number(hour) % 12) || 12)).padStart(2, "0");
+  const mm = String(Number(minute)).padStart(2, "0");
+  const p  = period === "PM" ? "PM" : "AM";
+  return `${hh}:${mm} ${p}`;
+};
+
+const explodeTime = (momentLib, t) => {
+  const m = momentLib(t, TIME_FORMATS, true);
+  if (!m.isValid()) return { hour: 1, minute: 0, period: "AM" };
+  return { hour: Number(m.format("hh")), minute: Number(m.format("mm")), period: m.format("A") };
+};
+
+const explodeGame = (momentLib, rec) => {
+  const topName = explodeTime(momentLib, rec.game_name);
+  const topClose = explodeTime(momentLib, rec.close_time);
+
+  return {
+    ...rec,
+    // top-level "game name" time parts + normalized string
+    nameHour: topName.hour,
+    nameMinute: topName.minute,
+    namePeriod: topName.period,
+    game_name: buildTime(topName),
+
+    // top-level close time parts + normalized string
+    closeHour: topClose.hour,
+    closeMinute: topClose.minute,
+    closePeriod: topClose.period,
+    close_time: buildTime(topClose),
+
+    // explode each day (if any)
+    week_selection: (rec.week_selection || []).map((d) => {
+      const dn = explodeTime(momentLib, d.game_name);
+      const dc = explodeTime(momentLib, d.close_time);
+      return {
+        ...d,
+        nameHour: dn.hour,
+        nameMinute: dn.minute,
+        namePeriod: dn.period,
+        game_name: buildTime(dn),
+        closeHour: dc.hour,
+        closeMinute: dc.minute,
+        closePeriod: dc.period,
+        close_time: buildTime(dc),
+      };
+    }),
+  };
+};
+/* ====================================================== */
+
 const GameName = () => {
   const [games, setGames] = useState([]);
   const [filteredGames, setFilteredGames] = useState([]); // Filtered Data
@@ -18,7 +72,6 @@ const GameName = () => {
   const [editingGame, setEditingGame] = useState(null);
   const [searchTerm, setSearchTerm] = useState(""); // Search state
   const [filterStatus, setFilterStatus] = useState("all"); // Filter state
-  const [pageSize, setPageSize] = useState(5); // Entries state
 
   // Function to sort games by close_time
   const sortGamesByTime = (gamesList) => {
@@ -70,7 +123,7 @@ const GameName = () => {
 
     if (search) {
       updatedGames = updatedGames.filter((game) =>
-        game.game_name.toLowerCase().includes(search.toLowerCase())
+        (game.game_name || "").toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -141,7 +194,34 @@ const GameName = () => {
     setGames(sortedGames);
     // Re-apply filters to the newly sorted list
     filterGames(searchTerm, filterStatus, sortedGames);
-    // toast.success("Game added successfully!");
+  };
+
+  const handleUpdateGame = async () => {
+    setLoadingAction(`update-${editingGame._id}`);
+    try {
+      const response = await instance.patch(
+        `/api/starline/updateGameById/${editingGame._id}`,
+        {
+          game_name: editingGame.game_name,
+          close_time: editingGame.close_time,
+          is_active: editingGame.is_active,
+          week_selection: editingGame.week_selection,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Game updated successfully!");
+        fetchGameList(); // Re-fetch the entire list to ensure data consistency
+        setEditingGame(null); // Close the modal
+      } else {
+        toast.error(response.data.message || "Failed to update game.");
+      }
+    } catch (error) {
+      console.error("Error updating game:", error);
+      toast.error("An error occurred while updating the game.");
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   return (
@@ -152,7 +232,7 @@ const GameName = () => {
       {/* Add Game Component */}
       <AddGame onGameAdded={handleGameAdded} />
 
-      {/* Search, Filter & Entries Options */}
+      {/* Search, Filter Options */}
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 mb-4">
         {/* Search Input */}
         <Input
@@ -171,18 +251,6 @@ const GameName = () => {
           <Option value="all">All Games</Option>
           <Option value="active">Active Games</Option>
           <Option value="inactive">Inactive Games</Option>
-        </Select>
-
-        {/* Entries Dropdown */}
-        <Select
-          value={pageSize}
-          onChange={(value) => setPageSize(value)}
-          className="w-24"
-        >
-          <Option value={5}>5</Option>
-          <Option value={10}>10</Option>
-          <Option value={20}>20</Option>
-          <Option value={50}>50</Option>
         </Select>
       </div>
 
@@ -227,30 +295,30 @@ const GameName = () => {
               key: "actions",
               render: (_, record) => (
                 <div className="flex space-x-2">
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  onClick={() => setEditingGame(record)}
-                >
-                  Edit
-                </Button>
-                <Popconfirm
-                  title="Are you sure to delete this game?"
-                  onConfirm={() => deleteGame(record._id)}
-                  okText="Yes"
-                  cancelText="No"
-                >
                   <Button
                     type="primary"
-                    danger
-                    icon={<DeleteOutlined />}
-                    loading={loadingAction === `delete-${record._id}`}
+                    icon={<EditOutlined />}
+                    onClick={() => setEditingGame(explodeGame(moment, record))}
                   >
-                    Delete
+                    Edit
                   </Button>
-                </Popconfirm>
-              </div>
-              
+                  <Popconfirm
+                    title="Are you sure to delete this game?"
+                    onConfirm={() => deleteGame(record._id)}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button
+                      type="primary"
+                      danger
+                      icon={<DeleteOutlined />}
+                      loading={loadingAction === `delete-${record._id}`}
+                    >
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </div>
+
               ),
             },
           ]}
@@ -258,23 +326,32 @@ const GameName = () => {
             ...game,
             key: index,
           }))}
-          pagination={{ pageSize }}
+          pagination={false} // Disable pagination
           className="mt-6"
         />
       )}
 
-      {/* Edit Game Modal */}
-      {editingGame && (
-        <EditGameModal
-          editingGame={editingGame}
-          setEditingGame={setEditingGame}
-          handleUpdateGame={() => {
-            fetchGameList(); // Refresh game list after update
-            setEditingGame(null);
-          }}
-          closeEditPopup={() => setEditingGame(null)}
-        />
-      )}
+      {/* Edit Game Modal - Full Screen */}
+      <Modal
+        title=""
+        open={!!editingGame}
+        onCancel={() => setEditingGame(null)}
+        footer={null}
+        width="100%"
+        style={{ top: 0 }}
+        bodyStyle={{ height: "90vh" }}
+        className="full-screen-modal"
+      >
+        {editingGame && (
+          <EditGameModal
+            key={`${editingGame._id}-${editingGame.game_name}-${editingGame.close_time}`}
+            editingGame={editingGame}
+            setEditingGame={setEditingGame}
+            handleUpdateGame={handleUpdateGame}
+            closeEditPopup={() => setEditingGame(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
