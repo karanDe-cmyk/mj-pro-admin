@@ -129,7 +129,7 @@ const Dashboard = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching deposit history:", err);
-      setError("Failed to fetch deposit history. Please try again.");
+      setError("No Record Found");
       setLoading(false);
     }
   };

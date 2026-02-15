@@ -21,7 +21,7 @@ const DepositTransactionsTable = () => {
             setLoading(true);
             setError(null);
 
-            const response = await axiosInstance.get(`/api/userPayment/getpaymentResponse?date=${selectedDate}`);
+            const response = await axiosInstance.get(`/api/userPayment/getpaymentResponse?date=${selectedDate}&&method=Admin Deposit`);
 
             if (response.data.success) {
                 // API response में data array में transactions हैं
