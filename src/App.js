@@ -74,7 +74,9 @@ import TotalBidPlayers from './pages/TotalBidPlayers';
 import TodayBidPlayersPage from './pages/TodayBidPlayersPage';
 import TotalNotBidPlayer from './pages/NonBidUsersTillDate';
 import TotalWithdrawal from './pages/wallet_management/TotalWithdrawal'
-import TotalwinningAmount from "./pages/Totalwinningamount"
+import TotalwinningAmount from "./pages/Totalwinningamount";
+import AppVersion from './pages/setting/AppVersion';
+
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
@@ -167,6 +169,7 @@ const App = () => {
               <Route path="ChangePassword" element={<ChangePassword />} />
               <Route path="slider-management" element={<SliderManagement />} />
               <Route path="fcm" element={<FCM />} />
+              <Route path="app-version" element={<AppVersion />} />
             </Route>
             <Route path="galidisawer-games">
               <Route path="game-list" element={<GalidisawerGameName />} />

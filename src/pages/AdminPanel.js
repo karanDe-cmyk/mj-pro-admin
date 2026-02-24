@@ -251,6 +251,12 @@ const AdminPanel = () => {
           icon: <i className="fa-solid fa-key"></i>,
         },
         {
+          key: "app-version",
+          label: "App Version",
+          path: "/admin/settings/app-version",
+          icon: <i className="fa-solid fa-mobile-alt"></i>,
+        },
+        {
           key: "FCM-Management",
           label: "FCM Management",
           path: "/admin/settings/fcm",
