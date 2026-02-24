@@ -1,1 +1,1 @@
-export const apiUrl = "https://aditiya-api.phoenixappapi.com"
+export const apiUrl = "https://aditiya-api.skylinkapi.online"

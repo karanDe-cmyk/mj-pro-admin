@@ -75,6 +75,8 @@ import TodayBidPlayersPage from './pages/TodayBidPlayersPage';
 import TotalNotBidPlayer from './pages/NonBidUsersTillDate';
 import TotalWithdrawal from './pages/wallet_management/TotalWithdrawal'
 import TotalwinningAmount from "./pages/Totalwinningamount"
+import AppVersion from './pages/setting/AppVersion';
+
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
   // console.log("accessToken:", localStorage.getItem('accessToken'));
@@ -87,7 +89,7 @@ const App = () => {
         const token = await getToken(messaging, {
           vapidKey: "BBd9yaeCTQ4XIvUmnPmyUZmFZu9k0lcSwf43ZPRa3Ok8RMnNhbNq4Ugbmq1rQaeXLJUfJbR7paZMc8dQF8Tp9OM"
         });
-        
+
         localStorage.setItem('fcmToken', token)
 
         if (token) {
@@ -167,6 +169,7 @@ const App = () => {
               <Route path="ChangePassword" element={<ChangePassword />} />
               <Route path="slider-management" element={<SliderManagement />} />
               <Route path="fcm" element={<FCM />} />
+              <Route path="app-version" element={<AppVersion />} />
             </Route>
             <Route path="galidisawer-games">
               <Route path="game-list" element={<GalidisawerGameName />} />
@@ -199,7 +202,7 @@ const App = () => {
             <Route path="bidrevert" element={<Bidrevert />} />
             <Route path="bids-list" element={<TotalBidsList />} />
             <Route path="wins-list" element={<TotalWinsList />} />
-<Route path = "totalwinning-amount" element={<TotalwinningAmount/>}/>
+            <Route path="totalwinning-amount" element={<TotalwinningAmount />} />
             <Route path="gateway-payment" element={<GatewayPayment />} />
           </Route>
 
