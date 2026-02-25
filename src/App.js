@@ -68,6 +68,7 @@ import AllDepositebyAdmin from './pages/wallet_management/DepositeByAdmin';
 import TotalBidsList from "./pages/TotalBidsList";
 import TotalWinsList from "./pages/TotalWinsList";
 import GatewayPayment from './pages/XtreemPyament'
+import AppVersion from './pages/setting/AppVersion';
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -177,6 +178,7 @@ const App = () => {
               <Route path="ChangePassword" element={<ChangePassword />} />
               <Route path="slider-management" element={<SliderManagement />} />
               <Route path="fcm" element={<FCM />} />
+              <Route path="app-version" element={<AppVersion />} />
             </Route>
             <Route path="galidisawer-games">
               <Route path="game-list" element={<GalidisawerGameName />} />
