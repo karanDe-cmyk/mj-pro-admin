@@ -155,7 +155,7 @@ const UPISettings = () => {
 
         // Fetch Razorpay gateway data
         const razorpayResponse = await axiosInstance.get(`/api/razorpay/get`);
-        if (razorpayResponse.data.success && razorpayResponse.data.data) {
+        if (razorpayResponse.data && razorpayResponse.data.data) {
           const razorpay = razorpayResponse.data.data;
           setRazorpayData({
             id: razorpay._id || "",
@@ -648,7 +648,7 @@ const UPISettings = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Key Secret</label>
                 <input
-                  type="password"
+                  type="text"
                   name="key_secret"
                   value={razorpayData.key_secret}
                   onChange={handleRazorpayChange}
@@ -701,7 +701,7 @@ const UPISettings = () => {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="text-gray-500">Key ID:</span>
-                    <span className="ml-2 font-mono">{razorpayData.key_id.substring(0, 10)}...</span>
+                    <span className="ml-2 font-mono">{razorpayData.key_id}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Status:</span>
