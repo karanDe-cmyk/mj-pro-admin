@@ -43,6 +43,35 @@ const UserDetails = () => {
     totalWinningAmount: 0
   });
 
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+
+  const handlePasswordUpdate = async () => {
+    if (!newPassword) {
+      alert("Enter a valid password");
+      return;
+    }
+
+    try {
+      const response = await instance.post(
+        `/api/auth/update-user-password/${userId}`,
+        { newPassword }
+      );
+
+      if (response.data?.success) {
+        alert("Password updated successfully!");
+        setUserPassword(newPassword);
+      }
+
+    } catch (err) {
+      console.error("Error updating password:", err);
+      alert("Password update failed!");
+    }
+
+    setPasswordModal(false);
+    setNewPassword("");
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchUserPassword = async () => {
@@ -168,7 +197,7 @@ const UserDetails = () => {
         const adminWithdrawals = response.data.filter(
           (txn) => txn.method === "Manual Withdrawal" || txn.type === "manual"
         );
-        
+
         const autoWithdrawals = response.data.filter(
           (txn) => txn.method === "Auto Withdrawal" || txn.type === "bank"
         );
@@ -452,7 +481,7 @@ const UserDetails = () => {
     // Calculate sum for each numeric column
     const calculateColumnSums = () => {
       const sums = {};
-      
+
       columns.forEach(column => {
         if (column.accessor && column.calculateSum !== false) {
           let total = 0;
@@ -467,7 +496,7 @@ const UserDetails = () => {
           sums[column.accessor] = total;
         }
       });
-      
+
       return sums;
     };
 
@@ -509,13 +538,13 @@ const UserDetails = () => {
                     ))}
                   </tr>
                 ))}
-                
+
                 {/* Sum Row */}
                 {showSum && data.length > 0 && (
                   <tr className="bg-blue-50 font-bold">
                     {columns.map((col, colIndex) => {
                       const sum = columnSums[col.accessor];
-                      
+
                       if (colIndex === 0) {
                         return (
                           <td key={colIndex} className="px-4 py-3 text-sm border-t-2 border-blue-300">
@@ -523,7 +552,7 @@ const UserDetails = () => {
                           </td>
                         );
                       }
-                      
+
                       if (sum !== undefined && sum !== 0) {
                         return (
                           <td key={colIndex} className="px-4 py-3 text-sm border-t-2 border-blue-300">
@@ -531,7 +560,7 @@ const UserDetails = () => {
                           </td>
                         );
                       }
-                      
+
                       return (
                         <td key={colIndex} className="px-4 py-3 text-sm border-t-2 border-blue-300">
                           <span className="text-gray-500">—</span>
@@ -1060,6 +1089,13 @@ const UserDetails = () => {
             <div className="flex gap-2">
               <span className="font-semibold w-32">Password :</span>
               <span>{userPassword || "******"}</span>
+
+              <button
+                onClick={() => setPasswordModal(true)}
+                className="ml-3 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs font-semibold"
+              >
+                Update
+              </button>
             </div>
 
             <div className="flex gap-2">
@@ -1335,6 +1371,42 @@ const UserDetails = () => {
                 ) : (
                   "Submit"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {passwordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-96">
+            <h2 className="text-xl font-bold mb-4">Update User Password</h2>
+
+            <label className="block mb-2 text-sm font-semibold">New Password</label>
+            <input
+              type="text"
+              className="w-full border px-3 py-2 rounded mb-4"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+            />
+
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setPasswordModal(false);
+                  setNewPassword("");
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handlePasswordUpdate}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Update
               </button>
             </div>
           </div>
