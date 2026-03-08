@@ -388,6 +388,8 @@ const MarketDeclareResult = () => {
       );
 
       setRefresh((prev) => !prev);
+
+      window.location.reload();
     } catch (error) {
       message.error("Failed to delete declared result.");
     }
@@ -423,6 +425,7 @@ const MarketDeclareResult = () => {
       }
 
       setRefresh((prev) => !prev);
+      window.location.reload();
     } catch (error) {
       console.error("Error deleting bid:", error);
       message.error("Failed to delete bid.");
