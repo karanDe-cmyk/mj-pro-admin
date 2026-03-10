@@ -4,13 +4,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "AIzaSyB1WgqxxEeB_wZ6KQkMBM8QH8S8h5GhgNg",
-  authDomain: "matkabar-1ec29.firebaseapp.com",
-  databaseURL: "https://matkabar-1ec29-default-rtdb.firebaseio.com",
-  projectId: "matkabar-1ec29",
-  storageBucket: "matkabar-1ec29.firebasestorage.app",
-  messagingSenderId: "1076308028320",
-  appId: "1:1076308028320:web:b7a5e262840d87d4f452c5",
+  apiKey: "AIzaSyBqdzjCdGQSnZNTFwFbTNb7wobOD5VITPM",
+  authDomain: "strong-matka.firebaseapp.com",
+  projectId: "strong-matka",
+  storageBucket: "strong-matka.firebasestorage.app",
+  messagingSenderId: "401509643073",
+  appId: "1:401509643073:web:c0bfdea9bb902328da67c0",
   measurementId: "G-EVVVDGB5CC"
 });
 

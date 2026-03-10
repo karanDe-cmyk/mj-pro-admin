@@ -87,7 +87,7 @@ const App = () => {
 
       if (permission === "granted") {
         const token = await getToken(messaging, {
-          vapidKey: "BBd9yaeCTQ4XIvUmnPmyUZmFZu9k0lcSwf43ZPRa3Ok8RMnNhbNq4Ugbmq1rQaeXLJUfJbR7paZMc8dQF8Tp9OM"
+          vapidKey: "BFvS5WukOk-_Zd-r0A7cn5Sgpfe4dPf6tsUsPOI8pc9dg6DfnfNuB-iY4vRFPkkOWhJ5KKqt5BpuqmKmt15wu08"
         });
         
         localStorage.setItem('fcmToken', token)
