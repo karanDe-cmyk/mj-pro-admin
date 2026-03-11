@@ -15,6 +15,7 @@ import {
 import moment from 'moment';
 import axiosInstance from "../../utils/axiosInstance";
 import dayjs from "dayjs";
+import { toast, ToastContainer } from 'react-toastify';
 
 const { Option } = Select;
 
@@ -183,6 +184,21 @@ const GalidisawerDeclareResults = () => {
         reqBody
       );
       alert("Result Declared successfully!");
+
+      try {
+        const resultString = `${filters.leftDigit}${filters.rightDigit} - ${filters.pana}`;
+        const notificationResponse = await axiosInstance.post("/api/notification", {
+          market: "Gali Disawar",
+          gameName: selectedGame,
+          gameType: "open",
+          result: resultString,
+          declaredAt: new Date().toISOString()
+        });
+        toast.success(notificationResponse.data.message);
+      } catch (notifyError) {
+        console.error("❌ Notification API failed:", notifyError);
+      }
+
       setTimeout(() => {
         fetchDeclareResults();
       }, 100);
@@ -206,10 +222,10 @@ const GalidisawerDeclareResults = () => {
       record.pana && record.pana !== "false"
         ? record.pana
         : record.leftDigit && record.leftDigit !== "false"
-        ? record.leftDigit
-        : record.rightDigit && record.rightDigit !== "false"
-        ? record.rightDigit
-        : "";
+          ? record.leftDigit
+          : record.rightDigit && record.rightDigit !== "false"
+            ? record.rightDigit
+            : "";
     editForm.setFieldsValue({
       bidPoints: record.bidPoints,
       bidNumber: computedBidNum
@@ -279,8 +295,8 @@ const GalidisawerDeclareResults = () => {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           style={{ backgroundColor: '#ff4d4f', borderColor: '#ff4d4f', marginRight: '8px' }}
           onClick={() => handleDeleteDeclareResult(record)}
         >
@@ -601,6 +617,7 @@ const GalidisawerDeclareResults = () => {
           </Form.Item>
         </Form>
       </Modal>
+      <ToastContainer />
     </div>
   );
 };
