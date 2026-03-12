@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { toast, ToastContainer } from 'react-toastify';
+import moment from "moment";
 
 const DeclareResult = () => {
   // States for Declare Result section
@@ -28,20 +29,30 @@ const DeclareResult = () => {
     return today.toISOString().substr(0, 10); // Format: YYYY-MM-DD for the datepicker
   });
 
-  // Fetch game list
+  
   useEffect(() => {
     const fetchGameList = async () => {
       try {
         const response = await axiosInstance.get(`/api/starline/getGameList`);
-        const uniqueGameNames = new Set();
+
+        let games = [];
+
         if (Array.isArray(response.data.data)) {
-          response.data.data.forEach((game) => {
-            uniqueGameNames.add(game.game_name);
-          });
-        } else {
-          console.error("Expected an array at response.data.data");
+          games = response.data.data
+            .filter(g => g.is_active) // optional
+            .map(g => g.game_name);
         }
-        setGameOptions([...uniqueGameNames]);
+
+        // remove duplicates
+        const uniqueGames = [...new Set(games)];
+
+        // sort by time
+        const sortedGames = uniqueGames.sort((a, b) =>
+          moment(a, "hh:mm A").diff(moment(b, "hh:mm A"))
+        );
+
+        setGameOptions(sortedGames);
+
       } catch (error) {
         console.error("Error fetching game list:", error);
       }
