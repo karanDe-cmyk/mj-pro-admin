@@ -1,1 +1,1 @@
-export const apiUrl = "https://bazigar-api.skylinkapi.online"
+export const apiUrl = "https://stronge-api.skylinkapi.online"

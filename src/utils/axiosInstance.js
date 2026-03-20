@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 // ✅ Use runtime-configured API URL
 const instance = axios.create({
-  baseURL :'https://bazigar-api.skylinkapi.online'
+  baseURL :'https://stronge-api.skylinkapi.online'
   // baseURL: "http://localhost:5002"
 });
 
