@@ -44,7 +44,8 @@ const TotalWinningTable = () => {
             digit: win.digit,
             panna: win.panna,
             winAmount: win.winAmount,
-            date: win.date
+            date: win.date,
+            points: win.points
           });
         });
       });
@@ -122,6 +123,7 @@ const TotalWinningTable = () => {
               <th className="px-3 py-2">Type</th>
               <th className="px-3 py-2">Digit</th>
               <th className="px-3 py-2">Panna</th>
+              <th className="px-3 py-2">Points</th>
               <th className="px-3 py-2">Winning ₹</th>
               <th className="px-3 py-2">Date</th>
             </tr>
@@ -151,6 +153,7 @@ const TotalWinningTable = () => {
                   <td className="px-3 py-2 capitalize">{row.gameType}</td>
                   <td className="px-3 py-2">{row.digit || "-"}</td>
                   <td className="px-3 py-2">{row.panna || "-"}</td>
+                  <td className="px-3 py-2">{row.points || "-"}</td>
                   <td className="px-3 py-2 font-semibold text-green-600">
                     ₹ {row.winAmount}
                   </td>
