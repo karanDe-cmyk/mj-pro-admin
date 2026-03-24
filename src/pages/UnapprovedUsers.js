@@ -91,8 +91,8 @@ const UnapprovedUsers = () => {
   const handleViewClick = (userId) => {
     navigate(`/admin/user-management/user-details/${userId}`);
   };
-  
-  
+
+
   const handleDelete = async (id) => {
     try {
       await instance.delete(`/api/auth/deleteUser/${id}`);
@@ -127,11 +127,11 @@ const UnapprovedUsers = () => {
 
   // ✅ Table Columns (Date and Time columns added)
   const columns = [
-    { 
-      title: "#", 
-      dataIndex: "_id", 
-      key: "_id", 
-      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1 
+    {
+      title: "#",
+      dataIndex: "_id",
+      key: "_id",
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1
     },
     {
       title: "Date",
@@ -145,10 +145,19 @@ const UnapprovedUsers = () => {
       key: "time",
       render: (text) => new Date(text).toLocaleTimeString(),
     },
-    { 
-      title: "Member Name", 
-      dataIndex: "userName", 
-      key: "userName" 
+    {
+      title: "Member Name",
+      dataIndex: "userName",
+      key: "userName",
+      render: (text, record) => (
+        <Button
+          type="link"
+          style={{ padding: 0, height: 'auto' }}
+          onClick={() => handleViewClick(record._id)}
+        >
+          {text || 'N/A'}
+        </Button>
+      ),
     },
     {
       title: "Member Mobile No",
@@ -224,16 +233,16 @@ const UnapprovedUsers = () => {
         {/* Show Entries Dropdown */}
         <div className="flex items-center">
           <span className="mr-2">Show</span>
-          <Select 
-            value={pageSize} 
-            onChange={(value) => handlePaginationChange(1, value)} 
+          <Select
+            value={pageSize}
+            onChange={(value) => handlePaginationChange(1, value)}
             style={{ width: 80 }}
           >
             <Option value={5}>5</Option>
-          <Option value={10}>10</Option>
-          <Option value={20}>20</Option>
-          <Option value={50}>50</Option>
-          <Option value={100}>100</Option>
+            <Option value={10}>10</Option>
+            <Option value={20}>20</Option>
+            <Option value={50}>50</Option>
+            <Option value={100}>100</Option>
           </Select>
           <span className="ml-2">entries</span>
         </div>
