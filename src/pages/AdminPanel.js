@@ -313,7 +313,10 @@ const AdminPanel = () => {
       key: "custom-notification",
       label: "Custom Notification",
       path: "/admin/custom-notification",
-      icon: <i className="fa fa-history" />,
+      icon: <i className="fa fa-bell" />,
+      children: [
+        { key: "All Notification", label: "All Notification", path: "/admin/managenotification" },
+      ],
     },
   ];
 

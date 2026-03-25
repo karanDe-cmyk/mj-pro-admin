@@ -76,6 +76,7 @@ import TotalNotBidPlayer from './pages/NonBidUsersTillDate';
 import TotalWithdrawal from './pages/wallet_management/TotalWithdrawal'
 import TotalwinningAmount from "./pages/Totalwinningamount";
 import AppVersion from './pages/setting/AppVersion';
+import NotificationManagement from './pages/AllNotification'
 
 const App = () => {
   // console.log("isAuthenticated:", localStorage.getItem('isAuthenticated'));
@@ -89,7 +90,7 @@ const App = () => {
         const token = await getToken(messaging, {
           vapidKey: "BFvS5WukOk-_Zd-r0A7cn5Sgpfe4dPf6tsUsPOI8pc9dg6DfnfNuB-iY4vRFPkkOWhJ5KKqt5BpuqmKmt15wu08"
         });
-        
+
         localStorage.setItem('fcmToken', token)
 
         if (token) {
@@ -202,8 +203,9 @@ const App = () => {
             <Route path="bidrevert" element={<Bidrevert />} />
             <Route path="bids-list" element={<TotalBidsList />} />
             <Route path="wins-list" element={<TotalWinsList />} />
-<Route path = "totalwinning-amount" element={<TotalwinningAmount/>}/>
+            <Route path="totalwinning-amount" element={<TotalwinningAmount />} />
             <Route path="gateway-payment" element={<GatewayPayment />} />
+            <Route path="managenotification" element={<NotificationManagement />} />
           </Route>
 
           <Route path="/user-details/:userId" element={<UserDetails />} />
