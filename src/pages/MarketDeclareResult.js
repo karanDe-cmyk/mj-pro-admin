@@ -283,6 +283,7 @@ const MarketDeclareResult = () => {
           winners: winners.length > 0 ? winners : [],
         }
       );
+      
 
       if (response.data.success === false) {
         toast.error(response.data.message);
