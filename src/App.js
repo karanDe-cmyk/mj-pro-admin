@@ -92,6 +92,7 @@ const App = () => {
         });
 
         localStorage.setItem('fcmToken', token)
+        console.log('fcm token', token)
 
         if (token) {
           await axiosInstance.post("/api/notification/save-fcm-token", {

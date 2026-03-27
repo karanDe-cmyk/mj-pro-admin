@@ -288,7 +288,6 @@ const MarketDeclareResult = () => {
       if (response.data.success === false) {
         toast.error(response.data.message);
       } else {
-        message.success("Result declared successfully!");
         toast.success("Result declared successfully!");
         setIsWinnerModalVisible(false);
 
