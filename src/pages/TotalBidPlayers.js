@@ -63,6 +63,7 @@ const TotalBidPlayers = () => {
                   <th className="px-4 py-2 border text-left">#</th>
                   <th className="px-4 py-2 border text-left">Username</th>
                   <th className="px-4 py-2 border text-left">Mobile</th>
+                  <th className="px-4 py-2 border text-left">Wallet</th>
                   <th className="px-4 py-2 border text-center">Action</th>
                 </tr>
               </thead>
@@ -77,6 +78,7 @@ const TotalBidPlayers = () => {
                     </td>
 
                     <td className="px-4 py-2 border">{item.phone}</td>
+                    <td className="px-4 py-2 border">{item.walletBalance}</td>
 
                     {/* ACTION COLUMN */}
                     <td className="px-4 py-2 border text-center">
