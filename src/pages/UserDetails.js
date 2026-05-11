@@ -147,6 +147,7 @@ const UserDetails = () => {
         `/api/auth/deleteUser/${userId}`
       );
       alert(response.data.message);
+      window.history.back();
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -1023,15 +1024,7 @@ const UserDetails = () => {
               </div>
             </div>
             <div>
-              <div className="mb-2">
-                <span className="font-bold mr-2">Delete Account</span>
-                <button
-                  onClick={deleteAccount}
-                  className="px-4 py-1 rounded-full bg-red-500 text-white font-bold text-sm hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </div>
+
               <div className="mb-2">
                 <span className="font-bold mr-2">Active:</span>
                 <button
@@ -1048,6 +1041,15 @@ const UserDetails = () => {
                   className={`px-4 py-1 rounded-full text-white font-bold text-sm ${!status ? 'bg-green-500' : 'bg-red-500'} hover:opacity-90`}
                 >
                   {!status ? "Yes" : "No"}
+                </button>
+              </div>
+              <div className="mb-2">
+                <span className="font-bold mr-2">Delete Account</span>
+                <button
+                  onClick={deleteAccount}
+                  className="px-4 py-1 rounded-full bg-red-500 text-white font-bold text-sm hover:bg-red-600"
+                >
+                  Delete
                 </button>
               </div>
             </div>

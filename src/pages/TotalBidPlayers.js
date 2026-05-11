@@ -62,6 +62,7 @@ const TotalBidPlayers = () => {
                 <tr>
                   <th className="px-4 py-2 border text-left">#</th>
                   <th className="px-4 py-2 border text-left">Username</th>
+                  <th className="px-4 py-2 border text-left">Wallet Balance</th>
                   <th className="px-4 py-2 border text-left">Mobile</th>
                   <th className="px-4 py-2 border text-center">Action</th>
                 </tr>
@@ -72,10 +73,16 @@ const TotalBidPlayers = () => {
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-4 py-2 border">{index + 1}</td>
 
-                    <td className="px-4 py-2 border font-medium text-blue-600">
-                      {item.userName}
+                    <td className="px-4 py-2 border">
+                      <a
+                        href={`/admin/user-management/user-details/${item.userId}`}
+                        className="px-4 py-2 font-medium text-blue-600"
+                      >
+                        {item.userName}
+                      </a>
                     </td>
 
+                    <td className="px-4 py-2 border">{item.walletBalance}</td>
                     <td className="px-4 py-2 border">{item.phone}</td>
 
                     {/* ACTION COLUMN */}
